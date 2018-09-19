@@ -37,6 +37,8 @@ ncei.data <- read_fwf(here(path = "data/NCEI/2016_data.txt"), skip = 1,
                        fwf_empty(here(path = "data/NCEI/2016_data.txt"),
                                  col_names = c("USAF","WBAN","DATE","DIR","SPD","GUS","CLG","SKC","L","M","H","VSB","MW1","MW2","MW3","MW4","AW1","AW2","AW3","AW4","W","TEMP","DEWP","SLP","ALT","STP","MAX","MIN","PCP01","PCP06","PCP24","PCPXX","SD")))
 
+ncei.stations <- read_fwf(here(path = "data/NCEI/stations.txt"), skip = 2, fwf_widths(c(7,6,31,51,31,9,9,10), c("USAF","WBAN","NAME","COUNTRY","STATE","LAT","LON","ELEV")))
+
 # Convert TEMP and DEWP to numeric 
 ncei.data$TEMP <- as.numeric(as.character(ncei.data$TEMP))
 ncei.data$DEWP <- as.numeric(as.character(ncei.data$DEWP))
@@ -70,16 +72,15 @@ ncei.data <- ncei.data[,c("USAF","WBAN","DateTime","TEMP","DEWP","TEMPC","DEWPC"
 
 #*#*#
 # import Maricopa County Flood Control District data
-files <- list.files(here(path = "data/MCFCD/2017/Temp"), pattern="txt$", full.names = T)
-names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Temp"), pattern = "txt$", full.names = F))
-mcfcd.data <- rbindlist(lapply(files, fread), idcol = "station")
-mcfcd.data[, station := factor(station, labels = basename(names))]
-colnames(mcfcd.data) <- c("station","date","time","temp")
-rm(names,files)
+files <- list.files(here(path = "data/MCFCD/2017/Temp"), pattern="txt$", full.names = T) # full file path names
+names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Temp"), pattern = "txt$", full.names = F)) # names (stations) of files
+mcfcd.data <- rbindlist(lapply(files, fread), idcol = "station") # load all station data 
+mcfcd.data[, station := factor(station, labels = basename(names))] # add station names to column 'station'
+colnames(mcfcd.data) <- c("station","date","time","temp") # add rest of column names
+rm(names,files) 
+mcfcd.stations <- fread(here(path = "data/MCFCD/stations.csv")) # load station data
 
-
-
-
+# fix station formatting
 
 
 # save final data objec, reload, & check data unchanged 
