@@ -72,6 +72,13 @@ ncei.phx$YrMth <- format(strptime(ncei.phx$DATE, format="%Y%m%d%H%M"), format="%
 ncei.phx <- ncei.phx[,c("USAF","WBAN","DateTime","TEMP","DEWP","TEMPC","DEWPC","AT","YrMth","SPD")]
 
 #*#*#
+# import Maricopa County Flood Control District data
+
+#temp <- do.call(rbind, lapply(list.files(here(path = "data/MCFCD/2017/Temp"), recursive = T, pattern="txt$", full.names= T), read.csv, header = F))
+
+# test read in one file
+read.fwf(here(path = "data/MCFCD/2017/Temp/1002.txt"), widths=(c(10,-1,8,-9,2)))
+
 
 # save final data objec, reload, & check data unchanged 
 #saveRDS(azmet.phx, here("data/AZMET", "all_binded.rds"))
