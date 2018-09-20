@@ -2,6 +2,7 @@
 
 library(data.table)
 library(tidyverse)
+library(lubridate)
 library(here)
 
 #-#-#
@@ -26,10 +27,15 @@ colnames(azmet.data) <- c("year","day.year","hour","temp","rh","vap","sol","prec
 
 # add date column
 azmet.data$date <- as.Date(azmet.data$day.year-1, origin = paste0(azmet.data$year,"-01-01"))
-azmet.stations <- unique(azmet.data$station)
+
+# Format date + time in new column as YYYY-MM-DD HH:MM:SS
+azmet.data$date.time  <- ymd_hm(paste0(azmet.data$date," ",azmet.data$hour,":00"), tz = "US/Arizona")
 
 # fix temp = 999 to NA
 azmet.data$temp <- ifelse(azmet.data$temp == 999, NA, azmet.data$temp)
+
+# read AZMET station data
+azmet.stations <- fread(here(path = "data/AZMET/stations.csv"))
 
 #~#~#
 # load NCEI data
@@ -45,13 +51,6 @@ ncei.data$DEWP <- as.numeric(as.character(ncei.data$DEWP))
 
 # Remove NAs in TEMP and DEWP
 #ncei.data <- ncei.data[(!is.na(ncei.data$TEMP) & !is.na(ncei.data$DEWP)),]
-
-# Add celsuis in TEMP and DEWP
-ncei.data$TEMPC <- (ncei.data$TEMP - 32) / 1.8
-ncei.data$DEWPC <- (ncei.data$DEWP - 32) / 1.8
-
-# Caluclate Apparent Temperature using Steadman eqn. Assume no wind correction factor (for now).
-ncei.data$AT <- -2.653 + (0.994 * ncei.data$TEMPC) + (0.0153 *  ncei.data$DEWPC * ncei.data$DEWPC)  
 
 # Format date + time in new column as YYYY-MM-DD HH:MM:SS
 ncei.data$DateTime  <- ISOdatetime(format(strptime(ncei.data$DATE, format="%Y%m%d%H%M"), format="%Y"),  # Year
@@ -74,16 +73,48 @@ ncei.data <- ncei.data[,c("USAF","WBAN","DateTime","TEMP","DEWP","TEMPC","DEWPC"
 # import Maricopa County Flood Control District data
 files <- list.files(here(path = "data/MCFCD/2017/Temp"), pattern="txt$", full.names = T) # full file path names
 names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Temp"), pattern = "txt$", full.names = F)) # names (stations) of files
-mcfcd.data <- rbindlist(lapply(files, fread), idcol = "station") # load all station data 
-mcfcd.data[, station := factor(station, labels = basename(names))] # add station names to column 'station'
+mcfcd.data <- rbindlist(lapply(files, fread), idcol = "station.id") # load all station data 
+mcfcd.data[, station.id := factor(station.id, labels = basename(names))] # add station names to column 'station'
 colnames(mcfcd.data) <- c("station","date","time","temp") # add rest of column names
 rm(names,files) 
 mcfcd.stations <- fread(here(path = "data/MCFCD/stations.csv")) # load station data
+mcfcd.stations <- mcfcd.stations[!is.na(station.id)]
 
-# fix station formatting
+# Format date + time in new column as YYYY-MM-DD HH:MM:SS
+mcfcd.data$DateTime  <- ISOdatetime(format(strptime(mcfcd.data$date, format="%m/%d/%Y"), format="%Y"),  # Year
+                                    format(strptime(mcfcd.data$date, format="%m/%d/%Y"), format="%m"),  # Month
+                                    format(strptime(mcfcd.data$date, format="%m/%d/%Y"), format="%d"),  # Day
+                                    format(strptime(mcfcd.data$time, format="%H:%M:%S"), format="%H"),  # Hour
+                                    format(strptime(mcfcd.data$time, format="%H:%M:%S"), format="%M"),  # Hour
+                                    format(strptime(mcfcd.data$time, format="%H:%M:%S"), format="%S"),  # Sec
+                                    tz = "US/Arizona") # MCFCD data is all local)
+
+
+
+# convert station deg-min-sec to decimal lat/long
+dms2dec <- function(x){
+  z <- sapply(strsplit(x, " "), as.numeric)
+  z[1, ] + z[2, ]/60 + z[3, ]/3600
+}
+mcfcd.stations$lat <- dms2dec(mcfcd.stations$lat.dms)
+mcfcd.stations$lon <- dms2dec(mcfcd.stations$lon.dms)
+mcfcd.stations$lon <- (-1) * mcfcd.stations$lon # arizona is west of prime meridian so longitude should be negative
+
+mcfcd.data2 <- merge(mcfcd.data, mcfcd.stations, by = "station.id")
+
+# combine all data into one object
+# columns: datasource, station.id, station.name, temp.f, temp.c. ap.temp.f, ap.temp.c, 
+
 
 
 # save final data objec, reload, & check data unchanged 
 #saveRDS(azmet.data, here("data/AZMET", "all_binded.rds"))
 #azmet.data2 <- readRDS(here("data/AZMET", "all_binded.rds"))
 #all.equal(azmet.data,azmet.data2)
+
+# Add celsuis in TEMP and DEWP
+#data$TEMPC <- (ncei.data$TEMP - 32) / 1.8
+#data$DEWPC <- (ncei.data$DEWP - 32) / 1.8
+
+# Caluclate Apparent Temperature using Steadman eqn. Assume no wind correction factor (for now).
+#data$AT <- -2.653 + (0.994 * ncei.data$TEMPC) + (0.0153 *  ncei.data$DEWPC * ncei.data$DEWPC)  

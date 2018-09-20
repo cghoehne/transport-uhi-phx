@@ -1,4 +1,4 @@
-Station Name,Device ID,Dev. Type,Installed,Latitude DMS,Longitude DMS,Elevation,Station Location
+station.name,station.id,sensor.type,installed,lat.dms,lon.dms,elevation,location
 Old Paint Wash (NI),,,,33 48 22.4,111 48 23.1,2820,2.75 mi. NNW of 136th St. & Lone Mtn. Rd.
 Middle Camp Creek (NI),,,,,,3725,
 Camp Creek Overlook (NI),,,,,,2335,
