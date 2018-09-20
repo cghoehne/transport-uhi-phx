@@ -67,29 +67,96 @@ ncei.data$DateTime <- lubridate::with_tz(ncei.data$DateTime, tz = "US/Arizona") 
 ncei.data$YrMth <- format(strptime(ncei.data$DATE, format="%Y%m%d%H%M"), format="%Y-%m")  # add year-month column
 
 # Keep relevant columns only
-ncei.data <- ncei.data[,c("USAF","WBAN","DateTime","TEMP","DEWP","TEMPC","DEWPC","AT","YrMth","SPD")]
+ncei.data <- ncei.data[,c("USAF","WBAN","DateTime","TEMP","DEWP","TEMPC","DEWPC","YrMth","SPD")]
 
 #*#*#
 # import Maricopa County Flood Control District data
-files <- list.files(here(path = "data/MCFCD/2017/Temp"), pattern="txt$", full.names = T) # full file path names
-names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Temp"), pattern = "txt$", full.names = F)) # names (stations) of files
-mcfcd.data <- rbindlist(lapply(files, fread), idcol = "station.id") # load all station data 
-mcfcd.data[, station.id := factor(station.id, labels = basename(names))] # add station names to column 'station'
-colnames(mcfcd.data) <- c("station","date","time","temp") # add rest of column names
-rm(names,files) 
+
+# temp data
+temp.files <- list.files(here(path = "data/MCFCD/2017/Temp"), pattern="txt$", full.names = T) # full file path names
+temp.names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Temp"), pattern = "txt$", full.names = F)) # names (stations) of files
+mcfcd.temp.data <- rbindlist(lapply(temp.files, fread), idcol = "station.id") # load all station data 
+mcfcd.temp.data[, station.id := factor(station.id, labels = basename(temp.names))] # add station names to column 'station'
+mcfcd.temp.data[, station.id := as.character(station.id)] # convert to character for matching
+colnames(mcfcd.temp.data) <- c("station.id","date","time","temp") # add rest of column names
+mcfcd.temp.data$date.time  <- mdy_hms(paste0(mcfcd.temp.data$date," ",mcfcd.temp.data$time), tz = "US/Arizona") # MCFCD data is all local
+
+# dewpt data
+dewpt.files <- list.files(here(path = "data/MCFCD/2017/Dewpoint"), pattern="txt$", full.names = T) # full file path names
+dewpt.names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Dewpoint"), pattern = "txt$", full.names = F)) # names (stations) of files
+mcfcd.dewpt.data <- rbindlist(lapply(dewpt.files, fread), idcol = "station.id") # load all station data 
+mcfcd.dewpt.data[, station.id := factor(station.id, labels = basename(dewpt.names))] # add station names to column 'station'
+mcfcd.dewpt.data[, station.id := as.character(station.id)] # convert to character for matching
+colnames(mcfcd.dewpt.data) <- c("station.id","date","time","dewpt") # add rest of column names
+mcfcd.dewpt.data$date.time  <- mdy_hms(paste0(mcfcd.dewpt.data$date," ",mcfcd.dewpt.data$time), tz = "US/Arizona") # MCFCD data is all local
+
+# windir data
+windir.files <- list.files(here(path = "data/MCFCD/2017/Wdir"), pattern="txt$", full.names = T) # full file path names
+windir.names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Wdir"), pattern = "txt$", full.names = F)) # names (stations) of files
+mcfcd.windir.data <- rbindlist(lapply(windir.files, fread), idcol = "station.id") # load all station data 
+mcfcd.windir.data[, station.id := factor(station.id, labels = basename(windir.names))] # add station names to column 'station'
+mcfcd.windir.data[, station.id := as.character(station.id)] # convert to character for matching
+colnames(mcfcd.windir.data) <- c("station.id","date","time","windir") # add rest of column names
+mcfcd.windir.data$date.time  <- mdy_hms(paste0(mcfcd.windir.data$date," ",mcfcd.windir.data$time), tz = "US/Arizona") # MCFCD data is all local
+
+# winspd data
+winspd.files <- list.files(here(path = "data/MCFCD/2017/Wspd"), pattern="txt$", full.names = T) # full file path names
+winspd.names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Wspd"), pattern = "txt$", full.names = F)) # names (stations) of files
+mcfcd.winspd.data <- rbindlist(lapply(winspd.files, fread), idcol = "station.id") # load all station data 
+mcfcd.winspd.data[, station.id := factor(station.id, labels = basename(winspd.names))] # add station names to column 'station'
+mcfcd.winspd.data[, station.id := as.character(station.id)] # convert to character for matching
+colnames(mcfcd.winspd.data) <- c("station.id","date","time","winspd") # add rest of column names
+mcfcd.winspd.data$date.time  <- mdy_hms(paste0(mcfcd.winspd.data$date," ",mcfcd.winspd.data$time), tz = "US/Arizona") # MCFCD data is all local
+
+# solar data
+solar.files <- list.files(here(path = "data/MCFCD/2017/Solar"), pattern="txt$", full.names = T) # full file path names
+solar.names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Solar"), pattern = "txt$", full.names = F)) # names (stations) of files
+mcfcd.solar.data <- rbindlist(lapply(solar.files, fread), idcol = "station.id") # load all station data 
+mcfcd.solar.data[, station.id := factor(station.id, labels = basename(solar.names))] # add station names to column 'station'
+mcfcd.solar.data[, station.id := as.character(station.id)] # convert to character for matching
+colnames(mcfcd.solar.data) <- c("station.id","date","time","solar") # add rest of column names
+mcfcd.solar.data$date.time  <- mdy_hms(paste0(mcfcd.solar.data$date," ",mcfcd.solar.data$time), tz = "US/Arizona") # MCFCD data is all local
+
+# station data
 mcfcd.stations <- fread(here(path = "data/MCFCD/stations.csv")) # load station data
-mcfcd.stations <- mcfcd.stations[!is.na(station.id)]
+mcfcd.stations <- mcfcd.stations[!is.na(station.id)]  # remove stations without an ID
+mcfcd.stations[, station.id := as.character(station.id)] # convert station.id to character for matching
+
+# in temp data, stations 1001 and 28301 are missing (both outside urbanized area, so not essential to replace)
+# in temp data, station 1002 is extra (removed, station is humidity data w/ 0 < x > 100)
+# in dewpt data, stations 30816 and 34916 are extra (removed, no stations w/ those IDs in index, data is consistent with dewpt data tho)
+
+{# check for missing stations of data
+  #all.temp.stations <- mcfcd.stations$station.id[mcfcd.stations$sensor.type == "Temperature"]
+  #all.dewpt.stations <- mcfcd.stations$station.id[mcfcd.stations$sensor.type == "Dewpoint"]
+  #all.windir.stations <- mcfcd.stations$station.id[mcfcd.stations$sensor.type == "Wind Dir."]
+  #all.winspd.stations <- mcfcd.stations$station.id[mcfcd.stations$sensor.type == "Peak Wind"]
+  #all.solar.stations <- mcfcd.stations$station.id[mcfcd.stations$sensor.type == "Solar Rad."]
+  
+  # missing stations for each data type
+  #all.temp.stations[which(!all.temp.stations %in% temp.names)] 
+  #all.dewpt.stations[which(!all.dewpt.stations %in% dewpt.names)] 
+  #all.windir.stations[which(!all.windir.stations %in% windir.names)] 
+  #all.winspd.stations[which(!all.winspd.stations %in% winspd.names)] 
+  #all.solar.stations[which(!all.solar.stations %in% solar.names)] 
+  
+  # extraneous stations for each data type
+  #temp.names[which(!temp.names %in% all.temp.stations)]
+  #dewpt.names[which(!dewpt.names %in% all.dewpt.stations)]
+  #windir.names[which(!windir.names %in% all.windir.stations)]
+  #winspd.names[which(!winspd.names %in% all.winspd.stations)]
+  #solar.names[which(!solar.names %in%all.solar.stations)]
+  } 
+
+# bind station names to each data type, then full join all data together by station.name and date.time 
+#(note: solar rad data is only every 30 min instead of other four at 15 min)
+
+
+
+rm(temp.names,temp.files) 
 
 # Format date + time in new column as YYYY-MM-DD HH:MM:SS
-mcfcd.data$DateTime  <- ISOdatetime(format(strptime(mcfcd.data$date, format="%m/%d/%Y"), format="%Y"),  # Year
-                                    format(strptime(mcfcd.data$date, format="%m/%d/%Y"), format="%m"),  # Month
-                                    format(strptime(mcfcd.data$date, format="%m/%d/%Y"), format="%d"),  # Day
-                                    format(strptime(mcfcd.data$time, format="%H:%M:%S"), format="%H"),  # Hour
-                                    format(strptime(mcfcd.data$time, format="%H:%M:%S"), format="%M"),  # Hour
-                                    format(strptime(mcfcd.data$time, format="%H:%M:%S"), format="%S"),  # Sec
-                                    tz = "US/Arizona") # MCFCD data is all local)
-
-
+mcfcd.data$date.time  <- mdy_hms(paste0(mcfcd.data$date," ",mcfcd.data$time), tz = "US/Arizona") # MCFCD data is all local
 
 # convert station deg-min-sec to decimal lat/long
 dms2dec <- function(x){
@@ -102,9 +169,13 @@ mcfcd.stations$lon <- (-1) * mcfcd.stations$lon # arizona is west of prime merid
 
 mcfcd.data2 <- merge(mcfcd.data, mcfcd.stations, by = "station.id")
 
+table(mcfcd.data2$sensor.type)
+
 # combine all data into one object
 # columns: datasource, station.id, station.name, temp.f, temp.c. ap.temp.f, ap.temp.c, 
 
+class(mcfcd.data$station.id)
+class(mcfcd.stations$station.id)
 
 
 # save final data objec, reload, & check data unchanged 
