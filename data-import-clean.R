@@ -48,7 +48,7 @@ azmet.data$date <- as.Date(azmet.data$day.year-1, origin = paste0(azmet.data$yea
 azmet.data$date.time  <- ymd_hm(paste0(azmet.data$date," ",azmet.data$hour,":00"), tz = "US/Arizona")
 
 # read AZMET station data
-azmet.stations <- fread(here(path = "data/AZMET/stations.csv"))
+azmet.stations <- fread(here("data/AZMET/stations.csv"))
 
 # add data source column and station.id column (NA, but for ordered cols later)
 azmet.data$source <- "AZMET"
@@ -68,8 +68,8 @@ azmet.data <- azmet.data[year(date.time) == 2017]
 # Import National Centers for Environmental Information data  #
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
 
-ncei.data <- read_fwf(here(path = "data/NCEI/2016_data.txt"), skip = 1,
-                       fwf_empty(here(path = "data/NCEI/2016_data.txt"),
+ncei.data <- read_fwf(here("data/NCEI/2016_data.txt"), skip = 1,
+                       fwf_empty(here("data/NCEI/2016_data.txt"),
                                  col_names = c("station.id","WBAN","date","windir","winspd","GUS","CLG","SKC","L","M","H","VSB","MW1","MW2","MW3","MW4","AW1","AW2","AW3","AW4","W","temp.f","dewpt.f","SLP","ALT","STP","MAX","MIN","PCP01","PCP06","PCP24","PCPXX","SD")))
 
 ncei.stations <- read_fwf(here(path = "data/NCEI/stations.txt"), skip = 2, fwf_widths(c(7,6,31,51,31,9,9,10), c("station.id","WBAN","station.name","COUNTRY","STATE","lat","lon","elevation")))
@@ -159,7 +159,7 @@ colnames(mcfcd.solar.data) <- c("station.id","date","time","solar") # add rest o
 mcfcd.solar.data$date.time  <- mdy_hms(paste0(mcfcd.solar.data$date," ",mcfcd.solar.data$time), tz = "US/Arizona") # MCFCD data is all local
 
 # station data
-mcfcd.stations <- fread(here(path = "data/MCFCD/stations.csv")) # load station data
+mcfcd.stations <- fread(here("data/MCFCD/stations.csv")) # load station data
 mcfcd.stations <- mcfcd.stations[!is.na(station.id)]  # remove stations without an ID
 mcfcd.stations[, station.id := as.character(station.id)] # convert station.id to character for matching
 dms2dec <- function(x){ 
