@@ -1,4 +1,4 @@
-Station,Elevation,Latitude,Longitude
+station.name,elevation,lat,lon
 Encanto,334,33.478443,-112.098046
 Desert Ridge,511,33.688202,-111.963449
 Greenway,403,33.623279,-112.107687
