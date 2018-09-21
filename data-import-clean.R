@@ -5,6 +5,7 @@
 library(data.table)
 library(tidyverse)
 library(lubridate)
+library(weathermetrics)
 library(here)
 
 
@@ -220,21 +221,29 @@ mcfcd.data <- mcfcd.data[year(date.time) == 2017]
 w.data <- rbindlist(list(azmet.data,ncei.data,mcfcd.data), use.names = T, fill = T)
 w.stations <- rbindlist(list(azmet.stations,ncei.stations,mcfcd.stations), use.names = T, fill = T)
 
-# calculate heat index, (Steadman eqn. / Apparent temp, **** assume no wind correction ****
-w.data[, heat.index := (-2.653 + (0.994 * w.data$temp.c) + (0.0153 *  w.data$dewpt.c * w.data$dewpt.c))]
+# calculate heat index, (National Weather Surface improved estimate of Steadman eqn. (heat index calculator eqns)
+w.data[, heat.f := heat.index(t = temp.f, dp = dewpt.f, temperature.metric = "fahrenheit", output.metric = "fahrenheit", round = 0)]
+w.data[, heat.c := heat.index(t = temp.c, dp = dewpt.c, temperature.metric = "celsius", output.metric = "celsius", round = 1)]
 
 # calculate observations in 2017 for each station by each data type
- #PLACEHOLDER
+ for(station in w.stations$station.name){
+   w.stations[station == station.name, n.temp := sum(!is.na(w.data$temp.f[station == w.data$station.name]))]
+   w.stations[station == station.name, n.dewpt := sum(!is.na(w.data$dewpt.f[station == w.data$station.name]))]
+   w.stations[station == station.name, n.windir := sum(!is.na(w.data$windir[station == w.data$station.name]))]
+   w.stations[station == station.name, n.winspd := sum(!is.na(w.data$winspd[station == w.data$station.name]))]
+   w.stations[station == station.name, n.solar := sum(!is.na(w.data$solar[station == w.data$station.name]))]
+   w.stations[station == station.name, n.heat := sum(!is.na(w.data$heat.f[station == w.data$station.name]))]
+ }
 
-# remove stations with no obs
- #PLACEHOLDER
+# remove stations with no temp obs
+w.stations <- w.stations[n.temp != 0]
 
-# save final data objec, reload, & check data unchanged 
+# save final data object
 saveRDS(w.data, here("data", "2016-all-data.rds"))
 saveRDS(w.stations, here("data", "2016-all-stations.rds"))
 
-w.data2 <- readRDS(here("data", "2016-all-data.rds"))
-w.stations2 <- readRDS(here("data", "2016-all-stations.rds"))
-
-all.equal(w.data,w.data2)
-all.equal(w.stations,w.stations2)
+# reload, & check data unchanged 
+#w.data2 <- readRDS(here("data", "2016-all-data.rds"))
+#w.stations2 <- readRDS(here("data", "2016-all-stations.rds"))
+#all.equal(w.data,w.data2)
+#all.equal(w.stations,w.stations2)
