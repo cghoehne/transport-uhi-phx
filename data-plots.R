@@ -30,10 +30,11 @@ w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations.xy, data = w.stati
 # load city labels shpfile
 phx.labels <- shapefile(here("data/shapefiles/phx_metro_labels.shp"))
 
-# load UZA border
+# load UZA & county border
 uza.border <- shapefile(here("data/shapefiles/maricopa_county_uza.shp"))
+cnty.border <- shapefile(here("data/shapefiles/maricopa_county.shp"))
 
-# load 2017 travel ways
+# load 2017 travel ways (note these are cropped to extend just outside of the UZA)
 hways <- shapefile(here("data/shapefiles/phx_metro_hways.shp"))
 
 # store master font
@@ -44,8 +45,9 @@ my.palette <- c("#0C120C", "#C20114", "#6D7275")
 
 # plot station points with UZA, highways, & city labels for context.
 stations.plot <-   
-  tm_shape(w.stations.spdf) + tm_dots(col = "source", border.col = NULL, palette = my.palette, size = 0.2, alpha = 0.8) + # station points
+  tm_shape(w.stations.spdf, bbox = w.stations.spdf) + tm_dots(col = "source", border.col = NULL, palette = my.palette, size = 0.2, alpha = 0.8, title = "Data Source") + # station points
   tm_shape(uza.border) + tm_borders(lwd = 0.8, lty = "solid", col = "grey40", alpha = 0.7) + # urbanized area (UZA) border
+  tm_shape(cnty.border) + tm_borders(lwd = 0.8, lty = "solid", col = "grey20", alpha = 0.7) + # county border
   tm_scale_bar(position = c(0.4,0.0), breaks = c(0,5,10,15,20), size = 0.90, color.light = "grey85") + # scalebar
   tm_compass(north = 0, type = "4star", size = 2, show.labels = 1, position = c(0.9,0.85)) + # compass
   tm_shape(hways) + tm_lines(lwd = 1.1, col = "grey40") + # highways
