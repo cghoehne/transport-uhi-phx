@@ -77,13 +77,43 @@ uza.stations.list <- w.stations[station.name %in% uza.stations$station.name]
 # filter data to uza.station.list
 uza.data <- w.data[station.name %in% uza.stations.list$station.name]
 
-# if time is within 15 of hour, round to hour, otherwise drop, then
+# if time is within 15 min of hour, round to hour, otherwise drop, then
 # aggregate to the min, mean, max temp at each unique timestep for all stations
-uza.data[, date.time.round := round.POSIXt(date.time, "hours")]
-
+uza.data[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
+uza.data <- uza.data[abs(difftime(date.time, date.time.round, units = "min")) < 15]
 uza.data.agg <- uza.data[, .(min.temp.f = min(temp.f, na.rm = T),
-                             mean.temp.f = mean(temp.f, na.rm = T),
-                             max.temp.f = max(temp.f, na.rm = T)), by = .(date.time)]
+                             med.temp.f = median(temp.f, na.rm = T),
+                             max.temp.f = max(temp.f, na.rm = T)), by = .(date.time.round)]
 
-# order by date.time
-uza.data.agg <- uza.data.agg[order(date.time)]
+# hourly temp min/mean/max by 2017 month aggregate across all stations
+uza.data[, month := as.factor(month(date.time.round, label = T))]
+uza.data[, hour := hour(date.time.round)]
+uza.data.month.agg <- uza.data[, .(min.temp.f = min(temp.f, na.rm = T),
+                                   med.temp.f = median(temp.f, na.rm = T),
+                                   max.temp.f = max(temp.f, na.rm = T)), by = .(hour,month)]
+
+# plot hourly temp.f range by month for 2017 for all stations
+# Plot historical tempeature plots of metro regions
+month.x.hour.p <- ggplot(uza.data.month.agg, aes(x = hour, y = med.temp.f , group = month)) +
+  geom_ribbon(aes(ymin = min.temp.f, ymax = max.temp.f),  fill = "grey50", alpha = 0.5) +
+  geom_line(size = 1.2) +
+  geom_segment(aes(x = 0, y = 25, xend = 23, yend = 25)) +
+  geom_segment(aes(x = 0, y = 25, xend = 0, yend = 125)) +
+  facet_wrap(~ month , scales = "fixed") +
+  labs(title = "Hourly Temperature Ranges for Urbanized Metro Phoenix, 2017", x = "Hour", y = "Temperature (deg F)") +
+  scale_x_continuous(limits = c(0,23), breaks = c(0,6,12,18)) +
+  scale_y_continuous(limits = c(25,125)) +
+  theme_minimal() +
+  theme(text = element_text(colour = "black", size = 11, family = my.font),
+        plot.title = element_text(size = 11, face = "bold", family = my.font, hjust = .5, vjust = 2),
+        plot.margin=unit(c(1, 1, 1, 1), units="mm"),
+        axis.title = element_text(face = "bold"),
+        axis.text.y = element_text(size = 11.5, vjust = 0.5, hjust = 0.7, margin = unit(c(0, 2, 0, 2), "mm"), colour = "black"),
+        strip.text.x = element_text(size = 12, colour = "black")
+  )
+
+ggsave("hourly_tempF_by_month_UZA.png", month.x.hour.p, device = "png", path = here("figures"),
+       scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
+
+
+
