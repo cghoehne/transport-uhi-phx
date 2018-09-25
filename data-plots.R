@@ -48,7 +48,7 @@ w.stations.spdf <- spTransform(w.stations.spdf, crs(uza.border))
 my.font <- "Century Gothic"
 
 # store palette 
-my.palette <- c("#0C120C", "#C20114", "#6D7275")
+my.palette <- c("#0C120C","#640D14","#C20114","#6D7275")
 
 # plot station points with UZA, highways, & city labels for context.
 stations.plot <-   
@@ -63,7 +63,7 @@ stations.plot <-
             legend.text.size = 0.95, title = "", title.position = c(0.12,0.94),
             legend.position = c(0.02,0.45), outer.margins = c(0,0,0,0), asp = 0)
 
-tmap_save(stations.plot, filename = here("figures/stations.png"))
+tmap_save(stations.plot, filename = here("figures/stations_w_ibut.png"))
 
 
 # calculate range of temps and mean temp for urbanized stations
@@ -98,11 +98,11 @@ month.x.hour.p <- ggplot(uza.data.month.agg, aes(x = hour, y = med.temp.f , grou
   geom_ribbon(aes(ymin = min.temp.f, ymax = max.temp.f),  fill = "grey50", alpha = 0.5) +
   geom_line(size = 1.2) +
   geom_segment(aes(x = 0, y = 25, xend = 23, yend = 25)) +
-  geom_segment(aes(x = 0, y = 25, xend = 0, yend = 125)) +
+  geom_segment(aes(x = 0, y = 25, xend = 0, yend = 135)) +
   facet_wrap(~ month , scales = "fixed") +
   labs(title = "Hourly Temperature Ranges for Urbanized Metro Phoenix, 2017", x = "Hour", y = "Temperature (deg F)") +
   scale_x_continuous(limits = c(0,23), breaks = c(0,6,12,18)) +
-  scale_y_continuous(limits = c(25,125)) +
+  scale_y_continuous(limits = c(25,135), breaks = c(25,50,75,100,125)) +
   theme_minimal() +
   theme(text = element_text(colour = "black", size = 11, family = my.font),
         plot.title = element_text(size = 11, face = "bold", family = my.font, hjust = .5, vjust = 2),
@@ -112,7 +112,7 @@ month.x.hour.p <- ggplot(uza.data.month.agg, aes(x = hour, y = med.temp.f , grou
         strip.text.x = element_text(size = 12, colour = "black")
   )
 
-ggsave("hourly_tempF_by_month_UZA.png", month.x.hour.p, device = "png", path = here("figures"),
+ggsave("hourly_tempF_by_month_UZA_w_ibut.png", month.x.hour.p, device = "png", path = here("figures"),
        scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
 
 
