@@ -37,7 +37,7 @@ colnames(azmet.data) <- c("year","day.year","hour","temp.c","rh","vap","sol","pr
 # fix temp = 999 to NA
 azmet.data$temp.c <- ifelse(azmet.data$temp.c == 999, NA, azmet.data$temp.c)
 
-# create celcius temp/dew
+# create fahrenheit temp/dew
 azmet.data[, temp.f := ((temp.c * 1.8) + 32)]
 azmet.data[, dewpt.f := ((dewpt.c * 1.8) + 32)]
 
@@ -85,8 +85,8 @@ ncei.data[, winspd := as.numeric(as.character(winspd))]
 ncei.data[, windir := as.numeric(as.character(windir))]
 
 # create celcius temp/dew
-ncei.data[, temp.c := ((temp.f - 32) * 1.8)]
-ncei.data[, dewpt.c := ((dewpt.f - 32) * 1.8)]
+ncei.data[, temp.c := ((temp.f - 32) / 1.8)]
+ncei.data[, dewpt.c := ((dewpt.f - 32) / 1.8)]
 
 # format date + time in new column as YYYY-MM-DD HH:MM:SS
 ncei.data$date.time  <- ymd_hm(ncei.data$date, tz = "UTC")
@@ -193,8 +193,8 @@ rm(mcfcd.temp.data, mcfcd.dewpt.data, mcfcd.windir.data, mcfcd.winspd.data, mcfc
 gc()
 
 # create celcius temp/dew
-mcfcd.data[, temp.c := ((temp.f - 32) * 1.8)]
-mcfcd.data[, dewpt.c := ((dewpt.f - 32) * 1.8)]
+mcfcd.data[, temp.c := ((temp.f - 32) / 1.8)]
+mcfcd.data[, dewpt.c := ((dewpt.f - 32) / 1.8)]
 
 # add data source column
 mcfcd.data$source <- "MCFCD"
@@ -213,13 +213,69 @@ mcfcd.stations <- unique(mcfcd.stations)
 mcfcd.data <- mcfcd.data[year(date.time) == 2017]
 
 
+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#
+# Import UWIN Phoenix iButton data  #
+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#
+
+# import temp and rel humidity data
+ibut.temp <- fread(here("data/iButton/phxbuttons.csv"))
+ibut.rhum <- fread(here("data/iButton/phxbuttonsrh.csv"))
+
+# import station info and data
+ibut.stations <- fread(here("data/iButton/phxdatsite_all.csv"))
+ibut.stations.col.info <- fread(here("data/iButton/phxdatsiteall_col_description.csv"))
+
+# rename some cols
+setnames(ibut.temp, "Date - Time", "date.time") 
+setnames(ibut.rhum, "Date - Time", "date.time")
+setnames(ibut.stations, "ibuttonID", "station.name")
+setnames(ibut.stations, "Lat", "lat")
+setnames(ibut.stations, "Lon", "lon")
+
+# keep only relevant columns
+ibut.stations <- ibut.stations[, .(station.name,lat,lon)]
+
+# remove hour column
+ibut.temp[, hour := NULL] 
+ibut.rhum[, hour := NULL] 
+
+# melt and recast temp & hum data b/c in wide format
+ibut.temp <- melt(ibut.temp, id = "date.time", variable.name = "station.name", value.name = "temp.c")
+ibut.rhum <- melt(ibut.rhum, id = "date.time", variable.name = "station.name", value.name = "rhum.c")
+
+# format date.time as YYYY-MM-DD HH:MM:SS
+ibut.temp[, date.time := mdy_hm(date.time, tz = "US/Arizona")]
+ibut.rhum[, date.time := mdy_hm(date.time, tz = "US/Arizona")]
+
+# round times of temp cause they are 1 min shifted off
+ibut.temp[, date.time := as.POSIXct(round.POSIXt(date.time, "hours"))]
+
+# bind temp and hum toegether by station.id & date.time
+ibut.data <- merge(ibut.temp, ibut.rhum, by = c("date.time","station.name"), all = T)
+
+# convert rhum to dewpt
+ibut.data[, dewpt.c := humidity.to.dewpoint(rh = rhum.c, t = temp.c, temperature.metric = "celsius")]
+ibut.data[, rhum.c := NULL] 
+
+# create fahrenheit temp/dew
+ibut.data[, temp.f := ((temp.c * 1.8) + 32)]
+ibut.data[, dewpt.f := ((dewpt.c * 1.8) + 32)]
+
+# add data source column
+ibut.data$source <- "iButton"
+ibut.stations$source <- "iButton"
+
+# clean up space
+rm(ibut.temp,ibut.rhum,ibut.stations.col.info)
+gc()
+
 #^#^#^#^#^#^#^#^#^#^#^#^#^#
 # Merge all data together #
 #^#^#^#^#^#^#^#^#^#^#^#^#^#
 
 # combine all data into one object, and all stations into one object
-w.data <- rbindlist(list(azmet.data,ncei.data,mcfcd.data), use.names = T, fill = T)
-w.stations <- rbindlist(list(azmet.stations,ncei.stations,mcfcd.stations), use.names = T, fill = T)
+w.data <- rbindlist(list(azmet.data,ncei.data,mcfcd.data,ibut.data), use.names = T, fill = T)
+w.stations <- rbindlist(list(azmet.stations,ncei.stations,mcfcd.stations,ibut.stations), use.names = T, fill = T)
 
 # calculate heat index, (National Weather Surface improved estimate of Steadman eqn. (heat index calculator eqns)
 w.data[, heat.f := heat.index(t = temp.f, dp = dewpt.f, temperature.metric = "fahrenheit", output.metric = "fahrenheit", round = 0)]
