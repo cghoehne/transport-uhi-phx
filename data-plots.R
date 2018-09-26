@@ -115,5 +115,29 @@ month.x.hour.p <- ggplot(uza.data.month.agg, aes(x = hour, y = med.temp.f , grou
 ggsave("hourly_tempF_by_month_UZA_w_ibut.png", month.x.hour.p, device = "png", path = here("figures"),
        scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
 
+# plot hourly temp.f range for summer months for 2017 for all stations
+uza.data.sum.month.agg <- uza.data[, .(min.temp.f = min(temp.f, na.rm = T),
+                                   med.temp.f = median(temp.f, na.rm = T),
+                                   max.temp.f = max(temp.f, na.rm = T)), by = .(hour,month,source)]
+uza.data.sum.month.agg <- uza.data.sum.month.agg[month %in% c("Jun","Jul","Aug")]
 
+sum.month.x.hour.p <- ggplot(uza.data.sum.month.agg, aes(x = hour, y = med.temp.f , group = month)) +
+  geom_ribbon(aes(ymin = min.temp.f, ymax = max.temp.f),  fill = "grey50", alpha = 0.5) +
+  geom_line(size = 1.2) +
+  geom_segment(aes(x = 0, y = 25, xend = 23, yend = 25)) +
+  geom_segment(aes(x = 0, y = 25, xend = 0, yend = 135)) +
+  facet_wrap(month ~ source, scales = "fixed") +
+  labs(title = "Summer Hourly Temperatures for Urbanized Metro Phoenix by Data Source, 2017", x = "Hour", y = "Temperature (deg F)") +
+  scale_x_continuous(limits = c(0,23), breaks = c(0,6,12,18)) +
+  scale_y_continuous(limits = c(25,135), breaks = c(25,50,75,100,125)) +
+  theme_minimal() +
+  theme(text = element_text(colour = "black", size = 11, family = my.font),
+        plot.title = element_text(size = 11, face = "bold", family = my.font, hjust = .5, vjust = 2),
+        plot.margin=unit(c(1, 1, 1, 1), units="mm"),
+        axis.title = element_text(face = "bold"),
+        axis.text.y = element_text(size = 11.5, vjust = 0.5, hjust = 0.7, margin = unit(c(0, 2, 0, 2), "mm"), colour = "black"),
+        strip.text.x = element_text(size = 12, colour = "black")
+  )
 
+ggsave("hourly_tempF_by_summer_month_UZA.png", sum.month.x.hour.p, device = "png", path = here("figures"),
+       scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
