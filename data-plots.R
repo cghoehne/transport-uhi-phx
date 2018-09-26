@@ -18,7 +18,7 @@ library(here)
 # Import data #
 #-#-#-#-#-#-#-#
 
-# cleaned weather station data
+# cleaned weather & station data
 w.data <- readRDS(here("data/2016-all-data.rds"))
 w.stations <- readRDS(here("data/2016-all-stations.rds"))
 
@@ -138,7 +138,11 @@ sum.month.x.hour.p <- ggplot(uza.data.sum.month.agg, aes(x = hour, y = med.temp.
   
   )
 
-ggsave("med_hrly_tempF_by_sum_month_and_source_phx_UZA.png", sum.month.x.hour.p, device = "png", path = here("figures"),
+ggsave("hrly_tempF_by_sum_month_and_source_phx_UZA.png", sum.month.x.hour.p, device = "png", path = here("figures"),
        scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
+
+
+
+
 
 
