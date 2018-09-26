@@ -295,11 +295,11 @@ w.data[, heat.c := heat.index(t = temp.c, dp = dewpt.c, temperature.metric = "ce
 w.stations <- w.stations[n.temp != 0]
 
 # save final data object
-saveRDS(w.data, here("data", "2016-all-data.rds"))
-saveRDS(w.stations, here("data", "2016-all-stations.rds"))
+saveRDS(w.data, here("data/2017-all-data.rds"))
+saveRDS(w.stations, here("data/2017-all-stations.rds"))
 
 # reload, & check data unchanged 
-#w.data2 <- readRDS(here("data", "2016-all-data.rds"))
-#w.stations2 <- readRDS(here("data", "2016-all-stations.rds"))
+#w.data2 <- readRDS(here("data", "2017-all-data.rds"))
+#w.stations2 <- readRDS(here("data", "2017-all-stations.rds"))
 #all.equal(w.data,w.data2)
 #all.equal(w.stations,w.stations2)

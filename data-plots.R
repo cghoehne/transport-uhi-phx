@@ -19,11 +19,11 @@ library(here)
 #-#-#-#-#-#-#-#
 
 # cleaned weather & station data
-w.data <- readRDS(here("data/2016-all-data.rds"))
-w.stations <- readRDS(here("data/2016-all-stations.rds"))
+w.data <- readRDS(here("data/2017-all-data.rds"))
+w.stations <- readRDS(here("data/2017-all-stations.rds"))
 
 # convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
-w.stations.xy <- w.stations[,.(lon,lat)]
+w.stations.xy <- w.stations[, .(lon,lat)]
 w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations.xy, data = w.stations,
                                           proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
 
@@ -142,6 +142,14 @@ ggsave("hrly_tempF_by_sum_month_and_source_phx_UZA.png", sum.month.x.hour.p, dev
        scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
 
 
+
+
+# create summer data aggreate by station for GIF
+uza.data.summer.station.agg <- uza.data[month %in% c("Jun","Jul","Aug"), .(min.temp.f = min(temp.f, na.rm = T),
+                                   mean.temp.f = mean(temp.f, na.rm = T),
+                                   max.temp.f = max(temp.f, na.rm = T)), by = .(hour,station.name)]
+# save data for GIF
+saveRDS(uza.data.summer.station.agg , here("data/2017-summer-aggregated-by-station.rds"))
 
 
 
