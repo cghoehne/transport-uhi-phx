@@ -28,8 +28,29 @@ library(here)
 w.data <- readRDS(here("data/2017-all-data.rds"))
 w.stations <- readRDS(here("data/2017-all-stations.rds"))
 
-# import other shapefiles for plotting
-phx.labels <- shapefile(here("data/shapefiles/phx_metro_labels.shp")) # city labels shpfile
-uza.border <- shapefile(here("data/shapefiles/maricopa_county_uza.shp")) # UZA shpfile
-cnty.border <- shapefile(here("data/shapefiles/maricopa_county.shp")) # county shpfile
-hways <- shapefile(here("data/shapefiles/phx_metro_hways.shp")) # 2017 highways (trimmed outside of UZA)
+# import osm data (maricopa county clipped raw road network data)
+phx.labels <- shapefile(here("data/shapefiles/maricopa_county_osm_roads.shp")) # city labels shpfile
+
+# import uza boundary
+uza.border <- shapefile(here("data/shapefiles/maricopa_county_uza.shp")) # uza shpfile
+
+# convert station lat/lon to spatial df, assign crs to uza crs and clip to uza extent
+w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
+                                          proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+w.stations.spdf <- spTransform(w.stations.spdf, crs(uza.border))
+uza.stations <- raster::intersect(w.stations.spdf, uza.border)
+
+
+# filter out non-auto roads (pedestrian walkways, bike paths, footpaths, etc)
+
+# assign roadway widths based on roadway class
+# assume number of lanes is constant by class
+# assume outside shoulder width is 10 ft
+# assume inside shoulde width is 10 ft and only exists for highway/express roadway classes
+# assume lane width is 12 ft
+# 1 ft = 0.3048 meters
+
+# buffer each weather station by a raduis of 500m 
+
+
+

@@ -30,9 +30,9 @@ w.stations <- readRDS(here("data/2017-all-stations.rds"))
 
 # import other shapefiles for plotting
 phx.labels <- shapefile(here("data/shapefiles/phx_metro_labels.shp")) # city labels shpfile
-uza.border <- shapefile(here("data/shapefiles/maricopa_county_uza.shp")) # UZA shpfile
+uza.border <- shapefile(here("data/shapefiles/maricopa_county_uza.shp")) # uza shpfile
 cnty.border <- shapefile(here("data/shapefiles/maricopa_county.shp")) # county shpfile
-hways <- shapefile(here("data/shapefiles/phx_metro_hways.shp")) # 2017 highways (trimmed outside of UZA)
+hways <- shapefile(here("data/shapefiles/phx_metro_hways.shp")) # 2017 highways (trimmed outside of uza)
 
 # other plot/formatting 
 heat.p <- c('#fff5f0','#ffe3d7','#fdc6af','#fca487','#fc8161','#eb362a','#cc181d','#a90f15','#67000d') # palette
@@ -45,12 +45,10 @@ w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], dat
 # transform stations crs to same as other shapefiles 
 w.stations.spdf <- spTransform(w.stations.spdf, crs(uza.border))
 
-
-# estimate thiessen polygons (voronoi diagram) around each station point then create gif of temp
-
-# first clip stations points to ones w/in uza 
+# clip stations points to ones w/in uza 
 uza.stations <- raster::intersect(w.stations.spdf, uza.border)
 
+# estimate thiessen polygons (voronoi diagram) around each station point then create gif of temp
 # this function uses a spatial point df with @ coords and a polygon to create the 
 # voronoi polyongs w/in the polygon as a bounding box
 voronoi.polygons <- function(x, poly) {
@@ -77,7 +75,7 @@ voronoi.polygons <- function(x, poly) {
 }
 stations.vpoly <- voronoi.polygons(uza.stations, uza.border)
 
-# match crs 
+# match crs of new vpolys
 crs(stations.vpoly) <- crs(uza.border)
 
 # clip to extent of phx uza border
@@ -97,11 +95,9 @@ setnames(sum.data.mean, paste0(0:23), paste0("hr",0:23))
 # join summer data to polys
 stations.vpoly.b <- merge(stations.vpoly.b, sum.data.mean, by = "station.name")
 
-
-
 # create GIF of summer temps in vpolys
 # **WARNING** this will not work withoug ImageMagick installed: https://www.imagemagick.org/script/download.php
-gif.tot <- 
+gif <- 
   tm_shape(stations.vpoly.b) + # voronoi polygons
   tm_fill(col = as.character(paste0("hr",0:23)), # fill of polys is based on tempF at hour
           palette = heat.p, 
@@ -146,8 +142,8 @@ gif.tot <-
   tm_facets(nrow=1, ncol=1) +  # gif properties
   tmap_options(limits = c(facets.plot = 120, facets.view = 1))
 
-# save total parking growth animation
-tmap_animation(gif.tot, filename = here("figures/summer-tempF-hourly-2017-vpoly-stations.gif"),
+# save gif
+tmap_animation(gif, filename = here("figures/summer-tempF-hourly-2017-vpoly-stations.gif"),
                delay = 100, loop = T, restart.delay = 0)
 
 
