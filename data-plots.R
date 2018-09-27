@@ -23,12 +23,8 @@ w.data <- readRDS(here("data/2017-all-data.rds"))
 w.stations <- readRDS(here("data/2017-all-stations.rds"))
 
 # convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
-w.stations.xy <- w.stations[, .(lon,lat)]
-w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations.xy, data = w.stations,
+w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
                                           proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-
-# save stations as point shapefile
-writeOGR(obj = w.stations.spdf, dsn = here("data/shapefiles/output"), layer = "phx_hourly_weather_stations", driver = "ESRI Shapefile", overwrite_layer = T)
 
 # various shapefiles for plotting
 # load city labels shpfile
