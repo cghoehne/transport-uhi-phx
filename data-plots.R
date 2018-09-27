@@ -28,14 +28,14 @@ w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], dat
 
 # various shapefiles for plotting
 # load city labels shpfile
-phx.labels <- shapefile(here("data/shapefiles/phx_metro_labels.shp"))
+phx.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp"))
 
 # load UZA & county border
-uza.border <- shapefile(here("data/shapefiles/maricopa_county_uza.shp"))
-cnty.border <- shapefile(here("data/shapefiles/maricopa_county.shp"))
+uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp"))
+cnty.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county.shp"))
 
 # load 2017 travel ways (note these are cropped to extend just outside of the UZA)
-hways <- shapefile(here("data/shapefiles/phx_metro_hways.shp"))
+hways <- shapefile(here("data/shapefiles/other/phx_metro_hways.shp"))
 
 # transform stations crs to same as other shapefiles 
 w.stations.spdf <- spTransform(w.stations.spdf, crs(uza.border))

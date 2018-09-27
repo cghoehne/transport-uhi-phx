@@ -29,10 +29,10 @@ w.data <- readRDS(here("data/2017-all-data.rds"))
 w.stations <- readRDS(here("data/2017-all-stations.rds"))
 
 # import other shapefiles for plotting
-phx.labels <- shapefile(here("data/shapefiles/phx_metro_labels.shp")) # city labels shpfile
-uza.border <- shapefile(here("data/shapefiles/maricopa_county_uza.shp")) # uza shpfile
-cnty.border <- shapefile(here("data/shapefiles/maricopa_county.shp")) # county shpfile
-hways <- shapefile(here("data/shapefiles/phx_metro_hways.shp")) # 2017 highways (trimmed outside of uza)
+phx.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp")) # city labels shpfile
+uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # uza shpfile
+cnty.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county.shp")) # county shpfile
+hways <- shapefile(here("data/shapefiles/other/phx_metro_hways.shp")) # 2017 highways (trimmed outside of uza)
 
 # other plot/formatting 
 heat.p <- c('#fff5f0','#ffe3d7','#fdc6af','#fca487','#fc8161','#eb362a','#cc181d','#a90f15','#67000d') # palette

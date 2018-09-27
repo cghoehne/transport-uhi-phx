@@ -29,10 +29,21 @@ w.data <- readRDS(here("data/2017-all-data.rds"))
 w.stations <- readRDS(here("data/2017-all-stations.rds"))
 
 # import osm data (maricopa county clipped raw road network data)
-phx.labels <- shapefile(here("data/shapefiles/maricopa_county_osm_roads.shp")) # city labels shpfile
+osm <- shapefile(here("data/shapefiles/osm/maricopa_county_osm_roads.shp")) # city labels shpfile
+
+# temp store for the data to view its structre
+osm.df <- osm@data
+
+# table of roadway classes
+road.classes <- as.data.table(table(osm@data$fclass))
+
+# create id column for fclasses unsuitable for cars.
+# open the data dic to see (page 15) by running in console: getOption('viewer')(here('data/shapefiles/osm/osm-data-dictionary.pdf'))
+road.classes[,auto.use := "Y"]
+road.classes[V1 %in% c("bridleway","cycleway","footway","path","steps"), auto.use := "N"]
 
 # import uza boundary
-uza.border <- shapefile(here("data/shapefiles/maricopa_county_uza.shp")) # uza shpfile
+uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # uza shpfile
 
 # convert station lat/lon to spatial df, assign crs to uza crs and clip to uza extent
 w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
