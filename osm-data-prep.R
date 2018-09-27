@@ -36,11 +36,30 @@ osm.df <- osm@data
 
 # table of roadway classes
 road.classes <- as.data.table(table(osm@data$fclass))
+setnames(road.classes, "V1", "fclass")
 
-# create id column for fclasses unsuitable for cars.
-# open the data dic to see (page 15) by running in console: getOption('viewer')(here('data/shapefiles/osm/osm-data-dictionary.pdf'))
+# create id column for 
+
 road.classes[,auto.use := "Y"]
-road.classes[V1 %in% c("bridleway","cycleway","footway","path","steps"), auto.use := "N"]
+
+# id fclasses where cars are unsuitable or prohibited. assume 'unknown' is unsuitable without info to assume otherwise
+# open the data dic to see details on this (page 15) by running in console: getOption('viewer')(here('data/shapefiles/osm/osm-data-dictionary.pdf'))
+road.classes[fclass %in% c("bridleway","cycleway","footway","path","steps", "pedestrian", "unknown"), auto.use := "N"]
+
+# also id fclasses of 'track' as 'P' for partial use/suitablity. data dic: "For agricultural use, in forests, etc. Often gravel roads."
+road.classes[fclass %in% c("track","track_grade1","track_grade2","track_grade3","track_grade4","track_grade5"), auto.use := "P"]
+
+# **Curently, OSM data in Phoenix does not have lane data. in light of this:
+# assign roadway widths based on roadway class
+# assume number of lanes is constant by class
+# assume outside shoulder width is 10 ft
+# assume inside shoulde width is 10 ft and only exists for highway/express roadway classes
+# assume lane width is 12 ft
+# 1 ft = 0.3048 meters
+
+# import additional fclass info w/ assumptions of 1 way lanes keyed .csv and bind to road.classes
+fclass.info <- fread(here("data/shapefiles/osm/fclass_info.csv"))
+road.classes <- merge(road.classes, fclass.info, by = "fclass")
 
 # import uza boundary
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # uza shpfile
@@ -54,12 +73,6 @@ uza.stations <- raster::intersect(w.stations.spdf, uza.border)
 
 # filter out non-auto roads (pedestrian walkways, bike paths, footpaths, etc)
 
-# assign roadway widths based on roadway class
-# assume number of lanes is constant by class
-# assume outside shoulder width is 10 ft
-# assume inside shoulde width is 10 ft and only exists for highway/express roadway classes
-# assume lane width is 12 ft
-# 1 ft = 0.3048 meters
 
 # buffer each weather station by a raduis of 500m 
 
