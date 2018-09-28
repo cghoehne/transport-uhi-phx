@@ -70,7 +70,7 @@ osm.dt$road.width.m <- ifelse(osm.dt$oneway == "B", # if the road has lanes in e
                               (osm.dt$lanes.1way * 1 * 12 * 0.3048)
                               + (osm.dt$in.shldr + osm.dt$out.shldr) * 0.3048) # in & out shoulder width (ft) * 0.3048 m/ft) # same but in 1 dir
 
-# join new vars to osm@data
+# update new relevant vars so they appear in osm@data
 osm <- merge(osm, osm.dt[, .(auto.use,road.width.m,descrip)], by = "osm_id")
 
 # import uza boundary
