@@ -18,4 +18,8 @@
 - Arizona Department of Transportation (ADOT)
 
 ### Traffic Data
-- Maricopa Association of Governments (MAG)
+- Calibrated Maricopa Association of Governments (MAG) travel demand and parcel data via modifed version of SUMO (Simulation of Urban MObility) using OpenStreetMap street network data
+
+## Methodology
+
+- TBA
