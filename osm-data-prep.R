@@ -31,19 +31,13 @@ w.stations <- readRDS(here("data/2017-all-stations.rds"))
 # import osm data (maricopa county clipped raw road network data)
 osm <- shapefile(here("data/shapefiles/osm/maricopa_county_osm_roads.shp")) # city labels shpfile
 
-# temp store for the data to view its structre
-osm.df <- osm@data
-
-# table of roadway classes
+# store table of roadway classes as data.table, rename V1 to fclass
 road.classes <- as.data.table(table(osm@data$fclass))
 setnames(road.classes, "V1", "fclass")
 
-# create id column for 
-
-road.classes[,auto.use := "Y"]
-
-# id fclasses where cars are unsuitable or prohibited. assume 'unknown' is unsuitable without info to assume otherwise
+# create id column for fclasses where cars are unsuitable or prohibited. assume 'unknown' is unsuitable without info to assume otherwise
 # open the data dic to see details on this (page 15) by running in console: getOption('viewer')(here('data/shapefiles/osm/osm-data-dictionary.pdf'))
+road.classes[,auto.use := "Y"]
 road.classes[fclass %in% c("bridleway","cycleway","footway","path","steps", "pedestrian", "unknown"), auto.use := "N"]
 
 # also id fclasses of 'track' as 'P' for partial use/suitablity. data dic: "For agricultural use, in forests, etc. Often gravel roads."
@@ -57,9 +51,27 @@ road.classes[fclass %in% c("track","track_grade1","track_grade2","track_grade3",
 # assume lane width is 12 ft
 # 1 ft = 0.3048 meters
 
-# import additional fclass info w/ assumptions of 1 way lanes keyed .csv and bind to road.classes
+# import additional fclass info w/ assumptions of 1 way lanes keyed .csv
 fclass.info <- fread(here("data/shapefiles/osm/fclass_info.csv"))
 road.classes <- merge(road.classes, fclass.info, by = "fclass")
+
+# store osm data for quick calcs of new variables and rebind
+osm.dt <- as.data.table(osm@data)
+
+# merge fclass.info with osm data
+osm.dt <- merge(osm.dt, road.classes, by = "fclass")
+
+
+# calulate the width of the road based on the number of lanes, 
+# if it is 1 or 2way, and the shoulder widths
+osm.dt$road.width.m <- ifelse(osm.dt$oneway == "B", # if the road has lanes in each direction
+                              (osm.dt$lanes.1way * 2 * 12 * 0.3048) # width (m) = # lns/dir * 2 dir * 12 ft/ln * 0.3048 m/ft
+                              + (osm.dt$in.shldr + osm.dt$out.shldr) * 0.3048, # in & out shoulder width (ft) * 0.3048 m/ft
+                              (osm.dt$lanes.1way * 1 * 12 * 0.3048)
+                              + (osm.dt$in.shldr + osm.dt$out.shldr) * 0.3048) # in & out shoulder width (ft) * 0.3048 m/ft) # same but in 1 dir
+
+# join new vars to osm@data
+osm <- merge(osm, osm.dt[, .(auto.use,road.width.m,descrip)], by = "osm_id")
 
 # import uza boundary
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # uza shpfile
@@ -71,7 +83,7 @@ w.stations.spdf <- spTransform(w.stations.spdf, crs(uza.border))
 uza.stations <- raster::intersect(w.stations.spdf, uza.border)
 
 
-# filter out non-auto roads (pedestrian walkways, bike paths, footpaths, etc)
+
 
 
 # buffer each weather station by a raduis of 500m 

@@ -1,28 +1,28 @@
-fclass,lanes.1way,descrip
-bridleway,0,Paths for horse riding
-cycleway,0,Paths for cycling
-footway,0,Footpaths
-living_street,1,Streets where pedestrians have priority
-motorway,4,Motorway/freeway
-motorway_link,2,Roads that connect from one motorway/freeway to another
-path,0,Unspecified paths
-pedestrian,0,Pedestrian only streets
-primary,3,"Primary roads, typically national."
-primary_link,1,"Roads that connect from one primary roads to another, typically national"
-residential,1,Roads in residential areas
-secondary,2,"Secondary roads, typically regional."
-secondary_link,1,"Roads that connect from one secondary road to another, typically regional"
-service,1,"Service roads for access to buildings, parking lots, etc."
-steps,0,Flights of steps on footpaths
-tertiary,1,"Tertiary roads, typically local."
-tertiary_link,1,"Roads that connect from one tertiary road to another, typically local "
-track,1,"For agricultural use, in forests, etc. Often gravel roads."
-track_grade1,1,track with asphalt or heavily compacted
-track_grade2,1,track with asphalt or moderately compacted
-track_grade3,1,track lightly compacted 
-track_grade4,1,"track uncompated, visible"
-track_grade5,1,"track uncompated, hardly visible"
-trunk,3,"Important roads, typically divided"
-trunk_link,1,"Roads that connect from one important road to another, typically divided"
-unclassified,1,Smaller local roads
-unknown,,
+fclass,lanes.1way,in.shldr,out.shldr,descrip
+bridleway,0,0,0,Paths for horse riding
+cycleway,0,0,0,Paths for cycling
+footway,0,0,0,Footpaths
+living_street,1,0,0,Streets where pedestrians have priority
+motorway,4,10,10,Motorway/freeway
+motorway_link,2,0,6,Roads that connect from one motorway/freeway to another
+path,0,0,0,Unspecified paths
+pedestrian,0,0,0,Pedestrian only streets
+primary,3,0,0,"Primary roads, typically national."
+primary_link,1,0,0,"Roads that connect from one primary roads to another, typically national"
+residential,1,0,0,Roads in residential areas
+secondary,2,0,0,"Secondary roads, typically regional."
+secondary_link,1,0,0,"Roads that connect from one secondary road to another, typically regional"
+service,1,0,0,"Service roads for access to buildings, parking lots, etc."
+steps,0,0,0,Flights of steps on footpaths
+tertiary,1,0,0,"Tertiary roads, typically local."
+tertiary_link,1,0,0,"Roads that connect from one tertiary road to another, typically local "
+track,1,0,0,"For agricultural use, in forests, etc. Often gravel roads."
+track_grade1,1,0,0,track with asphalt or heavily compacted
+track_grade2,1,0,0,track with asphalt or moderately compacted
+track_grade3,1,0,0,track lightly compacted 
+track_grade4,1,0,0,"track uncompated, visible"
+track_grade5,1,0,0,"track uncompated, hardly visible"
+trunk,3,0,6,"Important roads, typically divided"
+trunk_link,1,0,0,"Roads that connect from one important road to another, typically divided"
+unclassified,1,0,0,Smaller local roads
+unknown,,0,0,
