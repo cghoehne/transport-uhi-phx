@@ -9,14 +9,12 @@ extrafont::loadfonts(device = "win") # load fonts
 
 cat("\014")     # clear console (Cntl + L)
 
-library(data.table)
 library(tidyverse)
-library(lubridate)
+library(data.table)
 library(rgdal)
+library(rgeos)
 library(raster)
-library(sp)
 library(maptools)
-library(deldir)
 library(tmap)
 library(here)
 
@@ -61,7 +59,6 @@ osm.dt <- as.data.table(osm@data)
 # merge fclass.info with osm data
 osm.dt <- merge(osm.dt, road.classes, by = "fclass")
 
-
 # calulate the width of the road based on the number of lanes, 
 # if it is 1 or 2way, and the shoulder widths
 osm.dt$road.width.m <- ifelse(osm.dt$oneway == "B", # if the road has lanes in each direction
@@ -71,22 +68,29 @@ osm.dt$road.width.m <- ifelse(osm.dt$oneway == "B", # if the road has lanes in e
                               + (osm.dt$in.shldr + osm.dt$out.shldr) * 0.3048) # in & out shoulder width (ft) * 0.3048 m/ft) # same but in 1 dir
 
 # update new relevant vars so they appear in osm@data
-osm <- merge(osm, osm.dt[, .(auto.use,road.width.m,descrip)], by = "osm_id")
+osm <- merge(osm, osm.dt[, .(osm_id,auto.use,road.width.m,descrip)], by = "osm_id")
 
 # import uza boundary
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # uza shpfile
 
-# convert station lat/lon to spatial df, assign crs to uza crs and clip to uza extent
-w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
-                                          proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-w.stations.spdf <- spTransform(w.stations.spdf, crs(uza.border))
-uza.stations <- raster::intersect(w.stations.spdf, uza.border)
+# buffer uza boundary by ~1 mile, then clip osm network by buffered uza 
+uza.buffer <- gBuffer(uza.border, byid = F, width = 5280, capStyle = "FLAT")
 
+# transform osm crs to EPSG:2223
+osm <- spTransform(osm, crs(uza.buffer))
 
+# create buffer layer to estimate area of roadways
+osm.uza <- raster::intersect(osm, uza.buffer)
 
+# buffer links by half of roadway width by loop for each roadway class type
+w <- unique(osm.uza$road.width.m)
+b <- list()
+for (i in 1:length(w)) {
+  x <- osm.uza[osm.uza$road.width.m == w[i], ]
+  b[[i]] <- gBuffer(x, byid = F, width = w[i] / 2, capStyle = "FLAT")
+} 
+osm.uza.buffer <- do.call(bind, b)
+plot(osm.uza.buffer)
 
-
-# buffer each weather station by a raduis of 500m 
-
-
+# save prepped osm data
 

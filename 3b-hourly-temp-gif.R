@@ -9,12 +9,11 @@ extrafont::loadfonts(device = "win") # load fonts
 
 cat("\014")     # clear console (Cntl + L)
 
-library(data.table)
 library(tidyverse)
+library(data.table)
 library(lubridate)
 library(rgdal)
 library(raster)
-library(sp)
 library(maptools)
 library(deldir)
 library(tmap)

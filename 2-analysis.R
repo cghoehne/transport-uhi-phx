@@ -2,8 +2,8 @@
 ## DATA ANALYSIS SCRIPT ##
 #########################
 
-library(data.table)
 library(tidyverse)
+library(data.table)
 library(here)
 
 # import cleaned weather & station data

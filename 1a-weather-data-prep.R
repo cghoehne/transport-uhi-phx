@@ -2,8 +2,8 @@
 ## DATA IMPORT SCRIPT FOR 2017 PHOENIX, AZ WEATHER DATA - VARIOUS SOURCES ##
 ###########################################################################
 
-library(data.table)
 library(tidyverse)
+library(data.table)
 library(lubridate)
 library(weathermetrics)
 library(here)
