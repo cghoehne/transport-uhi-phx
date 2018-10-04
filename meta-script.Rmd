@@ -1,21 +1,22 @@
 ---
 title: "Understanding the influence of transportation infrastrucure on Urban Heat in Phoenix, Arizona"
 author: "C.G. Hoehne"
-date: "October 3, 2018"
-output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
+
 # default to knitr option of code printing
 knitr::opts_chunk$set(echo = TRUE)
 
 # load fonts for use figures
-extrafont::loadfonts(device = "win") 
+#extrafont::loadfonts(device = "win") 
 ##** CHANGE THIS TO LOAD ONLY THE FONT WE WILL USE
 ##** PREFERABLY INCLUDE THIS FONT IN THE REPO
 
 # store master figure font as string
-my.font <- "Century Gothic"
+my.font <- "Helvetica"
 
 # list of all dependant packages
 list.of.packages <- c("tidyverse",
@@ -28,11 +29,18 @@ list.of.packages <- c("tidyverse",
                       "tmap",
                       "maptools",
                       "deldir",
+                      "xtable",
+                      "knitr",
+                      "tinytex",
                       "here")
 
 # install missing packages
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
+
+# install TinyTex (for creating PDFs from rmarkdown) if it is not installed.
+# NOTE YOU NEED TO RESTART R STUDIO AFTER INSTALL
+#tinytex::install_tinytex(force = FALSE)
 
 # load packages
 lapply(list.of.packages, library, character.only = TRUE)
@@ -352,6 +360,9 @@ Here are the working plots:
 
 ```{r pressure, echo = FALSE}
 
+# set knitr chunk options to put spaces between plots
+opts_chunk$set(fig.ncol = 3, fig.sep = c('\\newline','\\newline','\\newline')) # only workds for LaTex output
+
 # convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
 w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
                                           proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
@@ -465,20 +476,22 @@ sum.month.x.hour.p <- ggplot(uza.data.sum.month.agg, aes(x = hour, y = med.temp.
 sum.month.x.hour.p
 #ggsave("hrly_tempF_by_sum_month_and_source_phx_UZA.png", sum.month.x.hour.p, device = "png", path = here("figures"), scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
 
-
 # create summer data aggreate by station for GIF
 uza.data.summer.station.agg <- uza.data[month %in% c("Jun","Jul","Aug"), .(min.temp.f = min(temp.f, na.rm = T),
                                    mean.temp.f = mean(temp.f, na.rm = T),
                                    max.temp.f = max(temp.f, na.rm = T)), by = .(hour,station.name)]
-# save data for GIF
-
-
 
 ```
 
-This document was compiled using R `r getRversion()`, R Markdown, and the following packages:
-```{r package-table, echo = FALSE}
-knitr::kable(package.info)
+This document was compiled using R `r getRversion()`, R Markdown, and the following packages:  
+
+```{r package-table, echo = FALSE, results = 'asis'}
+
+# hide xtable global comment option
+options(xtable.comment = FALSE)
+
+# output table of packages used with packages listed in alphabetical order
+print(xtable(package.info[order(package.info$Package),], row.names = NULL), include.rownames=FALSE)
 ```
 
 
