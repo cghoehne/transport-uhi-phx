@@ -3,31 +3,56 @@
 #################################################################
 
 extrafont::loadfonts(device = "win") # load fonts
-#list.of.packages <- c()  # a list of the dependant packages  
-#new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-#if(length(new.packages)) install.packages(new.packages)
 
-cat("\014")     # clear console (Cntl + L)
+# list of all dependant packages
+list.of.packages <- c("tidyverse",
+                      "data.table", 
+                      "lubridate",
+                      "rgdal",
+                      "rgeos",
+                      "raster",
+                      "maptools",
+                      "sp",
+                      "tmap",
+                      "doParallel",
+                      "foreach",
+                      "raster",
+                      "here")
 
-library(tidyverse)
-library(data.table)
-library(rgdal)
-library(rgeos)
-library(raster)
-library(maptools)
-library(tmap)
-library(here)
+# install missing packages
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# load packages
+lapply(list.of.packages, library, character.only = TRUE)
 
 #-#-#-#-#-#-#-#
 # Import data #
 #-#-#-#-#-#-#-#
 
-# import cleaned weather & station data
-w.data <- readRDS(here("data/2017-all-data.rds"))
+# import cleaned station data
 w.stations <- readRDS(here("data/2017-all-stations.rds"))
 
 # import osm data (maricopa county clipped raw road network data)
 osm <- shapefile(here("data/shapefiles/osm/maricopa_county_osm_roads.shp")) # city labels shpfile
+
+# import uza boundary
+uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # uza shpfile
+
+
+#-#-#-#-#-#-#
+# Prep data #
+#-#-#-#-#-#-#
+
+# convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
+w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
+                                          proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+
+# clip station points to ones w/in uza 
+uza.stations <- raster::intersect(w.stations.spdf, uza.border)
+
+# filter station.list to uza stations
+uza.stations.list <- w.stations[station.name %in% uza.stations$station.name]
 
 # store table of roadway classes as data.table, rename V1 to fclass
 road.classes <- as.data.table(table(osm@data$fclass))
@@ -70,26 +95,57 @@ osm.dt$road.width.m <- ifelse(osm.dt$oneway == "B", # if the road has lanes in e
 # update new relevant vars so they appear in osm@data
 osm <- merge(osm, osm.dt[, .(osm_id,auto.use,road.width.m,descrip)], by = "osm_id")
 
-# import uza boundary
-uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # uza shpfile
-
 # buffer uza boundary by ~1 mile, then clip osm network by buffered uza 
 uza.buffer <- gBuffer(uza.border, byid = F, width = 5280, capStyle = "FLAT")
 
 # transform osm crs to EPSG:2223
 osm <- spTransform(osm, crs(uza.buffer))
 
-# create buffer layer to estimate area of roadways
+# clip osm data to the buffered uza
 osm.uza <- raster::intersect(osm, uza.buffer)
 
 # buffer links by half of roadway width by loop for each roadway class type
-w <- unique(osm.uza$road.width.m)
-b <- list()
-for (i in 1:length(w)) {
+w <- unique(osm.uza$road.width.m) # list of unique roadway widths to buffer by
+w <- w[!is.na(w) & w > 0] # remove NA and 0 width roads
+b <- list() # empty list for foreach
+my.cores <- parallel::detectCores()  # store computers cores
+registerDoParallel(cores = my.cores) # register parallel backend
+
+# foreach loop in parallel to buffer links
+foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
   x <- osm.uza[osm.uza$road.width.m == w[i], ]
   b[[i]] <- gBuffer(x, byid = F, width = w[i] / 2, capStyle = "FLAT")
-} 
-osm.uza.buffer <- do.call(bind, b)
+}
+
+# also buffer stations points by multiple radii
+station.buffers <- c(50,100) #,200,500,1000) # radii for buffer on each station point
+
+# foreach loop in parallel to buffer points by variable distances
+foreach(i = 1:length(station.buffers), .packages = c("sp","rgeos"), .combine = "station.bufferd") %dopar% {
+  gBuffer(uza.stations, byid = T, width = station.buffers[i])
+}
+
+
+
+##################
+# 
+
+# rebind together and check plot
+osm.uza.buffer <- do.call(spRbind, b)
+osm.uza.buffer <- SpatialPolygons(lapply(b, function(x){x@polygons[[1:length(b)]]}))
+
+#Getting polygon IDs
+IDs <- sapply(b, function(x)
+  slot(slot(x, "polygons")[[1]], "ID"))
+
+#Checking
+length(unique(IDs)) == length(b)
+
+#Making SpatialPolygons from list of polygons
+osm.uza.buffer <- SpatialPolygons(lapply(b,
+                               function(x) slot(x, "polygons")[[1]]))
+
+
 plot(osm.uza.buffer)
 
 # save prepped osm data
