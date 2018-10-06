@@ -48,6 +48,9 @@ uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp
 w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
                                           proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
 
+# transform stations crs to same as other shapefiles 
+w.stations.spdf <- spTransform(w.stations.spdf, crs(uza.border))
+
 # clip station points to ones w/in uza 
 uza.stations <- raster::intersect(w.stations.spdf, uza.border)
 
@@ -121,11 +124,11 @@ foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
 station.buffers <- c(50,100) #,200,500,1000) # radii for buffer on each station point
 
 # foreach loop in parallel to buffer points by variable distances
-foreach(i = 1:length(station.buffers), .packages = c("sp","rgeos"), .combine = "station.bufferd") %dopar% {
-  gBuffer(uza.stations, byid = T, width = station.buffers[i])
+foreach(i = 1:length(station.buffers), .packages = c("sp","rgeos"), .combine = c) %dopar% {
+  b2 <- gBuffer(uza.stations, byid = T, width = station.buffers[i])
 }
 
-
+b2 <- gBuffer(uza.stations, byid = T, width = station.buffers[i])
 
 ##################
 # 
