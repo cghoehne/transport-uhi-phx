@@ -18,8 +18,8 @@ library(here)
 #-#-#-#-#-#-#-#
 
 # cleaned weather & station data
-w.data <- readRDS(here("data/2017-all-data.rds"))
-w.stations <- readRDS(here("data/2017-all-stations.rds"))
+w.data <- readRDS(here("data/2017-weather-data.rds"))
+w.stations <- readRDS(here("data/station-data.rds"))
 
 # convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
 w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,

@@ -26,12 +26,13 @@ if(length(new.packages)) install.packages(new.packages)
 # load packages
 lapply(list.of.packages, library, character.only = TRUE)
 
+
 #-#-#-#-#-#-#-#
 # Import data #
 #-#-#-#-#-#-#-#
 
 # import cleaned station data
-w.stations <- readRDS(here("data/2017-all-stations.rds"))
+w.stations <- readRDS(here("data/station-data.rds"))
 
 # import osm data (maricopa county clipped raw road network data)
 osm <- shapefile(here("data/shapefiles/osm/maricopa_county_osm_roads.shp")) # city labels shpfile
@@ -56,6 +57,10 @@ uza.stations <- raster::intersect(w.stations.spdf, uza.border)
 
 # filter station.list to uza stations
 uza.stations.list <- w.stations[station.name %in% uza.stations$station.name]
+
+# import and filter weather data to only stations in uza
+weather.data <- readRDS(here("data/2017-weather-data.rds"))
+uza.weather <- weather.data[station.name %in% uza.stations.list$station.name]
 
 # store table of roadway classes as data.table, rename V1 to fclass
 road.classes <- as.data.table(table(osm@data$fclass))
@@ -115,41 +120,27 @@ my.cores <- parallel::detectCores()  # store computers cores
 registerDoParallel(cores = my.cores) # register parallel backend
 
 # foreach loop in parallel to buffer links
-foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
+# (stores as list of SpatialPointDataFrames)
+osm.links.buffered <- foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
   x <- osm.uza[osm.uza$road.width.m == w[i], ]
   b[[i]] <- gBuffer(x, byid = F, width = w[i] / 2, capStyle = "FLAT")
 }
 
 # also buffer stations points by multiple radii
-station.buffers <- c(50,100) #,200,500,1000) # radii for buffer on each station point
+radii.buffers <- c(50,100,200,500,1000,2500) # radii for buffer on each station point
 
 # foreach loop in parallel to buffer points by variable distances
-foreach(i = 1:length(station.buffers), .packages = c("sp","rgeos"), .combine = c) %dopar% {
-  b2 <- gBuffer(uza.stations, byid = T, width = station.buffers[i])
-}
-
-b2 <- gBuffer(uza.stations, byid = T, width = station.buffers[i])
-
-##################
-# 
-
-# rebind together and check plot
-osm.uza.buffer <- do.call(spRbind, b)
-osm.uza.buffer <- SpatialPolygons(lapply(b, function(x){x@polygons[[1:length(b)]]}))
-
-#Getting polygon IDs
-IDs <- sapply(b, function(x)
-  slot(slot(x, "polygons")[[1]], "ID"))
-
-#Checking
-length(unique(IDs)) == length(b)
-
-#Making SpatialPolygons from list of polygons
-osm.uza.buffer <- SpatialPolygons(lapply(b,
-                               function(x) slot(x, "polygons")[[1]]))
+# (stores as list of SpatialPointDataFrames)
+stations.buffered <- foreach(i = 1:length(radii.buffers), .packages = c("sp","rgeos"), .combine = c) %dopar% {
+  gBuffer(uza.stations, byid = T, width = radii.buffers[i]) }
 
 
-plot(osm.uza.buffer)
+#-#-#-#-#-#-#-#
+# Export data #
+#-#-#-#-#-#-#-#
 
-# save prepped osm data
-
+# save formatted spatial data for analysis scripts 
+saveRDS(osm.links.buffered, here("data/osm-links-buffers-sp-list.rds")) # saves buffered osm  data as list of spatial r objects
+saveRDS(stations.buffered, here("data/station-buffers-sp-list.rds")) # saves buffered station data as list of spatial r objects
+saveRDS(uza.stations, here("data/uza-station-data.rds")) # saves station data as spatial r object (points)
+saveRDS(uza.weather, here("data/2017-uza-weather-data.rds")) # saves weather data filtered to only uza stations
