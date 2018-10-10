@@ -2,11 +2,19 @@
 ## DATA IMPORT SCRIPT FOR 2017 PHOENIX, AZ WEATHER DATA - VARIOUS SOURCES ##
 ###########################################################################
 
-library(tidyverse)
-library(data.table)
-library(lubridate)
-library(weathermetrics)
-library(here)
+# list of all dependant packages
+list.of.packages <- c("tidyverse",
+                      "data.table", 
+                      "lubridate",
+                      "weathermetrics",
+                      "here")
+
+# install missing packages
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# load packages
+lapply(list.of.packages, library, character.only = TRUE)
 
 
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#

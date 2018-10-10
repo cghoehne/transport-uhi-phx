@@ -1,0 +1,239 @@
+---
+title: "Understanding the influence of transportation infrastrucure on Urban Heat in Phoenix, Arizona"
+author: "C.G. Hoehne"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+
+# default to knitr option of code printing
+knitr::opts_chunk$set(echo = TRUE)
+
+# load fonts for use figures
+#extrafont::loadfonts(device = "win") 
+##** CHANGE THIS TO LOAD ONLY THE FONT WE WILL USE
+##** PREFERABLY INCLUDE THIS FONT IN THE REPO
+
+# store master figure font as string
+my.font <- "Helvetica"
+
+# list of all dependant packages
+list.of.packages <- c("tidyverse",
+                      "data.table", 
+                      "lubridate",
+                      "weathermetrics",
+                      "rgdal",
+                      "rgeos",
+                      "raster",
+                      "tmap",
+                      "maptools",
+                      "deldir",
+                      "xtable",
+                      "knitr",
+                      "tinytex",
+                      "here")
+
+# install missing packages
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# install TinyTex (for creating PDFs from rmarkdown) if it is not installed.
+# NOTE YOU NEED TO RESTART R STUDIO AFTER INSTALL
+#tinytex::install_tinytex(force = FALSE)
+
+# load packages
+lapply(list.of.packages, library, character.only = TRUE)
+
+# store loaded packages and thier version in a data.frame
+package.info <- data.frame("Package" = list.of.packages, "Version" = unlist(lapply(list.of.packages, function (x) as.character(packageVersion(x)))))
+
+```
+
+## Data Sources
+
+### Weather Data
+- National Centers for Environmental Information (NCEI): https://gis.ncdc.noaa.gov/maps/ncei/cdo/hourly
+- The Arizona Meteorological Network (AZMET): https://cals.arizona.edu/azmet/az-data.htm
+- Maricopa County Flood Control District (MCFCD): https://www.maricopa.gov/3769/Weather-Sensor-Data
+- iButton data recorded in the Summer of 2017 by the Urban Water Innovation Network (UWIN): https://erams.com/UWIN/
+
+
+### Parking Data
+- Forthcoming publication by Hoehne et al, info here: http://transportationlca.org/phoenixparking/
+
+### Road Network Data
+- OpenStreetMap (© OpenStreetMap contributors)
+- Arizona Department of Transportation (ADOT)
+
+### Traffic Data
+- Calibrated Maricopa Association of Governments (MAG) travel demand and parcel data via modifed version of SUMO (Simulation of Urban MObility) using OpenStreetMap street network data
+
+
+```{r data import, include = FALSE}
+
+## import weather, roadway, traffic & parking data
+
+# cleaned uza weather data
+uza.weather <- readRDS(here("data/2017-uza-weather-data.rds"))
+
+# uza station data (spatial points w/ metadata)
+uza.stations <- readRDS(here("data/uza-station-data.rds"))
+
+# formated UZA OSM data (list of spatial objects, each element is different roadway class that is buffered link according to roadway width)
+uza.roads <- readRDS(here("data/osm-links-buffers-sp-list.rds"))
+
+# cleaned traffic data
+# **(temporary dummy traffic data by osm_id and hour of day, e.g. dummy ICARUS output)**
+dummy.traffic <- as.data.table(matrix(runif(100, 100, 6000), nrow = 100, ncol = 24) * runif(24, 0, 1))
+dummy.traffic <- dummy.traffic[, floor(.SD)] # round down to nearest whole number for whole data.table
+colnames(dummy.traffic) <- paste0("hour", seq(1:24)) # rename cols to "hour#" (1:24)
+dummy.traffic$osm_id <- seq.int(nrow(dummy.traffic)) # dummy osm_id column (1:100)
+s
+# cleaned parking data 
+# *** PLACEHOLDER *** 
+
+
+## import other various shapefiles for plotting
+city.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp")) # city labels (pre-cropped to UZA)
+uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # UZA 
+cnty.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county.shp")) # county 
+highways <- shapefile(here("data/shapefiles/other/phx_metro_hways.shp")) # 2017 highways (pre-cropped to UZA)
+
+
+```
+
+## Plots
+
+Here are the working plots:
+
+```{r preliminary data plots, echo = FALSE}
+
+#-#-#-#-#-#-#-#
+# Data Plots #
+#-#-#-#-#-#-#
+
+# set knitr chunk options to put spaces between plots
+opts_chunk$set(fig.ncol = 3, fig.sep = c('\\newline','\\newline','\\newline')) # only workds for LaTex output
+
+# store palette for plotting stations
+my.palette <- c("#0C120C","#640D14","#C20114","#6D7275")
+
+# plot station points with UZA, highways, & city labels for context.
+stations.plot <-   
+  tm_shape(uza.border) + tm_borders(lwd = 0.8, lty = "solid", col = "grey40", alpha = 0.7) + tm_fill(col = "grey90") + # urbanized area (UZA) border & fill
+  tm_shape(w.stations.spdf, bbox = w.stations.spdf) + tm_dots(col = "source", border.col = NULL, palette = my.palette, size = 0.2, alpha = 0.8, title = "Data Source") + # station points
+  tm_shape(cnty.border) + tm_borders(lwd = 0.8, lty = "solid", col = "grey20", alpha = 0.7) + # county border
+  tm_scale_bar(position = c(0.4,0.0), breaks = c(0,5,10,15,20), size = 0.90, color.light = "grey85") + # scalebar
+  tm_compass(north = 0, type = "4star", size = 2, show.labels = 1, position = c(0.9,0.85)) + # compass
+  tm_shape(highways) + tm_lines(lwd = 1.1, col = "grey40") + # highways
+  tm_shape(city.labels) + tm_text("name", size = .5, fontfamily = my.font,  fontface = "bold.italic", just = "center") + # city labels
+  tm_layout(fontfamily = my.font, fontface = "italic", bg.color = "grey95", title.size = 1.5, legend.title.size = 1.10, # theme & formatting
+            legend.text.size = 0.95, title = "", title.position = c(0.12,0.94),
+            legend.position = c(0.02,0.45), outer.margins = c(0,0,0,0), asp = 0)
+
+#tmap_save(stations.plot, filename = here("figures/stations_w_ibut.png")) # option to save
+stations.plot #(plot in report)
+
+
+# calculate range of temps and mean temp for urbanized stations
+
+# first clip stations points to ones w/in uza 
+uza.stations <- raster::intersect(w.stations.spdf, uza.border)
+
+# filter station list to uza stations
+uza.stations.list <- w.stations[station.name %in% uza.stations$station.name]
+
+# if time is within 15 min of hour, round to hour, otherwise drop, then
+# aggregate to the min, mean, max temp at each unique timestep for all stations
+uza.weather[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
+uza.weather <- uza.weather[abs(difftime(date.time, date.time.round, units = "min")) < 15]
+uza.weather.agg <- uza.weather[, .(min.temp.f = min(temp.f, na.rm = T),
+                             med.temp.f = median(temp.f, na.rm = T),
+                             max.temp.f = max(temp.f, na.rm = T)), by = .(date.time.round)]
+
+# hourly temp min/mean/max by 2017 month aggregate across all stations
+uza.weather[, month := as.factor(month(date.time.round, label = T))]
+uza.weather[, hour := hour(date.time.round)]
+uza.weather.month.agg <- uza.weather[, .(min.temp.f = min(temp.f, na.rm = T),
+                                   med.temp.f = median(temp.f, na.rm = T),
+                                   max.temp.f = max(temp.f, na.rm = T)), by = .(hour,month)]
+
+# plot hourly temp.f range by month for 2017 for all stations
+# Plot historical tempeature plots of metro regions
+month.x.hour.p <- ggplot(uza.weather.month.agg, aes(x = hour, y = med.temp.f , group = month)) +
+  geom_ribbon(aes(ymin = min.temp.f, ymax = max.temp.f),  fill = "grey50", alpha = 0.5) +
+  geom_line(size = 1.2) +
+  geom_segment(aes(x = 0, y = 25, xend = 23, yend = 25)) +
+  geom_segment(aes(x = 0, y = 25, xend = 0, yend = 135)) +
+  facet_wrap(~ month , scales = "fixed") +
+  labs(title = "Hourly Temperature Ranges by month for Phoenix UZA, 2017", x = "Hour", y = "Temperature (deg F)") +
+  scale_x_continuous(limits = c(0,23), breaks = c(0,6,12,18), expand = c(0,0)) +
+  scale_y_continuous(limits = c(25,135), breaks = c(25,50,75,100,125), expand = c(0,0)) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", family = my.font, size = 12, colour = "black", hjust = 1),
+        strip.text = element_text(family = my.font, size = 11, colour = "black"),
+        axis.title = element_text(face = "bold", family = my.font, size = 12, colour = "black"),
+        axis.text = element_text(family = my.font, size = 10, colour = "black"),
+        axis.text.x = element_text(hjust = 0.25) # for some reason the text isn't defaulted to centered on the ticks
+  )
+
+month.x.hour.p
+#ggsave("hrly_tempF_by_month_all_phx_UZA_stations.png", month.x.hour.p, device = "png", path = here("figures"), scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
+
+# plot hourly temp.f range for summer months for 2017 for all stations
+uza.weather.sum.month.agg <- uza.weather[, .(min.temp.f = min(temp.f, na.rm = T),
+                                   med.temp.f = median(temp.f, na.rm = T),
+                                   max.temp.f = max(temp.f, na.rm = T)), by = .(hour,month,source)]
+uza.weather.sum.month.agg <- uza.weather.sum.month.agg[month %in% c("Jun","Jul","Aug")]
+
+sum.month.x.hour.p <- ggplot(uza.weather.sum.month.agg, aes(x = hour, y = med.temp.f , group = month)) +
+  geom_ribbon(aes(ymin = min.temp.f, ymax = max.temp.f),  fill = "grey50", alpha = 0.5) +
+  geom_line(size = 1.2) +
+  geom_segment(aes(x = 0, y = 25, xend = 23, yend = 25)) +
+  geom_segment(aes(x = 0, y = 25, xend = 0, yend = 135)) +
+  facet_wrap(month ~ source, scales = "fixed") +
+  labs(title = "Hourly Summer Temperatures Ranges for Phoenix UZA by Data Source, 2017", x = "Hour", y = "Temperature (deg F)") +
+  scale_x_continuous(limits = c(0,23), breaks = c(0,6,12,18), expand = c(0,0)) +
+  scale_y_continuous(limits = c(25,135), breaks = c(25,50,75,100,125), expand = c(0,0)) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", family = my.font, size = 12, colour = "black", hjust = 1),
+        strip.text = element_text(family = my.font, size = 11, colour = "black"),
+        axis.title = element_text(face = "bold", family = my.font, size = 12, colour = "black"),
+        axis.text = element_text(family = my.font, size = 10, colour = "black"),
+        axis.text.x = element_text(hjust = 0.25) # for some reason the text isn't defaulted to centered on the ticks
+  
+  )
+
+sum.month.x.hour.p
+#ggsave("hrly_tempF_by_sum_month_and_source_phx_UZA.png", sum.month.x.hour.p, device = "png", path = here("figures"), scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
+
+# create summer data aggreate by station for GIF
+uza.weather.summer.station.agg <- uza.weather[month %in% c("Jun","Jul","Aug"), .(min.temp.f = min(temp.f, na.rm = T),
+                                   mean.temp.f = mean(temp.f, na.rm = T),
+                                   max.temp.f = max(temp.f, na.rm = T)), by = .(hour,station.name)]
+
+```
+
+```{r analysis, include = FALSE}
+
+# for each buffer distance around stations, calc the fraction of pavement and the total traffic
+
+```
+
+This document was compiled using R `r getRversion()`, R Markdown, and the following packages:  
+
+```{r appendix, echo = FALSE, results = 'asis'}
+
+# hide xtable global comment option
+options(xtable.comment = FALSE)
+
+# output table of packages used with packages listed in alphabetical order
+print(xtable(package.info[order(package.info$Package),], row.names = NULL), include.rownames=FALSE)
+
+```
+
+
+
+
+

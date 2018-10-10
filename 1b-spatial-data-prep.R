@@ -2,8 +2,6 @@
 ## OSM DATA IMPORT and FORMART to USE with WEATHER STATION DATA ##
 #################################################################
 
-extrafont::loadfonts(device = "win") # load fonts
-
 # list of all dependant packages
 list.of.packages <- c("tidyverse",
                       "data.table", 
@@ -121,6 +119,7 @@ registerDoParallel(cores = my.cores) # register parallel backend
 
 # foreach loop in parallel to buffer links
 # (stores as list of SpatialPointDataFrames)
+#*** WARNING: multiple hour run time for these next few lines ***
 osm.links.buffered <- foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
   x <- osm.uza[osm.uza$road.width.m == w[i], ]
   b[[i]] <- gBuffer(x, byid = F, width = w[i] / 2, capStyle = "FLAT")
