@@ -81,7 +81,7 @@ uza.weather <- readRDS(here("data/2017-uza-weather-data.rds"))
 uza.stations <- readRDS(here("data/uza-station-data.rds"))
 
 # formated UZA OSM data (list of spatial objects, each element is different roadway class that is buffered link according to roadway width)
-uza.roads <- readRDS(here("data/osm-links-buffers-sp-list.rds"))
+#uza.roads <- readRDS(here("data/osm-links-buffers-sp-list.rds"))
 
 # cleaned traffic data
 # **(temporary dummy traffic data by osm_id and hour of day, e.g. dummy ICARUS output)**
@@ -89,7 +89,7 @@ dummy.traffic <- as.data.table(matrix(runif(100, 100, 6000), nrow = 100, ncol = 
 dummy.traffic <- dummy.traffic[, floor(.SD)] # round down to nearest whole number for whole data.table
 colnames(dummy.traffic) <- paste0("hour", seq(1:24)) # rename cols to "hour#" (1:24)
 dummy.traffic$osm_id <- seq.int(nrow(dummy.traffic)) # dummy osm_id column (1:100)
-s
+
 # cleaned parking data 
 # *** PLACEHOLDER *** 
 
@@ -100,6 +100,10 @@ uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp
 cnty.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county.shp")) # county 
 highways <- shapefile(here("data/shapefiles/other/phx_metro_hways.shp")) # 2017 highways (pre-cropped to UZA)
 
+# save osm roadway data to examine in QGIS for errors (TEMPORARY)
+for(i in 1:length(uza.roads)){
+  shapefile(uza.roads[[i]], here(paste0("data/shapefiles/osm/osm_buffered_",i)))
+}
 
 ```
 
