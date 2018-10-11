@@ -24,11 +24,9 @@ if(length(new.packages)) install.packages(new.packages)
 # load packages
 lapply(list.of.packages, library, character.only = TRUE)
 
-# import cleaned station data
-w.stations <- readRDS(here("data/station-data.rds"))
-
-# import uza boundary
-uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # uza shpfile
+# import data
+w.stations <- readRDS(here("data/station-data.rds")) # import cleaned station data
+uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # import uza boundary
 
 # convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
 w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
@@ -62,3 +60,6 @@ stations.buffered <- foreach(i = 1:length(radii.buffers), .packages = c("sp","rg
 saveRDS(stations.buffered, here("data/station-buffers-sp-list.rds")) # saves buffered station data as list of spatial r objects
 saveRDS(uza.stations, here("data/uza-station-data.rds")) # saves station data as spatial r object (points)
 saveRDS(uza.weather, here("data/2017-uza-weather-data.rds")) # saves weather data filtered to only uza stations
+
+shapefile(stations.buffered[[3]], here("data/shapefiles/stations_200m_buffered"), overwrite = T)
+shapefile(uza.stations, here("data/shapefiles/stations_pts"), overwrite = T)

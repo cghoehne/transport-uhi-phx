@@ -96,5 +96,5 @@ osm.uza$layer <- NULL
 osm.uza$maxspeed <- NULL # most are 0 and don't need speed info when it does exist
 
 # export formatted shapefile to be buffered in GIS (R is too slow/ineffective at doing this)
-shapefile(osm.uza, here("data/shapefiles/osm/osm_formatted_unbuffered"), overwrite = T)
+#shapefile(osm.uza, here("data/shapefiles/osm/osm_formatted_unbuffered"), overwrite = T)
 
