@@ -75,7 +75,8 @@ osm.dt <- as.data.table(osm@data)
 osm.dt <- merge(osm.dt, road.classes, by = "fclass")
 
 # create final buffer variable (in feet b/c proj is uses units of feet)
-osm.dt[, buf.ft := ifelse(oneway == "B", wdth.1way.ft / 2, wdth.1way.ft / 4)]
+# if roadway is bi-directional, the buffer radius is equal to the one-way roadway width in feet
+osm.dt[, buf.ft := ifelse(oneway == "B", wdth.1way.ft, wdth.1way.ft / 2)] 
 
 # update new relevant vars so they appear in osm@data
 osm <- merge(osm, osm.dt[, .(osm_id, auto.use, pave.type, buf.ft, descrip)], by = "osm_id")

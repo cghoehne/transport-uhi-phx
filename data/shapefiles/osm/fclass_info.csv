@@ -9,12 +9,12 @@ path,1,dirt,3,Unspecified paths
 pedestrian,1,asphalt,20,Pedestrian only streets
 primary,3,asphalt,42,"Primary roads, typically national (major arterial). 6x 12ft thru, 2x 6ft bike/park/shoulder"
 primary_link,1,asphalt,24,"Roads that connect from one primary roads to another, typically national. Assume no shoulder/turn lanes"
-residential,1,asphalt,20,"Roads in residential areas (minor/residential collector). 2x 14ft thru lane, 2x 6ft bike/park lane"
+residential,1,asphalt,15,"Roads in residential areas (minor/residential collector). 2x 14ft thru lane, 2x 6ft bike/park lane"
 secondary,2,asphalt,37,"Secondary roads, typically regional (minor arterial/major collector). 4x 12ft thru lane, 1x 10ft left turn lane, 2x 8ft bike/park/shoulder"
 secondary_link,1,asphalt,16,"Roads that connect from one secondary road to another, typically regional"
 service,1,asphalt,10,"Service roads for access to buildings, parking lots, etc. 1x 10ft lane, typically in parking lots"
 steps,1,concrete,3,Flights of steps on footpaths
-tertiary,1,asphalt,25,"Tertiary roads, typically local (major/minor collector). 2x 12ft thru lane, 1x 10ft left turn lane, 2x 8ft bike/park/shoulder"
+tertiary,1,asphalt,22,"Tertiary roads, typically local (major/minor collector). 2x 12ft thru lane, 1x 10ft left turn lane, 2x 8ft bike/park/shoulder"
 tertiary_link,1,asphalt,12,"Roads that connect from one tertiary road to another, typically local "
 track,1,asphalt,14,"For agricultural use, in forests, etc. Often gravel roads."
 track_grade1,1,asphalt,14,track with asphalt or heavily compacted
