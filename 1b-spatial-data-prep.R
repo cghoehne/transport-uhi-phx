@@ -3,6 +3,11 @@
 ## OSM DATA IMPORT and FORMART to USE with WEATHER STATION DATA ##
 #################################################################
 
+# start by setting the useable memory equivalent to the installed RAM
+gc()
+memory <- memory.limit()
+memory.size(max = memory)
+
 # list of all dependant packages
 list.of.packages <- c("tidyverse",
                       "data.table", 
@@ -108,7 +113,6 @@ osm.uza.car <- subset(osm.uza, auto.use == "Y" & !is.na(buf.ft) & buf.ft > 0) # 
 # buffer osm data
 # foreach loop in parallel to buffer links
 # (stores as list of SpatialPointDataFrames)
-#*** WARNING: multiple hour run time for these next few lines ***
 registerDoParallel(cores = my.cores) # register parallel backend
 w <- unique(osm.uza.car$buf.ft) # list of unique buffer widths
 b <- list() # empty list for foreach
@@ -117,17 +121,30 @@ osm.links.buffered <- foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dop
 } # byid = FALSE means the output is 'disolved' which is fine b/c roadways will overlap & we only need the buffer to calc pavement areas 
 # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
 
+# bind and dissolve the buffered osm data output
+osm.links.buffered.m <- do.call(raster::bind, osm.links.buffered) # bind list of spatial objects into single spatial obj
+
 # SAVE DATA FOR ANALYSIS
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # saves buffered station data as list of spatial r objects
-saveRDS(osm.links.buffered, here("data/outputs/osm-links-buffers-sp-list.rds")) # saves buffered osm  data as list of spatial r objects
+saveRDS(osm.links.buffered, here("data/outputs/osm-links-buffers-sp-list.rds")) # saves buffered osm data as list of spatial r objects
 saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # saves station data as spatial r object (points)
 saveRDS(uza.weather, here("data/outputs/2017-uza-weather-data.rds")) # saves weather data filtered to only uza stations
 
+# clean up space, then dissolve the roadway buffer before saving as this is by far the most time/memory intensive task
+rm(list=setdiff(ls(), "osm.links.buffered.m"))
+gc()
+osm.links.buffered.dissolved <- union(osm.links.buffered.m) # very slow (2+ hrs)
+#osm.links.buffered.dissolved <- unionSpatialPolygons(osm.links.buffered.dissolved) # alternative, also slow
+saveRDS(osm.links.buffered.dissolved, here("data/outputs/osm_buffered_dissolved.rds")) 
+shapefile(osm.links.buffered.dissolved, here("data/outpupts/temp/osm_buffered_dissolved"), overwrite = T)
+
+
 # TEMP FILESAVES FOR TESTING
 saveRDS(osm.uza.car, here("data/outputs/temp/osm-uza-car.rds"))
-osm.uza.car <- readRDS(here("data/outputs/temp/osm-uza-car.rds"))
-for(i in 1:length(osm.links.buffered)){  # save osm roadway data to examine in QGIS for errors (TEMPORARY)
-  shapefile(osm.links.buffered[[i]], here(paste0("data/shapefiles/osm/osm_buffered_",i,"ft")))}
+#osm.uza.car <- readRDS(here("data/outputs/temp/osm-uza-car.rds"))
+
+for(i in 1:length(w)){  # save osm roadway data to examine in QGIS for errors (TEMPORARY)
+  shapefile(osm.links.buffered[[i]], here(paste0("data/outputs/temp/osm_buffered_",floor(w[i]),"ft")))}
 #shapefile(stations.buffered[[3]], here("data/outpupts/temp/stations_200m_buffered"), overwrite = T)
 #shapefile(uza.stations, here("data/outputs/temp/stations_pts"), overwrite = T)
 #shapefile(osm.uza.car, here("data/outputs/temp/osm_uza_car"), overwrite = T)
