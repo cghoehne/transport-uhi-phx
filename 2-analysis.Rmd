@@ -75,13 +75,13 @@ package.info <- data.frame("Package" = list.of.packages, "Version" = unlist(lapp
 ## import weather, roadway, traffic & parking data
 
 # cleaned uza weather data
-uza.weather <- readRDS(here("data/2017-uza-weather-data.rds"))
+uza.weather <- readRDS(here("data/outputs/2017-uza-weather-data.rds"))
 
 # uza station data (spatial points w/ metadata)
-uza.stations <- readRDS(here("data/uza-station-data.rds"))
+uza.stations <- readRDS(here("data/outputs/uza-station-data.rds"))
 
 # formated UZA OSM data (list of spatial objects, each element is different roadway class that is buffered link according to roadway width)
-#uza.roads <- readRDS(here("data/osm-links-buffers-sp-list.rds"))
+#uza.roads <- readRDS(here("data/outputs/osm-links-buffers-sp-list.rds"))
 
 # cleaned traffic data
 # **(temporary dummy traffic data by osm_id and hour of day, e.g. dummy ICARUS output)**
@@ -99,11 +99,6 @@ city.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp")) # c
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # UZA 
 cnty.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county.shp")) # county 
 highways <- shapefile(here("data/shapefiles/other/phx_metro_hways.shp")) # 2017 highways (pre-cropped to UZA)
-
-# save osm roadway data to examine in QGIS for errors (TEMPORARY)
-for(i in 1:length(uza.roads)){
-  shapefile(uza.roads[[i]], here(paste0("data/shapefiles/osm/osm_buffered_",i)))
-}
 
 ```
 

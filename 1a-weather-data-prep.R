@@ -21,10 +21,10 @@ lapply(list.of.packages, library, character.only = TRUE)
 # Import Arizona Meteorological Network data  #
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
-encanto <- rbindlist(lapply(list.files(here(path = "data/AZMET/Encanto/raw"), pattern="txt$", full.names= T), read.csv, header = F))
-desert.ridge <- rbindlist(lapply(list.files(here(path = "data/AZMET/Desert Ridge/raw"), pattern="txt$", full.names= T), read.csv, header = F))
-mesa <- rbindlist(lapply(list.files(here(path = "data/AZMET/Mesa/raw"), pattern="txt$", full.names= T), read.csv, header = F))
-greenway <- rbindlist(lapply(list.files(here(path = "data/AZMET/Greenway/raw"), pattern="txt$", full.names= T), read.csv, header = F))
+encanto <- rbindlist(lapply(list.files(here(path = "data/weather data/AZMET/Encanto/raw"), pattern="txt$", full.names= T), read.csv, header = F))
+desert.ridge <- rbindlist(lapply(list.files(here(path = "data/weather data/AZMET/Desert Ridge/raw"), pattern="txt$", full.names= T), read.csv, header = F))
+mesa <- rbindlist(lapply(list.files(here(path = "data/weather data/AZMET/Mesa/raw"), pattern="txt$", full.names= T), read.csv, header = F))
+greenway <- rbindlist(lapply(list.files(here(path = "data/weather data/AZMET/Greenway/raw"), pattern="txt$", full.names= T), read.csv, header = F))
 
 # add station ID to each dataset
 encanto$station <- "Encanto"
@@ -56,7 +56,7 @@ azmet.data$date <- as.Date(azmet.data$day.year-1, origin = paste0(azmet.data$yea
 azmet.data$date.time  <- ymd_hm(paste0(azmet.data$date," ",azmet.data$hour,":00"), tz = "US/Arizona")
 
 # read AZMET station data
-azmet.stations <- fread(here("data/AZMET/stations.csv"))
+azmet.stations <- fread(here("data/weather data/AZMET/stations.csv"))
 
 # add data source column and station.id column (NA, but for ordered cols later)
 azmet.data$source <- "AZMET"
@@ -76,11 +76,11 @@ azmet.data <- azmet.data[year(date.time) == 2017]
 # Import National Centers for Environmental Information data  #
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
 
-ncei.data <- read_fwf(here("data/NCEI/2016_data.txt"), skip = 1,
-                       fwf_empty(here("data/NCEI/2016_data.txt"),
+ncei.data <- read_fwf(here("data/weather data/NCEI/2016_data.txt"), skip = 1,
+                       fwf_empty(here("data/weather data/NCEI/2016_data.txt"),
                                  col_names = c("station.id","WBAN","date","windir","winspd","GUS","CLG","SKC","L","M","H","VSB","MW1","MW2","MW3","MW4","AW1","AW2","AW3","AW4","W","temp.f","dewpt.f","SLP","ALT","STP","MAX","MIN","PCP01","PCP06","PCP24","PCPXX","SD")))
 
-ncei.stations <- read_fwf(here(path = "data/NCEI/stations.txt"), skip = 2, fwf_widths(c(7,6,31,51,31,9,9,10), c("station.id","WBAN","station.name","COUNTRY","STATE","lat","lon","elevation")))
+ncei.stations <- read_fwf(here(path = "data/weather data/NCEI/stations.txt"), skip = 2, fwf_widths(c(7,6,31,51,31,9,9,10), c("station.id","WBAN","station.name","COUNTRY","STATE","lat","lon","elevation")))
 
 # set as data.table
 setDT(ncei.data)
@@ -122,8 +122,8 @@ ncei.data <- ncei.data[year(date.time) == 2017]
 #*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
 
 # temp data
-temp.files <- list.files(here(path = "data/MCFCD/2017/Temp"), pattern="txt$", full.names = T) # full file path names
-temp.names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Temp"), pattern = "txt$", full.names = F)) # names (stations) of files
+temp.files <- list.files(here(path = "data/weather data/MCFCD/2017/Temp"), pattern="txt$", full.names = T) # full file path names
+temp.names <- gsub(".txt", "", list.files(here(path = "data/weather data/MCFCD/2017/Temp"), pattern = "txt$", full.names = F)) # names (stations) of files
 mcfcd.temp.data <- rbindlist(lapply(temp.files, fread), idcol = "station.id") # load all station data 
 mcfcd.temp.data[, station.id := factor(station.id, labels = basename(temp.names))] # add station names to column 'station'
 mcfcd.temp.data[, station.id := as.character(station.id)] # convert to character for matching
@@ -131,8 +131,8 @@ colnames(mcfcd.temp.data) <- c("station.id","date","time","temp.f") # add rest o
 mcfcd.temp.data$date.time  <- mdy_hms(paste0(mcfcd.temp.data$date," ",mcfcd.temp.data$time), tz = "US/Arizona") # MCFCD data is all local
 
 # dewpt data
-dewpt.files <- list.files(here(path = "data/MCFCD/2017/Dewpoint"), pattern="txt$", full.names = T) # full file path names
-dewpt.names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Dewpoint"), pattern = "txt$", full.names = F)) # names (stations) of files
+dewpt.files <- list.files(here(path = "data/weather data/MCFCD/2017/Dewpoint"), pattern="txt$", full.names = T) # full file path names
+dewpt.names <- gsub(".txt", "", list.files(here(path = "data/weather data/MCFCD/2017/Dewpoint"), pattern = "txt$", full.names = F)) # names (stations) of files
 mcfcd.dewpt.data <- rbindlist(lapply(dewpt.files, fread), idcol = "station.id") # load all station data 
 mcfcd.dewpt.data[, station.id := factor(station.id, labels = basename(dewpt.names))] # add station names to column 'station'
 mcfcd.dewpt.data[, station.id := as.character(station.id)] # convert to character for matching
@@ -140,8 +140,8 @@ colnames(mcfcd.dewpt.data) <- c("station.id","date","time","dewpt.f") # add rest
 mcfcd.dewpt.data$date.time  <- mdy_hms(paste0(mcfcd.dewpt.data$date," ",mcfcd.dewpt.data$time), tz = "US/Arizona") # MCFCD data is all local
 
 # windir data
-windir.files <- list.files(here(path = "data/MCFCD/2017/Wdir"), pattern="txt$", full.names = T) # full file path names
-windir.names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Wdir"), pattern = "txt$", full.names = F)) # names (stations) of files
+windir.files <- list.files(here(path = "data/weather data/MCFCD/2017/Wdir"), pattern="txt$", full.names = T) # full file path names
+windir.names <- gsub(".txt", "", list.files(here(path = "data/weather data/MCFCD/2017/Wdir"), pattern = "txt$", full.names = F)) # names (stations) of files
 mcfcd.windir.data <- rbindlist(lapply(windir.files, fread), idcol = "station.id") # load all station data 
 mcfcd.windir.data[, station.id := factor(station.id, labels = basename(windir.names))] # add station names to column 'station'
 mcfcd.windir.data[, station.id := as.character(station.id)] # convert to character for matching
@@ -149,8 +149,8 @@ colnames(mcfcd.windir.data) <- c("station.id","date","time","windir") # add rest
 mcfcd.windir.data$date.time  <- mdy_hms(paste0(mcfcd.windir.data$date," ",mcfcd.windir.data$time), tz = "US/Arizona") # MCFCD data is all local
 
 # winspd data
-winspd.files <- list.files(here(path = "data/MCFCD/2017/Wspd"), pattern="txt$", full.names = T) # full file path names
-winspd.names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Wspd"), pattern = "txt$", full.names = F)) # names (stations) of files
+winspd.files <- list.files(here(path = "data/weather data/MCFCD/2017/Wspd"), pattern="txt$", full.names = T) # full file path names
+winspd.names <- gsub(".txt", "", list.files(here(path = "data/weather data/MCFCD/2017/Wspd"), pattern = "txt$", full.names = F)) # names (stations) of files
 mcfcd.winspd.data <- rbindlist(lapply(winspd.files, fread), idcol = "station.id") # load all station data 
 mcfcd.winspd.data[, station.id := factor(station.id, labels = basename(winspd.names))] # add station names to column 'station'
 mcfcd.winspd.data[, station.id := as.character(station.id)] # convert to character for matching
@@ -158,8 +158,8 @@ colnames(mcfcd.winspd.data) <- c("station.id","date","time","winspd") # add rest
 mcfcd.winspd.data$date.time  <- mdy_hms(paste0(mcfcd.winspd.data$date," ",mcfcd.winspd.data$time), tz = "US/Arizona") # MCFCD data is all local
 
 # solar data
-solar.files <- list.files(here(path = "data/MCFCD/2017/Solar"), pattern="txt$", full.names = T) # full file path names
-solar.names <- gsub(".txt", "", list.files(here(path = "data/MCFCD/2017/Solar"), pattern = "txt$", full.names = F)) # names (stations) of files
+solar.files <- list.files(here(path = "data/weather data/MCFCD/2017/Solar"), pattern="txt$", full.names = T) # full file path names
+solar.names <- gsub(".txt", "", list.files(here(path = "data/weather data/MCFCD/2017/Solar"), pattern = "txt$", full.names = F)) # names (stations) of files
 mcfcd.solar.data <- rbindlist(lapply(solar.files, fread), idcol = "station.id") # load all station data 
 mcfcd.solar.data[, station.id := factor(station.id, labels = basename(solar.names))] # add station names to column 'station'
 mcfcd.solar.data[, station.id := as.character(station.id)] # convert to character for matching
@@ -167,7 +167,7 @@ colnames(mcfcd.solar.data) <- c("station.id","date","time","solar") # add rest o
 mcfcd.solar.data$date.time  <- mdy_hms(paste0(mcfcd.solar.data$date," ",mcfcd.solar.data$time), tz = "US/Arizona") # MCFCD data is all local
 
 # station data
-mcfcd.stations <- fread(here("data/MCFCD/stations.csv")) # load station data
+mcfcd.stations <- fread(here("data/weather data/MCFCD/stations.csv")) # load station data
 mcfcd.stations <- mcfcd.stations[!is.na(station.id)]  # remove stations without an ID
 mcfcd.stations[, station.id := as.character(station.id)] # convert station.id to character for matching
 dms2dec <- function(x){ 
@@ -226,12 +226,12 @@ mcfcd.data <- mcfcd.data[year(date.time) == 2017]
 #+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#
 
 # import temp and rel humidity data
-ibut.temp <- fread(here("data/iButton/phxbuttons.csv"))
-ibut.rhum <- fread(here("data/iButton/phxbuttonsrh.csv"))
+ibut.temp <- fread(here("data/weather data/iButton/phxbuttons.csv"))
+ibut.rhum <- fread(here("data/weather data/iButton/phxbuttonsrh.csv"))
 
 # import station info and data
-ibut.stations <- fread(here("data/iButton/phxdatsite_all.csv"))
-ibut.stations.col.info <- fread(here("data/iButton/phxdatsiteall_col_description.csv"))
+ibut.stations <- fread(here("data/weather data/iButton/phxdatsite_all.csv"))
+ibut.stations.col.info <- fread(here("data/weather data/iButton/phxdatsiteall_col_description.csv"))
 
 # rename some cols
 setnames(ibut.temp, "Date - Time", "date.time") 
@@ -303,5 +303,5 @@ w.data[, heat.c := heat.index(t = temp.c, dp = dewpt.c, temperature.metric = "ce
 w.stations <- w.stations[n.temp != 0]
 
 # save final data object
-saveRDS(w.data, here("data/2017-weather-data.rds"))
-saveRDS(w.stations, here("data/station-data.rds"))
+saveRDS(w.data, here("data/outputs/2017-weather-data.rds"))
+saveRDS(w.stations, here("data/outputs/station-data.rds"))

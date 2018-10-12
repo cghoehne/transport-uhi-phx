@@ -1,3 +1,4 @@
+
 ###################################################################
 ## OSM DATA IMPORT and FORMART to USE with WEATHER STATION DATA ##
 #################################################################
@@ -26,7 +27,7 @@ lapply(list.of.packages, library, character.only = TRUE)
 
 
 # IMPORT DATA
-w.stations <- readRDS(here("data/station-data.rds")) # import cleaned station data
+w.stations <- readRDS(here("data/outputs/station-data.rds")) # import cleaned station data
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # import Maricopa County UZA boundary
 osm <- shapefile(here("data/shapefiles/osm/maricopa_county_osm_roads.shp")) # import OSM data (maricopa county clipped raw road network data)
 fclass.info <- fread(here("data/shapefiles/osm/fclass_info.csv")) # additional OSM info by roadway functional class (fclass)
@@ -49,7 +50,7 @@ uza.stations <- raster::intersect(w.stations.spdf, uza.buffer)
 uza.stations.list <- w.stations[station.name %in% uza.stations$station.name]
 
 # import and filter weather data to only stations in uza
-weather.data <- readRDS(here("data/2017-weather-data.rds"))
+weather.data <- readRDS(here("data/outputs/2017-weather-data.rds"))
 uza.weather <- weather.data[station.name %in% uza.stations.list$station.name]
 
 # foreach loop in parallel to buffer stations points by multiple radii
@@ -117,10 +118,17 @@ osm.links.buffered <- foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dop
 # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
 
 # SAVE DATA FOR ANALYSIS
-saveRDS(stations.buffered, here("data/station-buffers-sp-list.rds")) # saves buffered station data as list of spatial r objects
-saveRDS(osm.links.buffered, here("data/osm-links-buffers-sp-list.rds")) # saves buffered osm  data as list of spatial r objects
-saveRDS(uza.stations, here("data/uza-station-data.rds")) # saves station data as spatial r object (points)
-saveRDS(uza.weather, here("data/2017-uza-weather-data.rds")) # saves weather data filtered to only uza stations
+saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # saves buffered station data as list of spatial r objects
+saveRDS(osm.links.buffered, here("data/outputs/osm-links-buffers-sp-list.rds")) # saves buffered osm  data as list of spatial r objects
+saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # saves station data as spatial r object (points)
+saveRDS(uza.weather, here("data/outputs/2017-uza-weather-data.rds")) # saves weather data filtered to only uza stations
 
-#shapefile(stations.buffered[[3]], here("data/shapefiles/stations_200m_buffered"), overwrite = T)
-#shapefile(uza.stations, here("data/shapefiles/stations_pts"), overwrite = T)
+# TEMP FILESAVES FOR TESTING
+saveRDS(osm.uza.car, here("data/outputs/temp/osm-uza-car.rds"))
+osm.uza.car <- readRDS(here("data/outputs/temp/osm-uza-car.rds"))
+for(i in 1:length(osm.links.buffered)){  # save osm roadway data to examine in QGIS for errors (TEMPORARY)
+  shapefile(osm.links.buffered[[i]], here(paste0("data/shapefiles/osm/osm_buffered_",i,"ft")))}
+#shapefile(stations.buffered[[3]], here("data/outpupts/temp/stations_200m_buffered"), overwrite = T)
+#shapefile(uza.stations, here("data/outputs/temp/stations_pts"), overwrite = T)
+#shapefile(osm.uza.car, here("data/outputs/temp/osm_uza_car"), overwrite = T)
+
