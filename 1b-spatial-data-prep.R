@@ -63,7 +63,7 @@ uza.weather <- weather.data[station.name %in% uza.stations.list$station.name]
 # note that the foreach loop in parallel probably isn't necessary
 my.cores <- parallel::detectCores()  # store computers cores
 registerDoParallel(cores = my.cores) # register parallel backend
-radii.buffers <- c(50,100,200,500,1000,2500) # radii for buffer on each station point
+radii.buffers <- c(50,100,200,500,1000,2500) # radii for buffer on each station point (in feet)
 stations.buffered <- foreach(i = 1:length(radii.buffers), .packages = c("sp","rgeos"), .combine = c) %dopar% {
   gBuffer(uza.stations, byid = T, width = radii.buffers[i]) } # (stores as list of SpatialPointDataFrames)
 
@@ -118,6 +118,7 @@ saveRDS(uza.weather, here("data/outputs/2017-uza-weather-data.rds")) # saves wea
 # clean up space
 rm(list=setdiff(ls(), c("my.cores", "stations.buffered", "osm.uza.car", "t.start")))
 gc()
+memory.limit(size = 50000)
 
 # buffer osm data
 # foreach loop in parallel to buffer links
@@ -133,8 +134,11 @@ osm.buffered <- foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
 # bind the buffered osm data output
 osm.buffered <- do.call(raster::bind, osm.buffered) # bind list of spatial objects into single spatial obj
 
-# fix any invalid geometery issues
-osm.cleaned <- clgeo_Clean(osm.buffered) 
+# fix invalid geometery issues
+# currently, there is a self intersection at (709401.64201999945, 919884.08219000)
+osm.cleaned <- clgeo_Clean(osm.buffered)        # start w/ simple clean function
+osm.cleaned <- gSimplify(osm.cleaned, tol = 1)  # simplify polygons with Douglas-Peucker algorithm and a tolerance of 1 ft
+osm.cleaned <- gBuffer(osm.cleaned2, width = 0)  # width = 0 as hack to clean polygon errors such as self intersetions
 
 # then clip roadways to largest buffer of stations
 osm.stations <- gIntersection(osm.cleaned, stations.buffered[[length(stations.buffered)]]) # chooses last buffer (which is largest radius)
@@ -152,7 +156,7 @@ t.end <- Sys.time()
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "hours"),2)," hours to complete.")
 
 
-####
+####   
 
 # OLD CODE
 
