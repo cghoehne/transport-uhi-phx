@@ -3,5 +3,5 @@
 .RData
 .Ruserdata
 **/osm_formatted_unbuffered*
-**/temp/*
+data/outputs/temp/*
 ~$utline.docx
