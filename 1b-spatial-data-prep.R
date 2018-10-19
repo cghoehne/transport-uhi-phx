@@ -5,7 +5,7 @@
 
 # start by maxing out the memory allocation (use high number to force max)
 gc()
-memory.limit(size = 50000)
+memory.limit(size = 56000)
 t.start <- Sys.time()
 
 # list of all dependant packages
@@ -118,16 +118,19 @@ saveRDS(uza.weather, here("data/outputs/2017-uza-weather-data.rds")) # saves wea
 # clean up space
 rm(list=setdiff(ls(), c("my.cores", "stations.buffered", "osm.uza.car", "t.start")))
 gc()
-memory.limit(size = 50000)
+memory.limit(size = 56000)
+
+# then clip roadways to largest buffer of stations
+osm.stations <- gIntersection(osm.uza.car, stations.buffered[[length(stations.buffered)]]) # chooses last (largest) station buffer to clip road links
 
 # buffer osm data
 # foreach loop in parallel to buffer links
 # (stores as list of SpatialPointDataFrames)
 registerDoParallel(cores = my.cores) # register parallel backend
-w <- unique(osm.uza.car$buf.ft) # list of unique buffer widths
+w <- unique(osm.stations$buf.ft) # list of unique buffer widths
 b <- list() # empty list for foreach
 osm.buffered <- foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
-  b[[i]] <- gBuffer(osm.uza.car[osm.uza.car$buf.ft == w[i], ], byid = F, width = w[i], capStyle = "FLAT") # buf.ft is already adjusted to correct buffer distances
+  b[[i]] <- gBuffer(osm.stations[osm.stations$buf.ft == w[i], ], byid = F, width = w[i], capStyle = "FLAT") # buf.ft is already adjusted to correct buffer distances
 } # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
 
 
@@ -138,10 +141,7 @@ osm.buffered <- do.call(raster::bind, osm.buffered) # bind list of spatial objec
 # currently, there is a self intersection at (709401.64201999945, 919884.08219000)
 osm.cleaned <- clgeo_Clean(osm.buffered)        # start w/ simple clean function
 osm.cleaned <- gSimplify(osm.cleaned, tol = 1)  # simplify polygons with Douglas-Peucker algorithm and a tolerance of 1 ft
-osm.cleaned <- gBuffer(osm.cleaned2, width = 0)  # width = 0 as hack to clean polygon errors such as self intersetions
-
-# then clip roadways to largest buffer of stations
-osm.stations <- gIntersection(osm.cleaned, stations.buffered[[length(stations.buffered)]]) # chooses last buffer (which is largest radius)
+osm.cleaned <- gBuffer(osm.cleaned, width = 0)  # width = 0 as hack to clean polygon errors such as self intersetions
 
 # dissolve the roadway buffer to a single polygon to calculate area w/o overlaps
 osm.dissolved <- gUnaryUnion(osm.stations)
