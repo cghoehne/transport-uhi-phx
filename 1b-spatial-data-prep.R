@@ -5,7 +5,7 @@
 
 # start by maxing out the memory allocation (use high number to force max)
 gc()
-memory.limit(size = 56000)
+memory.limit(size = 50000)
 t.start <- Sys.time()
 
 # list of all dependant packages
@@ -108,7 +108,7 @@ osm.uza$ref <- NULL # irrelevant variable
 osm.uza$layer <- NULL # irrelevant variable
 osm.uza$maxspeed <- NULL # most are 0 or missing so unuseable in this case
 
-# filter to only car based paths (this also currenlty assumes all remaining are pavement.type == "concrete")
+# filter to only car based links (this also filters all remaining pavement.types to "concrete" under current assumptions)
 osm.uza.car <- subset(osm.uza, auto.use == "Y" & !is.na(buf.ft) & buf.ft > 0) # also make sure to exclude NA and 0 width roads
 
 # save some data 
@@ -120,37 +120,38 @@ rm(list=setdiff(ls(), c("my.cores", "stations.buffered", "osm.uza.car", "t.start
 gc()
 memory.limit(size = 56000)
 
-# then clip roadways to largest buffer of stations
-osm.stations <- gIntersection(osm.uza.car, stations.buffered[[length(stations.buffered)]]) # chooses last (largest) station buffer to clip road links
+# clip osm links by largest weather station radii
+# b/c we don't need all the network so this greatly reduces file size moving forward
+osm.clip.station <- intersect(osm.uza.car, stations.buffered[[length(stations.buffered)]]) # better than gIntersection b/c it keeps attributes
+#osm.clip.station <- gIntersection(osm.uza.car, stations.buffered[[length(stations.buffered)]])
+#osm.stations <- foreach(i = 1:length(osm.buffered), .packages = c("sp","rgeos"), .combine = c) %dopar% {gIntersection(osm.buffered[[i]], stations.buffered[[length(stations.buffered)]]) }
 
-# buffer osm data
+# buffer clipped osm data
 # foreach loop in parallel to buffer links
 # (stores as list of SpatialPointDataFrames)
 registerDoParallel(cores = my.cores) # register parallel backend
-w <- unique(osm.stations$buf.ft) # list of unique buffer widths
+w <- unique(osm.clip.station$buf.ft) # list of unique buffer widths
 b <- list() # empty list for foreach
 osm.buffered <- foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
-  b[[i]] <- gBuffer(osm.stations[osm.stations$buf.ft == w[i], ], byid = F, width = w[i], capStyle = "FLAT") # buf.ft is already adjusted to correct buffer distances
+  b[[i]] <- gBuffer(osm.clip.station[osm.clip.station$buf.ft == w[i], ], byid = F, width = w[i], capStyle = "FLAT") # buf.ft is already adjusted to correct buffer distances
 } # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
 
-
 # bind the buffered osm data output
-osm.buffered <- do.call(raster::bind, osm.buffered) # bind list of spatial objects into single spatial obj
+osm.buffered.m <- do.call(raster::bind, osm.buffered) # bind list of spatial objects into single spatial obj
 
 # fix invalid geometery issues
-# currently, there is a self intersection at (709401.64201999945, 919884.08219000)
-osm.cleaned <- clgeo_Clean(osm.buffered)        # start w/ simple clean function
-osm.cleaned <- gSimplify(osm.cleaned, tol = 1)  # simplify polygons with Douglas-Peucker algorithm and a tolerance of 1 ft
+osm.cleaned <- clgeo_Clean(osm.stations.m)        # start w/ simple clean function
+osm.cleaned <- gSimplify(osm.cleaned, tol = 0.1)  # simplify polygons with Douglas-Peucker algorithm and a tolerance of 0.1 ft
 osm.cleaned <- gBuffer(osm.cleaned, width = 0)  # width = 0 as hack to clean polygon errors such as self intersetions
 
 # dissolve the roadway buffer to a single polygon to calculate area w/o overlaps
-osm.dissolved <- gUnaryUnion(osm.stations)
+osm.dissolved <- gUnaryUnion(osm.cleaned)
 
 # save everything else
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # saves buffered station data as list of spatial r objects
-saveRDS(osm.dissolved, here("data/outputs/osm_final.rds")) # save cleaned, clipped, and buffered osm data
-shapefile(osm.dissolved, here("data/outputs/temp/osm_final"), overwrite = T) # also save shapefile to check in qgis
+saveRDS(osm.dissolved, here("data/outputs/osm_dissolved.rds")) # save cleaned, clipped, and buffered osm data
+shapefile(osm.dissolved, here("data/outputs/temp/osm_dissolved"), overwrite = T) # also save shapefile to check in qgis
 
 t.end <- Sys.time()
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "hours"),2)," hours to complete.")
