@@ -123,8 +123,6 @@ memory.limit(size = 56000)
 # clip osm links by largest weather station radii
 # b/c we don't need all the network so this greatly reduces file size moving forward
 osm.clip.station <- intersect(osm.uza.car, stations.buffered[[length(stations.buffered)]]) # better than gIntersection b/c it keeps attributes
-#osm.clip.station <- gIntersection(osm.uza.car, stations.buffered[[length(stations.buffered)]])
-#osm.stations <- foreach(i = 1:length(osm.buffered), .packages = c("sp","rgeos"), .combine = c) %dopar% {gIntersection(osm.buffered[[i]], stations.buffered[[length(stations.buffered)]]) }
 
 # buffer clipped osm data
 # foreach loop in parallel to buffer links
@@ -140,7 +138,7 @@ osm.buffered <- foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
 osm.buffered.m <- do.call(raster::bind, osm.buffered) # bind list of spatial objects into single spatial obj
 
 # fix invalid geometery issues
-osm.cleaned <- clgeo_Clean(osm.stations.m)        # start w/ simple clean function
+osm.cleaned <- clgeo_Clean(osm.buffered.m)        # start w/ simple clean function
 osm.cleaned <- gSimplify(osm.cleaned, tol = 0.1)  # simplify polygons with Douglas-Peucker algorithm and a tolerance of 0.1 ft
 osm.cleaned <- gBuffer(osm.cleaned, width = 0)  # width = 0 as hack to clean polygon errors such as self intersetions
 
@@ -149,36 +147,17 @@ osm.dissolved <- gUnaryUnion(osm.cleaned)
 
 # save everything else
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
-saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # saves buffered station data as list of spatial r objects
-saveRDS(osm.dissolved, here("data/outputs/osm_dissolved.rds")) # save cleaned, clipped, and buffered osm data
-shapefile(osm.dissolved, here("data/outputs/temp/osm_dissolved"), overwrite = T) # also save shapefile to check in qgis
+saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects
+saveRDS(osm.dissolved, here("data/outputs/osm_dissolved.rds")) # final osm cleaned/clipped/buffered/dissolved output as single spatial object
+
+# shapefile outputs
+#shapefile(osm.dissolved, here("data/outputs/temp/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
+#shapefile(stations.buffered[[6]], here("data/outputs/temp/stations_r2500ft_buffer"), overwrite = T) # shapefile output of largest station buffer
+#shapefile(uza.stations, here("data/outputs/temp/stations_pts"), overwrite = T) # station points shapefile
 
 t.end <- Sys.time()
-paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "hours"),2)," hours to complete.")
+paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.")
 
 
-####   
 
-# OLD CODE
-
-#memory.limit(size = 50000)
-#osm.links.buffered <- readRDS(here("data/outputs/osm-links-buffers-sp-list.rds"))
-#osm.links.buffered.m <- do.call(raster::bind, osm.links.buffered) # bind list of spatial objects into single spatial obj
-#osm.links.cln.buf.mrg <- clgeo_Clean(osm.links.buffered.m) # fix invalid geometery issues
-#gIsValid(osm.links.cln.buf.mrg) # check is valid
-
-# dissolve polygons (many options with few solutions)
-#osm.links.dissolved <- gUnaryUnion(osm.links.cln.buf.mrg)
-#osm.links.dissolved <- gBuffer(osm.links.cln.buf.mrg, width = 0)  # buffer with a 0 width can be used as a way to dissolve polygons
-#osm.links.dissolved <- union(osm.links.cln.buf.mrg) # FAILS, very slow (2+ hrs)
-#osm.links.dissolved <- unionSpatialPolygons(osm.links.cln.buf.mrg) # FAILS, alternative, also slow
-
-# TEMP FILESAVES FOR TESTING
-#osm.uza.car <- readRDS(here("data/outputs/temp/osm-uza-car.rds"))
-
-#for(i in 1:length(w)){  # save osm roadway data to examine in QGIS for errors (TEMPORARY)
-#  shapefile(osm.links.buffered[[i]], here(paste0("data/outputs/temp/osm_buffered_",floor(w[i]),"ft")))}
-#shapefile(stations.buffered[[3]], here("data/outpupts/temp/stations_200m_buffered"), overwrite = T)
-#shapefile(uza.stations, here("data/outputs/temp/stations_pts"), overwrite = T)
-#shapefile(osm.uza.car, here("data/outputs/temp/osm_uza_car"), overwrite = T)
 
