@@ -15,9 +15,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ##** CHANGE THIS TO LOAD ONLY THE FONT WE WILL USE
 ##** PREFERABLY INCLUDE THIS FONT IN THE REPO
 
-# store master figure font as string
-my.font <- "Helvetica"
-
 # list of all dependant packages
 list.of.packages <- c("tidyverse",
                       "data.table", 
@@ -43,10 +40,16 @@ if(length(new.packages)) install.packages(new.packages)
 #tinytex::install_tinytex(force = FALSE)
 
 # load packages
-lapply(list.of.packages, library, character.only = TRUE)
+invisible(lapply(list.of.packages, library, character.only = TRUE)) # invisible() just hides printing stuff in console
 
 # store loaded packages and thier version in a data.frame
 package.info <- data.frame("Package" = list.of.packages, "Version" = unlist(lapply(list.of.packages, function (x) as.character(packageVersion(x)))))
+
+# load windows fonts and store as string
+windowsFonts(Century=windowsFont("TT Century Gothic"))
+windowsFonts(Times=windowsFont("TT Times New Roman"))
+my.font <- "Century"
+#my.font <- "Times"
 
 ```
 
@@ -73,15 +76,10 @@ package.info <- data.frame("Package" = list.of.packages, "Version" = unlist(lapp
 ```{r data import, include = FALSE}
 
 ## import weather, roadway, traffic & parking data
-
-# cleaned uza weather data
-uza.weather <- readRDS(here("data/outputs/2017-uza-weather-data.rds"))
-
-# uza station data (spatial points w/ metadata)
-uza.stations <- readRDS(here("data/outputs/uza-station-data.rds"))
-
-# formated UZA OSM data (list of spatial objects, each element is different roadway class that is buffered link according to roadway width)
-#uza.roads <- readRDS(here("data/outputs/osm-links-buffers-sp-list.rds"))
+all.stations <- readRDS(here("data/outputs/all-station-data.rds")) # all station data (spatial points w/ metadata)
+uza.stations <- readRDS(here("data/outputs/uza-station-data.rds")) # uza station data (spatial points w/ metadata)
+uza.weather <- readRDS(here("data/outputs/2017-uza-weather-data.rds")) # cleaned uza weather data
+uza.roads <- readRDS(here("data/outputs/osm-dissolved.rds")) # cleaned/clipped/buffered/dissoved UZA OSM data 
 
 # cleaned traffic data
 # **(temporary dummy traffic data by osm_id and hour of day, e.g. dummy ICARUS output)**
@@ -113,35 +111,30 @@ Here are the working plots:
 #-#-#-#-#-#-#
 
 # set knitr chunk options to put spaces between plots
-opts_chunk$set(fig.ncol = 3, fig.sep = c('\\newline','\\newline','\\newline')) # only workds for LaTex output
+opts_chunk$set(fig.ncol = 3, fig.showtext = T, fig.sep = c('\\newline','\\newline','\\newline')) # only workds for LaTex output
 
 # store palette for plotting stations
 my.palette <- c("#0C120C","#640D14","#C20114","#6D7275")
 
-# plot station points with UZA, highways, & city labels for context.
+# plot all station points with UZA, highways, & city labels for context.
 stations.plot <-   
   tm_shape(uza.border) + tm_borders(lwd = 0.8, lty = "solid", col = "grey40", alpha = 0.7) + tm_fill(col = "grey90") + # urbanized area (UZA) border & fill
-  tm_shape(w.stations.spdf, bbox = w.stations.spdf) + tm_dots(col = "source", border.col = NULL, palette = my.palette, size = 0.2, alpha = 0.8, title = "Data Source") + # station points
+  tm_shape(all.stations, bbox = all.stations) + tm_dots(col = "source", border.col = NULL, palette = my.palette, size = 0.3, alpha = 0.8, title = "Data Source") + # stations
   tm_shape(cnty.border) + tm_borders(lwd = 0.8, lty = "solid", col = "grey20", alpha = 0.7) + # county border
   tm_scale_bar(position = c(0.4,0.0), breaks = c(0,5,10,15,20), size = 0.90, color.light = "grey85") + # scalebar
   tm_compass(north = 0, type = "4star", size = 2, show.labels = 1, position = c(0.9,0.85)) + # compass
   tm_shape(highways) + tm_lines(lwd = 1.1, col = "grey40") + # highways
-  tm_shape(city.labels) + tm_text("name", size = .5, fontfamily = my.font,  fontface = "bold.italic", just = "center") + # city labels
-  tm_layout(fontfamily = my.font, fontface = "italic", bg.color = "grey95", title.size = 1.5, legend.title.size = 1.10, # theme & formatting
-            legend.text.size = 0.95, title = "", title.position = c(0.12,0.94),
-            legend.position = c(0.02,0.45), outer.margins = c(0,0,0,0), asp = 0)
+  tm_shape(city.labels) + tm_text("name", size = 0.7, fontfamily = my.font,  fontface = "bold.italic", just = "center") + # city labels
+  tm_layout(fontfamily = my.font, fontface = "italic", bg.color = "grey95", title.size = 1.5, legend.title.size = 1.20, # theme & formatting
+            legend.text.size = 0.7, title = "", title.position = c(0.2,0.94),
+            legend.position = c(0.1,0.45), outer.margins = c(0,0,0,0), asp = 0)
 
-#tmap_save(stations.plot, filename = here("figures/stations_w_ibut.png")) # option to save
-stations.plot #(plot in report)
+tmap_save(stations.plot, filename = here("figures/stations-w-ibut.png")) # option to save
+stations.plot # plot in report
 
-
+##
 # calculate range of temps and mean temp for urbanized stations
-
-# first clip stations points to ones w/in uza 
-uza.stations <- raster::intersect(w.stations.spdf, uza.border)
-
-# filter station list to uza stations
-uza.stations.list <- w.stations[station.name %in% uza.stations$station.name]
+##
 
 # if time is within 15 min of hour, round to hour, otherwise drop, then
 # aggregate to the min, mean, max temp at each unique timestep for all stations
@@ -178,7 +171,7 @@ month.x.hour.p <- ggplot(uza.weather.month.agg, aes(x = hour, y = med.temp.f , g
   )
 
 month.x.hour.p
-#ggsave("hrly_tempF_by_month_all_phx_UZA_stations.png", month.x.hour.p, device = "png", path = here("figures"), scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
+ggsave("phx-uza-hrly-by-month-temp.png", month.x.hour.p, device = "png", path = here("figures"), scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
 
 # plot hourly temp.f range for summer months for 2017 for all stations
 uza.weather.sum.month.agg <- uza.weather[, .(min.temp.f = min(temp.f, na.rm = T),
@@ -205,7 +198,7 @@ sum.month.x.hour.p <- ggplot(uza.weather.sum.month.agg, aes(x = hour, y = med.te
   )
 
 sum.month.x.hour.p
-#ggsave("hrly_tempF_by_sum_month_and_source_phx_UZA.png", sum.month.x.hour.p, device = "png", path = here("figures"), scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
+ggsave("phx-uza-hrly-summer-temp.png", sum.month.x.hour.p, device = "png", path = here("figures"), scale = 1, width = 6.5, height = 8, dpi = 300, units = "in")
 
 # create summer data aggreate by station for GIF
 uza.weather.summer.station.agg <- uza.weather[month %in% c("Jun","Jul","Aug"), .(min.temp.f = min(temp.f, na.rm = T),

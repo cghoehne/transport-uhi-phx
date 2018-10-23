@@ -112,7 +112,8 @@ osm.uza$maxspeed <- NULL # most are 0 or missing so unuseable in this case
 osm.uza.car <- subset(osm.uza, auto.use == "Y" & !is.na(buf.ft) & buf.ft > 0) # also make sure to exclude NA and 0 width roads
 
 # save some data 
-saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # saves station data as spatial r object (points)
+saveRDS(w.stations.spdf, here("data/outputs/all-station-data.rds")) # saves station data (all) as spatial r object (points)
+saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # saves station data (uza) as spatial r object (points)
 saveRDS(uza.weather, here("data/outputs/2017-uza-weather-data.rds")) # saves weather data filtered to only uza stations
 
 # clean up space
@@ -148,7 +149,7 @@ osm.dissolved <- gUnaryUnion(osm.cleaned)
 # save everything else
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects
-saveRDS(osm.dissolved, here("data/outputs/osm_dissolved.rds")) # final osm cleaned/clipped/buffered/dissolved output as single spatial object
+saveRDS(osm.dissolved, here("data/outputs/osm-dissolved.rds")) # final osm cleaned/clipped/buffered/dissolved output as single spatial object
 
 # shapefile outputs
 #shapefile(osm.dissolved, here("data/outputs/temp/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
