@@ -31,7 +31,6 @@ if(length(new.packages)) install.packages(new.packages)
 # load packages
 lapply(list.of.packages, library, character.only = TRUE)
 
-
 # IMPORT DATA
 w.stations <- readRDS(here("data/outputs/station-data.rds")) # import cleaned station data
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # import Maricopa County UZA boundary
@@ -111,19 +110,20 @@ osm.uza$maxspeed <- NULL # most are 0 or missing so unuseable in this case
 # filter to only car based links (this also filters all remaining pavement.types to "concrete" under current assumptions)
 osm.uza.car <- subset(osm.uza, auto.use == "Y" & !is.na(buf.ft) & buf.ft > 0) # also make sure to exclude NA and 0 width roads
 
+# clip osm links by largest weather station radii
+# b/c we don't need all the network so this greatly reduces file size moving forward
+osm.clip.station <- intersect(osm.uza.car, stations.buffered[[length(stations.buffered)]]) # better than gIntersection b/c it keeps attributes
+
 # save some data 
 saveRDS(w.stations.spdf, here("data/outputs/all-station-data.rds")) # saves station data (all) as spatial r object (points)
 saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # saves station data (uza) as spatial r object (points)
 saveRDS(uza.weather, here("data/outputs/2017-uza-weather-data.rds")) # saves weather data filtered to only uza stations
+saveRDS(osm.clip.station, here("data/outputs/2017-uza-weather-data.rds")) # saves clipped osm link data around stations (use for linking w/ traffic data)
 
 # clean up space
-rm(list=setdiff(ls(), c("my.cores", "stations.buffered", "osm.uza.car", "t.start")))
+rm(list=setdiff(ls(), c("my.cores", "stations.buffered", "osm.clip.station", "t.start")))
 gc()
 memory.limit(size = 56000)
-
-# clip osm links by largest weather station radii
-# b/c we don't need all the network so this greatly reduces file size moving forward
-osm.clip.station <- intersect(osm.uza.car, stations.buffered[[length(stations.buffered)]]) # better than gIntersection b/c it keeps attributes
 
 # buffer clipped osm data
 # foreach loop in parallel to buffer links
@@ -146,12 +146,22 @@ osm.cleaned <- gBuffer(osm.cleaned, width = 0)  # width = 0 as hack to clean pol
 # dissolve the roadway buffer to a single polygon to calculate area w/o overlaps
 osm.dissolved <- gUnaryUnion(osm.cleaned)
 
+# calculate intersecting osm roadway area aroun each station buffer for each buffer distance
+for(y in 1:length(stations.buffered)){
+  stations.buffered[[y]]$road.area <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y 
+                                             function(x) gArea(gIntersection(stations.buffered[[y]][x,], osm.dissolved))) # calc the area of intersection with the road area
+  
+  # also calculate the percent area in each station buffer
+  stations.buffered[[y]]$road.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
+                                             function(x) (stations.buffered[[y]][x,]$road.area / gArea(stations.buffered[[y]][x,]))) # calc the % road area in buffer
+}
+
 # save everything else
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects
 saveRDS(osm.dissolved, here("data/outputs/osm-dissolved.rds")) # final osm cleaned/clipped/buffered/dissolved output as single spatial object
 
-# shapefile outputs
+# shapefile outputs (to interactively investigate e.g. in QGIS)
 #shapefile(osm.dissolved, here("data/outputs/temp/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
 #shapefile(stations.buffered[[6]], here("data/outputs/temp/stations_r2500ft_buffer"), overwrite = T) # shapefile output of largest station buffer
 #shapefile(uza.stations, here("data/outputs/temp/stations_pts"), overwrite = T) # station points shapefile

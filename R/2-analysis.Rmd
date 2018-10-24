@@ -79,7 +79,8 @@ my.font <- "Century"
 all.stations <- readRDS(here("data/outputs/all-station-data.rds")) # all station data (spatial points w/ metadata)
 uza.stations <- readRDS(here("data/outputs/uza-station-data.rds")) # uza station data (spatial points w/ metadata)
 uza.weather <- readRDS(here("data/outputs/2017-uza-weather-data.rds")) # cleaned uza weather data
-uza.roads <- readRDS(here("data/outputs/osm-dissolved.rds")) # cleaned/clipped/buffered/dissoved UZA OSM data 
+#uza.roads <- readRDS(here("data/outputs/osm-dissolved.rds")) # cleaned/clipped/buffered/dissoved UZA OSM data 
+stations.buffered <- readRDS(here("data/outputs/station-buffers-sp-list.rds")) # station data buffered with appended roadway area and parking area
 
 # cleaned traffic data
 # **(temporary dummy traffic data by osm_id and hour of day, e.g. dummy ICARUS output)**
@@ -87,9 +88,6 @@ dummy.traffic <- as.data.table(matrix(runif(100, 100, 6000), nrow = 100, ncol = 
 dummy.traffic <- dummy.traffic[, floor(.SD)] # round down to nearest whole number for whole data.table
 colnames(dummy.traffic) <- paste0("hour", seq(1:24)) # rename cols to "hour#" (1:24)
 dummy.traffic$osm_id <- seq.int(nrow(dummy.traffic)) # dummy osm_id column (1:100)
-
-# cleaned parking data 
-# *** PLACEHOLDER *** 
 
 
 ## import other various shapefiles for plotting
@@ -209,7 +207,6 @@ uza.weather.summer.station.agg <- uza.weather[month %in% c("Jun","Jul","Aug"), .
 
 ```{r analysis, include = FALSE}
 
-# for each buffer distance around stations, calc the fraction of pavement and the total traffic
 
 ```
 
