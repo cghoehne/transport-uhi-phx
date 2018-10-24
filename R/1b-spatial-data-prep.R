@@ -29,13 +29,15 @@ new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"
 if(length(new.packages)) install.packages(new.packages)
 
 # load packages
-lapply(list.of.packages, library, character.only = TRUE)
+invisible(lapply(list.of.packages, library, character.only = TRUE)) # invisible() just hides printing stuff in console
 
 # IMPORT DATA
 w.stations <- readRDS(here("data/outputs/station-data.rds")) # import cleaned station data
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # import Maricopa County UZA boundary
 osm <- shapefile(here("data/shapefiles/osm/maricopa_county_osm_roads.shp")) # import OSM data (maricopa county clipped raw road network data)
 fclass.info <- fread(here("data/shapefiles/osm/fclass_info.csv")) # additional OSM info by roadway functional class (fclass)
+parking <- readRDS(here("data/phoenix-parking-parcel.rds")) # estimated parking space data for all Maricopa County by APN
+station.parcels <- readRDS(here("data/shapefiles/processed/station-parcels.rds")) # pre-clipped to largest station buffer (r=2500ft) to save repo space
 
 # STATION DATA FORMAT
 # convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
@@ -146,6 +148,7 @@ osm.cleaned <- gBuffer(osm.cleaned, width = 0)  # width = 0 as hack to clean pol
 # dissolve the roadway buffer to a single polygon to calculate area w/o overlaps
 osm.dissolved <- gUnaryUnion(osm.cleaned)
 
+# ROADWAY AND PARKING DATA MERGE TO STATION BUFFERS
 # calculate intersecting osm roadway area aroun each station buffer for each buffer distance
 for(y in 1:length(stations.buffered)){
   stations.buffered[[y]]$road.area <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y 
@@ -156,15 +159,41 @@ for(y in 1:length(stations.buffered)){
                                              function(x) (stations.buffered[[y]][x,]$road.area / gArea(stations.buffered[[y]][x,]))) # calc the % road area in buffer
 }
 
+# calculate the # of spaces and area of parking within each station buffer for each buffer distance
+# assume that for partial parcels, the area of parking scales with the fractional parcel area intersecting the buffer
+# assume that parking + road area cannot be greater than 100% of the buffer area
+# if parking area would put over 100% area, then assume there are parking garages and only use all the buffer area (e.g. 100% area assumed pavement)
+# assume on-street spaces are 
+
+# merge parking data to spatial parcel files (clipped to largest station buffer),
+station.parking <- sp::merge(station.parcels, parking, by = "APN", duplicateGeoms = T) # multi geoms b/c some station buffers overlap so need duplicateGeoms = T 
+
+# calculate area of parcels (in ft^2)
+station.parking$parcel.area <- sapply(1:length(station.parking), function(x) gArea(station.parking[x,]))
+
+# extract the merged parking data w/ station ids to data.table for new variable calcs
+station.parking.dt <- as.data.table(station.parking@data)
+
+# calculate the total number of parking spaces adjusting for partial parcel areas 
+#station.parking.dt[, parking.area := ]
+
+# calculate the total area of parking spaces adjusting for partial parcels areas
+
+## TEMP ##
+parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds"))
+parcels.keep <- parcels[parcels$APN %in% station.parking$APN,]
+parcels.keep$parcel.full.area <- sapply(1:length(parcels.keep), function(x) gArea(parcels.keep[x,]))
+station.parcels <- sp::merge(station.parcels, parcels.keep[,c("parcel.full.area","APN")], by = "APN", duplicateGeoms = T)
+
 # save everything else
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects
 saveRDS(osm.dissolved, here("data/outputs/osm-dissolved.rds")) # final osm cleaned/clipped/buffered/dissolved output as single spatial object
 
 # shapefile outputs (to interactively investigate e.g. in QGIS)
-#shapefile(osm.dissolved, here("data/outputs/temp/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
-#shapefile(stations.buffered[[6]], here("data/outputs/temp/stations_r2500ft_buffer"), overwrite = T) # shapefile output of largest station buffer
-#shapefile(uza.stations, here("data/outputs/temp/stations_pts"), overwrite = T) # station points shapefile
+shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
+shapefile(stations.buffered[[6]], here("data/shapefiles/processed/stations_r2500ft_buffer"), overwrite = T) # shapefile output of largest station buffer
+shapefile(uza.stations, here("data/shapefiles/processed/stations_pts"), overwrite = T) # station points shapefile
 
 t.end <- Sys.time()
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.")
