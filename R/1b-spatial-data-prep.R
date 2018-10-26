@@ -150,7 +150,23 @@ osm.dissolved <- gUnaryUnion(osm.cleaned)
 
 # import parking data and parcel data to merge together
 parking <- readRDS(here("data/phoenix-parking-parcel.rds")) # estimated parking space data for all Maricopa County by APN
-station.parcels <- readRDS(here("data/shapefiles/processed/station-parcels.rds")) # pre-clipped to largest station buffer (r=2500ft) to save space, has full parcel area calc'd
+#station.parcels <- readRDS(here("data/shapefiles/processed/station-parcels.rds")) # parcels pre-clipped station buffers to save space, 
+# also has full parcel area calc'd. script for creating this object from larger parcel database is at bottom
+
+# ***TEMP***
+parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds")) # all parcels in region
+registerDoParallel(cores = my.cores) # register parallel backend
+station.parcels <- foreach(i = 1:length(stations.buffered), .packages = c("sp","rgeos"), .combine = c) %dopar% { # clip station.parcels to all station buffers
+  intersect(parcels, stations.buffered[[i]]) } # and store as list of SpatialPointDataFrames
+parcels.keep <- parcels[parcels$APN %in% station.parcels[[6]]$APN,]  # create list of parcels that are within largest buffer (keeps all relevant parcels in station buffers)
+parcels.keep$parcel.full.area <- sapply(1:length(parcels.keep), function(x) gArea(parcels.keep[x,]))  # calculate the full area of all relevant parcels
+# merge parcel.full.area to station parcels and keep duplicates b/c some parcels in multiple buffers
+station.parcels <- sp::merge(station.parcels, parcels.keep[,c("parcel.full.area","APN")], by = "APN", duplicateGeoms = T) 
+saveRDS(here("data/shapefiles/processed/station-parcels.rds")) # save station parcel data 
+save.image(here("data/outputs/temp/sp-prep-temp.RData")) # save temp workspace incase
+rm(parcels)
+gc()
+# ***TEMP***
 
 # calc some new variables in the list of spatial objects using sapply
 for(y in 1:length(stations.buffered)){
@@ -168,7 +184,6 @@ for(y in 1:length(stations.buffered)){
                                               function(x) stations.buffered[[y]][x,]$road.area / stations.buffered[[y]][x,]$buffer.area) # calc the % roadway area in buffer
 }
 
-
 # calculate the # of spaces and area of parking within each station buffer for each buffer distance
 # assume that for partial parcels, the area of parking scales with the fractional parcel area intersecting the buffer
 # assume that parking + road area cannot be greater than 100% of the buffer area
@@ -184,23 +199,47 @@ station.parking$parcel.area <- sapply(1:length(station.parking), function(x) gAr
 # extract the merged parking data w/ station ids to data.table for new variable calcs
 station.parking.dt <- as.data.table(station.parking@data)
 
-# calculate the total number of parking spaces adjusting for partial parcel areas
-station.parking.dt[, parking.area := (9*18) * spaces * parcel.area / parcel.full.area]
-# parking area = (space size in ft) * (# of spaces at parcel) * (fraction of parcel area w/in station buffer)
+# re-calculate the total number of parking spaces adjusting for partial parcel areas and calc parking area
+station.parking.dt[, spaces := floor(spaces * parcel.area / parcel.full.area)]
+station.parking.dt[, parking.area := (9*18) * spaces]
+# so: parking area = (space size in ft) * (# of spaces at parcel) * (fraction of parcel area w/in station buffer)
 
 # aggregate total parking spaces and area by station 
-#station.parking.dt.a <- 
+station.parking.dt.a <- station.parking.dt[, .(tot.park.area = sum(parking.area, na.rm = T),
+                                               tot.park.spaces = sum(spaces, na.rm = T)),
+                                           by = .(station.name)]
 
 # merge the total parking spaces and area to the buffered station data by station.name
-#for(y in 1:length(stations.buffered)){
-#  stations.buffered[[y]] <- sp::merge(stations.buffered[[y]], )
-#}
+for(y in 1:length(stations.buffered)){
+  stations.buffered[[y]] <- merge(stations.buffered[[y]], station.parking.dt.a, by = "station.name")
+}
 
+# calc parking % area in station buffers and adjust total spaces if total parking area + roadway area > station buffer
+# (which means there is multistory parking and we just assume there is a 100% road + parking coverage)
+for(y in 1:length(stations.buffered)){
+  stations.buffered[[y]]$park.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
+                                             function(x) stations.buffered[[y]][x,]$tot.park.area / stations.buffered[[y]][x,]$buffer.area) # calc the % parking area in buffer
+  
+  # create coverage area flag to mark which features have the issue of too much parking coverage
+  stations.buffered[[y]]$park.cov.flag <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
+                                                   # if the % of parking + road area is over 100%
+                                                   function(x) ifelse(stations.buffered[[y]][x,]$park.prct + stations.buffered[[y]][x,]$road.prct > 1,
+                                                                      1, 0)) # mark 1 for flag, 0 for not.
+  
+  # re-adjust total parking spaces if parking coverage is too high
+  stations.buffered[[y]]$tot.park.spaces <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
+                                                                # if the parking coverage is flagged (% of parking + road area is over 100%)
+                                             function(x) ifelse(stations.buffered[[y]][x,]$park.cov.flag == 1, 
+                                                                # then reduce spaces based by excess parking area
+                                                                stations.buffered[[y]][x,]$tot.park.spaces - floor((stations.buffered[[y]][x,]$tot.park.area + stations.buffered[[y]][x,]$road.area - stations.buffered[[y]][x,]$buffer.area)/(9*18)),
+                                                                # otherwise total spaces stays the same
+                                                                stations.buffered[[y]][x,]$tot.park.spaces))
+}
 
-# save everything else
+# save things
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects
-saveRDS(osm.dissolved, here("data/outputs/osm-dissolved.rds")) # final osm cleaned/clipped/buffered/dissolved output as single spatial object
+#saveRDS(osm.dissolved, here("data/outputs/osm-dissolved.rds")) # final osm cleaned/clipped/buffered/dissolved output as single spatial object
 
 # shapefile outputs (to interactively investigate e.g. in QGIS)
 shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
@@ -211,14 +250,11 @@ t.end <- Sys.time()
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.")
 #load(here("data/outputs/temp/sp-prep.RData"))
 
-# this data came with pre-clipped parcel data and appended parking data by parcel id to it
+# this data came with pre-clipped parcel data with appended parking data linked via parcel id
 # if starting with larger parcel data, use this:
 # load raw parcels, create clipped parcels based on station buffers
 # also filter raw parcels to parcels within station buffers and calculate full parcel area (used for partial parking area calcs)
 # merge full.parcel.area varaible back to clipped station.parcels with duplicates true to keep all instances (in case some buffer overlap which is ok)
-#parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds"))
-#station.parcels <- intersect(parcels, stations.buffered[[6]])
-#parcels.keep <- parcels[parcels$APN %in% station.parking$APN,]
-#parcels.keep$parcel.full.area <- sapply(1:length(parcels.keep), function(x) gArea(parcels.keep[x,]))
-#station.parcels <- sp::merge(station.parcels, parcels.keep[,c("parcel.full.area","APN")], by = "APN", duplicateGeoms = T)
+
+
 
