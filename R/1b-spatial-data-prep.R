@@ -3,10 +3,10 @@
 ## OSM DATA IMPORT and FORMART to USE with WEATHER STATION DATA ##
 #################################################################
 
-# start by maxing out the memory allocation (use high number to force max)
+# start by maxing out the memory allocation (we use high number to force max allocation)
 gc()
-memory.limit(size = 50000)
-t.start <- Sys.time()
+memory.limit(size = 56000) 
+t.start <- Sys.time() # end script timestamp
 
 # list of all dependant packages
 list.of.packages <- c("tidyverse",
@@ -73,7 +73,7 @@ stations.buffered <- foreach(i = 1:length(radii.buffers), .packages = c("sp","rg
 # assume roadway widths are constant by fclass
 # 1way roadway width is based on typical regional street design 
 # and average observed roadway widths by functional class
-# proj is EPSG 2223 and units are in feet
+# this data is all proj in EPSG 2223 and units are in feet
 
 # transform osm crs to EPSG:2223
 osm <- spTransform(osm, crs(uza.buffer))
@@ -150,11 +150,16 @@ osm.dissolved <- gUnaryUnion(osm.cleaned)
 
 # import parking data and parcel data to merge together
 parking <- readRDS(here("data/phoenix-parking-parcel.rds")) # estimated parking space data for all Maricopa County by APN
-#station.parcels <- readRDS(here("data/shapefiles/processed/station-parcels.rds")) # parcels pre-clipped station buffers to save space, 
+station.parcels <- readRDS(here("data/shapefiles/processed/station-parcels.rds")) # parcels pre-clipped station buffers to save space, 
 # also has full parcel area calc'd. script for creating this object from larger parcel database is at bottom
 
-# ***TEMP***
-parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds")) # all parcels in region
+# ***TEMP HERE; MOVE TO BOTTOM AND CONVERT TO COMMENTS TO PRESERVE***
+# this data came with pre-clipped parcel data for which we then append parking data via parcel id
+# if starting with larger parcel data, use the below script will
+# load unclipped regional parcel data, create clipped parcels based on variable station buffers
+# and filter raw parcels to parcels within station buffers to then calculate full parcel area (used for partial parking area calcs b/c some parcels intersect buffer boundary)
+# merge full.parcel.area varaible back to clipped station.parcels with duplicates true to keep all instances (b/c if some buffers overlap, parcels can be in multiple station buffers)
+parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds")) # load full parcels in region
 registerDoParallel(cores = my.cores) # register parallel backend
 station.parcels <- foreach(i = 1:length(stations.buffered), .packages = c("sp","rgeos"), .combine = c) %dopar% { # clip station.parcels to all station buffers
   intersect(parcels, stations.buffered[[i]]) } # and store as list of SpatialPointDataFrames
@@ -246,15 +251,11 @@ shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwr
 shapefile(stations.buffered[[6]], here("data/shapefiles/processed/stations_r2500ft_buffer"), overwrite = T) # shapefile output of largest station buffer
 shapefile(uza.stations, here("data/shapefiles/processed/stations_pts"), overwrite = T) # station points shapefile
 
-t.end <- Sys.time()
-paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.")
-#load(here("data/outputs/temp/sp-prep.RData"))
+t.end <- Sys.time() # end script timestamp
+paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
+#load(here("data/outputs/temp/sp-prep.RData")) # if need to load previous data
 
-# this data came with pre-clipped parcel data with appended parking data linked via parcel id
-# if starting with larger parcel data, use this:
-# load raw parcels, create clipped parcels based on station buffers
-# also filter raw parcels to parcels within station buffers and calculate full parcel area (used for partial parking area calcs)
-# merge full.parcel.area varaible back to clipped station.parcels with duplicates true to keep all instances (in case some buffer overlap which is ok)
+
 
 
 
