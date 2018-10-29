@@ -130,7 +130,7 @@ memory.limit(size = 56000)
 # (stores as list of SpatialPointDataFrames)
 registerDoParallel(cores = my.cores) # register parallel backend
 w <- unique(osm.clip.station$buf.ft) # list of unique buffer widths
-b <- list() # empty list for foreach
+b <- list() # create empty list for foreach
 osm.buffered <- foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
   b[[i]] <- gBuffer(osm.clip.station[osm.clip.station$buf.ft == w[i], ], byid = F, width = w[i], capStyle = "FLAT") # buf.ft is already adjusted to correct buffer distances
 } # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
@@ -161,13 +161,13 @@ station.parcels <- readRDS(here("data/shapefiles/processed/station-parcels.rds")
 # merge full.parcel.area varaible back to clipped station.parcels with duplicates true to keep all instances (b/c if some buffers overlap, parcels can be in multiple station buffers)
 parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds")) # load full parcels in region
 registerDoParallel(cores = my.cores) # register parallel backend
-station.parcels <- foreach(i = 1:length(stations.buffered), .packages = c("sp","rgeos"), .combine = c) %dopar% { # clip station.parcels to all station buffers
-  intersect(parcels, stations.buffered[[i]]) } # and store as list of SpatialPointDataFrames
+station.parcels <- foreach(i = 1:length(stations.buffered), .packages = c("sp","rgeos"), .combine = c) %dopar% { 
+  b[[i]] <- intersect(parcels, stations.buffered[[i]]) } # clip parcels to those w/in station buffers and store as list of SpatialPointDataFrames
 parcels.keep <- parcels[parcels$APN %in% station.parcels[[6]]$APN,]  # create list of parcels that are within largest buffer (keeps all relevant parcels in station buffers)
 parcels.keep$parcel.full.area <- sapply(1:length(parcels.keep), function(x) gArea(parcels.keep[x,]))  # calculate the full area of all relevant parcels
 # merge parcel.full.area to station parcels and keep duplicates b/c some parcels in multiple buffers
 station.parcels <- sp::merge(station.parcels, parcels.keep[,c("parcel.full.area","APN")], by = "APN", duplicateGeoms = T) 
-saveRDS(here("data/shapefiles/processed/station-parcels.rds")) # save station parcel data 
+saveRDS(station.parcels, here("data/shapefiles/processed/station-parcels.rds")) # save station parcel data 
 save.image(here("data/outputs/temp/sp-prep-temp.RData")) # save temp workspace incase
 rm(parcels)
 gc()
