@@ -162,6 +162,7 @@ for(y in 1:length(stations.buffered)){
                                               function(x) stations.buffered[[y]][x,]$road.area / stations.buffered[[y]][x,]$buffer.area) # calc the % roadway area in buffer
 }
 
+# **PICKUP HERE**
 
 # PARKING
 
@@ -173,28 +174,8 @@ for(y in 1:length(stations.buffered)){
 
 # import parking data and parcel data to merge together
 parking <- readRDS(here("data/phoenix-parking-parcel.rds")) # estimated parking space data for all Maricopa County by APN
-#station.parcels <- readRDS(here("data/shapefiles/processed/station-parcels.rds")) # parcels pre-clipped station buffers to save space, 
+station.parcels <- readRDS(here("data/shapefiles/processed/station-parcels.rds")) # parcels pre-clipped station buffers to save space, 
 # also has full parcel area calc'd. script for creating this object from larger parcel database is at bottom
-
-# ** TEMP
-# this data came with pre-clipped parcel data for which we then append parking data via parcel id
-# if starting with larger parcel data, use the below script will
-# load unclipped regional parcel data, create clipped parcels based on variable station buffers
-# and filter raw parcels to parcels within station buffers to then calculate full parcel area (used for partial parking area calcs b/c some parcels intersect buffer boundary)
-# merge full.parcel.area varaible back to clipped station.parcels with duplicates true to keep all instances (b/c if some buffers overlap, parcels can be in multiple station buffers)
-parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds")) # load full parcels in region
-registerDoParallel(cores = my.cores) # register parallel backend
-station.parcels <- foreach(i = 1:length(stations.buffered), .packages = c("sp","rgeos","raster"), .combine = c) %dopar% { 
-  b[[i]] <- intersect(parcels, stations.buffered[[i]]) } # clip parcels to those w/in station buffers and store as list of SpatialPointDataFrames
-parcels.keep <- parcels[parcels$APN %in% station.parcels[[6]]$APN,]  # create list of parcels that are within largest buffer (keeps all relevant parcels in station buffers)
-parcels.keep$parcel.full.area <- sapply(1:length(parcels.keep), function(x) gArea(parcels.keep[x,]))  # calculate the full area of all relevant parcels
-for(y in 1:length(station.parcels)){ # merge parcel.full.area to station parcels sp list and keep duplicates b/c some parcels in multiple buffers that overlap
-  station.parcels[[y]] <- sp::merge(station.parcels[[y]], parcels.keep[,c("parcel.full.area","APN")], by = "APN", duplicateGeoms = T, all.x = T)}
-saveRDS(station.parcels, here("data/shapefiles/processed/station-parcels.rds")) # save station parcel data 
-save.image(here("data/outputs/temp/sp-prep-temp.RData")) # save temp workspace incase
-rm(parcels)
-gc()
-
 
 # create parking data from parcel data as spatial dataframes in list
 station.parking <- list() # create empty list 
@@ -258,8 +239,28 @@ shapefile(uza.stations, here("data/shapefiles/processed/stations_pts"), overwrit
 
 t.end <- Sys.time() # end script timestamp
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
-#load(here("data/outputs/temp/sp-prep.RData")) # if need to load previous data
 
+
+# this data came with pre-clipped parcel data for which we then append parking data via parcel id
+# if starting with larger parcel data, use the below script will
+# load unclipped regional parcel data, create clipped parcels based on variable station buffers
+# and filter raw parcels to parcels within station buffers to then calculate full parcel area (used for partial parking area calcs b/c some parcels intersect buffer boundary)
+# merge full.parcel.area varaible back to clipped station.parcels with duplicates true to keep all instances (b/c if some buffers overlap, parcels can be in multiple station buffers)
+
+#parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds")) # load full parcels in region
+#parcels.keep <- intersect(parcels, stations.buffered[[6]])
+#rm(parcels)
+#gc()
+#my.cores <- parallel::detectCores()  # store computers cores
+#registerDoParallel(cores = my.cores) # register parallel backend
+#b <- list()
+#station.parcels <- foreach(i = 1:length(stations.buffered), .packages = c("sp","rgeos","raster"), .combine = c) %dopar% { 
+#  b[[i]] <- intersect(parcels.keep, stations.buffered[[i]]) } # clip parcels to those w/in station buffers and store as list of SpatialPointDataFrames
+#parcels.keep$parcel.full.area <- sapply(1:length(parcels.keep), function(x) gArea(parcels.keep[x,]))  # calculate the full area of all relevant parcels
+#for(y in 1:length(station.parcels)){ # merge parcel.full.area to station parcels sp list and keep duplicates b/c some parcels in multiple buffers that overlap
+#  station.parcels[[y]] <- sp::merge(station.parcels[[y]], parcels.keep, by = "APN", duplicateGeoms = TRUE, all.x = TRUE)}
+#saveRDS(station.parcels, here("data/shapefiles/processed/station-parcels.rds")) # save station parcel data 
+#save.image(here("data/outputs/temp/sp-station-parcels-temp.RData")) # save temp workspace incase
 
 
 
