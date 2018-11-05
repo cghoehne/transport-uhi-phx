@@ -162,8 +162,6 @@ for(y in 1:length(stations.buffered)){
                                               function(x) stations.buffered[[y]][x,]$road.area / stations.buffered[[y]][x,]$buffer.area) # calc the % roadway area in buffer
 }
 
-# **PICKUP HERE**
-
 # PARKING
 
 # calculate the # of spaces and area of parking within each station buffer for each buffer distance
@@ -178,32 +176,37 @@ station.parcels <- readRDS(here("data/shapefiles/processed/station-parcels.rds")
 # also has full parcel area calc'd. script for creating this object from larger parcel database is at bottom
 
 # create parking data from parcel data as spatial dataframes in list
-station.parking <- list() # create empty list 
+
+# create empty lists for to store lists of spatial or data.table objects (one for each buffer size)
+station.parking <- list() 
+station.parking.dt <- list()
+station.parking.dt.a <- list()
+
 for(y in 1:length(station.parcels)){ 
   
   # merge parking data to spatial parcel files and store in newly named list
   station.parking[[y]] <- sp::merge(station.parcels[[y]], parking, by = "APN", duplicateGeoms = T, all.x = T)
   
-  # calculate area of parcels (in ft^2)
+  # calculate actual area of parcels (in ft^2)
   station.parking[[y]]$parcel.area <- sapply(1:length(station.parking[[y]]), function(x) gArea(station.parking[[y]][x,]))
+  
+  # extract the merged parking data w/ station ids to data.table for new variable calcs
+  station.parking.dt[[y]] <- as.data.table(station.parking[[y]]@data)
+  
+  # re-calculate the total number of parking spaces adjusting for partial parcel areas and calc parking area
+  station.parking.dt[[y]][, spaces := floor(spaces * parcel.area / parcel.full.area)]
+  station.parking.dt[[y]][, parking.area := (9*18) * spaces]
+  # so; parking area = (space size in ft) * (# of spaces at parcel) * (fraction of parcel area w/in station buffer)
+  
+  # aggregate total parking spaces and area by station 
+  station.parking.dt.a[[y]] <- station.parking.dt[[y]][, .(tot.park.area = sum(parking.area, na.rm = T),
+                                                           tot.park.spaces = sum(spaces, na.rm = T)),
+                                                       by = .(station.name)]
   }
-
-# extract the merged parking data w/ station ids to data.table for new variable calcs
-station.parking.dt <- as.data.table(station.parking@data)
-
-# re-calculate the total number of parking spaces adjusting for partial parcel areas and calc parking area
-station.parking.dt[, spaces := floor(spaces * parcel.area / parcel.full.area)]
-station.parking.dt[, parking.area := (9*18) * spaces]
-# so; parking area = (space size in ft) * (# of spaces at parcel) * (fraction of parcel area w/in station buffer)
-
-# aggregate total parking spaces and area by station 
-station.parking.dt.a <- station.parking.dt[, .(tot.park.area = sum(parking.area, na.rm = T),
-                                               tot.park.spaces = sum(spaces, na.rm = T)),
-                                           by = .(station.name)]
 
 # merge the total parking spaces and area to the buffered station data by station.name
 for(y in 1:length(stations.buffered)){
-  stations.buffered[[y]] <- sp::merge(stations.buffered[[y]], station.parking.dt.a, by = "station.name", duplicateGeoms = T, all.x = T)
+  stations.buffered[[y]] <- sp::merge(stations.buffered[[y]], station.parking.dt.a[[y]], by = "station.name", duplicateGeoms = T, all.x = T)
 }
 
 # calc parking % area in station buffers and adjust total spaces if total parking area + roadway area > station buffer
@@ -233,9 +236,9 @@ save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects w/ all parking/road data
 
 # shapefile outputs (to interactively investigate e.g. in QGIS)
-shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
-shapefile(stations.buffered[[6]], here("data/shapefiles/processed/stations_r2500ft_buffer"), overwrite = T) # shapefile output of largest station buffer
-shapefile(uza.stations, here("data/shapefiles/processed/stations_pts"), overwrite = T) # station points shapefile
+#shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
+#shapefile(stations.buffered[[6]], here("data/shapefiles/processed/stations_r2500ft_buffer"), overwrite = T) # shapefile output of largest station buffer
+#shapefile(uza.stations, here("data/shapefiles/processed/stations_pts"), overwrite = T) # station points shapefile
 
 t.end <- Sys.time() # end script timestamp
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
