@@ -76,11 +76,13 @@ my.font <- "Century"
 ```{r data import, include = FALSE}
 
 ## import weather, roadway, traffic & parking data
-all.stations <- readRDS(here("data/outputs/all-station-data.rds")) # all station data (spatial points w/ metadata)
-uza.stations <- readRDS(here("data/outputs/uza-station-data.rds")) # uza station data (spatial points w/ metadata)
-uza.weather <- readRDS(here("data/outputs/2017-uza-weather-data.rds")) # cleaned uza weather data
+
+#all.stations <- readRDS(here("data/outputs/all-station-data.rds")) # all station data (spatial points w/ metadata)
 #uza.roads <- readRDS(here("data/outputs/osm-dissolved.rds")) # cleaned/clipped/buffered/dissoved UZA OSM data 
-stations.buffered <- readRDS(here("data/outputs/station-buffers-sp-list.rds")) # station data buffered with appended roadway area and parking area
+uza.stations <- readRDS(here("data/outputs/uza-station-data.rds")) # uza station data (spatial points w/ metadata)
+w.data <- readRDS(here("data/outputs/2017-weather-data.rds")) # cleaned weather data for all stations
+stations.buffered <- readRDS(here("data/outputs/station-buffers-sp-list.rds")) # buffered station data w/ roadway & parking area
+uza.weather <- w.data[station.name %in% uza.stations$station.name] # filter weather data to uza stations
 
 # cleaned traffic data
 # **(temporary dummy traffic data by osm_id and hour of day, e.g. dummy ICARUS output)**
@@ -136,15 +138,12 @@ stations.plot # plot in report
 
 # if time is within 15 min of hour, round to hour, otherwise drop, then
 # aggregate to the min, mean, max temp at each unique timestep for all stations
-uza.weather[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
 uza.weather <- uza.weather[abs(difftime(date.time, date.time.round, units = "min")) < 15]
 uza.weather.agg <- uza.weather[, .(min.temp.f = min(temp.f, na.rm = T),
                              med.temp.f = median(temp.f, na.rm = T),
                              max.temp.f = max(temp.f, na.rm = T)), by = .(date.time.round)]
 
 # hourly temp min/mean/max by 2017 month aggregate across all stations
-uza.weather[, month := as.factor(month(date.time.round, label = T))]
-uza.weather[, hour := hour(date.time.round)]
 uza.weather.month.agg <- uza.weather[, .(min.temp.f = min(temp.f, na.rm = T),
                                    med.temp.f = median(temp.f, na.rm = T),
                                    max.temp.f = max(temp.f, na.rm = T)), by = .(hour,month)]
@@ -207,6 +206,24 @@ uza.weather.summer.station.agg <- uza.weather[month %in% c("Jun","Jul","Aug"), .
 
 ```{r analysis, include = FALSE}
 
+
+#radii.buffers <- c(50,100,200,500,1000,2500)
+
+# create list of data from stations, filter uza.weather to relavent vars, then combine in list of DTs
+s.data <- lapply(1:length(stations.buffered), function(x) as.data.table(stations.buffered[[x]]@data))
+w <- uza.weather[, .(source,station.name,date.time.round,heat.f,month,week,day,wday,hour)]
+all.data <- lapply(1:length(s.data), function(x) w[s.data[[x]], on = .(station.name,source), nomatch = 0])
+
+
+# test summer max temps vs parking/roadway percent
+w.data.agg <- uza.weather[month %in% c("Jun","Jul","Aug"), .(max.temp = max(temp.f, na.rm = T)), by = .(station.name)]
+#w.data.agg[, max.temp := ifelse(!is.finite(max.wk.temp), NA, max.wk.temp)]
+w.data.agg <- w.data.agg[data.500ft.r, on = .(station.name), nomatch = 0]
+w.data.agg <- w.data.agg[data.500ft.r, on = .(station.name), nomatch = 0]
+plot(w.data.agg$max.avg.day.temp, w.data.agg$road.prct)
+plot(w.data.agg$max.avg.day.temp, w.data.agg$park.prct)
+summary(lm(w.data.agg$max.avg.day.temp ~ w.data.agg$road.prct))
+summary(lm(w.data.agg$max.avg.day.temp ~ w.data.agg$park.prct))
 
 ```
 

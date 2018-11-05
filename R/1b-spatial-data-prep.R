@@ -51,13 +51,6 @@ uza.buffer <- gBuffer(uza.border, byid = F, width = 5280)
 # clip station points to ones w/in uza 1mi buffer
 uza.stations <- raster::intersect(w.stations.spdf, uza.buffer)
 
-# filter station.list to uza stations
-uza.stations.list <- w.stations[station.name %in% uza.stations$station.name]
-
-# import and filter weather data to only stations in uza
-weather.data <- readRDS(here("data/outputs/2017-weather-data.rds"))
-uza.weather <- weather.data[station.name %in% uza.stations.list$station.name]
-
 # foreach loop in parallel to buffer stations points by multiple radii
 # note that the foreach loop in parallel probably isn't necessary
 my.cores <- parallel::detectCores()  # store computers cores
@@ -117,7 +110,6 @@ osm.clip.station <- intersect(osm.uza.car, stations.buffered[[length(stations.bu
 # save some data 
 saveRDS(w.stations.spdf, here("data/outputs/all-station-data.rds")) # saves station data (all) as spatial r object (points)
 saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # saves station data (uza) as spatial r object (points)
-saveRDS(uza.weather, here("data/outputs/2017-uza-weather-data.rds")) # saves weather data filtered to only uza stations
 saveRDS(osm.clip.station, here("data/outputs/2017-uza-weather-data.rds")) # saves clipped osm link data around stations (use for linking w/ traffic data)
 
 # clean up space
@@ -229,6 +221,9 @@ for(y in 1:length(stations.buffered)){
                                                                 stations.buffered[[y]][x,]$tot.park.spaces - floor((stations.buffered[[y]][x,]$tot.park.area + stations.buffered[[y]][x,]$road.area - stations.buffered[[y]][x,]$buffer.area)/(9*18)),
                                                                 # otherwise total spaces stays the same
                                                                 stations.buffered[[y]][x,]$tot.park.spaces))
+  # recalculate parking percent of area (will be max 100% if road is 0%, road + park <= 100%)
+  stations.buffered[[y]]$park.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
+                                             function(x) stations.buffered[[y]][x,]$tot.park.area / stations.buffered[[y]][x,]$buffer.area) # calc the % parking area in buffer
 }
 
 # save things

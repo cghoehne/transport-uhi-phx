@@ -14,7 +14,7 @@ new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"
 if(length(new.packages)) install.packages(new.packages)
 
 # load packages
-lapply(list.of.packages, library, character.only = TRUE)
+invisible(lapply(list.of.packages, library, character.only = TRUE))
 
 
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
@@ -288,6 +288,16 @@ w.stations <- rbindlist(list(azmet.stations,ncei.stations,mcfcd.stations,ibut.st
 # calculate heat index, (National Weather Surface improved estimate of Steadman eqn. (heat index calculator eqns)
 w.data[, heat.f := heat.index(t = temp.f, dp = dewpt.f, temperature.metric = "fahrenheit", output.metric = "fahrenheit", round = 0)]
 w.data[, heat.c := heat.index(t = temp.c, dp = dewpt.c, temperature.metric = "celsius", output.metric = "celsius", round = 1)]
+
+# add some other variables 
+w.data[, month := as.factor(month(date.time, label = T))]
+w.data[, week := as.factor(week(date.time))]
+w.data[, day := as.factor(day(date.time))]
+w.data[, wday := as.factor(wday(date.time, label = T))]
+w.data[, hour := hour(date.time)]
+
+# create rounded data.time to more easily filter by observations on/near the hour
+w.data[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
 
 # calculate observations in 2017 for each station by each data type
  for(station in w.stations$station.name){
