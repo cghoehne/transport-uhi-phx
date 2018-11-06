@@ -208,22 +208,42 @@ uza.weather.summer.station.agg <- uza.weather[month %in% c("Jun","Jul","Aug"), .
 
 
 #radii.buffers <- c(50,100,200,500,1000,2500)
-
+# BEST SO FAR IS 100 >= R >= 500 ft
 # create list of data from stations, filter uza.weather to relavent vars, then combine in list of DTs
 s.data <- lapply(1:length(stations.buffered), function(x) as.data.table(stations.buffered[[x]]@data))
 w <- uza.weather[, .(source,station.name,date.time.round,heat.f,month,week,day,wday,hour)]
 all.data <- lapply(1:length(s.data), function(x) w[s.data[[x]], on = .(station.name,source), nomatch = 0])
-
+saveRDS(all.data, here("data/outputs/all-merged-data.rds"))
 
 # test summer max temps vs parking/roadway percent
-w.data.agg <- uza.weather[month %in% c("Jun","Jul","Aug"), .(max.temp = max(temp.f, na.rm = T)), by = .(station.name)]
-#w.data.agg[, max.temp := ifelse(!is.finite(max.wk.temp), NA, max.wk.temp)]
-w.data.agg <- w.data.agg[data.500ft.r, on = .(station.name), nomatch = 0]
-w.data.agg <- w.data.agg[data.500ft.r, on = .(station.name), nomatch = 0]
-plot(w.data.agg$max.avg.day.temp, w.data.agg$road.prct)
-plot(w.data.agg$max.avg.day.temp, w.data.agg$park.prct)
-summary(lm(w.data.agg$max.avg.day.temp ~ w.data.agg$road.prct))
-summary(lm(w.data.agg$max.avg.day.temp ~ w.data.agg$park.prct))
+all.data
+all.data <- lapply(1:length(all.data), function(x) all.data[[x]][, pave.prct := road.prct + park.prct]) # create pavement total %
+w.data.agg <- all.data[[2]][source != "iButton", .(max.temp = max(heat.f, na.rm = T), road.prct = mean(road.prct, na.rm = T), park.prct = mean(park.prct, na.rm = T)), by = .(station.name)] # aggregate
+w.data.agg[, max.temp := ifelse(!is.finite(max.temp), NA, max.temp)] # set inf values to NA
+
+plot(w.data.agg[road.prct != 0]$max.temp, w.data.agg[road.prct != 0]$road.prct)
+summary(lm(w.data.agg[road.prct != 0]$max.temp ~ w.data.agg[road.prct != 0]$road.prct))
+
+plot(w.data.agg[park.prct != 0]$max.temp, w.data.agg[park.prct != 0]$park.prct)
+summary(lm(w.data.agg[park.prct != 0]$max.temp ~ w.data.agg[park.prct != 0]$park.prct))
+
+# linear model of 2017 max heat index by non iButton stations by pavement fraction
+lm1 <- lm(w.data.agg[pave.prct != 0]$max.temp ~ w.data.agg[pave.prct != 0]$pave.prct)
+summary(lm1)
+(ggplot(aes(y = max.temp, x = pave.prct), data = w.data.agg[pave.prct != 0]) 
+  + geom_point()
+  + stat_smooth(method = "lm")
+  + geom_text(aes(x = 0.1, y = 117), label = paste("R^2 ==",round(summary(lm1)$r.squared, 2)), parse = T)
+  )
+
+# heat change relative to hourly mean (May through September)
+w.data.agg2 <- all.data[[3]][source != "iButton"]
+w.data.agg2 <- w.data.agg2[, hour.mean := mean(heat.f, na.rm = T), by = .(hour,station.name)]
+w.data.agg2[, heat.chng := heat.f - hour.mean]
+
+lm2 <- lm(w.data.agg2[pave.prct != 0]$heat.chng ~ w.data.agg2[pave.prct != 0]$pave.prct)
+summary(lm2)
+
 
 ```
 
