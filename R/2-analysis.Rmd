@@ -25,7 +25,6 @@ list.of.packages <- c("tidyverse",
                       "raster",
                       "tmap",
                       "maptools",
-                      "deldir",
                       "xtable",
                       "knitr",
                       "tinytex",
@@ -103,60 +102,64 @@ highways <- shapefile(here("data/shapefiles/other/phx_metro_hways.shp")) # 2017 
 
 ```{r analysis, include = FALSE}
 
+## First Pass Linear Regression Analysis
+# test summer max temps vs parking/roadway percent
 
-radii.buffers <- c(50,100,200,500,1000,2500)
-# BEST SO FAR IS 100 >= R >= 500 ft
+# store current radii buffer distances as vector for refrence
+# BEST SO FAR IS ~100 >= R >= ~200 ft
+radii.buffers <- c(100,150,175,200,250,350)
+
 # create list of data from stations, filter uza.weather to relavent vars, then combine in list of DTs
 all.data <- lapply(1:length(stations.buffered), function(x) as.data.table(stations.buffered[[x]]@data))
-
-w <- uza.weather[, .(source,station.name,date.time.round,heat.f,month,week,day,wday,hour)]
-all.data <- lapply(1:length(all.data), function(x) w[s.data[[x]], on = .(station.name,source), nomatch = 0])
-
+w <- uza.weather[, .(source,station.name,date.time.round,heat.f,temp.f,month,week,day,wday,hour)]
+all.data <- lapply(1:length(all.data), function(x) w[all.data[[x]], on = .(station.name,source), nomatch = 0])
 #for(y in 1:length(all.data)){all.data[[y]]$pave.prct <- all.data[[y]]$park.prct + all.data[[y]]$road.prct}
+#saveRDS(all.data, here("data/outputs/all-merged-data.rds")) # save 
 
+# create list of aggregated data frames for each buffer with max yearly temps by station
+max.temp.agg <- list()
+for(y in 1:length(all.data)){
+  max.temp.agg[[y]] <- all.data[[y]][, .(max.temp = max(temp.f, na.rm = T), max.heat = max(heat.f, na.rm = T), road.prct = mean(road.prct, na.rm = T), park.prct = mean(park.prct, na.rm = T), pave.prct = mean(pave.prct, na.rm = T)), by = .(station.name)] # aggregate
+  max.temp.agg[[y]]$max.temp <- ifelse(!is.finite(max.temp.agg[[y]]$max.temp), NA, max.temp.agg[[y]]$max.temp) # set inf values to NA
+  max.temp.agg[[y]]$max.heat <- ifelse(!is.finite(max.temp.agg[[y]]$max.heat), NA, max.temp.agg[[y]]$max.heat) # set inf values to NA
+  max.temp.agg[[y]] <- max.temp.agg[[y]][pave.prct > 0 & pave.prct <= 1] # remove extraneous   & 
+  }
 
-saveRDS(all.data, here("data/outputs/all-merged-data.rds"))
+# create empty lists to store linear regression model/data/plots, iterate through, summarize, and plot
+models <- list() # list of model objects
+models.dt <- list() # list of data.tables of output data from models
+models.pl <- list() # list of model plots
 
-# test summer max temps vs parking/roadway percent #source != "iButton"
-w.data.agg <- all.data[[3]][, .(max.temp = max(heat.f, na.rm = T), road.prct = mean(road.prct, na.rm = T), park.prct = mean(park.prct, na.rm = T), pave.prct = mean(pave.prct, na.rm = T)), by = .(station.name)] # aggregate
-w.data.agg[, max.temp := ifelse(!is.finite(max.temp), NA, max.temp)] # set inf values to NA
-w.data.agg <- w.data.agg[pave.prct <= 1] # remove extraneous  pave.prct > 0 & 
-
-# temp ~ road %
-plot(w.data.agg[road.prct != 0]$max.temp, w.data.agg[road.prct != 0]$road.prct)
-summary(lm(w.data.agg[road.prct != 0]$max.temp ~ w.data.agg[road.prct != 0]$road.prct))
-
-# temp ~ park %
-plot(w.data.agg[park.prct != 0]$max.temp, w.data.agg[park.prct != 0]$park.prct)
-summary(lm(w.data.agg[park.prct != 0]$max.temp ~ w.data.agg[park.prct != 0]$park.prct))
-
-lm <- list()
 # linear model of 2017 max heat index by non iButton stations by pavement fraction
-for(a in 1:length(all.data)){
-  lm1 <- lm(w.data.agg$max.temp ~ w.data.agg$pave.prct)
-}
-
-
-lm1.dt <- as.data.table(data.frame(fit = lm1$fitted.values, x = lm1$model[,2], y = lm1$model[,1]))
-conf.i <- as.data.table(predict(lm1, interval="confidence", level = 0.95))
-lm1.dt <- merge(lm1.dt[,fit.f := as.factor(fit)], conf.i[, fit.f := as.factor(fit)][,fit := NULL], by = "fit.f", all = T)[,fit.f := NULL]
-lm.p1 <- (ggplot()
+for(a in 1:length(max.temp.agg)){
+  models[[a]] <- lm(max.temp.agg[[a]]$max.heat ~ max.temp.agg[[a]]$pave.prct)
+  models.dt[[a]] <- as.data.table(data.frame(fit = signif(models[[a]]$fitted.values,6), x = signif(models[[a]]$model[,2],6), y = signif(models[[a]]$model[,1],6)))
+  conf.i <- as.data.table(predict(models[[a]], interval="confidence", level = 0.95))
+  conf.i[, `:=`(lwr = signif(lwr,6), upr = signif(upr,6), fit.f = as.factor(signif(fit,6)))][,fit := NULL]
+  models.dt[[a]] <- merge(models.dt[[a]][,fit.f := as.factor(fit)], unique(conf.i), by = "fit.f", all.x = T)[,fit.f := NULL]
+  
+  # plots
+  models.pl[[a]] <- (ggplot()
           + geom_segment(aes(x = 0, y = 100, xend = 1, yend = 100))   # x border (x,y) (xend,yend)
           + geom_segment(aes(x = 0, y = 100, xend = 0, yend = 135))  # y border (x,y) (xend,yend)
-          + geom_ribbon(aes(ymin = lwr, ymax = upr, x = x), fill = "grey30", alpha = 0.2, data = lm1.dt)
-          + geom_line(aes(y = fit, x = x), data = lm1.dt, colour = "red")
-          + geom_point(aes(y = max.temp, x = pave.prct), data = w.data.agg)
+          + geom_ribbon(aes(ymin = lwr, ymax = upr, x = x), fill = "grey30", alpha = 0.2, data = models.dt[[a]])
+          + geom_line(aes(y = fit, x = x), data = models.dt[[a]], colour = "red")
+          + geom_point(aes(y = y, x = x), data = models.dt[[a]])
           + scale_x_continuous(expand = c(0,0))
           + scale_y_continuous(expand = c(0,0))
-          + labs(x = "Fractional Surrounding Area of Road & Parking Pavement (r=200ft)", y = "2017 Max Observed Heat Index")
-          + geom_text(aes(x = 0.75, y = 108), label = paste("R^2 ==",signif(summary(lm1)$r.squared, 2)), parse = T, family = my.font)
-          + geom_text(aes(x = 0.75, y = 105), label = paste("p ==",signif(anova(lm1)$'Pr(>F)'[1], 2)), parse = T, family = my.font)+ theme_minimal()
+          + labs(x = paste0("Fractional Surrounding Area of Road & Parking Pavement (r=",radii.buffers[[a]],"ft)"), y = "2017 Max Observed Heat Index")
+          + geom_text(aes(x = 0.75, y = 108), label = paste("R^2 ==",signif(summary(models[[a]])$r.squared, 2)), parse = T, family = my.font)
+          + geom_text(aes(x = 0.75, y = 105), label = paste("p ==",signif(anova(models[[a]])$'Pr(>F)'[1], 2)), parse = T, family = my.font)
+          + geom_text(aes(x = 0.75, y = 102), label = paste("n ==",nrow(models.dt[[a]])), parse = T, family = my.font)
+          + theme_minimal()
           + theme(text = element_text(family = my.font, size = 12),
                   plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"))
           )
+  
+  # save plots as png
+  ggsave(paste0("max-temp-by-pavement-regression-r",radii.buffers[[a]],"ft.png"), models.pl[[a]], device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
+}
 
-
-ggsave("max-temp-by-pavement-regression.png", lm.p1, device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
 
 ```
 
