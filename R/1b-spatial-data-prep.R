@@ -55,7 +55,7 @@ uza.stations <- raster::intersect(w.stations.spdf, uza.buffer)
 # note that the foreach loop in parallel probably isn't necessary
 my.cores <- parallel::detectCores()  # store computers cores
 registerDoParallel(cores = my.cores) # register parallel backend
-radii.buffers <- c(50,100,200,500,1000,2500) # radii for buffer on each station point (in feet)
+radii.buffers <- c(100,200,300,400,500,600) # radii for buffer on each station point (in feet)
 stations.buffered <- foreach(i = 1:length(radii.buffers), .packages = c("sp","rgeos"), .combine = c) %dopar% {
   gBuffer(uza.stations, byid = T, width = radii.buffers[i]) } # (stores as list of SpatialPointDataFrames)
 
@@ -221,9 +221,14 @@ for(y in 1:length(stations.buffered)){
                                                                 stations.buffered[[y]][x,]$tot.park.spaces - floor((stations.buffered[[y]][x,]$tot.park.area + stations.buffered[[y]][x,]$road.area - stations.buffered[[y]][x,]$buffer.area)/(9*18)),
                                                                 # otherwise total spaces stays the same
                                                                 stations.buffered[[y]][x,]$tot.park.spaces))
+  
   # recalculate parking percent of area (will be max 100% if road is 0%, road + park <= 100%)
   stations.buffered[[y]]$park.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
                                              function(x) stations.buffered[[y]][x,]$tot.park.area / stations.buffered[[y]][x,]$buffer.area) # calc the % parking area in buffer
+  
+  # calculate pavement percent of area 
+  stations.buffered[[y]]$pave.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
+                                             function(x) stations.buffered[[y]][x,]$park.prct + stations.buffered[[y]][x,]$road.prct) # calc the % parking area in buffer
 }
 
 # save things

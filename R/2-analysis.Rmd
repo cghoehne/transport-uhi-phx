@@ -100,11 +100,71 @@ highways <- shapefile(here("data/shapefiles/other/phx_metro_hways.shp")) # 2017 
 
 ```
 
+
+```{r analysis, include = FALSE}
+
+
+radii.buffers <- c(50,100,200,500,1000,2500)
+# BEST SO FAR IS 100 >= R >= 500 ft
+# create list of data from stations, filter uza.weather to relavent vars, then combine in list of DTs
+all.data <- lapply(1:length(stations.buffered), function(x) as.data.table(stations.buffered[[x]]@data))
+
+w <- uza.weather[, .(source,station.name,date.time.round,heat.f,month,week,day,wday,hour)]
+all.data <- lapply(1:length(all.data), function(x) w[s.data[[x]], on = .(station.name,source), nomatch = 0])
+
+#for(y in 1:length(all.data)){all.data[[y]]$pave.prct <- all.data[[y]]$park.prct + all.data[[y]]$road.prct}
+
+
+saveRDS(all.data, here("data/outputs/all-merged-data.rds"))
+
+# test summer max temps vs parking/roadway percent #source != "iButton"
+w.data.agg <- all.data[[3]][, .(max.temp = max(heat.f, na.rm = T), road.prct = mean(road.prct, na.rm = T), park.prct = mean(park.prct, na.rm = T), pave.prct = mean(pave.prct, na.rm = T)), by = .(station.name)] # aggregate
+w.data.agg[, max.temp := ifelse(!is.finite(max.temp), NA, max.temp)] # set inf values to NA
+w.data.agg <- w.data.agg[pave.prct <= 1] # remove extraneous  pave.prct > 0 & 
+
+# temp ~ road %
+plot(w.data.agg[road.prct != 0]$max.temp, w.data.agg[road.prct != 0]$road.prct)
+summary(lm(w.data.agg[road.prct != 0]$max.temp ~ w.data.agg[road.prct != 0]$road.prct))
+
+# temp ~ park %
+plot(w.data.agg[park.prct != 0]$max.temp, w.data.agg[park.prct != 0]$park.prct)
+summary(lm(w.data.agg[park.prct != 0]$max.temp ~ w.data.agg[park.prct != 0]$park.prct))
+
+lm <- list()
+# linear model of 2017 max heat index by non iButton stations by pavement fraction
+for(a in 1:length(all.data)){
+  lm1 <- lm(w.data.agg$max.temp ~ w.data.agg$pave.prct)
+}
+
+
+lm1.dt <- as.data.table(data.frame(fit = lm1$fitted.values, x = lm1$model[,2], y = lm1$model[,1]))
+conf.i <- as.data.table(predict(lm1, interval="confidence", level = 0.95))
+lm1.dt <- merge(lm1.dt[,fit.f := as.factor(fit)], conf.i[, fit.f := as.factor(fit)][,fit := NULL], by = "fit.f", all = T)[,fit.f := NULL]
+lm.p1 <- (ggplot()
+          + geom_segment(aes(x = 0, y = 100, xend = 1, yend = 100))   # x border (x,y) (xend,yend)
+          + geom_segment(aes(x = 0, y = 100, xend = 0, yend = 135))  # y border (x,y) (xend,yend)
+          + geom_ribbon(aes(ymin = lwr, ymax = upr, x = x), fill = "grey30", alpha = 0.2, data = lm1.dt)
+          + geom_line(aes(y = fit, x = x), data = lm1.dt, colour = "red")
+          + geom_point(aes(y = max.temp, x = pave.prct), data = w.data.agg)
+          + scale_x_continuous(expand = c(0,0))
+          + scale_y_continuous(expand = c(0,0))
+          + labs(x = "Fractional Surrounding Area of Road & Parking Pavement (r=200ft)", y = "2017 Max Observed Heat Index")
+          + geom_text(aes(x = 0.75, y = 108), label = paste("R^2 ==",signif(summary(lm1)$r.squared, 2)), parse = T, family = my.font)
+          + geom_text(aes(x = 0.75, y = 105), label = paste("p ==",signif(anova(lm1)$'Pr(>F)'[1], 2)), parse = T, family = my.font)+ theme_minimal()
+          + theme(text = element_text(family = my.font, size = 12),
+                  plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"))
+          )
+
+
+ggsave("max-temp-by-pavement-regression.png", lm.p1, device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
+
+```
+
 ## Plots
 
 Here are the working plots:
 
-```{r preliminary data plots, echo = FALSE}
+```{r data plots, echo = FALSE}
 
 #-#-#-#-#-#-#-#
 # Data Plots #
@@ -204,48 +264,7 @@ uza.weather.summer.station.agg <- uza.weather[month %in% c("Jun","Jul","Aug"), .
 
 ```
 
-```{r analysis, include = FALSE}
 
-
-#radii.buffers <- c(50,100,200,500,1000,2500)
-# BEST SO FAR IS 100 >= R >= 500 ft
-# create list of data from stations, filter uza.weather to relavent vars, then combine in list of DTs
-s.data <- lapply(1:length(stations.buffered), function(x) as.data.table(stations.buffered[[x]]@data))
-w <- uza.weather[, .(source,station.name,date.time.round,heat.f,month,week,day,wday,hour)]
-all.data <- lapply(1:length(s.data), function(x) w[s.data[[x]], on = .(station.name,source), nomatch = 0])
-saveRDS(all.data, here("data/outputs/all-merged-data.rds"))
-
-# test summer max temps vs parking/roadway percent
-all.data
-all.data <- lapply(1:length(all.data), function(x) all.data[[x]][, pave.prct := road.prct + park.prct]) # create pavement total %
-w.data.agg <- all.data[[2]][source != "iButton", .(max.temp = max(heat.f, na.rm = T), road.prct = mean(road.prct, na.rm = T), park.prct = mean(park.prct, na.rm = T)), by = .(station.name)] # aggregate
-w.data.agg[, max.temp := ifelse(!is.finite(max.temp), NA, max.temp)] # set inf values to NA
-
-plot(w.data.agg[road.prct != 0]$max.temp, w.data.agg[road.prct != 0]$road.prct)
-summary(lm(w.data.agg[road.prct != 0]$max.temp ~ w.data.agg[road.prct != 0]$road.prct))
-
-plot(w.data.agg[park.prct != 0]$max.temp, w.data.agg[park.prct != 0]$park.prct)
-summary(lm(w.data.agg[park.prct != 0]$max.temp ~ w.data.agg[park.prct != 0]$park.prct))
-
-# linear model of 2017 max heat index by non iButton stations by pavement fraction
-lm1 <- lm(w.data.agg[pave.prct != 0]$max.temp ~ w.data.agg[pave.prct != 0]$pave.prct)
-summary(lm1)
-(ggplot(aes(y = max.temp, x = pave.prct), data = w.data.agg[pave.prct != 0]) 
-  + geom_point()
-  + stat_smooth(method = "lm")
-  + geom_text(aes(x = 0.1, y = 117), label = paste("R^2 ==",round(summary(lm1)$r.squared, 2)), parse = T)
-  )
-
-# heat change relative to hourly mean (May through September)
-w.data.agg2 <- all.data[[3]][source != "iButton"]
-w.data.agg2 <- w.data.agg2[, hour.mean := mean(heat.f, na.rm = T), by = .(hour,station.name)]
-w.data.agg2[, heat.chng := heat.f - hour.mean]
-
-lm2 <- lm(w.data.agg2[pave.prct != 0]$heat.chng ~ w.data.agg2[pave.prct != 0]$pave.prct)
-summary(lm2)
-
-
-```
 
 This document was compiled using R `r getRversion()`, R Markdown, and the following packages:  
 
