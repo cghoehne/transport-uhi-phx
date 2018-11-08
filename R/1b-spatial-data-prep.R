@@ -55,7 +55,7 @@ uza.stations <- raster::intersect(w.stations.spdf, uza.buffer)
 # note that the foreach loop in parallel probably isn't necessary
 my.cores <- parallel::detectCores()  # store computers cores
 registerDoParallel(cores = my.cores) # register parallel backend
-radii.buffers <- c(100,200,300,400,500,600) # radii for buffer on each station point (in feet)
+radii.buffers <- c(100,150,175,200,250,350) # radii for buffer on each station point (in feet)
 stations.buffered <- foreach(i = 1:length(radii.buffers), .packages = c("sp","rgeos"), .combine = c) %dopar% {
   gBuffer(uza.stations, byid = T, width = radii.buffers[i]) } # (stores as list of SpatialPointDataFrames)
 
