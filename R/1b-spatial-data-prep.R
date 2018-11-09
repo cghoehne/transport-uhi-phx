@@ -291,7 +291,7 @@ tiles <- list() # empty list
 # import tif files as list of tifs
 for(a in 1:length(tile.list)){
   tiles[[a]] <- stack(tile.list[a]) # each tile is a raster stack, each raster is a day in they year
-  tiles[[a]] <- projectRaster(tiles[[a]], crs = crs(stations.buffered[[1]])) # convert tile crs to local AZ crs
+  #tiles[[a]] <- projectRaster(tiles[[a]], crs = crs(stations.buffered[[1]])) # convert tile crs to local AZ crs
 }
 
 ## clip daymet tiles (raster bricks) to buffered uza

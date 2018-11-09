@@ -1,8 +1,16 @@
+# ignore local R files
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+
+# ignore osm shapefiles, temp files
 **/osm_formatted_unbuffered*
 data/outputs/temp/*
-data/daymet/*
+
+# ignore word temp file
 ~$utline.docx
+
+# keep the daymet folder but not data, download through script
+data/daymet/*
+!data/daymet/.gitkeep 
