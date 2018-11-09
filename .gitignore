@@ -4,4 +4,5 @@
 .Ruserdata
 **/osm_formatted_unbuffered*
 data/outputs/temp/*
+data/daymet/*
 ~$utline.docx

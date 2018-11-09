@@ -11,14 +11,13 @@ t.start <- Sys.time() # end script timestamp
 # list of all dependant packages
 list.of.packages <- c("tidyverse",
                       "data.table", 
-                      "lubridate",
                       "rgdal",
                       "rgeos",
-                      "raster",
+                      "ncdf4",
                       "maptools",
                       "sp",
                       "cleangeo",
-                      "tmap",
+                      "daymetr",
                       "doParallel",
                       "foreach",
                       "raster",
@@ -39,14 +38,19 @@ fclass.info <- fread(here("data/shapefiles/osm/fclass_info.csv")) # additional O
 
 # STATION DATA FORMAT
 # convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
+longlat.prj <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
 w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
-                                          proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+                                          proj4string = CRS(longlat.prj))
 
 # transform stations crs to same as other shapefiles 
 w.stations.spdf <- spTransform(w.stations.spdf, crs(uza.border))
 
-# buffer uza boundary by 1 mile
+# buffer uza boundary by 1 mile (1.6 km)
 uza.buffer <- gBuffer(uza.border, byid = F, width = 5280)
+
+# create bounding box for uza for DAYMET data download, which requires top left and bottom right coords c(lat, lon, lat, lon)
+uza.bbox <- spTransform(uza.buffer, longlat.prj)
+uza.bbox <- bbox(uza.bbox)
 
 # clip station points to ones w/in uza 1mi buffer
 uza.stations <- raster::intersect(w.stations.spdf, uza.buffer)
@@ -113,7 +117,7 @@ saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # saves station
 saveRDS(osm.clip.station, here("data/outputs/2017-uza-weather-data.rds")) # saves clipped osm link data around stations (use for linking w/ traffic data)
 
 # clean up space
-rm(list=setdiff(ls(), c("my.cores", "stations.buffered", "osm.clip.station", "t.start")))
+rm(list=setdiff(ls(), c("my.cores", "stations.buffered", "osm.clip.station", "t.start", "uza.bbox")))
 gc()
 memory.limit(size = 56000)
 
@@ -147,11 +151,11 @@ for(y in 1:length(stations.buffered)){
   
   # calculate the area of station buffer (for % area calc). Note it is the same for all features, same buffer
   stations.buffered[[y]]$buffer.area <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                             function(x) gArea(stations.buffered[[y]][x,])) # calc the station area buffer
+                                               function(x) gArea(stations.buffered[[y]][x,])) # calc the station area buffer
   
   # calculate the % area of roadway w/in buffer
   stations.buffered[[y]]$road.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                              function(x) stations.buffered[[y]][x,]$road.area / stations.buffered[[y]][x,]$buffer.area) # calc the % roadway area in buffer
+                                             function(x) stations.buffered[[y]][x,]$road.area / stations.buffered[[y]][x,]$buffer.area) # calc the % roadway area in buffer
 }
 
 # PARKING
@@ -194,7 +198,7 @@ for(y in 1:length(station.parcels)){
   station.parking.dt.a[[y]] <- station.parking.dt[[y]][, .(tot.park.area = sum(parking.area, na.rm = T),
                                                            tot.park.spaces = sum(spaces, na.rm = T)),
                                                        by = .(station.name)]
-  }
+}
 
 # merge the total parking spaces and area to the buffered station data by station.name
 for(y in 1:length(stations.buffered)){
@@ -209,18 +213,18 @@ for(y in 1:length(stations.buffered)){
   
   # create coverage area flag to mark which features have the issue of too much parking coverage
   stations.buffered[[y]]$park.cov.flag <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                                   # if the % of parking + road area is over 100%
-                                                   function(x) ifelse(stations.buffered[[y]][x,]$park.prct + stations.buffered[[y]][x,]$road.prct > 1,
-                                                                      1, 0)) # mark 1 for flag, 0 for not.
+                                                 # if the % of parking + road area is over 100%
+                                                 function(x) ifelse(stations.buffered[[y]][x,]$park.prct + stations.buffered[[y]][x,]$road.prct > 1,
+                                                                    1, 0)) # mark 1 for flag, 0 for not.
   
   # re-adjust total parking spaces if parking coverage is too high
   stations.buffered[[y]]$tot.park.spaces <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                                                # if the parking coverage is flagged (% of parking + road area is over 100%)
-                                             function(x) ifelse(stations.buffered[[y]][x,]$park.cov.flag == 1, 
-                                                                # then reduce spaces based by excess parking area
-                                                                stations.buffered[[y]][x,]$tot.park.spaces - floor((stations.buffered[[y]][x,]$tot.park.area + stations.buffered[[y]][x,]$road.area - stations.buffered[[y]][x,]$buffer.area)/(9*18)),
-                                                                # otherwise total spaces stays the same
-                                                                stations.buffered[[y]][x,]$tot.park.spaces))
+                                                   # if the parking coverage is flagged (% of parking + road area is over 100%)
+                                                   function(x) ifelse(stations.buffered[[y]][x,]$park.cov.flag == 1, 
+                                                                      # then reduce spaces based by excess parking area
+                                                                      stations.buffered[[y]][x,]$tot.park.spaces - floor((stations.buffered[[y]][x,]$tot.park.area + stations.buffered[[y]][x,]$road.area - stations.buffered[[y]][x,]$buffer.area)/(9*18)),
+                                                                      # otherwise total spaces stays the same
+                                                                      stations.buffered[[y]][x,]$tot.park.spaces))
   
   # recalculate parking percent of area (will be max 100% if road is 0%, road + park <= 100%)
   stations.buffered[[y]]$park.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
@@ -235,6 +239,7 @@ for(y in 1:length(stations.buffered)){
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects w/ all parking/road data
 
+load(here("data/outputs/temp/sp-prep.RData"))
 # shapefile outputs (to interactively investigate e.g. in QGIS)
 #shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
 #shapefile(stations.buffered[[6]], here("data/shapefiles/processed/stations_r2500ft_buffer"), overwrite = T) # shapefile output of largest station buffer
@@ -266,6 +271,34 @@ paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start
 #save.image(here("data/outputs/temp/sp-station-parcels-temp.RData")) # save temp workspace incase
 
 
+
+
+# DAYMET DATA DOWNLOAD @ 1km for PHOENIX METRO
+# tmax: daily maximum 2-meter air temperature in degrees Celsius
+# from bounding box, pull top left and bottom right coords c(lat, lon, lat, lon)
+# bounding box is give as:     xmin xmax 
+#                              ymin ymax 
+# top lft (in lat,lon)  (ymax, xmin); 
+# bot rgt (in lat,lon): (ymin, xmax)
+download_daymet_tiles(location = c(uza.bbox[2,2], uza.bbox[1,1], uza.bbox[2,1], uza.bbox[1,2]), 
+                      start = 2016, end = 2016, path = here("data/daymet"), param = c("tmax"))
+nc2tif(path = here("data/daymet"), overwrite = T) # convert to tif to work w/ easier
+
+# create list of daymet netcdf files and import as list of objects
+tile.list <- list.files(here("data/daymet"), recursive= T, pattern="tif$", full.names= T)  
+tiles <- list() # empty list
+
+# import tif files as list of tifs
+for(a in 1:length(tile.list)){
+  tiles[[a]] <- stack(tile.list[a]) # each tile is a raster stack, each raster is a day in they year
+  tiles[[a]] <- projectRaster(tiles[[a]], crs = crs(stations.buffered[[1]])) # convert tile crs to local AZ crs
+}
+
+## clip daymet tiles (raster bricks) to buffered uza
+
+
+## clip + aggregate pavement and parking data by each grid cell (1km x 1km) 
+## and merge parking and pavement data to each grid cell in daymet tiles (raster bricks)
 
 
 
