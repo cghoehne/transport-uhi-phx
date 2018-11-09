@@ -239,7 +239,7 @@ for(y in 1:length(stations.buffered)){
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects w/ all parking/road data
 
-load(here("data/outputs/temp/sp-prep.RData"))
+
 # shapefile outputs (to interactively investigate e.g. in QGIS)
 #shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
 #shapefile(stations.buffered[[6]], here("data/shapefiles/processed/stations_r2500ft_buffer"), overwrite = T) # shapefile output of largest station buffer
@@ -271,6 +271,9 @@ paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start
 #save.image(here("data/outputs/temp/sp-station-parcels-temp.RData")) # save temp workspace incase
 
 
+## **WORKING HERE** ##
+save.image(here("data/outputs/temp/sp-prep-daymet.RData"))
+load(here("data/outputs/temp/sp-prep-daymet.RData"))
 
 
 # DAYMET DATA DOWNLOAD @ 1km for PHOENIX METRO
@@ -281,20 +284,40 @@ paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start
 # top lft (in lat,lon)  (ymax, xmin); 
 # bot rgt (in lat,lon): (ymin, xmax)
 download_daymet_tiles(location = c(uza.bbox[2,2], uza.bbox[1,1], uza.bbox[2,1], uza.bbox[1,2]), 
-                      start = 2016, end = 2016, path = here("data/daymet"), param = c("tmax"))
+                      start = 2016, end = 2016, path = here("data/daymet"), param = "tmax")
 nc2tif(path = here("data/daymet"), overwrite = T) # convert to tif to work w/ easier
 
 # create list of daymet netcdf files and import as list of objects
 tile.list <- list.files(here("data/daymet"), recursive= T, pattern="tif$", full.names= T)  
-tiles <- list() # empty list
+tiles.raw <- list() # empty list
+tiles.prj <- list() # empty list
 
-# import tif files as list of tifs
-for(a in 1:length(tile.list)){
-  tiles[[a]] <- stack(tile.list[a]) # each tile is a raster stack, each raster is a day in they year
-  #tiles[[a]] <- projectRaster(tiles[[a]], crs = crs(stations.buffered[[1]])) # convert tile crs to local AZ crs
-}
+# stack the raw geotiff tiles
+tiles.raw <- lapply(tile.list, stack)
 
-## clip daymet tiles (raster bricks) to buffered uza
+# merge the tiles into one
+tiles.m <- do.call(merge, c(tiles.raw, tolerance = 1))
+
+# project uza buffer to crs of daymet data to crop
+uza.buffer.prj <- spTransform(uza.buffer, crs(tiles.m))
+uza.border.prj <- spTransform(uza.border, crs(tiles.m))
+
+# crop the merged tiles by the projected uza buffer
+tiles.mc <- crop(tiles.m, uza.buffer.prj)
+
+# plot daymet tmax for 2016 day 181 (jun 29)
+plot(tiles.m$layer.181, col = rev(heat.colors(40)))
+plot(uza.buffer.prj, add = T)
+
+# plot daymet tmax for 2016 day 181 (jun 29)
+ncol <- floor(maxValue(tiles.mc$layer.181) - minValue(tiles.mc$layer.181))
+png(filename = here("figures/DAYMET_20160629_tmax_phx.png"))
+plot(tiles.mc$layer.181, col = rev(heat.colors(ncol+1)))
+plot(uza.border.prj, add = T)
+title(main = "DAYMET June 29th, 2016 Max Temperature (deg C)")
+dev.copy(png, filename = here("figures/DAYMET_20160629_tmax_phx.png"), width = 3600, height = 3000)
+dev.off()
+dev.off()
 
 
 ## clip + aggregate pavement and parking data by each grid cell (1km x 1km) 
