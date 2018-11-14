@@ -239,10 +239,10 @@ for(y in 1:length(stations.buffered)){
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects w/ all parking/road data
 
-
 # shapefile outputs (to interactively investigate e.g. in QGIS)
 #shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
-#shapefile(stations.buffered[[6]], here("data/shapefiles/processed/stations_r2500ft_buffer"), overwrite = T) # shapefile output of largest station buffer
+r <- 4
+shapefile(stations.buffered[[r]], here(paste0("data/shapefiles/processed/stations_r",radii.buffers[r],"ft_buffer")), overwrite = T) # shapefile output of largest station buffer
 #shapefile(uza.stations, here("data/shapefiles/processed/stations_pts"), overwrite = T) # station points shapefile
 
 t.end <- Sys.time() # end script timestamp
