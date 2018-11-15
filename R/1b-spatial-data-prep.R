@@ -96,7 +96,14 @@ osm.dt[fclass %in% c("track","track_grade1","track_grade2","track_grade3","track
 osm.dt[, buf.ft := ifelse(oneway == "B", wdth.1way.ft,  # if roadway is bi-directional the buffer radius is equal to the one-way roadway width in feet
                           wdth.1way.ft / 2)] # otherwise divide by 2 as only 1 of 2 directions: buffer raduis = half of 1way width
 
-# update new relevant vars so they appear in osm@data
+# import traffic data aggregated by osm link id and hour
+traffic <- fread(here("data/icarus-osm-traffic.csv"))
+setnames(traffic, "link_id", "osm_id") 
+
+# merge traffic data to osm data by link id
+osm.dt <- merge(osm.dt, traffic, by = "id")
+
+# merge new relevant vars back to spatial osm data so they appear in osm@data
 osm.uza <- merge(osm.uza, osm.dt[, .(osm_id, auto.use, pave.type, buf.ft, descrip)], by = "osm_id")
 
 # remove unnecessary variables before exporting
@@ -322,6 +329,4 @@ dev.off()
 
 ## clip + aggregate pavement and parking data by each grid cell (1km x 1km) 
 ## and merge parking and pavement data to each grid cell in daymet tiles (raster bricks)
-
-
 

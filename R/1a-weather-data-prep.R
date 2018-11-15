@@ -315,3 +315,16 @@ w.stations <- w.stations[n.temp != 0]
 # save final data object
 saveRDS(w.data, here("data/outputs/2017-weather-data.rds"))
 saveRDS(w.stations, here("data/outputs/station-data.rds"))
+
+###
+
+coops_search(begin_date = "20160101", end_date = "20161231", station_name = NULL,
+             product, datum = NULL, units = "metric", time_zone = "gmt",
+             application = "rnoaa", ...)
+
+meteo_nearby_stations(lat_lon_df, lat_colname = "latitude",
+                      lon_colname = "longitude", station_data = ghcnd_stations(), var = "all",
+                      year_min = NULL, year_max = NULL, radius = NULL, limit = NULL)
+
+
+

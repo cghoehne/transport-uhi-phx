@@ -83,12 +83,7 @@ w.data <- readRDS(here("data/outputs/2017-weather-data.rds")) # cleaned weather 
 stations.buffered <- readRDS(here("data/outputs/station-buffers-sp-list.rds")) # buffered station data w/ roadway & parking area
 uza.weather <- w.data[station.name %in% uza.stations$station.name] # filter weather data to uza stations
 
-# cleaned traffic data
-# **(temporary dummy traffic data by osm_id and hour of day, e.g. dummy ICARUS output)**
-dummy.traffic <- as.data.table(matrix(runif(100, 100, 6000), nrow = 100, ncol = 24) * runif(24, 0, 1))
-dummy.traffic <- dummy.traffic[, floor(.SD)] # round down to nearest whole number for whole data.table
-colnames(dummy.traffic) <- paste0("hour", seq(1:24)) # rename cols to "hour#" (1:24)
-dummy.traffic$osm_id <- seq.int(nrow(dummy.traffic)) # dummy osm_id column (1:100)
+# import cleaned traffic data
 
 
 ## import other various shapefiles for plotting
