@@ -3,10 +3,11 @@
 ###########################################################################
 
 # list of all dependant packages
-list.of.packages <- c("tidyverse",
-                      "data.table", 
+list.of.packages <- c("data.table", 
                       "lubridate",
                       "weathermetrics",
+                      "tidyverse",
+                      "rnoaa",
                       "here")
 
 # install missing packages
@@ -316,15 +317,46 @@ w.stations <- w.stations[n.temp != 0]
 saveRDS(w.data, here("data/outputs/2017-weather-data.rds"))
 saveRDS(w.stations, here("data/outputs/station-data.rds"))
 
-###
-
-coops_search(begin_date = "20160101", end_date = "20161231", station_name = NULL,
-             product, datum = NULL, units = "metric", time_zone = "gmt",
-             application = "rnoaa", ...)
-
-meteo_nearby_stations(lat_lon_df, lat_colname = "latitude",
-                      lon_colname = "longitude", station_data = ghcnd_stations(), var = "all",
-                      year_min = NULL, year_max = NULL, radius = NULL, limit = NULL)
 
 
+### get Global Historical Climatology Network daily (GHCND) weather data
+
+# get global list of all ghcnd stations
+ghcnd.stations <- as.data.table(ghcnd_stations())
+
+# set the center of ea downtown to search for nearest stations in radius of metro
+coords <- data.frame(id = c("phx","la"), lat = c(33.453808, 34.055997), lon = c(-112.071277, -117.715813)) 
+
+
+# filter stations to list of stations in 60km radius of (approx.) metro center
+# search radius = 60km (should capture all of metro)
+my.stations <- meteo_nearby_stations(lat_lon_df = coords, lat_colname = "lat",
+                                        lon_colname = "lon", station_data = ghcnd.stations, var = c("TMAX", "TMIN"),
+                                        year_min = 2016, year_max = 2018, radius = 60, limit = NULL)
+
+# pull data from all stations and binds together (phx)
+phx.ghcnd.data <- as.data.table(meteo_pull_monitors(my.stations$phx$id, date_min = "2017-01-01", date_max = "2017-12-31", var = c("TMAX", "TMIN")))
+
+# function to create the decimal in the temp data (raw data does not have the decminal but we'll need it)
+fix.ghcnd.temp <- function(t) {
+  as.numeric(
+    paste0(
+      substr(t, 1, nchar(t) - 1),
+      ".",
+      substr(t, nchar(t), nchar(t))))
+}
+
+# apply function and fix data
+phx.ghcnd.data$tmax <- fix.ghcnd.temp(phx.ghcnd.data$tmax)
+phx.ghcnd.data$tmin <- fix.ghcnd.temp(phx.ghcnd.data$tmin)
+
+# merge two more vars to station data
+my.stations$phx <- merge(my.stations$phx, ghcnd.stations[, .(name,elevation)])
+setnames(my.stations$phx, "id", "station.name")
+setnames(my.stations$phx, "latitude", "lat")
+setnames(my.stations$phx, "longitude", "lon")
+
+# save ghcnd data
+saveRDS(phx.ghcnd.data, here("data/outputs/2017-ghcnd-weather-data.rds"))
+saveRDS(ghcnd.stations, here("data/outputs/ghcnd-station-data.rds"))
 
