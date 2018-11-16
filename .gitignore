@@ -11,6 +11,9 @@ data/outputs/temp/*
 # ignore word temp file
 ~$utline.docx
 
+# ignore my api token
+token1.txt
+
 # keep the daymet folder but not data, download through script
 data/daymet/*
 !data/daymet/.gitkeep 

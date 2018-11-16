@@ -3,10 +3,12 @@
 ###########################################################################
 
 # list of all dependant packages
-list.of.packages <- c("data.table", 
+list.of.packages <- c("httr",
+                      "jsonlite",
                       "lubridate",
                       "weathermetrics",
                       "tidyverse",
+                      "data.table",
                       "rnoaa",
                       "here")
 
@@ -213,7 +215,7 @@ mcfcd.stations$source <- "MCFCD"
 mcfcd.stations <- mcfcd.stations[sensor.type %in% c("Temperature","Dewpoint","Wind Dir.","Peak Wind","Solar Rad.")]
 
 # keep relevant columns only
-mcfcd.stations <- mcfcd.stations[,c("source","station.name","lat","lon","elevation","id")]
+mcfcd.stations <- mcfcd.stations[,c("source","station.name","lat","lon","elevation")]
 
 # simplify station list
 mcfcd.stations <- unique(mcfcd.stations)
@@ -374,10 +376,29 @@ w.data[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
  }
 
 # remove stations with no temp obs
-w.stations <- w.stations[n.temp != 0]
+#w.stations <- w.stations[n.temp != 0]
 
 # save final data object
 saveRDS(w.data, here("data/outputs/2017-weather-data.rds")) # all houlry data
 saveRDS(phx.ghcnd.data, here("data/outputs/2017-ghcnd-weather-data.rds")) # daily summary (non-hourly) data
 saveRDS(w.stations, here("data/outputs/station-data.rds")) # all station data
+
+## MESO WEST DATA RETREIVAL VIA API
+
+# station metadata link w/o token
+link <- "http://api.mesowest.net/v2/stations/metadata?state=AZ&county=Maricopa&status=ACTIVE&token="
+
+# load personal api token (note you'll need your own)
+token <- read_file(here("token1.txt"))
+
+# get station metadata (as JSON)
+meso.metadata <- fromJSON(paste0(link,token))
+meso.stations <- meso.metadata$STATION
+
+# weather data link w/o token
+weather.link <- ""
+
+# get weather data 
+
+
 
