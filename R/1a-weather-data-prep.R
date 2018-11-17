@@ -389,11 +389,13 @@ saveRDS(w.stations, here("data/outputs/station-data.rds")) # all station data
 link <- "http://api.mesowest.net/v2/stations/metadata?state=AZ&county=Maricopa&status=ACTIVE&token="
 
 # load personal api token (note you'll need your own)
-token <- read_file(here("token1.txt"))
+token <- read_file(here("local-token.txt"))
 
 # get station metadata (as JSON)
 meso.metadata <- fromJSON(paste0(link,token))
 meso.stations <- meso.metadata$STATION
+
+saveRDS(meso.stations, here("data/outputs/meso-station-data.rds"))
 
 # weather data link w/o token
 weather.link <- ""
