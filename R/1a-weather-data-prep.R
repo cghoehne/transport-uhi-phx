@@ -421,6 +421,9 @@ meso.s.data$source <- "MesoWest"
 w.data <- rbindlist(list(azmet.data,ncei.data,mcfcd.data,ibut.data), use.names = T, fill = T)
 w.stations <- rbindlist(c(list(azmet.stations,ncei.stations,mcfcd.stations,ibut.stations,meso.s.data), my.stations), use.names = T, fill = T)
 
+# coerce lat & lon to numeric
+w.stations[, lat := as.numeric(lat)][, lon := as.numeric(lon)]
+
 # calculate heat index, (National Weather Surface improved estimate of Steadman eqn. (heat index calculator eqns)
 w.data[, heat.f := heat.index(t = temp.f, dp = dewpt.f, temperature.metric = "fahrenheit", output.metric = "fahrenheit", round = 0)]
 w.data[, heat.c := heat.index(t = temp.c, dp = dewpt.c, temperature.metric = "celsius", output.metric = "celsius", round = 1)]
