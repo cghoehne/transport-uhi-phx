@@ -383,6 +383,7 @@ saveRDS(w.data, here("data/outputs/2017-weather-data.rds")) # all houlry data
 saveRDS(phx.ghcnd.data, here("data/outputs/2017-ghcnd-weather-data.rds")) # daily summary (non-hourly) data
 saveRDS(w.stations, here("data/outputs/station-data.rds")) # all station data
 
+
 ## MESO WEST DATA RETREIVAL VIA API
 
 # station metadata link w/o token
@@ -410,15 +411,23 @@ for(i in 1:nrow(meso.s.data)){
   # retieve json data for station 'i' based on start and end time, custom api token, and desired variables
   j <- fromJSON(paste0(w.link.f,meso.s.data$STID[i],"&start=",start,"&end=",end,"&token=",token,w.link.vars))
   
-  # coerce to data.table in list (need to unlist columns)
-  meso.w.data[[i]] <- as.data.table(sapply(j$STATION$OBSERVATIONS, unlist))
-  
-  # rename vars for consistency w/ other data
-  colnames(meso.w.data[[i]]) <- c("date.time", "rh", "winspd", "windir", "temp.c")
-  
-  # create station column name and list index name based on the station id (STID) for refrencing
-  names(meso.w.data)[i] <- j$STATION$STID
-  meso.w.data[[i]]$station.name <- j$STATION$STID
+  # if there is data at the location, get it
+  if(is_empty(j$STATION) == F){
+    
+    # coerce to data.table in list (need to unlist columns)
+    meso.w.data[[i]] <- as.data.table(sapply(j$STATION$OBSERVATIONS, unlist))
+    
+    # if vars exists, rename it for consistency w/ other data
+    if(is.null(meso.w.data[[i]]$date_time) == F){setnames(meso.w.data[[i]], "date_time", "date.time")}
+    if(is.null(meso.w.data[[i]]$relative_humidity_set_1) == F){setnames(meso.w.data[[i]], "relative_humidity_set_1", "rh")}
+    if(is.null(meso.w.data[[i]]$wind_speed_set_1) == F){setnames(meso.w.data[[i]], "wind_speed_set_1", "winspd")}
+    if(is.null(meso.w.data[[i]]$wind_direction_set_1) == F){setnames(meso.w.data[[i]], "wind_direction_set_1", "windir")}
+    if(is.null(meso.w.data[[i]]$air_temp_set_1) == F){setnames(meso.w.data[[i]], "air_temp_set_1", "temp.c")}
+    
+    # create station column name and list index name based on the station id (STID) for refrencing
+    names(meso.w.data)[i] <- j$STATION$STID
+    meso.w.data[[i]]$station.name <- j$STATION$STID
+  }
 }
 
 # save retrieved MesoWest station and weather data
