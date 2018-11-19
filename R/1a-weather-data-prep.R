@@ -343,45 +343,6 @@ my.stations$phx$distance <- NULL
 my.stations$la$distance <- NULL
 
 
-#^#^#^#^#^#^#^#^#^#^#^#^#^#
-# Merge all data together #
-#^#^#^#^#^#^#^#^#^#^#^#^#^#
-
-# combine all houlry weather data into one object, and all stations into one object
-w.data <- rbindlist(list(azmet.data,ncei.data,mcfcd.data,ibut.data), use.names = T, fill = T)
-w.stations <- rbindlist(c(list(azmet.stations,ncei.stations,mcfcd.stations,ibut.stations), my.stations), use.names = T, fill = T)
-
-# calculate heat index, (National Weather Surface improved estimate of Steadman eqn. (heat index calculator eqns)
-w.data[, heat.f := heat.index(t = temp.f, dp = dewpt.f, temperature.metric = "fahrenheit", output.metric = "fahrenheit", round = 0)]
-w.data[, heat.c := heat.index(t = temp.c, dp = dewpt.c, temperature.metric = "celsius", output.metric = "celsius", round = 1)]
-
-# add some other variables 
-w.data[, month := as.factor(month(date.time, label = T))]
-w.data[, week := as.factor(week(date.time))]
-w.data[, day := as.factor(day(date.time))]
-w.data[, wday := as.factor(wday(date.time, label = T))]
-w.data[, hour := hour(date.time)]
-
-# create rounded data.time to more easily filter by observations on/near the hour
-w.data[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
-
-# calculate observations in 2017 for each station by each data type
- for(station in w.stations$station.name){
-   w.stations[station == station.name, n.temp := sum(!is.na(w.data$temp.f[station == w.data$station.name]))]
-   w.stations[station == station.name, n.dewpt := sum(!is.na(w.data$dewpt.f[station == w.data$station.name]))]
-   w.stations[station == station.name, n.windir := sum(!is.na(w.data$windir[station == w.data$station.name]))]
-   w.stations[station == station.name, n.winspd := sum(!is.na(w.data$winspd[station == w.data$station.name]))]
-   w.stations[station == station.name, n.solar := sum(!is.na(w.data$solar[station == w.data$station.name]))]
-   w.stations[station == station.name, n.heat := sum(!is.na(w.data$heat.f[station == w.data$station.name]))]
- }
-
-# remove stations with no temp obs
-#w.stations <- w.stations[n.temp != 0]
-
-# save final data object
-saveRDS(w.data, here("data/outputs/2017-weather-data.rds")) # all houlry data
-saveRDS(phx.ghcnd.data, here("data/outputs/2017-ghcnd-weather-data.rds")) # daily summary (non-hourly) data
-saveRDS(w.stations, here("data/outputs/station-data.rds")) # all station data
 
 
 ## MESO WEST DATA RETREIVAL VIA API
@@ -396,13 +357,16 @@ token <- read_file(here("local-token.txt"))
 meso.metadata <- fromJSON(paste0(s.link,token))
 meso.s.data <- as.data.table(meso.metadata$STATION)
 
-# store partial weather data links (front half and variables list)
+# store partial weather data links (front half and variables list). time is local
 w.link.f <- "http://api.mesowest.net/v2/stations/timeseries?&stid="
 w.link.vars <- "&vars=air_temp,relative_humidity,wind_speed,wind_direction&obtimezone=local"
 
+# [including in link] "timeformat=%b%20%d%20%Y%20-%20%H:%M" would yield "Jun 22 2017 - 17:06"
+
 # define start and end times in correct format for api link retrieval
-start <- "201701010000" # start time in YYYYMMDDHHSS (UTC)
-end <- "201712312359"   # end time in YYYYMMDDHHSS (UTC)
+# AZ is -7 UTC, so leave a little space make sure and capture all records in calendar year
+start <- "201701010600" # start time in YYYYMMDDhhmm (UTC)
+end   <- "201801010800"   # end time in YYYYMMDDhhmm (UTC)
 
 # loop through each station and retrieve sson data
 meso.w.data <- list()
@@ -426,10 +390,70 @@ for(i in 1:nrow(meso.s.data)){
     
     # create station column name and list index name based on the station id (STID) for refrencing
     names(meso.w.data)[i] <- j$STATION$STID
-    meso.w.data[[i]]$station.name <- j$STATION$STID
+    meso.w.data[[i]]$id <- j$STATION$STID
   }
 }
 
-# save retrieved MesoWest station and weather data
-saveRDS(meso.s.data, here("data/outputs/meso-station-data.rds"))
-saveRDS(meso.w.data, here("data/outputs/meso-weather-data.rds"))
+# create combined data option (all data in one data.table). this is more compact 
+all.meso.w.data <- rbindlist(meso.w.data, use.names = T, fill = T)
+
+# format date.time correctly (time is local so call AZ timezone). ignore "T" (for: time) in middle and -0700 at end (for: GMT/UTC +0700)
+all.meso.w.data[, date.time := ymd_hms(paste(substr(date.time, 1, 10), substr(date.time, 12, 19)), tz = "US/Arizona")]
+
+# rename columns for consistency
+setnames(meso.s.data, "NAME", "station.name")
+setnames(meso.s.data, "STID", "id") # could use "ID" column here instead
+setnames(meso.s.data, "ELEVATION", "elevation")
+setnames(meso.s.data, "LONGITUDE", "lon")
+setnames(meso.s.data, "LATITUDE", "lat")
+  
+# keep relevant columns only
+meso.s.data <- meso.s.data[, .(station.name,id,elevation,lat,lon)]
+
+# add source column
+meso.s.data$source <- "MesoWest"
+
+#^#^#^#^#^#^#^#^#^#^#^#^#^#
+# Merge all data together #
+#^#^#^#^#^#^#^#^#^#^#^#^#^#
+
+# combine all houlry weather data into one object, and all stations into one object
+w.data <- rbindlist(list(azmet.data,ncei.data,mcfcd.data,ibut.data), use.names = T, fill = T)
+w.stations <- rbindlist(c(list(azmet.stations,ncei.stations,mcfcd.stations,ibut.stations,meso.s.data), my.stations), use.names = T, fill = T)
+
+# calculate heat index, (National Weather Surface improved estimate of Steadman eqn. (heat index calculator eqns)
+w.data[, heat.f := heat.index(t = temp.f, dp = dewpt.f, temperature.metric = "fahrenheit", output.metric = "fahrenheit", round = 0)]
+w.data[, heat.c := heat.index(t = temp.c, dp = dewpt.c, temperature.metric = "celsius", output.metric = "celsius", round = 1)]
+
+# add some other variables 
+w.data[, month := as.factor(lubridate::month(date.time, label = T))]
+w.data[, week := as.factor(lubridate::week(date.time))]
+w.data[, day := as.factor(lubridate::day(date.time))]
+w.data[, wday := as.factor(lubridate::wday(date.time, label = T))]
+w.data[, hour := lubridate::hour(date.time)]
+
+# create rounded data.time to more easily filter by observations on/near the hour
+w.data[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
+
+# calculate observations in 2017 for each station by each data type
+# for(station in w.stations$station.name){
+#   w.stations[station == station.name, n.temp := sum(!is.na(w.data$temp.f[station == w.data$station.name]))]
+#   w.stations[station == station.name, n.dewpt := sum(!is.na(w.data$dewpt.f[station == w.data$station.name]))]
+#   w.stations[station == station.name, n.windir := sum(!is.na(w.data$windir[station == w.data$station.name]))]
+#   w.stations[station == station.name, n.winspd := sum(!is.na(w.data$winspd[station == w.data$station.name]))]
+#   w.stations[station == station.name, n.solar := sum(!is.na(w.data$solar[station == w.data$station.name]))]
+#   w.stations[station == station.name, n.heat := sum(!is.na(w.data$heat.f[station == w.data$station.name]))]
+# }
+
+# remove stations with no temp obs
+#w.stations <- w.stations[n.temp != 0]
+
+# save all final R objects
+saveRDS(w.data, here("data/outputs/2017-weather-data.rds")) # all houlry data (excluding meso west)
+saveRDS(w.stations, here("data/outputs/station-data.rds")) # ALL station data
+saveRDS(phx.ghcnd.data, here("data/outputs/2017-ghcnd-weather-data.rds")) # daily summary (non-hourly) weather data from ghcnd
+saveRDS(all.meso.w.data, here("data/outputs/meso-weather-data-combined.rds")) # save MesoWest weather data seperately
+
+###
+#saveRDS(meso.w.data, here("data/outputs/meso-weather-data.rds")) # all meso west data as list of data.tables (less compact)
+#saveRDS(meso.s.data, here("data/outputs/meso-station-data.rds"))
