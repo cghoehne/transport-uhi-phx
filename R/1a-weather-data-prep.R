@@ -386,21 +386,41 @@ saveRDS(w.stations, here("data/outputs/station-data.rds")) # all station data
 ## MESO WEST DATA RETREIVAL VIA API
 
 # station metadata link w/o token
-link <- "http://api.mesowest.net/v2/stations/metadata?state=AZ&county=Maricopa&status=ACTIVE&token="
+s.link <- "http://api.mesowest.net/v2/stations/metadata?state=AZ&county=Maricopa&status=ACTIVE&token="
 
 # load personal api token (note you'll need your own)
 token <- read_file(here("local-token.txt"))
 
 # get station metadata (as JSON)
-meso.metadata <- fromJSON(paste0(link,token))
-meso.stations <- meso.metadata$STATION
+meso.metadata <- fromJSON(paste0(s.link,token))
+meso.s.data <- as.data.table(meso.metadata$STATION)
 
-saveRDS(meso.stations, here("data/outputs/meso-station-data.rds"))
+# store partial weather data links (front half and variables list)
+w.link.f <- "http://api.mesowest.net/v2/stations/timeseries?&stid="
+w.link.vars <- "&vars=air_temp,relative_humidity,wind_speed,wind_direction&obtimezone=local"
 
-# weather data link w/o token
-weather.link <- ""
+# define start and end times in correct format for api link retrieval
+start <- "201701010000" # start time in YYYYMMDDHHSS (UTC)
+end <- "201712312359"   # end time in YYYYMMDDHHSS (UTC)
 
-# get weather data 
+# loop through each station and retrieve sson data
+meso.w.data <- list()
+for(i in 1:nrow(meso.s.data)){
+  
+  # retieve json data for station 'i' based on start and end time, custom api token, and desired variables
+  j <- fromJSON(paste0(w.link.f,meso.s.data$STID[i],"&start=",start,"&end=",end,"&token=",token,w.link.vars))
+  
+  # coerce to data.table in list (need to unlist columns)
+  meso.w.data[[i]] <- as.data.table(sapply(j$STATION$OBSERVATIONS, unlist))
+  
+  # rename vars for consistency w/ other data
+  colnames(meso.w.data[[i]]) <- c("date.time", "rh", "winspd", "windir", "temp.c")
+  
+  # create station column name and list index name based on the station id (STID) for refrencing
+  names(meso.w.data)[i] <- j$STATION$STID
+  meso.w.data[[i]]$station.name <- j$STATION$STID
+}
 
-
-
+# save retrieved MesoWest station and weather data
+saveRDS(meso.s.data, here("data/outputs/meso-station-data.rds"))
+saveRDS(meso.w.data, here("data/outputs/meso-weather-data.rds"))
