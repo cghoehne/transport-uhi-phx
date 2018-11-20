@@ -67,6 +67,9 @@ azmet.stations$source <- "AZMET"
 azmet.data$id <- NA
 azmet.stations$id <- NA
 
+# convert elevation to feet from meters
+azmet.stations[, elevation := elevation * 3.28084]
+
 # keep relevant columns only
 azmet.data <- azmet.data[,c("source","station.name","date.time","temp.f","dewpt.f","temp.c","dewpt.c","winspd","windir")]
 azmet.stations <- azmet.stations[,c("source","station.name","lat","lon","elevation","id")]
@@ -111,6 +114,9 @@ ncei.data <- merge(ncei.data, ncei.stations[,.(station.name,id)], by = "id")
 # add data source column
 ncei.data$source <- "NCEI"
 ncei.stations$source <- "NCEI"
+
+# convert elevation to feet from meters
+ncei.stations[, elevation := elevation * 3.28084]
 
 # keep relevant columns only
 ncei.data <- ncei.data[,c("source","station.name","date.time","temp.f","dewpt.f","temp.c","dewpt.c","winspd","windir")]
@@ -173,12 +179,16 @@ mcfcd.solar.data$date.time  <- mdy_hms(paste0(mcfcd.solar.data$date," ",mcfcd.so
 mcfcd.stations <- fread(here("data/weather data/MCFCD/stations.csv")) # load station data
 mcfcd.stations <- mcfcd.stations[!is.na(id)]  # remove stations without an ID
 mcfcd.stations[, id := as.character(id)] # convert id to character for matching
+
+# function to convert degree min sec lat lon to decimal
 dms2dec <- function(x){ 
   z <- sapply(strsplit(x, " "), as.numeric)
   z[1, ] + z[2, ]/60 + z[3, ]/3600
 }
-mcfcd.stations$lat <- dms2dec(mcfcd.stations$lat.dms) # convert station deg-min-sec to decimal lat
-mcfcd.stations$lon <- dms2dec(mcfcd.stations$lon.dms) # convert station deg-min-sec to decimal lon
+
+# b/c the dms lat lon had one decimal place after the seconds (DD:MM:SS.S), we assume corresponding accuarcy of XX.XXX in decimal lat lon (3 digits to rhs)
+mcfcd.stations$lat <- round(dms2dec(mcfcd.stations$lat.dms), digits = 3) # convert station deg-min-sec to decimal lat
+mcfcd.stations$lon <- round(dms2dec(mcfcd.stations$lon.dms), digits = 3) # convert station deg-min-sec to decimal lon
 mcfcd.stations$lon <- (-1) * mcfcd.stations$lon # arizona is west of prime meridian so longitude should be negative
 
 # in temp data, stations 1001 and 28301 are missing (both outside urbanized area, so not essential to replace)
@@ -370,7 +380,7 @@ end   <- "201801010800"   # end time in YYYYMMDDhhmm (UTC)
 
 # loop through each station and retrieve sson data
 meso.w.data <- list()
-for(i in 1:nrow(meso.s.data)){
+for(i in 1:nrow(meso.s.data)){ #
   
   # retieve json data for station 'i' based on start and end time, custom api token, and desired variables
   j <- fromJSON(paste0(w.link.f,meso.s.data$STID[i],"&start=",start,"&end=",end,"&token=",token,w.link.vars))
@@ -391,6 +401,7 @@ for(i in 1:nrow(meso.s.data)){
     # create station column name and list index name based on the station id (STID) for refrencing
     names(meso.w.data)[i] <- j$STATION$STID
     meso.w.data[[i]]$id <- j$STATION$STID
+    meso.w.data[[i]]$qcflag <- j$STATION$QC_FLAGGED
   }
 }
 
@@ -399,6 +410,9 @@ all.meso.w.data <- rbindlist(meso.w.data, use.names = T, fill = T)
 
 # format date.time correctly (time is local so call AZ timezone). ignore "T" (for: time) in middle and -0700 at end (for: GMT/UTC +0700)
 all.meso.w.data[, date.time := ymd_hms(paste(substr(date.time, 1, 10), substr(date.time, 12, 19)), tz = "US/Arizona")]
+
+# force data columns to numeric
+all.meso.w.data[, rh := as.numeric(rh)][, winspd := as.numeric(winspd)][, windir := as.numeric(windir)][, temp.c := as.numeric(temp.c)]
 
 # rename columns for consistency
 setnames(meso.s.data, "NAME", "station.name")
@@ -421,8 +435,8 @@ meso.s.data$source <- "MesoWest"
 w.data <- rbindlist(list(azmet.data,ncei.data,mcfcd.data,ibut.data), use.names = T, fill = T)
 w.stations <- rbindlist(c(list(azmet.stations,ncei.stations,mcfcd.stations,ibut.stations,meso.s.data), my.stations), use.names = T, fill = T)
 
-# coerce lat & lon to numeric
-w.stations[, lat := as.numeric(lat)][, lon := as.numeric(lon)]
+# coerce lat, lon, & elev to numeric
+w.stations[, lat := as.numeric(lat)][, lon := as.numeric(lon)][, elevation := round(as.numeric(elevation), digits = 0)]
 
 # calculate heat index, (National Weather Surface improved estimate of Steadman eqn. (heat index calculator eqns)
 w.data[, heat.f := heat.index(t = temp.f, dp = dewpt.f, temperature.metric = "fahrenheit", output.metric = "fahrenheit", round = 0)]
@@ -439,17 +453,55 @@ w.data[, hour := lubridate::hour(date.time)]
 w.data[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
 
 # calculate observations in 2017 for each station by each data type
-# for(station in w.stations$station.name){
-#   w.stations[station == station.name, n.temp := sum(!is.na(w.data$temp.f[station == w.data$station.name]))]
-#   w.stations[station == station.name, n.dewpt := sum(!is.na(w.data$dewpt.f[station == w.data$station.name]))]
-#   w.stations[station == station.name, n.windir := sum(!is.na(w.data$windir[station == w.data$station.name]))]
-#   w.stations[station == station.name, n.winspd := sum(!is.na(w.data$winspd[station == w.data$station.name]))]
-#   w.stations[station == station.name, n.solar := sum(!is.na(w.data$solar[station == w.data$station.name]))]
-#   w.stations[station == station.name, n.heat := sum(!is.na(w.data$heat.f[station == w.data$station.name]))]
-# }
+for(station in w.stations$station.name){
+  w.stations[station == station.name, n.temp := sum(!is.na(w.data$temp.f[station == w.data$station.name]))]}
+for(station in w.stations$id){
+  w.stations[station == id, n.temp := sum(!is.na(all.meso.w.data$temp.c[station == all.meso.w.data$id]))]}
 
 # remove stations with no temp obs
-#w.stations <- w.stations[n.temp != 0]
+w.stations <- w.stations[n.temp != 0]
+
+# function to calculate distance in kilometers between two lat/lon points
+earth.dist <- function (long1, lat1, long2, lat2){
+  rad <- pi/180
+  a1 <- lat1 * rad
+  a2 <- long1 * rad
+  b1 <- lat2 * rad
+  b2 <- long2 * rad
+  dlon <- b2 - a2
+  dlat <- b1 - a1
+  a <- (sin(dlat/2))^2 + cos(a1) * cos(b1) * (sin(dlon/2))^2
+  c <- 2 * atan2(sqrt(a), sqrt(1 - a))
+  R <- 6378.145
+  d <- R * c
+  return(d)
+}
+
+## determine duplicate stations that appear in station list and choose the more accurate station location
+# for each station, iterate through all other stations from other data sources
+# calc the distance between station 'i' and other stations
+# if the station closest has a station.name with a partial string match (agrep),
+# flag both stations in the original station list and keep the station w/ more accurate lat/lon (greater mean sig figs in lat/lon)
+# flag: 0 no flag, 1 flag match but keep, -1 flag match and delete
+w.stations$dupflag <- 0
+for(i in 1:nrow(w.stations)){
+  n <- w.stations$station.name[i] # station name
+  lat <- w.stations$lat[i] # station lat
+  lon <- w.stations$lon[i] # station lon
+  s <- w.stations$source[i] # station source
+  l <- w.stations[source != s] # stations from other sources
+  d <- list() # empty list
+  for(k in 1:nrow(l)){ # for all stations from other sources
+    d[[k]] <- earth.dist(lon, lat, l$lon[k], l$lat[k]) # calc all euc dist btwn stations 
+  }
+  m <- which.min(d) # which index in d is the closest station
+  if((!is_empty(agrep(n, l$station.name[m], max.distance = 1, ignore.case = T)) == T |  # if either order of string matching is not empty (partial match)
+      !is_empty(agrep(l$station.name[m], n, max.distance = 1, ignore.case = T)) == T) == T){
+    w.stations$dupflag[i] <- ifelse(mean(nchar(lat), nchar(lon)) > mean(nchar(l$lat[m]), nchar(l$lon[m])), 1 , -1) # flag based on signifs
+  }
+}
+
+dups <- w.stations[dupflag != 0]
 
 # save all final R objects
 saveRDS(w.data, here("data/outputs/2017-weather-data.rds")) # all houlry data (excluding meso west)
@@ -457,6 +509,5 @@ saveRDS(w.stations, here("data/outputs/station-data.rds")) # ALL station data
 saveRDS(phx.ghcnd.data, here("data/outputs/2017-ghcnd-weather-data.rds")) # daily summary (non-hourly) weather data from ghcnd
 saveRDS(all.meso.w.data, here("data/outputs/meso-weather-data-combined.rds")) # save MesoWest weather data seperately
 
-###
-#saveRDS(meso.w.data, here("data/outputs/meso-weather-data.rds")) # all meso west data as list of data.tables (less compact)
-#saveRDS(meso.s.data, here("data/outputs/meso-station-data.rds"))
+
+
