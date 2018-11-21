@@ -84,7 +84,7 @@ stations.buffered <- readRDS(here("data/outputs/station-buffers-sp-list.rds")) #
 uza.weather <- w.data[station.name %in% uza.stations$station.name] # filter weather data to uza stations
 
 # import cleaned traffic data
-
+traffic <- fread(here("data/icarus-osm-traffic.csv"))
 
 ## import other various shapefiles for plotting
 city.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp")) # city labels (pre-cropped to UZA)

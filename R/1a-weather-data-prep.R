@@ -352,7 +352,9 @@ my.stations$la$source <- "GHCND"
 my.stations$phx$distance <- NULL
 my.stations$la$distance <- NULL
 
-
+# convert elevation into ft
+my.stations$phx[, elevation := elevation * 3.28084]
+my.stations$la[, elevation := elevation * 3.28084]
 
 
 ## MESO WEST DATA RETREIVAL VIA API
@@ -505,30 +507,69 @@ earth.dist <- function (long1, lat1, long2, lat2){
 }
 
 ## determine duplicate stations that appear in station list and choose the more accurate station location
+
 # for each station, iterate through all other stations from other data sources
 # calc the distance between station 'i' and other stations
-# if the station closest has a station.name with a partial string match (agrep),
+# if the closest station has a station.name with a partial string match (agrep),
+# and it is within the range of lat/long coord precision 
 # flag both stations in the original station list and keep the station w/ more accurate lat/lon (greater mean sig figs in lat/lon)
 # flag: 0 no flag, 1 flag match but keep, -1 flag match and delete
+
+# first create dupflag column defaulted to 0 (1 for dupe but keep, -1 for dupe but delete)
 w.stations$dupflag <- 0
+
+# store precision of decimial lat lon
+# we assume the single direction precision of lat lon coords is approximatley = (111,131.96 meters) / (10^(num of sigfig decimal degrees))
+# based on distance at equator per decimal degree: 
+# https://gisjames.wordpress.com/2016/04/27/deciding-how-many-decimal-places-to-include-when-reporting-latitude-and-longitude/ 
+# this allows us to ignore stations that are similaly named but outside the possibility of being duplicates due to the precision of coords
+# this assumes that the coords are accurate but may not precise. 
+inv.prec <- 111.13196 # store as km b/c earth.dist function calcs in kilometers too
+# the maximum inprecision
+
 for(i in 1:nrow(w.stations)){
+  
   n <- w.stations$station.name[i] # station name
   lat <- w.stations$lat[i] # station lat
   lon <- w.stations$lon[i] # station lon
   s <- w.stations$source[i] # station source
   l <- w.stations[source != s] # stations from other sources
+  lat2 <- l$lat # vector of other station lats
+  lon2 <- l$lon # vector of other station lons
   d <- list() # empty list
+  
   for(k in 1:nrow(l)){ # for all stations from other sources
-    d[[k]] <- earth.dist(lon, lat, l$lon[k], l$lat[k]) # calc all euc dist btwn stations 
+    d[[k]] <- earth.dist(lon, lat, lon2[k], lat2[k]) # calc all euclidian dist btwn stations 
   }
   m <- which.min(d) # which index in d is the closest station
-  if((!is_empty(agrep(n, l$station.name[m], max.distance = 1, ignore.case = T)) == T |  # if either order of string matching is not empty (partial match)
-      !is_empty(agrep(l$station.name[m], n, max.distance = 1, ignore.case = T)) == T) == T){
-    w.stations$dupflag[i] <- ifelse(mean(nchar(lat), nchar(lon)) > mean(nchar(l$lat[m]), nchar(l$lon[m])), 1 , -1) # flag based on signifs
-  }
+  
+  # logic to determine if stations are dups
+  z <- !is_empty(agrep(n, l$station.name[m], max.distance = 1, ignore.case = T)) # TRUE for station name partial string match
+  y <- !is_empty(agrep(l$station.name[m], n, max.distance = 1, ignore.case = T)) # TRUE for station name partial string match (reverse)
+  x <- isTRUE(if(!is.na(l$elevation[m]) & !is.na(w.stations$elevation[i])) 
+    {abs(l$elevation[m] - w.stations$elevation[i])}   # TRUE if station elevations are w/in 50ft of each other 
+    else {0} < 50) # or if one or both station elevations are NA
+  
+  # determine number of figs to right of decimal in lat/long for mean precision of coord
+  p1 <- mean(nchar(strsplit(as.character(lat), "[.]")[2]),nchar(strsplit(as.character(lon), "[.]")[2]))
+  p2 <- mean(nchar(strsplit(as.character(lat2[m]), "[.]")[2]),nchar(strsplit(as.character(lon2[m]), "[.]")[2]))
+  
+  # the max inpercision (in km) btwn closest 2 pts is along the diag of both inprecision squares of coords, assume pathag therom and euclidian dist
+  max.inprec <- (2 * sqrt(2)) * ((inv.prec / (10^(p1))) + (inv.prec / (10^p2)))
+    
+  # if names match in either direction of test, then flag stations as duplicates based on precision, previous label, and number of temp obs
+  if((z == T | y == T) & d[[m]] < max.inprec){    # IF station.names match in either direction of agrep test AND the 2 stations are within the max inpercision distance of thier lat/lon 
+    w.stations$dupflag[i] <- ifelse(( (p1 >= p2) # assign the dupflag of keep IF station 'i' has greater lat/lon precision
+                                      | l$dupflag[m] == -1   # OR the closest station to station 'i' has already been flagged to delete
+                                      | l$n.temp[m] == 0)    # OR the closest station to station 'i' has no temperature observations
+                                    & w.stations$n.temp[i] > 0, # AND station 'i' has greater than zero temp obs
+                                    1, -1) # if pass these logic steps, mark to keep, otherwise mark to delete (1 is keep, -1 is delete)
+  } # if the names didn't match closely, then the dupflag stays as is (zero) indicating there was not a duplicate station identified with station 'i' 
 }
 
 dups <- w.stations[dupflag != 0]
+
+
 
 # save all final R objects
 saveRDS(w.data, here("data/outputs/2017-weather-data.rds")) # all houlry data (excluding meso west)
