@@ -401,6 +401,7 @@ for(i in 1:nrow(meso.s.data)){ #
     # create station column name and list index name based on the station id (STID) for refrencing
     names(meso.w.data)[i] <- j$STATION$STID
     meso.w.data[[i]]$id <- j$STATION$STID
+    meso.w.data[[i]]$station.name <- j$STATION$NAME
     meso.w.data[[i]]$qcflag <- j$STATION$QC_FLAGGED
   }
 }
@@ -453,13 +454,39 @@ w.data[, hour := lubridate::hour(date.time)]
 w.data[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
 
 # calculate observations in 2017 for each station by each data type
-for(station in w.stations$station.name){
-  w.stations[station == station.name, n.temp := sum(!is.na(w.data$temp.f[station == w.data$station.name]))]}
-for(station in w.stations$id){
-  w.stations[station == id, n.temp := sum(!is.na(all.meso.w.data$temp.c[station == all.meso.w.data$id]))]}
+for(i in 1:nrow(w.stations)){
+  i.name <- w.stations$station.name[i]
+  i.id <- w.stations$id[i]
+  i.source <- w.stations$source[i]
+  
+  # NCEI
+  if(i.source == "NCEI"){
+    w.stations[station.name == i.name & source == i.source & id == i.id, n.temp := sum(!is.na(w.data$temp.f[i.name == w.data$station.name]))]}
+
+  # MesoWest; use all.meso.w.data & temp.c
+  if(i.source == "MesoWest"){
+    w.stations[station.name == i.name & source == i.source & id == i.id, n.temp := sum(!is.na(all.meso.w.data$temp.c[i.name == all.meso.w.data$station.name & i.id == all.meso.w.data$id]))]}
+  
+  # GHCND; use phx.ghcnd.data & tmax/tmin
+  if(i.source == "GHCND"){
+    w.stations[station.name == i.name & source == i.source, n.temp := sum(!is.na(phx.ghcnd.data$tmax[i.name == phx.ghcnd.data$station.name]))]}
+  
+  # iButton; id is NA
+  if(i.source == "iButton"){
+    w.stations[station.name == i.name & source == i.source, n.temp := sum(!is.na(w.data$temp.f[i.name == w.data$station.name]))]}
+  
+  # AZMET; id is NA
+  if(i.source == "AZMET"){
+    w.stations[station.name == i.name & source == i.source, n.temp := sum(!is.na(w.data$temp.f[i.name == w.data$station.name]))]}
+  
+  # MCFCD; id is NA
+  if(i.source == "MCFCD"){
+    w.stations[station.name == i.name & source == i.source, n.temp := sum(!is.na(w.data$temp.f[i.name == w.data$station.name]))]}
+}
+
 
 # remove stations with no temp obs
-w.stations <- w.stations[n.temp != 0]
+#w.stations <- w.stations[n.temp != 0]
 
 # function to calculate distance in kilometers between two lat/lon points
 earth.dist <- function (long1, lat1, long2, lat2){
@@ -509,5 +536,12 @@ saveRDS(w.stations, here("data/outputs/station-data.rds")) # ALL station data
 saveRDS(phx.ghcnd.data, here("data/outputs/2017-ghcnd-weather-data.rds")) # daily summary (non-hourly) weather data from ghcnd
 saveRDS(all.meso.w.data, here("data/outputs/meso-weather-data-combined.rds")) # save MesoWest weather data seperately
 
+all.meso.w.data <- readRDS(here("data/outputs/meso-weather-data-combined.rds"))
+w.stations <- readRDS(here("data/outputs/station-data.rds"))
+test <- all.meso.w.data[id == "AT933"]
+
+# where did station id == "AT933" go?
+w.stations[id == "AT933"]
+meso.s.data[id == "AT933"]
 
 
