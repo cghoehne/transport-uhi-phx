@@ -101,7 +101,7 @@ traffic <- fread(here("data/icarus-osm-traffic.csv"))
 setnames(traffic, "link_id", "osm_id") 
 
 # merge traffic data to osm data by link id
-osm.dt <- merge(osm.dt, traffic, by = "id")
+#osm.dt <- merge(osm.dt, traffic, by = "id")
 
 # merge new relevant vars back to spatial osm data so they appear in osm@data
 osm.uza <- merge(osm.uza, osm.dt[, .(osm_id, auto.use, pave.type, buf.ft, descrip)], by = "osm_id")
@@ -124,7 +124,7 @@ saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # saves station
 saveRDS(osm.clip.station, here("data/outputs/2017-uza-weather-data.rds")) # saves clipped osm link data around stations (use for linking w/ traffic data)
 
 # clean up space
-rm(list=setdiff(ls(), c("my.cores", "stations.buffered", "osm.clip.station", "t.start", "uza.bbox")))
+rm(list=setdiff(ls(), c("my.cores", "stations.buffered", "osm.clip.station", "t.start", "uza.bbox","radii.buffers","uza.stations")))
 gc()
 memory.limit(size = 56000)
 
