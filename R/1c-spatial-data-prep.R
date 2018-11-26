@@ -28,7 +28,7 @@ new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"
 if(length(new.packages)) install.packages(new.packages)
 
 # load packages
-invisible(lapply(list.of.packages, library, character.only = TRUE)) # invisible() just hides printing stuff in console
+invisible(lapply(list.of.packages, library, character.only = T)) # invisible() just hides printing stuff in console
 
 # IMPORT DATA
 w.stations <- readRDS(here("data/outputs/station-data.rds")) # import cleaned station data
@@ -165,18 +165,32 @@ for(y in 1:length(stations.buffered)){
                                              function(x) stations.buffered[[y]][x,]$road.area / stations.buffered[[y]][x,]$buffer.area) # calc the % roadway area in buffer
 }
 
-# PARKING
-
+## PARKING
 # calculate the # of spaces and area of parking within each station buffer for each buffer distance
 # assume that for partial parcels, the area of parking scales with the fractional parcel area intersecting the buffer
 # assume that parking + road area cannot be greater than 100% of the buffer area
 # if parking area would put over 100% area, then assume there are parking garages and only use all the buffer area (e.g. 100% area assumed pavement)
-# assume on-street spaces are 9x18 ft **FOR NOW**
+# assume on-street spaces are 9x18 ft for area calcs
 
 # import parking data and parcel data to merge together
 parking <- readRDS(here("data/phoenix-parking-parcel.rds")) # estimated parking space data for all Maricopa County by APN
-station.parcels <- readRDS(here("data/shapefiles/processed/station-parcels.rds")) # parcels pre-clipped station buffers to save space, 
-# also has full parcel area calc'd. script for creating this object from larger parcel database is at bottom
+
+# parcels.trimmed is derived from all of regions parcels via script 1b-parcel-preprocessing.R
+parcels.trimmed <- readRDS(here("data/outputs/parcels-trimmed.rds"))
+
+# clip parcels to those w/in station buffers and store as list of SpatialPointDataFrames
+my.cores <- parallel::detectCores()  # store computers cores
+registerDoParallel(cores = my.cores) # register parallel backend
+b <- list() # empty list
+station.parcels <- foreach(i = 1:length(stations.buffered), .packages = c("sp","rgeos","raster"), .combine = c) %dopar% { 
+  b[[i]] <- intersect(parcels.trimmed, stations.buffered[[i]]) } 
+
+# calculate the full area of all relevant parcels
+parcels.trimmed$parcel.full.area <- sapply(1:length(parcels.trimmed), function(x) gArea(parcels.trimmed[x,]))  
+
+# merge parcel.full.area to station parcels sp list and keep duplicates b/c some parcels in multiple buffers that overlap
+for(y in 1:length(station.parcels)){ 
+  station.parcels[[y]] <- sp::merge(station.parcels[[y]], parcels.trimmed, by = "APN", duplicateGeoms = T, all.x = T)}
 
 # create parking data from parcel data as spatial dataframes in list
 
@@ -244,6 +258,7 @@ for(y in 1:length(stations.buffered)){
 
 # save things
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
+load(here("data/outputs/temp/sp-prep.RData"))
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects w/ all parking/road data
 
 # shapefile outputs (to interactively investigate e.g. in QGIS)
@@ -255,78 +270,4 @@ shapefile(uza.stations, here("data/shapefiles/processed/stations_pts"), overwrit
 t.end <- Sys.time() # end script timestamp
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
 
-
-# this data came with pre-clipped parcel data for which we then append parking data via parcel id
-# if starting with larger parcel data, use the below script will
-# load unclipped regional parcel data, create clipped parcels based on variable station buffers
-# and filter raw parcels to parcels within station buffers to then calculate full parcel area (used for partial parking area calcs b/c some parcels intersect buffer boundary)
-# merge full.parcel.area varaible back to clipped station.parcels with duplicates true to keep all instances (b/c if some buffers overlap, parcels can be in multiple station buffers)
-
-#parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds")) # load full parcels in region
-#parcels.keep <- intersect(parcels, stations.buffered[[6]])
-#rm(parcels)
-#gc()
-#my.cores <- parallel::detectCores()  # store computers cores
-#registerDoParallel(cores = my.cores) # register parallel backend
-#b <- list()
-#station.parcels <- foreach(i = 1:length(stations.buffered), .packages = c("sp","rgeos","raster"), .combine = c) %dopar% { 
-#  b[[i]] <- intersect(parcels.keep, stations.buffered[[i]]) } # clip parcels to those w/in station buffers and store as list of SpatialPointDataFrames
-#parcels.keep$parcel.full.area <- sapply(1:length(parcels.keep), function(x) gArea(parcels.keep[x,]))  # calculate the full area of all relevant parcels
-#for(y in 1:length(station.parcels)){ # merge parcel.full.area to station parcels sp list and keep duplicates b/c some parcels in multiple buffers that overlap
-#  station.parcels[[y]] <- sp::merge(station.parcels[[y]], parcels.keep, by = "APN", duplicateGeoms = TRUE, all.x = TRUE)}
-#saveRDS(station.parcels, here("data/shapefiles/processed/station-parcels.rds")) # save station parcel data 
-#save.image(here("data/outputs/temp/sp-station-parcels-temp.RData")) # save temp workspace incase
-
-
-## **WORKING HERE** ##
-save.image(here("data/outputs/temp/sp-prep-daymet.RData"))
-load(here("data/outputs/temp/sp-prep-daymet.RData"))
-
-
-# DAYMET DATA DOWNLOAD @ 1km for PHOENIX METRO
-# tmax: daily maximum 2-meter air temperature in degrees Celsius
-# from bounding box, pull top left and bottom right coords c(lat, lon, lat, lon)
-# bounding box is give as:     xmin xmax 
-#                              ymin ymax 
-# top lft (in lat,lon)  (ymax, xmin); 
-# bot rgt (in lat,lon): (ymin, xmax)
-download_daymet_tiles(location = c(uza.bbox[2,2], uza.bbox[1,1], uza.bbox[2,1], uza.bbox[1,2]), 
-                      start = 2016, end = 2016, path = here("data/daymet"), param = "tmax")
-nc2tif(path = here("data/daymet"), overwrite = T) # convert to tif to work w/ easier
-
-# create list of daymet netcdf files and import as list of objects
-tile.list <- list.files(here("data/daymet"), recursive= T, pattern="tif$", full.names= T)  
-tiles.raw <- list() # empty list
-tiles.prj <- list() # empty list
-
-# stack the raw geotiff tiles
-tiles.raw <- lapply(tile.list, stack)
-
-# merge the tiles into one
-tiles.m <- do.call(merge, c(tiles.raw, tolerance = 1))
-
-# project uza buffer to crs of daymet data to crop
-uza.buffer.prj <- spTransform(uza.buffer, crs(tiles.m))
-uza.border.prj <- spTransform(uza.border, crs(tiles.m))
-
-# crop the merged tiles by the projected uza buffer
-tiles.mc <- crop(tiles.m, uza.buffer.prj)
-
-# plot daymet tmax for 2016 day 181 (jun 29)
-plot(tiles.m$layer.181, col = rev(heat.colors(40)))
-plot(uza.buffer.prj, add = T)
-
-# plot daymet tmax for 2016 day 181 (jun 29)
-ncol <- floor(maxValue(tiles.mc$layer.181) - minValue(tiles.mc$layer.181))
-png(filename = here("figures/DAYMET_20160629_tmax_phx.png"))
-plot(tiles.mc$layer.181, col = rev(heat.colors(ncol+1)))
-plot(uza.border.prj, add = T)
-title(main = "DAYMET June 29th, 2016 Max Temperature (deg C)")
-dev.copy(png, filename = here("figures/DAYMET_20160629_tmax_phx.png"), width = 3600, height = 3000)
-dev.off()
-dev.off()
-
-
-## clip + aggregate pavement and parking data by each grid cell (1km x 1km) 
-## and merge parking and pavement data to each grid cell in daymet tiles (raster bricks)
 

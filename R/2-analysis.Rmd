@@ -12,8 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # load fonts for use figures
 #extrafont::loadfonts(device = "win") 
-##** CHANGE THIS TO LOAD ONLY THE FONT WE WILL USE
-##** PREFERABLY INCLUDE THIS FONT IN THE REPO
 
 # list of all dependant packages
 list.of.packages <- c("tidyverse",
@@ -58,8 +56,6 @@ my.font <- "Century"
 - National Centers for Environmental Information (NCEI): https://gis.ncdc.noaa.gov/maps/ncei/cdo/hourly
 - The Arizona Meteorological Network (AZMET): https://cals.arizona.edu/azmet/az-data.htm
 - Maricopa County Flood Control District (MCFCD): https://www.maricopa.gov/3769/Weather-Sensor-Data
-- iButton data recorded in the Summer of 2017 by the Urban Water Innovation Network (UWIN): https://erams.com/UWIN/
-
 
 ### Parking Data
 - Forthcoming publication by Hoehne et al, info here: http://transportationlca.org/phoenixparking/
