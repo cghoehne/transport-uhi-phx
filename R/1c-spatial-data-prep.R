@@ -31,8 +31,8 @@ invisible(lapply(list.of.packages, library, character.only = T)) # invisible() j
 # IMPORT DATA
 #osm <- readOGR(here("data/shapefiles/osm/maricopa_county_osm_roads.shp"))
 osm <- shapefile(here("data/shapefiles/osm/maricopa_county_osm_roads.shp")) # import OSM data (maricopa county clipped raw road network data)
-fclass.info <- fread(here("data/shapefiles/osm/fclass_info.csv")) # additional OSM info by roadway functional class (fclass)
-radii.buffers <- readRDS(here("data/outputs/radii-buffers.rds")) # vector of station buffer radii chosen
+fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by roadway functional class (fclass)
+radii.buffers <- readRDS(here("data/outputs/temp/radii-buffers.rds")) # vector of station buffer radii chosen
 stations.buffered <- readRDS(here("data/outputs/temp/stations-buffered-prep.rds")) # buffered stations by various buffer radii chosen
 uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds"))
 
@@ -69,7 +69,7 @@ osm.dt[, buf.ft := ifelse(oneway == "B", wdth.1way.ft,  # if roadway is bi-direc
                           wdth.1way.ft / 2)] # otherwise divide by 2 as only 1 of 2 directions: buffer raduis = half of 1way width
 
 # import traffic data aggregated by osm link id and hour
-traffic <- fread(here("data/icarus-osm-traffic.csv"))
+traffic <- fread(here("data/icarus_osm_traffic.csv"))
 setnames(traffic, "link_id", "osm_id") 
 
 # merge traffic data to osm data by link id
@@ -91,7 +91,7 @@ osm.uza.car <- subset(osm.uza, auto.use == "Y" & !is.na(buf.ft) & buf.ft > 0) # 
 osm.clip.station <- intersect(osm.uza.car, stations.buffered[[length(stations.buffered)]]) # better than gIntersection b/c it keeps attributes
 
 # save some data 
-saveRDS(osm.clip.station, here("data/outputs/2017-uza-weather-data.rds")) # saves clipped osm link data around stations (use for linking w/ traffic data)
+saveRDS(osm.clip.station, here("data/outputs/temp/2017-uza-weather-data.rds")) # saves clipped osm link data around stations (use for linking w/ traffic data)
 
 # clean up space
 rm(list=setdiff(ls(), c("stations.buffered","osm.clip.station","t.start","radii.buffers")))
@@ -147,7 +147,7 @@ for(y in 1:length(stations.buffered)){
 parking <- readRDS(here("data/phoenix-parking-parcel.rds")) # estimated parking space data for all Maricopa County by APN
 
 # parcels.trimmed is derived from all of regions parcels via script 1b-parcel-preprocessing.R
-parcels.trimmed <- readRDS(here("data/outputs/temp/parcels-trimmed.rds"))
+parcels.trimmed <- readRDS(here("data/outputs/parcels-trimmed.rds"))
 
 # clip parcels to those w/in station buffers and store as list of SpatialPointDataFrames
 registerDoParallel(cores = my.cores) # register parallel backend
@@ -226,13 +226,14 @@ for(y in 1:length(stations.buffered)){
                                              function(x) stations.buffered[[y]][x,]$park.prct + stations.buffered[[y]][x,]$road.prct) # calc the % parking area in buffer
 }
 
+# remove dupliate stations manually
+
+
 # save things
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
 #load(here("data/outputs/temp/sp-prep.RData"))
-saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects w/ all parking/road data
+saveRDS(stations.buffered, here("data/outputs/temp/station-buffers-final.rds")) # buffered station data as list of spatial r objects w/ all parking/road data
 #shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
-r <- which(radii.buffers == 200) # save the shapefile where the raduis of buffer is 200ft
-shapefile(stations.buffered[[r]], here(paste0("data/shapefiles/processed/stations_r",radii.buffers[r],"ft_buffer")), overwrite = T) # shapefile output of largest station buffer
 #shapefile(station.parcels[[1]], here("data/shapefiles/processed/station-parcels"), overwrite = T) # shapefile output of largest station buffer
 
 # print script endtime

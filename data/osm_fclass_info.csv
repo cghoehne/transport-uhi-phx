@@ -1,0 +1,28 @@
+fclass,lanes.1way,pave.type,wdth.1way.ft,descrip
+bridleway,1,dirt,3,Paths for horse riding
+cycleway,1,concrete,3,Paths for cycling
+footway,1,concrete,3,Footpaths
+living_street,1,asphalt,20,Streets where pedestrians have priority
+motorway,4,asphalt,70,"Motorway/freeway. 10x 12ft lanes, 4x 10ft shoulder"
+motorway_link,2,asphalt,30,Roads that connect from one motorway/freeway to another
+path,1,dirt,3,Unspecified paths
+pedestrian,1,asphalt,20,Pedestrian only streets
+primary,3,asphalt,42,"Primary roads, typically national (major arterial). 6x 12ft thru, 2x 6ft bike/park/shoulder"
+primary_link,1,asphalt,24,"Roads that connect from one primary roads to another, typically national. Assume no shoulder/turn lanes"
+residential,1,asphalt,15,"Roads in residential areas (minor/residential collector). 2x 14ft thru lane, 2x 6ft bike/park lane"
+secondary,2,asphalt,37,"Secondary roads, typically regional (minor arterial/major collector). 4x 12ft thru lane, 1x 10ft left turn lane, 2x 8ft bike/park/shoulder"
+secondary_link,1,asphalt,16,"Roads that connect from one secondary road to another, typically regional"
+service,1,asphalt,10,"Service roads for access to buildings, parking lots, etc. 1x 10ft lane, typically in parking lots"
+steps,1,concrete,3,Flights of steps on footpaths
+tertiary,1,asphalt,22,"Tertiary roads, typically local (major/minor collector). 2x 12ft thru lane, 1x 10ft left turn lane, 2x 8ft bike/park/shoulder"
+tertiary_link,1,asphalt,12,"Roads that connect from one tertiary road to another, typically local "
+track,1,asphalt,14,"For agricultural use, in forests, etc. Often gravel roads."
+track_grade1,1,asphalt,14,track with asphalt or heavily compacted
+track_grade2,1,asphalt,14,track with asphalt or moderately compacted
+track_grade3,1,dirt,14,track lightly compacted 
+track_grade4,1,dirt,14,"track uncompated, visible"
+track_grade5,1,dirt,14,"track uncompated, hardly visible"
+trunk,3,asphalt,42,"Important roads, typically divided. 6x 12ft lane, 2x 6ft shoulder"
+trunk_link,1,asphalt,24,"Roads that connect from one important road to another, typically divided"
+unclassified,1,asphalt,20,"Smaller local roads (local/collectors in non-residential areas, typically industrial). 2x 14ft thru lane, 2x 6ft bike/park lane"
+unknown,NA,NA,NA,"Unknown, ignore"

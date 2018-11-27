@@ -1,6 +1,7 @@
 #############################################################################
 ## DATA IMPORT SCRIPT FOR 2017 PHOENIX, AZ WEATHER DATA - VARIOUS SOURCES ##
 ###########################################################################
+t.start <- Sys.time() # start script timestamp
 
 # list of all dependant packages
 list.of.packages <- c("httr",
@@ -295,12 +296,15 @@ gc()
 # Retrieve Global Historical Climatology Network daily (GHCND) weather data #
 #$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#
 
-# note this is the only data set that is currently not hourly, and is only daily summaries (min/max temps)
+# note this is the data set is not hourly, it is only daily summaries (e.g. min/max temps)
 
 # get global list of all ghcnd stations
-#ghcnd.stations <- as.data.table(ghcnd_stations())
-#saveRDS(ghcnd.stations, here("data/outputs/ghcnd-station-data.rds"))
-ghcnd.stations <- readRDS(here("data/outputs/ghcnd-station-data.rds"))
+if(file_test("-f", here("data/ghcnd-station-data.rds")) == T){ # if the file has been previously retrieved
+  ghcnd.stations <- readRDS(here("data/ghcnd-station-data.rds")) # load previous retervial to save time
+} else {
+  ghcnd.stations <- as.data.table(ghcnd_stations()) # otherwise retrieve raw station data
+  saveRDS(ghcnd.stations, here("data/ghcnd-station-data.rds")) # and save
+}
 
 # set the center of ea downtown to search for nearest stations in radius of metro
 coords <- data.frame(id = c("phx","la"), lat = c(33.453808, 34.055997), lon = c(-112.071277, -117.715813)) 
@@ -353,9 +357,8 @@ my.stations$phx$distance <- NULL
 my.stations$la$distance <- NULL
 
 # convert elevation into ft
-my.stations$phx[, elevation := elevation * 3.28084]
-my.stations$la[, elevation := elevation * 3.28084]
-
+my.stations$phx$elevation <- my.stations$phx$elevation * 3.28084
+my.stations$la$elevation <- my.stations$la$elevation * 3.28084
 
 ## MESO WEST DATA RETREIVAL VIA API
 
@@ -417,6 +420,9 @@ all.meso.w.data[, date.time := ymd_hms(paste(substr(date.time, 1, 10), substr(da
 # force data columns to numeric
 all.meso.w.data[, rh := as.numeric(rh)][, winspd := as.numeric(winspd)][, windir := as.numeric(windir)][, temp.c := as.numeric(temp.c)]
 
+# trim to year 2017 weather obs only
+all.meso.w.data <- all.meso.w.data[year(date.time) == 2017]
+
 # rename columns for consistency
 setnames(meso.s.data, "NAME", "station.name")
 setnames(meso.s.data, "STID", "id") # could use "ID" column here instead
@@ -424,10 +430,10 @@ setnames(meso.s.data, "ELEVATION", "elevation")
 setnames(meso.s.data, "LONGITUDE", "lon")
 setnames(meso.s.data, "LATITUDE", "lat")
   
-# keep relevant columns only
+# keep relevant columns only in station data
 meso.s.data <- meso.s.data[, .(station.name,id,elevation,lat,lon)]
 
-# add source column
+# add source column in station data
 meso.s.data$source <- "MesoWest"
 
 #^#^#^#^#^#^#^#^#^#^#^#^#^#
@@ -486,9 +492,8 @@ for(i in 1:nrow(w.stations)){
     w.stations[station.name == i.name & source == i.source, n.temp := sum(!is.na(w.data$temp.f[i.name == w.data$station.name]))]}
 }
 
-
-# remove stations with no temp obs
-#w.stations <- w.stations[n.temp != 0]
+# for id == NA, make them the station.name
+w.stations[is.na(id), id := station.name]
 
 # function to calculate distance in kilometers between two lat/lon points
 earth.dist <- function (long1, lat1, long2, lat2){
@@ -592,20 +597,13 @@ for(pass in 1:2){
 }
 
 # save all final R objects
-saveRDS(w.data, here("data/outputs/2017-weather-data.rds")) # all houlry data (excluding meso west)
-saveRDS(w.stations, here("data/outputs/station-data.rds")) # ALL station data
+saveRDS(w.data, here("data/outputs/2017-other-weather-data.rds")) # all houlry data (excluding meso west)
+saveRDS(all.meso.w.data, here("data/outputs/2017-meso-weather-data.rds")) # hourly MesoWest weather data seperately
 saveRDS(phx.ghcnd.data, here("data/outputs/2017-ghcnd-weather-data.rds")) # daily summary (non-hourly) weather data from ghcnd
-saveRDS(all.meso.w.data, here("data/outputs/meso-weather-data-combined.rds")) # save MesoWest weather data seperately
+saveRDS(w.stations, here("data/outputs/all-station-data.rds")) # ALL station data
 
 
-
-#############
-all.meso.w.data <- readRDS(here("data/outputs/meso-weather-data-combined.rds"))
-w.stations <- readRDS(here("data/outputs/station-data.rds"))
-test <- all.meso.w.data[id == "AT933"]
-
-# where did station id == "AT933" go?
-w.stations[id == "AT933"]
-meso.s.data[id == "AT933"]
-
-
+# print script endtime
+t.end <- Sys.time() 
+paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
+# end

@@ -75,12 +75,12 @@ my.font <- "Century"
 #all.stations <- readRDS(here("data/outputs/all-station-data.rds")) # all station data (spatial points w/ metadata)
 #uza.roads <- readRDS(here("data/outputs/osm-dissolved.rds")) # cleaned/clipped/buffered/dissoved UZA OSM data 
 uza.stations <- readRDS(here("data/outputs/uza-station-data.rds")) # uza station data (spatial points w/ metadata)
-w.data <- readRDS(here("data/outputs/2017-weather-data.rds")) # cleaned weather data for all stations
-stations.buffered <- readRDS(here("data/outputs/station-buffers-sp-list.rds")) # buffered station data w/ roadway & parking area
+w.data <- readRDS(here("data/outputs/2017-other-weather-data.rds")) # cleaned weather data for all stations
+stations.buffered <- readRDS(here("data/outputs/station-buffers-final.rds")) # buffered station data w/ roadway & parking area
 uza.weather <- w.data[station.name %in% uza.stations$station.name] # filter weather data to uza stations
 
 # import cleaned traffic data
-traffic <- fread(here("data/icarus-osm-traffic.csv"))
+traffic <- fread(here("data/icarus_osm_traffic.csv"))
 
 ## import other various shapefiles for plotting
 city.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp")) # city labels (pre-cropped to UZA)
