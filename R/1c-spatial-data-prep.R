@@ -233,11 +233,10 @@ saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # b
 #shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
 r <- which(radii.buffers == 200) # save the shapefile where the raduis of buffer is 200ft
 shapefile(stations.buffered[[r]], here(paste0("data/shapefiles/processed/stations_r",radii.buffers[r],"ft_buffer")), overwrite = T) # shapefile output of largest station buffer
+#shapefile(station.parcels[[1]], here("data/shapefiles/processed/station-parcels"), overwrite = T) # shapefile output of largest station buffer
 
 # print script endtime
 t.end <- Sys.time() 
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
 
-shapefile(station.parcels[[1]], here("data/shapefiles/processed/station-parcels"), overwrite = T) # shapefile output of largest station buffer
-
-
+# end
