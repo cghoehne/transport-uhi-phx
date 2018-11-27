@@ -25,7 +25,19 @@ if(length(new.packages)) install.packages(new.packages)
 # load packages
 invisible(lapply(list.of.packages, library, character.only = TRUE)) # invisible() just hides printing stuff in console
 
-load(here("data/outputs/temp/sp-prep-daymet.RData"))
+# load previous data if needed
+#load(here("data/outputs/temp/sp-prep-daymet.RData"))
+
+# lat lon projection
+longlat.prj <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+
+# buffer uza boundary by 1 mile (1.6 km)
+uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # import Maricopa County UZA boundary
+uza.buffer <- gBuffer(uza.border, byid = F, width = 5280)
+
+# create bounding box for uza for DAYMET data download, which requires top left and bottom right coords c(lat, lon, lat, lon)
+uza.bbox <- spTransform(uza.buffer, longlat.prj)
+uza.bbox <- bbox(uza.bbox)
 
 # DAYMET DATA DOWNLOAD @ 1km for PHOENIX METRO
 # tmax: daily maximum 2-meter air temperature in degrees Celsius

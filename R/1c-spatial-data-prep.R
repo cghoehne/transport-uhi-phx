@@ -6,18 +6,16 @@
 # start by maxing out the memory allocation (we use high number to force max allocation)
 gc()
 memory.limit(size = 56000) 
-t.start <- Sys.time() # end script timestamp
+t.start <- Sys.time() # start script timestamp
 
 # list of all dependant packages
 list.of.packages <- c("tidyverse",
                       "data.table", 
                       "rgdal",
                       "rgeos",
-                      "ncdf4",
                       "maptools",
                       "sp",
                       "cleangeo",
-                      "daymetr",
                       "doParallel",
                       "foreach",
                       "raster",
@@ -31,38 +29,12 @@ if(length(new.packages)) install.packages(new.packages)
 invisible(lapply(list.of.packages, library, character.only = T)) # invisible() just hides printing stuff in console
 
 # IMPORT DATA
-w.stations <- readRDS(here("data/outputs/station-data.rds")) # import cleaned station data
-uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # import Maricopa County UZA boundary
+#osm <- readOGR(here("data/shapefiles/osm/maricopa_county_osm_roads.shp"))
 osm <- shapefile(here("data/shapefiles/osm/maricopa_county_osm_roads.shp")) # import OSM data (maricopa county clipped raw road network data)
 fclass.info <- fread(here("data/shapefiles/osm/fclass_info.csv")) # additional OSM info by roadway functional class (fclass)
-
-# STATION DATA FORMAT
-# convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
-longlat.prj <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
-w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
-                                          proj4string = CRS(longlat.prj))
-
-# transform stations crs to same as other shapefiles 
-w.stations.spdf <- spTransform(w.stations.spdf, crs(uza.border))
-
-# buffer uza boundary by 1 mile (1.6 km)
-uza.buffer <- gBuffer(uza.border, byid = F, width = 5280)
-
-# create bounding box for uza for DAYMET data download, which requires top left and bottom right coords c(lat, lon, lat, lon)
-uza.bbox <- spTransform(uza.buffer, longlat.prj)
-uza.bbox <- bbox(uza.bbox)
-
-# clip station points to ones w/in uza 1mi buffer
-uza.stations <- raster::intersect(w.stations.spdf, uza.buffer)
-
-# foreach loop in parallel to buffer stations points by multiple radii
-# note that the foreach loop in parallel probably isn't necessary
-my.cores <- parallel::detectCores()  # store computers cores
-registerDoParallel(cores = my.cores) # register parallel backend
-radii.buffers <- c(100,150,175,200,250,350) # radii for buffer on each station point (in feet)
-stations.buffered <- foreach(i = 1:length(radii.buffers), .packages = c("sp","rgeos"), .combine = c) %dopar% {
-  gBuffer(uza.stations, byid = T, width = radii.buffers[i]) } # (stores as list of SpatialPointDataFrames)
-
+radii.buffers <- readRDS(here("data/outputs/radii-buffers.rds")) # vector of station buffer radii chosen
+stations.buffered <- readRDS(here("data/outputs/temp/stations-buffered-prep.rds")) # buffered stations by various buffer radii chosen
+uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds"))
 
 # OSM DATA FORMAT
 # **Curently, OSM data in Phoenix does not have lane data. in light of this:
@@ -119,18 +91,17 @@ osm.uza.car <- subset(osm.uza, auto.use == "Y" & !is.na(buf.ft) & buf.ft > 0) # 
 osm.clip.station <- intersect(osm.uza.car, stations.buffered[[length(stations.buffered)]]) # better than gIntersection b/c it keeps attributes
 
 # save some data 
-saveRDS(w.stations.spdf, here("data/outputs/all-station-data.rds")) # saves station data (all) as spatial r object (points)
-saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # saves station data (uza) as spatial r object (points)
 saveRDS(osm.clip.station, here("data/outputs/2017-uza-weather-data.rds")) # saves clipped osm link data around stations (use for linking w/ traffic data)
 
 # clean up space
-rm(list=setdiff(ls(), c("my.cores", "stations.buffered", "osm.clip.station", "t.start", "uza.bbox","radii.buffers","uza.stations")))
+rm(list=setdiff(ls(), c("stations.buffered","osm.clip.station","t.start","radii.buffers")))
 gc()
 memory.limit(size = 56000)
 
 # buffer clipped osm data
 # foreach loop in parallel to buffer links
 # (stores as list of SpatialPointDataFrames)
+my.cores <- parallel::detectCores()  # store computers cores
 registerDoParallel(cores = my.cores) # register parallel backend
 w <- unique(osm.clip.station$buf.ft) # list of unique buffer widths
 b <- list() # create empty list for foreach
@@ -176,10 +147,9 @@ for(y in 1:length(stations.buffered)){
 parking <- readRDS(here("data/phoenix-parking-parcel.rds")) # estimated parking space data for all Maricopa County by APN
 
 # parcels.trimmed is derived from all of regions parcels via script 1b-parcel-preprocessing.R
-parcels.trimmed <- readRDS(here("data/outputs/parcels-trimmed.rds"))
+parcels.trimmed <- readRDS(here("data/outputs/temp/parcels-trimmed.rds"))
 
 # clip parcels to those w/in station buffers and store as list of SpatialPointDataFrames
-my.cores <- parallel::detectCores()  # store computers cores
 registerDoParallel(cores = my.cores) # register parallel backend
 b <- list() # empty list
 station.parcels <- foreach(i = 1:length(stations.buffered), .packages = c("sp","rgeos","raster"), .combine = c) %dopar% { 
@@ -258,16 +228,16 @@ for(y in 1:length(stations.buffered)){
 
 # save things
 save.image(here("data/outputs/temp/sp-prep.RData")) # save workspace
-load(here("data/outputs/temp/sp-prep.RData"))
+#load(here("data/outputs/temp/sp-prep.RData"))
 saveRDS(stations.buffered, here("data/outputs/station-buffers-sp-list.rds")) # buffered station data as list of spatial r objects w/ all parking/road data
-
-# shapefile outputs (to interactively investigate e.g. in QGIS)
 #shapefile(osm.dissolved, here("data/shapefiles/processed/osm_dissolved"), overwrite = T) # final osm cleaned/clipped/buffered/dissolved output
-r <- 4
+r <- which(radii.buffers == 200) # save the shapefile where the raduis of buffer is 200ft
 shapefile(stations.buffered[[r]], here(paste0("data/shapefiles/processed/stations_r",radii.buffers[r],"ft_buffer")), overwrite = T) # shapefile output of largest station buffer
-shapefile(uza.stations, here("data/shapefiles/processed/stations_pts"), overwrite = T) # station points shapefile
 
-t.end <- Sys.time() # end script timestamp
+# print script endtime
+t.end <- Sys.time() 
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
+
+shapefile(station.parcels[[1]], here("data/shapefiles/processed/station-parcels"), overwrite = T) # shapefile output of largest station buffer
 
 
