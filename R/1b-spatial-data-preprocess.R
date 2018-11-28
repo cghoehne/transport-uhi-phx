@@ -25,7 +25,7 @@ if(length(new.packages)) install.packages(new.packages)
 invisible(lapply(list.of.packages, library, character.only = T)) # invisible() just hides printing stuff in console
 
 # IMPORT DATA
-w.stations <- readRDS(here("data/outputs/all-station-data.rds")) # import cleaned station data
+w.stations <- readRDS(here("data/outputs/temp/2017-station-data.rds")) # import cleaned station data
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # import Maricopa County UZA boundary
 
 # convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
@@ -52,9 +52,6 @@ uza.stations.dt <- uza.stations.dt[n.temp != 0]
 
 # remove iButton station as they are unreliable
 uza.stations.dt <- uza.stations.dt[source != "iButton"]
-
-# remove GHCND stations b/c focusing on houly observations only
-uza.stations.dt <- uza.stations.dt[source != "GHCND"]
 
 # remove co-op stations due to reliability
 uza.stations.dt <- uza.stations.dt[-grep("COOP", id)]
@@ -182,7 +179,7 @@ uza.stations <- subset(uza.stations, id %in% uza.stations.dt$id)
 # note that the foreach loop in parallel probably isn't necessary
 my.cores <- parallel::detectCores()  # store computers cores
 registerDoParallel(cores = my.cores) # register parallel backend
-radii.buffers <- seq(from = 100, to = 300, by = 25) # radii for buffer on each station point (in feet)
+radii.buffers <- seq(from = 100, to = 1000, by = 50) # radii for buffer on each station point (in feet)
 
 stations.buffered <- foreach(i = 1:length(radii.buffers), .packages = c("sp","rgeos"), .combine = c) %dopar% {
   gBuffer(uza.stations, byid = T, width = radii.buffers[i]) } # (stores as list of SpatialPointDataFrames)
@@ -191,18 +188,17 @@ stations.buffered <- foreach(i = 1:length(radii.buffers), .packages = c("sp","rg
 # the next section of script imports the raw parcel database for the metro region and clips to only the maximum
 # buffered radius of the stations in the region for quicker processing in the 1c-spatial-data-prep.R script
 parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds")) # load full parcels in region
-radii.buffers <- seq(from = 100, to = 300, by = 25) # radii for buffer on each station point (in feet)
 l <- length(radii.buffers) # store index of largest buffer radii
 parcels.trimmed <- intersect(parcels, stations.buffered[[l]]) # trim parcels by largest station buffer
 parcels.trimmed <- raster::aggregate(parcels.trimmed, by = "APN", dissolve = T) # dissolve
 parcels.trimmed <- parcels.trimmed[,c("APN")] # only need the APN
 
 # save files
-#saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # station data (uza) as spatial r object (points)
-saveRDS(uza.buffer, here("data/outputs/temp/uza-buffer.rds"))
+saveRDS(uza.stations, here("data/outputs/uza-station-data.rds")) # station data (uza) as spatial r object (points)
+saveRDS(uza.buffer, here("data/outputs/temp/uza-buffer.rds")) # buffered uza (1 mi)
 saveRDS(parcels.trimmed, here("data/outputs/parcels-trimmed.rds")) # trimmed parcels for clipping to station buffers
-saveRDS(stations.buffered, here("data/outputs/temp/stations-buffered-prep.rds"))
-saveRDS(radii.buffers, here("data/outputs/temp/radii-buffers.rds"))
+saveRDS(stations.buffered, here("data/outputs/temp/stations-buffered-prep.rds")) # list of spatial station buffers at variable radii
+saveRDS(radii.buffers, here("data/outputs/temp/radii-buffers.rds")) # vector of chosen radii buffers
 shapefile(uza.stations, here("data/shapefiles/processed/stations_pts"), overwrite = T) # station points shapefile
 
 # print script endtime

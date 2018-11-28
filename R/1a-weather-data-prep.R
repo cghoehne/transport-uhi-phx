@@ -292,73 +292,6 @@ rm(ibut.temp,ibut.rhum,ibut.stations.col.info)
 gc()
 
 
-#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#
-# Retrieve Global Historical Climatology Network daily (GHCND) weather data #
-#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#
-
-# note this is the data set is not hourly, it is only daily summaries (e.g. min/max temps)
-
-# get global list of all ghcnd stations
-if(file_test("-f", here("data/ghcnd-station-data.rds")) == T){ # if the file has been previously retrieved
-  ghcnd.stations <- readRDS(here("data/ghcnd-station-data.rds")) # load previous retervial to save time
-} else {
-  ghcnd.stations <- as.data.table(ghcnd_stations()) # otherwise retrieve raw station data
-  saveRDS(ghcnd.stations, here("data/ghcnd-station-data.rds")) # and save
-}
-
-# set the center of ea downtown to search for nearest stations in radius of metro
-coords <- data.frame(id = c("phx","la"), lat = c(33.453808, 34.055997), lon = c(-112.071277, -117.715813)) 
-
-# filter stations to list of stations in 60km radius of (approx.) metro center
-# search radius = 90km (should capture all of metro)
-my.stations <- meteo_nearby_stations(lat_lon_df = coords, lat_colname = "lat",
-                                     lon_colname = "lon", station_data = ghcnd.stations, var = c("TMAX", "TMIN"),
-                                     year_min = 2016, year_max = 2018, radius = 90, limit = NULL)
-
-# pull 2017 data from all stations and binds together (phx)
-phx.ghcnd.data <- as.data.table(meteo_pull_monitors(my.stations$phx$id, date_min = "2017-01-01", date_max = "2017-12-31", var = c("TMAX", "TMIN")))
-la.ghcnd.data <- as.data.table(meteo_pull_monitors(my.stations$la$id, date_min = "2017-01-01", date_max = "2017-12-31", var = c("TMAX", "TMIN")))
-
-# create function to create the decimal in the temp data (raw data does not have the decminal but we'll need it)
-fix.ghcnd.temp <- function(t) {
-  as.numeric(
-    paste0(
-      substr(t, 1, nchar(t) - 1),
-      ".",
-      substr(t, nchar(t), nchar(t))))
-}
-
-# apply function and fix data
-phx.ghcnd.data$tmax <- fix.ghcnd.temp(phx.ghcnd.data$tmax)
-phx.ghcnd.data$tmin <- fix.ghcnd.temp(phx.ghcnd.data$tmin)
-
-la.ghcnd.data$tmax <- fix.ghcnd.temp(la.ghcnd.data$tmax)
-la.ghcnd.data$tmin <- fix.ghcnd.temp(la.ghcnd.data$tmin)
-
-# add elevation to station data from metadata of all stations
-my.stations$phx <- unique(merge(my.stations$phx, ghcnd.stations[, .(elevation,id)], by = "id"))
-my.stations$la <- unique(merge(my.stations$la, ghcnd.stations[, .(elevation,id)], by = "id"))
-
-# rename to merge w/ all stations
-setnames(my.stations$phx, "name", "station.name")
-setnames(my.stations$phx, "latitude", "lat")
-setnames(my.stations$phx, "longitude", "lon")
-
-setnames(my.stations$la, "name", "station.name")
-setnames(my.stations$la, "latitude", "lat")
-setnames(my.stations$la, "longitude", "lon")
-
-# create source column
-my.stations$phx$source <- "GHCND"
-my.stations$la$source <- "GHCND"
-
-# remove 'distance' column
-my.stations$phx$distance <- NULL
-my.stations$la$distance <- NULL
-
-# convert elevation into ft
-my.stations$phx$elevation <- my.stations$phx$elevation * 3.28084
-my.stations$la$elevation <- my.stations$la$elevation * 3.28084
 
 ## MESO WEST DATA RETREIVAL VIA API
 
@@ -423,6 +356,11 @@ all.meso.w.data[, rh := as.numeric(rh)][, winspd := as.numeric(winspd)][, windir
 # trim to year 2017 weather obs only
 all.meso.w.data <- all.meso.w.data[year(date.time) == 2017]
 
+# create some vars
+all.meso.w.data[, temp.f := signif((temp.c * 1.8) + 32, digits = 4)]
+all.meso.w.data[, dewpt.c := humidity.to.dewpoint(rh = rh, t = temp.c, temperature.metric = "celsius")]
+all.meso.w.data[, dewpt.f := humidity.to.dewpoint(rh = rh, t = temp.f, temperature.metric = "fahrenheit")]
+
 # rename columns for consistency
 setnames(meso.s.data, "NAME", "station.name")
 setnames(meso.s.data, "STID", "id") # could use "ID" column here instead
@@ -436,13 +374,14 @@ meso.s.data <- meso.s.data[, .(station.name,id,elevation,lat,lon)]
 # add source column in station data
 meso.s.data$source <- "MesoWest"
 
+
 #^#^#^#^#^#^#^#^#^#^#^#^#^#
 # Merge all data together #
 #^#^#^#^#^#^#^#^#^#^#^#^#^#
 
 # combine all houlry weather data into one object, and all stations into one object
-w.data <- rbindlist(list(azmet.data,ncei.data,mcfcd.data,ibut.data), use.names = T, fill = T)
-w.stations <- rbindlist(c(list(azmet.stations,ncei.stations,mcfcd.stations,ibut.stations,meso.s.data), my.stations), use.names = T, fill = T)
+w.data <- rbindlist(list(azmet.data,ncei.data,mcfcd.data,ibut.data,all.meso.w.data), use.names = T, fill = T)
+w.stations <- rbindlist(list(azmet.stations,ncei.stations,mcfcd.stations,ibut.stations,meso.s.data), use.names = T, fill = T)
 
 # coerce lat, lon, & elev to numeric
 w.stations[, lat := as.numeric(lat)][, lon := as.numeric(lon)][, elevation := round(as.numeric(elevation), digits = 0)]
@@ -473,11 +412,7 @@ for(i in 1:nrow(w.stations)){
 
   # MesoWest; use all.meso.w.data & temp.c
   if(i.source == "MesoWest"){
-    w.stations[station.name == i.name & source == i.source & id == i.id, n.temp := sum(!is.na(all.meso.w.data$temp.c[i.name == all.meso.w.data$station.name & i.id == all.meso.w.data$id]))]}
-  
-  # GHCND; use phx.ghcnd.data & tmax/tmin
-  if(i.source == "GHCND"){
-    w.stations[station.name == i.name & source == i.source, n.temp := sum(!is.na(phx.ghcnd.data$tmax[i.name == phx.ghcnd.data$station.name]))]}
+    w.stations[station.name == i.name & source == i.source & id == i.id, n.temp := sum(!is.na(w.data$temp.c[i.name == w.data$station.name & i.id == w.data$id]))]}
   
   # iButton; id is NA
   if(i.source == "iButton"){
@@ -495,113 +430,9 @@ for(i in 1:nrow(w.stations)){
 # for id == NA, make them the station.name
 w.stations[is.na(id), id := station.name]
 
-# function to calculate distance in kilometers between two lat/lon points
-earth.dist <- function (long1, lat1, long2, lat2){
-  rad <- pi/180
-  a1 <- lat1 * rad
-  a2 <- long1 * rad
-  b1 <- lat2 * rad
-  b2 <- long2 * rad
-  dlon <- b2 - a2
-  dlat <- b1 - a1
-  a <- (sin(dlat/2))^2 + cos(a1) * cos(b1) * (sin(dlon/2))^2
-  c <- 2 * atan2(sqrt(a), sqrt(1 - a))
-  R <- 6378.145
-  d <- R * c
-  return(d)
-}
-
-## determine duplicate stations that appear in station list and choose the more accurate station location
-
-# for each station, iterate through all other stations 
-# calc the distance between station 'i' and other stations
-# if the closest station has a station.name with a partial string match (agrep),
-# and it is within the range of lat/long coord precision 
-# flag both stations in the original station list and keep the station w/ more accurate lat/lon (greater mean sig figs in lat/lon)
-# flag: 0 no flag, 1 flag match but keep, -1 flag match and delete
-
-# store precision of decimial lat lon
-# we assume the single direction precision of lat lon coords is approximatley = (111,131.96 meters) / (10^(num of sigfig decimal degrees))
-# based on distance at equator per decimal degree: 
-# https://gisjames.wordpress.com/2016/04/27/deciding-how-many-decimal-places-to-include-when-reporting-latitude-and-longitude/ 
-# this allows us to ignore stations that are similaly named but outside the possibility of being duplicates due to the precision of coords
-# this assumes that the coords are accurate but may not precise. 
-inv.prec <- 111.13196 # store as km b/c earth.dist function calcs in kilometers too
-
-# store old station list
-w.stations <- w.stations.old
-w.stations.old <- w.stations
-
-
-# first set/reset dupflag column to 0 (0 is default = no action keep, 1 for dupe but keep, -1 for dupe but delete)
-w.stations$dupflag <- 0
-
-# double pass 
-for(pass in 1:2){
-
-
-    # mark dupes 
-  for(i in 1:nrow(w.stations)){
-    
-    n <- w.stations$station.name[i] # station name
-    lat <- w.stations$lat[i] # station lat
-    lon <- w.stations$lon[i] # station lon
-    l <- w.stations[!i] # all other stations 
-
-    for(k in 1:nrow(l)){ # for all stations
-      
-      # calc all euclidian dist btwn stations 
-      l$d[k] <- earth.dist(lon, lat, l$lon[k], l$lat[k]) 
-      
-      # logic to determine if stations are dups
-      l$L1[k] <- !is_empty(agrep(n, l$station.name[k], max.distance = 1, ignore.case = T)) # TRUE for station name partial string match
-      l$L2[k] <- !is_empty(agrep(l$station.name[k], n, max.distance = 1, ignore.case = T)) # TRUE for station name partial string match (reverse)
-      l$L3[k] <- isTRUE(if(!is.na(l$elevation[k]) & !is.na(w.stations$elevation[i]))
-        {abs(l$elevation[k] - w.stations$elevation[k])}   # TRUE if station elevations are w/in 50ft of each other 
-      else {0} < 50) # or if one or both station elevations are NA
-    }
-    
-    l.match <- l[L1 == T & L2 == T] # which stations have similar names to station 'i'
-    
-    # if there are stations that matched, continue with marking otherwise skip to next station
-    if(nrow(l.match) > 0){
-      
-      m <- which.min(l.match$d) # which index in the matches is the closest station
-      lat2 <- l.match$lat[m] # closest station match 
-      lon2 <- l.match$lon[m]
-      
-      # determine number of figs to right of decimal in lat/long for mean precision of coord
-      p1 <- mean(nchar(strsplit(as.character(lat), "[.]")[2]),nchar(strsplit(as.character(lon), "[.]")[2]))
-      p2 <- mean(nchar(strsplit(as.character(lat2), "[.]")[2]),nchar(strsplit(as.character(lon2), "[.]")[2]))
-      
-      # the max impercision (in km) btwn closest 2 pts is along the diag of both imprecision squares of coords, assume pathag therom and euclidian dist
-      max.imprec <- (2 * sqrt(2)) * ((inv.prec / (10^(p1))) + (inv.prec / (10^p2)))
-      
-      # if names match in either direction of test, then flag stations as dupes based on precision, previous label, & number of temp obs
-      if(l.match$d[m] < max.imprec){ # IF matched 2 stations that are closest are within the max impercision of lat/lon distance
-        
-        # flag station 'i' to keep or delete based on:
-        w.stations$dupflag[i] <- ifelse(( p1 > p2 # IF station 'i' has greater lat/lon precision
-                                          | p1 == p2 & w.stations$n.temp[i] > l.match$n.temp[m]  # OR they are equal precision but station 'i' has larger sample size
-                                          | l.match$dupflag[m] == -1   # OR the closest station to station 'i' has already been flagged to delete
-                                          | l.match$n.temp[m] == 0)    # OR the closest station to station 'i' has no temperature observations
-                                        & w.stations$n.temp[i] > 0,  # AND station 'i' has greater than zero temp obs
-                                        1, -1) # THEN mark to keep, otherwise mark to delete (1 is keep, -1 is delete)
-        
-      } # if none of the matched stations by name were within the imprecision distance, 
-      #then the dupflag stays as is (zero) indicating there was not a duplicate station identified with station 'i' 
-    }
-  }
-  # remove dupes and pass again in case missed some due to some station locations have more than 2 of same instance
-  w.stations <- w.stations[dupflag != -1]
-}
-
 # save all final R objects
-saveRDS(w.data, here("data/outputs/2017-other-weather-data.rds")) # all houlry data (excluding meso west)
-saveRDS(all.meso.w.data, here("data/outputs/2017-meso-weather-data.rds")) # hourly MesoWest weather data seperately
-saveRDS(phx.ghcnd.data, here("data/outputs/2017-ghcnd-weather-data.rds")) # daily summary (non-hourly) weather data from ghcnd
-saveRDS(w.stations, here("data/outputs/all-station-data.rds")) # ALL station data
-
+saveRDS(w.data, here("data/outputs/temp/2017-weather-data.rds")) # all houlry weather data
+saveRDS(w.stations, here("data/outputs/temp/2017-station-data.rds")) # all station data
 
 # print script endtime
 t.end <- Sys.time() 
