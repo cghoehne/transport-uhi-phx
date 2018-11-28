@@ -429,6 +429,7 @@ for(i in 1:nrow(w.stations)){
 
 # for id == NA, make them the station.name
 w.stations[is.na(id), id := station.name]
+w.data[is.na(id), id := station.name]
 
 # save all final R objects
 saveRDS(w.data, here("data/outputs/temp/2017-weather-data.rds")) # all houlry weather data

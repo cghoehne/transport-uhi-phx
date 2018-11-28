@@ -237,3 +237,7 @@ t.end <- Sys.time()
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
 
 # end
+
+# Austin XML optimized OSM network to match to traffic data
+#net <- XML::xmlParse(here("data/optimizedNetwork.xml"))
+#net.list <- XML::xmlToList(net)
