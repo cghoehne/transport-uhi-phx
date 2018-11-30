@@ -3,49 +3,52 @@
 ##################################################################
 
 extrafont::loadfonts(device = "win") # load fonts
-#list.of.packages <- c()  # a list of the dependant packages  
-#new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-#if(length(new.packages)) install.packages(new.packages)
 
-cat("\014")     # clear console (Cntl + L)
+# list of all dependant packages
+list.of.packages <- c("tidyverse",
+                      "data.table", 
+                      "rgdal",
+                      "rgeos",
+                      "sp",
+                      "raster",
+                      "maptools",
+                      "deldir",
+                      "tmap",
+                      "here")
 
-library(tidyverse)
-library(data.table)
-library(lubridate)
-library(rgdal)
-library(raster)
-library(maptools)
-library(deldir)
-library(tmap)
-library(here)
+# install missing packages
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# load packages
+invisible(lapply(list.of.packages, library, character.only = T)) # invisible() just hides printing stuff in console
 
 #-#-#-#-#-#-#-#
 # Import data #
 #-#-#-#-#-#-#-#
 
 # import cleaned weather & station data
-w.data <- readRDS(here("data/2017-all-data.rds"))
-w.stations <- readRDS(here("data/2017-all-stations.rds"))
+w.data <- readRDS(here("data/outputs/temp/2017-weather-data.rds")) # cleaned hourly/sub-hourly weather data for all stations
+uza.stations <- readRDS(here("data/outputs/uza-station-data.rds")) # station data (uza) as spatial r object (points)
 
-# import other shapefiles for plotting
-phx.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp")) # city labels shpfile
-uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # uza shpfile
-cnty.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county.shp")) # county shpfile
-hways <- shapefile(here("data/shapefiles/other/phx_metro_hways.shp")) # 2017 highways (trimmed outside of uza)
+## import other various shapefiles for plotting
+city.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp")) # city labels (pre-cropped to UZA)
+uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # UZA 
+cnty.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county.shp")) # county 
+highways <- shapefile(here("data/shapefiles/other/phx_metro_hways.shp")) # 2017 highighways (pre-cFropped to UZA)
 
 # other plot/formatting 
-heat.p <- c('#fff5f0','#ffe3d7','#fdc6af','#fca487','#fc8161','#eb362a','#cc181d','#a90f15','#67000d') # palette
+my.scale <- seq(from = 71, to = 111, by = 3)
+heat.p <- rev(grDevices::heat.colors(n = length(my.scale))) # heat color palette
 my.font <- "Century Gothic" # store master font
 
-# convert stations data.table w/ lat-lon to coordinates (SpatialPointDataFrame)
-w.stations.spdf <- SpatialPointsDataFrame(coords = w.stations[, .(lon,lat)], data = w.stations,
-                                          proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
 
-# transform stations crs to same as other shapefiles 
-w.stations.spdf <- spTransform(w.stations.spdf, crs(uza.border))
-
-# clip stations points to ones w/in uza 
-uza.stations <- raster::intersect(w.stations.spdf, uza.border)
+# filter weather data to all unique uza stations
+all.station.ids <- unique(uza.stations$id[uza.stations$id != "UP549"]) # remove outlier station UP549
+all.station.ids <- all.station.ids
+uza.weather <- w.data[id %in% all.station.ids] 
+rm(w.data)
+gc()
 
 # estimate thiessen polygons (voronoi diagram) around each station point then create gif of temp
 # this function uses a spatial point df with @ coords and a polygon to create the 
@@ -81,18 +84,22 @@ crs(stations.vpoly) <- crs(uza.border)
 stations.vpoly.b <- raster::intersect(uza.border, stations.vpoly)
 
 # join station data to vpolys for linking temp data
-stations.vpoly.data <- over(stations.vpoly.b, w.stations.spdf)
+stations.vpoly.data <- over(stations.vpoly.b, uza.stations)
 stations.vpoly.b <- spCbind(stations.vpoly.b, stations.vpoly.data)
 
-# load previously formatted data for summer 2017
-sum.data <- readRDS(here("data/2017-summer-aggregated-by-station.rds"))
+# aggregate uza weather data to data.table of summary variables
+t.agg <-
+  uza.weather %>%
+  group_by(id,hour) %>%
+  summarise(smr_mean_hr_temp = mean(temp.f[month %in% c("Jun","Jul","Aug")], na.rm = T)) %>%
+  data.table() 
 
 # recast to join such that it can be used in a GIF
-sum.data.mean <- dcast(sum.data[,c("station.name","hour","mean.temp.f")], station.name ~ hour, value.var = "mean.temp.f")
+sum.data.mean <- dcast(t.agg[,c("id","hour","smr_mean_hr_temp")], id ~ hour, value.var = "smr_mean_hr_temp")
 setnames(sum.data.mean, paste0(0:23), paste0("hr",0:23))
 
 # join summer data to polys
-stations.vpoly.b <- merge(stations.vpoly.b, sum.data.mean, by = "station.name")
+stations.vpoly.b <- merge(stations.vpoly.b, sum.data.mean, by = "id")
 
 # create GIF of summer temps in vpolys
 # **WARNING** this will not work withoug ImageMagick installed: https://www.imagemagick.org/script/download.php
@@ -101,7 +108,7 @@ gif <-
   tm_fill(col = as.character(paste0("hr",0:23)), # fill of polys is based on tempF at hour
           palette = heat.p, 
           style = "fixed", # scale is fixed for each frame
-          breaks = c(50,60,70,80,90,100,110,120,130), # scale from 50 F to 130 F
+          breaks = my.scale, # scale from 70 F to 122 F by 4
           showNA = F, 
           colorNA = NULL,  # missing data is 'transparent'
           title = " 2017 Mean Summer \n Temperature (deg F)") +
@@ -119,9 +126,9 @@ gif <-
                breaks = c(0,5,10,15,20),
                size = 0.75,
                color.light = "grey85") +
-  tm_shape(hways) +  # major metro highways
+  tm_shape(highways) +  # major metro highighways
   tm_lines(lwd = 1, col = "grey20") +
-  tm_shape(phx.labels) +  # city labels
+  tm_shape(city.labels) +  # city labels
   tm_text("name", 
           size = .5, 
           fontfamily = my.font,
@@ -130,11 +137,11 @@ gif <-
   tm_layout(fontfamily = my.font,   # formatting & layout properties
             fontface = "italic", 
             title.size = 1.5, 
-            legend.title.size = 1.1, 
-            legend.text.size = 0.9, 
+            legend.title.size = 0.8, 
+            legend.text.size = 0.6, 
             title = as.character(paste("Hour:",0:23)), 
             bg.color = "grey95",
-            title.position = c(0.06,0.78),
+            title.position = c(0.06,0.12),
             legend.position = c(0.02,0.40),
             outer.margins = c(0,0,0,0), 
             asp = 0) +
@@ -142,8 +149,15 @@ gif <-
   tmap_options(limits = c(facets.plot = 120, facets.view = 1))
 
 # save gif
-tmap_animation(gif, filename = here("figures/summer-tempF-hourly-2017-vpoly-stations.gif"),
+tmap_animation(gif, filename = here::here("figures/summer-tempF-hourly-2017-vpoly-stations_new.gif"),
                delay = 100, loop = T, restart.delay = 0)
+
+# percent obs
+#nrow(uza.weather[!is.na(temp.f)]) / nrow(uza.weather)
+#nrow(uza.weather[!is.na(dewpt.f)]) / nrow(uza.weather)
+#nrow(uza.weather[!is.na(winspd)]) / nrow(uza.weather)
+#nrow(uza.weather[!is.na(solar)]) / nrow(uza.weather)
+
 
 
 

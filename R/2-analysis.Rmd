@@ -103,7 +103,7 @@ mean(sapply(1:length(stations.buffered), function(x) length(unique(stations.buff
 signif.dig <- function(x) length(gregexpr("[[:digit:]]", as.character(x))[[1]])
 
 # count digits to left hand side of decimal
-lhs.dig <- function(x) ifelse(abs(x) < 1, 0, nchar(as.character(as.integer(x))))
+lhs.dig <- function(x) ifelse(abs(x) < 1, 0, nchar(as.character(as.integer(abs(x)))))
 
 ```
 
@@ -112,16 +112,21 @@ lhs.dig <- function(x) ifelse(abs(x) < 1, 0, nchar(as.character(as.integer(x))))
 
 ## First Pass Linear Regression Analysis
 
+# calc hourly mean
+uza.weather[, all_month_hr_mean := mean(temp.f, na.rm = T), by = .(hour,month)]
+
 # aggregate uza weather data to data.table of summary variables
 t.agg <-
   uza.weather %>%
   group_by(id) %>%
   summarise(yr_max_temp = max(temp.f, na.rm = T),
-            yr_avg_temp = mean(temp.f, na.rm = T),
             smr_min_temp = min(temp.f[month %in% c("Jun","Jul","Aug")], na.rm = T),
-            smr_5pm_temp = mean(temp.f[hour == 17], na.rm = T),
-            smr_7pm_temp = mean(temp.f[hour == 19], na.rm = T),
-            smr_9pm_temp = mean(temp.f[hour == 21], na.rm = T)) %>%
+            smr_5pm_temp = mean(temp.f[hour == 17 & month %in% c("Jun","Jul","Aug")], na.rm = T),
+            smr_7pm_temp = mean(temp.f[hour == 19 & month %in% c("Jun","Jul","Aug")], na.rm = T),
+            smr_9pm_temp = mean(temp.f[hour == 21 & month %in% c("Jun","Jul","Aug")], na.rm = T),
+            rel_inc_month_hr_mean = mean(temp.f - all_month_hr_mean, na.rm = T),
+            smr_5pm_month_hr_mean = mean(temp.f[hour == 19 & month %in% c("Jun","Jul","Aug")] - 
+                                           all_month_hr_mean[hour == 19 & month %in% c("Jun","Jul","Aug")])) %>%
   data.table() 
 
 # force abt NaN, Inf, and -Inf, to NA
@@ -133,61 +138,89 @@ for(y in 1:length(uza.stations)){
   uza.stations[[y]] <- merge(uza.stations[[y]], t.agg, by = "id")
 }
 
+
 # create empty lists to store linear regression model/data/plots, iterate through, summarize, and plot
+model.in <- list() # list cleaned input data to models
 models <- list() # list of model objects
 models.dt <- list() # list of data.tables of output data from models
 models.pl <- list() # list of model plots
 
 # loop through each temperature summary variable and each buffer distance creating a regression between the 2 and output plots for each combo
+
+# all variables and corresponding labels
 variables <- colnames(t.agg)[2:length(t.agg)] # list of summary variables
-for(variable.j in variables){ # each summary variable j
-  for(buffer.i in 1:length(uza.stations)){ # each buffer index i
+variable.labs <- c("2017 Max Observed Temp (deg F)",
+                   "2017 Min Summer Observed Temp (deg F)",
+                   "2017 Mean 5pm Summer Temp (deg F)",
+                   "2017 Mean 7pm Summer Temp (deg F)",
+                   "2017 Mean 9pm Summer Temp (deg F)",
+                   "2017 Mean Change in Month-hour Temps (deg F)",
+                   "2017 Mean Change in 5pm Month-hour Temp (deg F)")
+
+# remove stations with no pavement area detected
+#uza.stations.adj <- lapply(1:length(uza.stations), function(x) uza.stations[[x]][pave.prct > 0] )
+
+# filter to which you want to plot
+variables <- variables[1:7]
+variable.labs <- variable.labs[1:7]
+
+for(variable.j in 1:length(variables)){ # each summary variable j
+  for(buffer.i in 1:length(uza.stations.adj)){ # each buffer index i
   
-    # models
-    models[[buffer.i]] <- lm(unlist(uza.stations[[buffer.i]][,mget(variable.j)]) ~ uza.stations[[buffer.i]]$pave.prct)
+    ## models
+    # first check and remove outliers in y (3 sd outside)
+    model.in[[buffer.i]] <- as.data.table(data.frame(y = unlist(uza.stations.adj[[buffer.i]][,mget(variables[variable.j])]),
+                                                     x = uza.stations.adj[[buffer.i]]$pave.prct))
+    mean.y <- mean(model.in[[buffer.i]]$y, na.rm = T)
+    sd.y <- sd(model.in[[buffer.i]]$y, na.rm = T)
+    model.in[[buffer.i]] <- model.in[[buffer.i]][(y > mean.y - sd.y*3) & (y < mean.y + sd.y*3),]
+    
+    models[[buffer.i]] <- lm(model.in[[buffer.i]]$y ~ model.in[[buffer.i]]$x)
     models.dt[[buffer.i]] <- as.data.table(data.frame(fit = signif(models[[buffer.i]]$fitted.values,6), 
                                                       x = signif(models[[buffer.i]]$model[,2],6), 
                                                       y = signif(models[[buffer.i]]$model[,1],6)))
+    # confidence intervals for plot banding
     conf.i <- as.data.table(predict(models[[buffer.i]], interval="confidence", level = 0.95))
     conf.i[, `:=`(lwr = signif(lwr,6), upr = signif(upr,6), fit.f = as.factor(signif(fit,6)))][,fit := NULL]
     models.dt[[buffer.i]] <- merge(models.dt[[buffer.i]][,fit.f := as.factor(fit)], unique(conf.i), by = "fit.f", all.x = T)[,fit.f := NULL]
     
-    # plots
-    range.x <- diff(range(uza.stations[[buffer.i]]$pave.prct))
-    range.y <- diff(range(unlist(uza.stations[[buffer.i]][,mget(variable.j)]), na.rm = T))
+    ## plots
+    # plot x/y max/mins
+    range.x <- diff(range(uza.stations.adj[[buffer.i]]$pave.prct))
+    range.y <- diff(range(unlist(uza.stations.adj[[buffer.i]][,mget(variables[variable.j])]), na.rm = T))
     min.x <- 0
-    max.x <- 1
-    min.y <- min()
-    max.y <- 
+    max.x <- signif(max(models.dt[[buffer.i]]$x) + (0.1 * range.x), 2)
+    min.y <- floor(min(models.dt[[buffer.i]]$y) - (0.1 * range.y))
+    max.y <- ceiling(max(models.dt[[buffer.i]]$y) + (0.1 * range.y))
+    chng.x <- models.dt[[buffer.i]]$x[2] - models.dt[[buffer.i]]$x[1]
+    chng.y <- models.dt[[buffer.i]]$fit[2] - models.dt[[buffer.i]]$fit[1]
     
+    # model plots using ggplot
     models.pl[[buffer.i]] <- (ggplot()
-          + geom_segment(aes(x = 0, y = 100, xend = 1, yend = 100))   # x border (x,y) (xend,yend)
-          + geom_segment(aes(x = 0, y = 100, xend = 0, yend = 135))  # y border (x,y) (xend,yend)
+          + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
+          + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
           + geom_ribbon(aes(ymin = lwr, ymax = upr, x = x), fill = "grey30", alpha = 0.2, data = models.dt[[buffer.i]])
           + geom_line(aes(y = fit, x = x), data = models.dt[[buffer.i]], colour = "red")
           + geom_point(aes(y = y, x = x), data = models.dt[[buffer.i]])
-          + scale_x_continuous(expand = c(0,0), limits = c(0,1))
-          + scale_y_continuous(expand = c(0,0), limits = c(100,140))
-          + labs(x = paste0("Fractional Surrounding Area of Road & Parking Pavement (r=",radii.buffers[[buffer.i]],"ft)"), y = "2017 Max Observed Temperature")
-          + geom_text(aes(x = 0.75, y = 108), label = paste("R^2 ==",signif(summary(models[[buffer.i]])$r.squared, 2)), parse = T, family = my.font)
-          + geom_text(aes(x = 0.75, y = 105), label = paste("p ==",signif(anova(models[[buffer.i]])$'Pr(>F)'[1], 2)), parse = T, family = my.font)
-          + geom_text(aes(x = 0.75, y = 102), label = paste("n ==",nrow(models.dt[[buffer.i]])), parse = T, family = my.font)
+          + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
+          + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
+          + labs(x = paste0("Fractional Surrounding Area of Road & Parking Pavement (r=",radii.buffers[[buffer.i]],"ft)"), y = variable.labs[variable.j])
+          + geom_text(aes(x = 0.80*(max.x - min.x), y = min.y + 0.25*(max.y - min.y)), label = paste0("+10% pavement = ",if(chng.y/chng.x > 0){"+"},signif(0.1*(chng.y/chng.x),2),"F"), parse = F, family = my.font)
+          + geom_text(aes(x = 0.85*(max.x - min.x), y = min.y + 0.18*(max.y - min.y)), label = paste("R^2 ==",signif(summary(models[[buffer.i]])$r.squared, 2)), parse = T, family = my.font)
+          + geom_text(aes(x = 0.85*(max.x - min.x), y = min.y + 0.11*(max.y - min.y)), label = paste("p ==",signif(anova(models[[buffer.i]])$'Pr(>F)'[1], 2)), parse = T, family = my.font)
+          + geom_text(aes(x = 0.85*(max.x - min.x), y = min.y + 0.04*(max.y - min.y)), label = paste("n ==",nrow(models.dt[[buffer.i]])), parse = T, family = my.font)
           + theme_minimal()
           + theme(text = element_text(family = my.font, size = 12),
                   plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt")))
     
     # save plots as png
-    var.path <- here(paste0("figures/",variable.j)) # string of new variable path sub-directory
+    var.path <- here(paste0("figures/",variables[variable.j])) # string of new variable path sub-directory
     dir.create(var.path, showWarnings = F) # create variable sub-directory in "figures/" 
     ggsave(paste0("r",radii.buffers[[buffer.i]],"ft.png"), models.pl[[buffer.i]], 
            device = "png", path = var.path, scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
     
   }
 }
-
-# count significant digits (NOT VECTORIZED)
-signif.dig <- function(x) length(gregexpr("[[:digit:]]", as.character(x))[[1]]) 
-
 
 
 ```
@@ -211,7 +244,7 @@ my.palette <- c("#0C120C","#640D14","#C20114","#6D7275")
 # plot all station points with UZA, highways, & city labels for context.
 stations.plot <-   
   tm_shape(uza.border) + tm_borders(lwd = 0.8, lty = "solid", col = "grey40", alpha = 0.7) + tm_fill(col = "grey90") + # urbanized area (UZA) border & fill
-  tm_shape(all.stations, bbox = all.stations) + tm_dots(col = "source", border.col = NULL, palette = my.palette, size = 0.3, alpha = 0.8, title = "Data Source") + # stations
+  tm_shape(uza.stations, bbox = uza.stations) + tm_dots(col = "source", border.col = NULL, palette = my.palette, size = 0.3, alpha = 0.8, title = "Data Source") + # stations
   tm_shape(cnty.border) + tm_borders(lwd = 0.8, lty = "solid", col = "grey20", alpha = 0.7) + # county border
   tm_scale_bar(position = c(0.4,0.0), breaks = c(0,5,10,15,20), size = 0.90, color.light = "grey85") + # scalebar
   tm_compass(north = 0, type = "4star", size = 2, show.labels = 1, position = c(0.9,0.85)) + # compass
@@ -221,7 +254,7 @@ stations.plot <-
             legend.text.size = 0.7, title = "", title.position = c(0.2,0.94),
             legend.position = c(0.1,0.45), outer.margins = c(0,0,0,0), asp = 0)
 
-tmap_save(stations.plot, filename = here("figures/stations-w-ibut.png")) # option to save
+tmap_save(stations.plot, filename = here::here("figures/stations.png")) # option to save
 stations.plot # plot in report
 
 ##
