@@ -217,7 +217,7 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
       delta.x.up <- pave.time[time.s == t.step[p+1] & node == (m), depth.m] - pave.time[time.s == t.step[p+1] & node == (m-1), depth.m]
       delta.x.dn <- pave.time[time.s == t.step[p+1] & node == (m+1), depth.m] - pave.time[time.s == t.step[p+1] & node == (m), depth.m]
       
-      # interface calc for m and m+1 at p+1
+      # interface calc for m+1 at p+1
       pave.time[time.s == t.step[p+1] & node == (m+1), T.degC := 
                   pave.time[time.s == t.step[p+1] & node == (m), T.degC]
                 - ((k[pave.time[time.s == t.step[p+1] & node == (m-1), layer]] # k @ current layer
@@ -227,6 +227,8 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
                    - pave.time[time.s == t.step[p+1] & node == (m), T.degC])) ]
       
     } else { # otherwise calc for non-boundary
+      # non-interface calc for  at p+1
+      pave.time[time.s == t.step[p+1] & node == (m), T.degC := 1 ] #** HERE **#
       
     }
 
