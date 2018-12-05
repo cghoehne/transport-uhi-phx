@@ -156,8 +156,7 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
     
     # find the closest two obsevations indices and store thier obs time
     w1 <- which.min(abs(weather$time.s - t.step[p]))
-    w2 <- ifelse(which.min(c(abs(weather$time.s[w1-1] - t.step[p]),abs(weather$time.s[w1+1] - t.step[p]))) == 1, w1-1, # previous time is closer {w1+1} # later time is closer
-                 w1+1)
+    w2 <- if(w1 == 1){2} else if(which.min(c(abs(weather$time.s[w1-1] - t.step[p]),abs(weather$time.s[w1+1] - t.step[p]))) == 1){w1-1} else {w1+1}
   
     t1 <- weather$time.s[w1]
     t2 <- weather$time.s[w2]
@@ -189,7 +188,7 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
 
   pave.time[time.s == t.step[p+1] & node == 0, T.degC := 
               ((((1 - albedo) * solar[p])
-                + (h.inf * (T.inf[p] - T.s[p]))
+                + (h.inf[p] * (T.inf[p] - T.s[p]))
                 + (h.rad[p] * (T.sky[p] - T.s[p]))
                 + ((k["surface"] * (pave.time[time.s == t.step[p] & node == 1, T.degC] - T.s[p]))
                    / delta.x))
