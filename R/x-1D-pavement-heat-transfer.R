@@ -1,6 +1,11 @@
 # 1D model based on fundamental energy balance to calculate the pavement near-surface temperatures
 # based on model outlined in Gui et al. (2007) [1]
 
+# start by maxing out the memory allocation (we use high number to force max allocation)
+gc()
+memory.limit(size = 56000) 
+t.start <- Sys.time() # start script timestamp
+
 # list of all dependant packages
 list.of.packages <- c("tidyverse",
                       "lubridate",
@@ -107,36 +112,12 @@ v.inf <- 0.02 #  kinematic viscosity of air (m^2/s); ~0.02
 L <- 10 #  characteristic length of pavement (m);
 
 ## calculate time/weather-dependant parameters
-
-
-weather$k.inf <- ((1.5207E-11) * (weather$temp.c^3)) - ((4.8574E-08) * (weather$temp.c^2)) + ((1.0184E-04) * (weather$temp.c)) - 3.9333E-04 # Ref [2]
+weather$time.s <- as.numeric(difftime(weather$date.time, weather$date.time[1], units = "secs")) # time.s to match with iterations in weather data (assuming first obs is time zero)
 weather$T.inf <- weather$temp.c + 273.15 #  atmospheric dry-bulb temperature (K);
 weather$T.sky <- weather$T.inf * ((0.004 * weather$dewpt.c + 0.8)^0.25) # sky temperature (K), caluclated using equation (2)
-
-# create corresponding time.s in weather data (assuming first obs is time zero)
-weather$time.s <- as.numeric(difftime(weather$date.time, weather$date.time[1], units = "secs"))
-for(a in 1:nrow(weather)){
-  
-  # calc the convective heat coefficient of air (h.inf); (needed for CFL condition)
-  weather$h.inf[a] <- 0.664 * (weather$k.inf[a] * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^ -0.5) * ((weather$winspd[a] * 0.44704) ^ 0.5))
-  # U.inf (m/s) is weather$winspd * 0.44704 (winspd is in mph, so multiply by 0.44704 to get m/s)
-  
-  # check the time steps obey the CFL condition for stability
-  # (each timestep must staisfy the explicit finite difference condition for stability)
-  weather$t.delta.max.L1[a] <- (rho.c * (delta.x^2)) / (2 * (weather$h.rad[a] * delta.x + weather$h.inf[a] * delta.x + k["surface"])) # in seconds
-  weather$t.delta.max.L2[a] <-  (rho.c * (delta.x^2)) / (2 * (weather$h.rad[a] * delta.x + weather$h.inf[a] * delta.x + k["base"])) # in seconds
-  weather$t.delta.max.L3[a] <- (rho.c * (delta.x^2)) / (2 * (weather$h.rad[a] * delta.x + weather$h.inf[a] * delta.x + k["subgrade"])) # in seconds
-  
-}
-
-# check if CFL condition met for the chosen delta.t, if so delete the cols for checking
-if(abs(t.step[1] - t.step[2]) <= min(c(weather$t.delta.max.L1, weather$t.delta.max.L2, weather$t.delta.max.L3))){
-  weather$t.delta.max.L1 <- NULL
-  weather$t.delta.max.L2 <- NULL
-  weather$t.delta.max.L3 <- NULL
-  print("CFL condition met for all timesteps")
-} else {print("CFL condition *NOT* met for all timesteps")}
-
+weather$k.inf <- ((1.5207E-11) * (weather$temp.c^3)) - ((4.8574E-08) * (weather$temp.c^2)) + ((1.0184E-04) * (weather$temp.c)) - 3.9333E-04 # Ref [2]
+weather$h.inf <- 0.664 * (weather$k.inf * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^ -0.5) * ((weather$winspd * 0.44704) ^ 0.5)) # convective heat coefficient of air
+# U.inf (m/s) is weather$winspd * 0.44704 (winspd is in mph, so multiply by 0.44704 to get m/s)
 
 ## MODEL HEAT TRANSFER OF PAVEMENT
 
@@ -147,23 +128,18 @@ q.rad <- vector(mode = "numeric", length = p.n)
 h.rad <- vector(mode = "numeric", length = p.n)
 T.sky <- vector(mode = "numeric", length = p.n)
 T.inf <- vector(mode = "numeric", length = p.n)
+T.s <- vector(mode = "numeric", length = p.n)
 solar <- vector(mode = "numeric", length = p.n)
 k.inf <- vector(mode = "numeric", length = p.n)
 h.inf <- vector(mode = "numeric", length = p.n)
 temp.c <- vector(mode = "numeric", length = p.n)
 winspd <- vector(mode = "numeric", length = p.n)
 
-# initial conditions
-#T.s.i <- pave.time[time.s == 0 & depth.m == 0, T.degC] # initial pavement surface temp
-#q.rad[1] <- SVF * epsilon * sigma * ((T.s.i ^ 4) - (weather$T.sky[1] ^ 4)) # initial outgoing infared radiation
-#h.rad[1] <- (T.s.i - weather$T.sky[1]) / q.rad[1] # initial radiative coefficient
-#weather$pave.T.s[1] <- T.s.i # initial pavement surface temp
-  
 for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
   
   # current pavement surface temp
   T.s[p] <- pave.time[time.s == t.step[p] & depth.m == 0, T.degC]
-
+  
   w <- which(t.step[p] == weather$time.s) # store location of timestep match (will be empty if no match)
   if(length(w) == 1){ # if timestep match is valid (there is a weather obs at this timestep in the model)
     
@@ -180,7 +156,8 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
     
     # find the closest two obsevations indices and store thier obs time
     w1 <- which.min(abs(weather$time.s - t.step[p]))
-    w2 <- which.min(abs(weather$time.s[-w1] - t.step[p]))
+    w2 <- ifelse(which.min(c(abs(weather$time.s[w1-1] - t.step[p]),abs(weather$time.s[w1+1] - t.step[p]))) == 1, w1-1, # previous time is closer {w1+1} # later time is closer
+                 w1+1)
   
     t1 <- weather$time.s[w1]
     t2 <- weather$time.s[w2]
@@ -206,47 +183,82 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
   h.rad[p] <- (T.s[p] - T.sky[p]) / q.rad[p] # radiative coefficient
   h.inf[p] <- 0.664 * (k.inf[p] * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^ -0.5) * (winspd[p] ^ 0.5)) # windspeed is correctly in m/s here
   k.inf[p] <- ((1.5207E-11) * (temp.c[p]^3)) - ((4.8574E-08) * (temp.c[p]^2)) + ((1.0184E-04) * (temp.c[p])) - 3.9333E-04 # Ref [2]
+  
+  # SURFACE NODE at time p+1
+  # solve for surface node, s (pavement surface temp at time p+1) (EQN 10)
 
-  # EQN 9: solve for interior node m at time p+1 using state at time p
-  for(m in 1:(max(pave.time$node)-1)){ # for nodes 1 to max(nodes)-1
-    # calculate the p+1 temps at node m based on temps at time p at nodes m, m-1, and m+1
-    
-    # if the next node is a boundary node, use boundary condition, otherwise not
-    if(pave.time[time.s == t.step[p] & node == m, layer] == "boundary"){
-      
-      delta.x.up <- pave.time[time.s == t.step[p+1] & node == (m), depth.m] - pave.time[time.s == t.step[p+1] & node == (m-1), depth.m]
-      delta.x.dn <- pave.time[time.s == t.step[p+1] & node == (m+1), depth.m] - pave.time[time.s == t.step[p+1] & node == (m), depth.m]
-      
-      # interface calc for m+1 at p+1
-      pave.time[time.s == t.step[p+1] & node == (m+1), T.degC := 
-                  pave.time[time.s == t.step[p+1] & node == (m), T.degC]
-                - ((k[pave.time[time.s == t.step[p+1] & node == (m-1), layer]] # k @ current layer
-                   / k[pave.time[time.s == t.step[p+1] & node == (m+1), layer]]) # k @ next layer
-                * (delta.x.dn / delta.x.up) 
-                * (pave.time[time.s == t.step[p+1] & node == (m-1), T.degC] 
-                   - pave.time[time.s == t.step[p+1] & node == (m), T.degC])) ]
-      
-    } else { # otherwise calc for non-boundary
-      # non-interface calc for  at p+1
-      pave.time[time.s == t.step[p+1] & node == (m), T.degC := 1 ] #** HERE **#
-      
-    }
-
-  }
-  
-  
-  # EQN 10: surface node, s (pavement surface temp at time p+1)
-  
-  # temp store change in x between surface node 0 and node 1
-  delta.x <- abs(pave.time[time.s == t.step[p] & node == 0, depth.m] - pave.time[time.s == t.step[p] & node == 1, depth.m])
-  T.s[p+1] <- ((((1 - albedo) * solar[p])
+  pave.time[time.s == t.step[p+1] & node == 0, T.degC := 
+              ((((1 - albedo) * solar[p])
                 + (h.inf * (T.inf[p] - T.s[p]))
                 + (h.rad[p] * (T.sky[p] - T.s[p]))
                 + ((k["surface"] * (pave.time[time.s == t.step[p] & node == 1, T.degC] - T.s[p]))
                    / delta.x))
-               * (2 * delta.t / (rho.c * delta.x)))
+               * (2 * delta.t / (rho.c * delta.x)))]
+
+  # INTERIOR NODES m at time p+1
+  # solve for interior node m at time p+1 using state at time p (EQN 9)
+  for(m in 1:(max(pave.time$node)-1)){ # for nodes 1 to max(nodes)-1
+    # calculate the p+1 temps at node m based on temps at time p at nodes m, m-1, and m+1
+    
+    # store the change in x between m and m-1 and m and m+1 (this is different at the boundary)
+    d.x.up <- pave.time[time.s == t.step[p+1] & node == (m), depth.m] - pave.time[time.s == t.step[p+1] & node == (m-1), depth.m]
+    d.x.dn <- pave.time[time.s == t.step[p+1] & node == (m+1), depth.m] - pave.time[time.s == t.step[p+1] & node == (m), depth.m]
+    
+    # if the node is a boundary node, use boundary condition to solve for the next time step, otherwise not
+    if(pave.time[time.s == t.step[p] & node == m, layer] == "boundary"){
+  
+      # store k values at above and below the boundary (they are different)
+      k.up <- k[pave.time[time.s == t.step[p+1] & node == (m-1), layer]]
+      k.dn <- k[pave.time[time.s == t.step[p+1] & node == (m+1), layer]]
+      
+      pave.time[time.s == t.step[p+1] & node == m, T.degC := 
+                  ((k.up / k.dn) * (d.x.dn / d.x.up) * pave.time[time.s == t.step[p] & node == (m-1), T.degC])
+                / (1 + ((k.up / k.dn) * (d.x.dn / d.x.up)))]
+      
+    } else { # otherwise calc for non-boundary
+      
+      # store k value at layer
+      k.m <- k[pave.time[time.s == t.step[p+1] & node == (m-1), layer]]
+      
+      # non-interface calc for  at p+1
+      pave.time[time.s == t.step[p+1] & node == m, T.degC := 
+                  ((k.m * delta.t / rho.c) * (pave.time[time.s == t.step[p] & node == (m-1), T.degC]
+                                             + pave.time[time.s == t.step[p] & node == (m+1), T.degC]
+                                             - 2 * pave.time[time.s == t.step[p] & node == m, T.degC])) 
+                + pave.time[time.s == t.step[p] & node == m, T.degC]] 
+    }
+  }
+}
+
+
+# print script endtime
+t.end <- Sys.time() 
+paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
+# end
+
+
+
+
+
+
+# check CFL boundary condition
+for(a in 1:nrow(weather)){
+  
+  # check the time steps obey the CFL condition for stability
+  # (each timestep must staisfy the explicit finite difference condition for stability)
+  weather$t.delta.max.L1[a] <- (rho.c * (delta.x^2)) / (2 * (weather$h.rad[a] * delta.x + weather$h.inf[a] * delta.x + k["surface"])) # in seconds
+  weather$t.delta.max.L2[a] <-  (rho.c * (delta.x^2)) / (2 * (weather$h.rad[a] * delta.x + weather$h.inf[a] * delta.x + k["base"])) # in seconds
+  weather$t.delta.max.L3[a] <- (rho.c * (delta.x^2)) / (2 * (weather$h.rad[a] * delta.x + weather$h.inf[a] * delta.x + k["subgrade"])) # in seconds
   
 }
+
+# check if CFL condition met for the chosen delta.t, if so delete the cols for checking
+if(abs(t.step[1] - t.step[2]) <= min(c(weather$t.delta.max.L1, weather$t.delta.max.L2, weather$t.delta.max.L3))){
+  weather$t.delta.max.L1 <- NULL
+  weather$t.delta.max.L2 <- NULL
+  weather$t.delta.max.L3 <- NULL
+  print("CFL condition met for all timesteps")
+} else {print("CFL condition *NOT* met for all timesteps")}
 
 
 
