@@ -89,7 +89,7 @@ pave.time <- as.data.table(data.frame("time.s" = rep(t.step, each = nrow(p.data)
                                       "node" = rep(0:(nrow(p.data)-1), p.n),
                                       "depth.m" = rep(p.data$x, p.n),
                                       "layer" = rep(p.data$layer, p.n),
-                                      "T.K" = rep(seq(from = 40, to = 35, length.out = p.n)))) # surface temp as 40, down to 35 at 10m
+                                      "T.K" = rep(seq(from = 40+273.15, to = 35+273.15, length.out = p.n)))) # surface temp in K (40 degC, down to 35 degC at 10m)
 
 # static parameters for pavement heat transfer
 
@@ -97,7 +97,6 @@ pave.time <- as.data.table(data.frame("time.s" = rep(t.step, each = nrow(p.data)
 alpha <- 4.0  # thermal diffusivity (m^2/s), typically range from 2 to 12; [1]
 albedo <- 0.17 #  albedo (dimensionless); [1]
 epsilon <- 0.8 #  emissivity (dimensionless); [1]
-rho.c <- 2.2*10^6 #  volumetric heat capacity (J/(m3 degK)); [1]
 sigma <- 5.67*10^(-8) #  Stefan-Boltzmann constant (W/(m2*K4); [1]
 SVF <- 1	# sky view factor (dimensionless [0,1]). assume 1.0: pavement is completely visible to sky
 
@@ -106,19 +105,20 @@ SVF <- 1	# sky view factor (dimensionless [0,1]). assume 1.0: pavement is comple
 k	<- c("surface" = 1.21, "base" = 1.21, "subgrade" = 1.00) #  thermal conductivity (W/(m2*degK))
 rho <- c("surface" = 2238, "base" = 2238, "subgrade" = 1500) #  pavement density (kg/m3);
 c	<- c("surface" = 921, "base" = 921, "subgrade" = 1900) # specific heat (J/(kg*degK);
+rho.c <- rho * c #  volumetric heat capacity (J/(m3 degK)); [1]
 
 # static parameters needed to check CFL condition for stability
-Pr.inf <- 0.71 #  Prandtl number (dimensionless);
-v.inf <- 0.02 #  kinematic viscosity of air (m^2/s); ~0.02
-L <- 10 #  characteristic length of pavement (m);
+Pr.inf <- 0.7085 #  Prandtl number (dimensionless) [0.708, 0.719] (50 to -50 degC range)
+L <- 1 #  characteristic length of pavement (m);
 
 ## calculate time/weather-dependant parameters
 weather$time.s <- as.numeric(difftime(weather$date.time, weather$date.time[1], units = "secs")) # time.s to match with iterations in weather data (assuming first obs is time zero)
 weather$winspd <- weather$winspd * 0.44704 # convert to m/s from mi/h
 weather$T.inf <- weather$temp.c + 273.15 #  atmospheric dry-bulb temperature (K);
 weather$T.sky <- weather$T.inf * ((0.004 * weather$dewpt.c + 0.8)^0.25) # sky temperature (K), caluclated using equation (2)
+weather$v.inf <- (16.92E-6) * ((weather$temp.c / 40)^0.7) # emperical fit for kinematic viscosity of air using refrence of 30 deg C where v.inf is 15.98E-6 m2/s  [4],[5]
 weather$k.inf <- ((1.5207E-11) * (weather$T.inf^3)) - ((4.8574E-08) * (weather$T.inf^2)) + ((1.0184E-04) * (weather$T.inf)) - 3.9333E-04 # Ref [2] # thermal conductivity of air in W/(m2*degK)
-weather$h.inf <- 0.664 * (weather$k.inf * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^ -0.5) * (weather$winspd ^ 0.5)) # convective heat transfer coefficient in W/(m2*degK)
+weather$h.inf <- 0.664 * (weather$k.inf * (Pr.inf ^ 0.3) * (weather$v.inf ^ -0.5) * (L ^ -0.5) * (weather$winspd ^ 0.5)) # convective heat transfer coefficient in W/(m2*degK)
 
 ## MODEL HEAT TRANSFER OF PAVEMENT
 
@@ -128,17 +128,18 @@ weather$h.inf <- 0.664 * (weather$k.inf * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^
 T.s <- vector(mode = "numeric", length = p.n) # pavement suface temp in K
 T.sky <- vector(mode = "numeric", length = p.n) # sky temperature in K
 T.inf <- vector(mode = "numeric", length = p.n) # atmospheric dry-bulb temperature in K
-winspd <- vector(mode = "numeric", length = p.n) # wind speed in m/s
 solar <- vector(mode = "numeric", length = p.n) # solar radiation in W/m2
+winspd <- vector(mode = "numeric", length = p.n) # wind speed in m/s
+v.inf <- vector(mode = "numeric", length = p.n) # kinematic viscosity of air in m2/s [10E-6,14E-6]
+k.inf <- vector(mode = "numeric", length = p.n) # thermal conductivity of air in W/(m*degK) [0.02, 0.03] (for normal air temps)
+h.inf <- vector(mode = "numeric", length = p.n) # convective heat transfer coefficient in W/(m2*degK) [0.5, 1000]
 q.rad <- vector(mode = "numeric", length = p.n) # infrared radiation heat transfer W/m2
 h.rad <- vector(mode = "numeric", length = p.n) # radiative heat transfer coefficient in W/(m2*degK)
-k.inf <- vector(mode = "numeric", length = p.n) # thermal conductivity of air in W/(m2*degK)
-h.inf <- vector(mode = "numeric", length = p.n) # convective heat transfer coefficient in W/(m2*degK)
 
-for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
+for(p in 1:10){ #(p.n-1) state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
   
   # current pavement surface temp (in Kelvin)
-  T.s[p] <- pave.time[time.s == t.step[p] & depth.m == 0, T.K] 
+  T.s[p] <- pave.time[time.s == t.step[p] & depth.m == 0, T.K]
   
   w <- which(t.step[p] == weather$time.s) # store location of timestep match (will be empty if no match)
   if(length(w) == 1){ # if timestep match is valid (there is a weather obs at this timestep in the model)
@@ -146,8 +147,9 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
     # use observation values for calculations
     T.sky[p] <- weather$T.sky[w] 
     T.inf[p] <- weather$T.inf[w]
-    winspd[p] <- weather$winspd[w]
     solar[p] <- weather$solar[w]
+    winspd[p] <- weather$winspd[w]
+    v.inf[p] <- weather$v.inf[w]
     k.inf[p] <- weather$k.inf[w]
     h.inf[p] <- weather$h.inf[w]
 
@@ -164,32 +166,34 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
     T.sky[p] <- (weather$T.sky[w1] * (abs(t.step[p] - t1) / abs(t2 - t1))) +
                 (weather$T.sky[w2] * (abs(t.step[p] - t2) / abs(t2 - t1)))
     
+    T.inf[p] <- (weather$T.inf[w1] * (abs(t.step[p] - t1) / abs(t2 - t1))) +
+                (weather$T.inf[w2] * (abs(t.step[p] - t2) / abs(t2 - t1))) 
+    
     solar[p] <- (weather$solar[w1] * (abs(t.step[p] - t1) / abs(t2 - t1))) +
                 (weather$solar[w2] * (abs(t.step[p] - t2) / abs(t2 - t1)))
-    
-    T.inf[p] <- (weather$T.inf[w1] * (abs(t.step[p] - t1) / abs(t2 - t1))) +
-                 (weather$T.inf[w2] * (abs(t.step[p] - t2) / abs(t2 - t1))) 
     
     winspd[p] <- (weather$winspd[w1] * (abs(t.step[p] - t1) / abs(t2 - t1))) +
                  (weather$winspd[w2] * (abs(t.step[p] - t2) / abs(t2 - t1)))
   }
   
   # estimate parameters
-  q.rad[p] <- SVF * epsilon * sigma * ((T.s[p] ^ 4) - (T.sky[p] ^ 4)) # outgoing infared radiation
-  h.rad[p] <- (T.s[p] - T.sky[p]) / q.rad[p] # radiative coefficient
-  k.inf[p] <- ((1.5207E-11) * (T.inf[p]^3)) - ((4.8574E-08) * (T.inf[p]^2)) + ((1.0184E-04) * (T.inf[p])) - 3.9333E-04 # Ref [2]
-  h.inf[p] <- 0.664 * (k.inf[p] * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^ -0.5) * (winspd[p] ^ 0.5))
+  #q.rad[p] <- SVF * epsilon * sigma * ((T.s[p]^4) - (T.sky[p]^4)) # outgoing infared radiation
+  h.rad[p] <- SVF * epsilon * sigma * ((T.s[p]^2) + (T.sky[p]^2)) * (T.s[p] + T.sky[p]) # radiative coefficient
+  q.rad[p] <- h.rad[p] * (T.s[p] - T.sky[p])
+  v.inf[p] <- (16.92E-6) * (((T.inf[p] - 273.15) / 40)^0.7) #  kinematic viscosity of air [4], [5]
+  k.inf[p] <- ((1.5207E-11) * (T.inf[p]^3)) - ((4.8574E-08) * (T.inf[p]^2)) + ((1.0184E-04) * (T.inf[p])) - 3.9333E-04 # [2]
+  h.inf[p] <- 0.664 * (k.inf[p] * (Pr.inf ^ 0.3) * (v.inf[p] ^ -0.5) * (L ^ -0.5) * (winspd[p] ^ 0.5))
   
   # SURFACE NODE at time p+1
   # solve for surface node, s (pavement surface temp at time p+1) (EQN 10)
 
-  pave.time[time.s == t.step[p+1] & node == 0, T.K := 
+  pave.time[time.s == t.step[p+1] & node == 0, T.K := T.s[p] +
               ((((1 - albedo) * solar[p])
                 + (h.inf[p] * (T.inf[p] - T.s[p]))
                 + (h.rad[p] * (T.sky[p] - T.s[p]))
                 + ((k["surface"] * (pave.time[time.s == t.step[p] & node == 1, T.K] - T.s[p]))
                    / delta.x))
-               * (2 * delta.t / (rho.c * delta.x)))]
+               * (2 * delta.t / (rho.c["surface"] * delta.x)))]
 
   # INTERIOR NODES m at time p+1
   # solve for interior node m at time p+1 using state at time p (EQN 9)
@@ -197,28 +201,29 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
     # calculate the p+1 temps at node m based on temps at time p at nodes m, m-1, and m+1
     
     # store the change in x between m and m-1 and m and m+1 (this is different at the boundary)
-    d.x.up <- pave.time[time.s == t.step[p+1] & node == (m), depth.m] - pave.time[time.s == t.step[p+1] & node == (m-1), depth.m]
-    d.x.dn <- pave.time[time.s == t.step[p+1] & node == (m+1), depth.m] - pave.time[time.s == t.step[p+1] & node == (m), depth.m]
+    d.x.up <- pave.time[time.s == t.step[p] & node == (m), depth.m] - pave.time[time.s == t.step[p] & node == (m-1), depth.m]
+    d.x.dn <- pave.time[time.s == t.step[p] & node == (m+1), depth.m] - pave.time[time.s == t.step[p] & node == (m), depth.m]
     
     # if the node is a boundary node, use boundary condition to solve for the next time step, otherwise not
     if(pave.time[time.s == t.step[p] & node == m, layer] == "boundary"){
   
       # store k values at above and below the boundary (they are different)
-      k.up <- k[pave.time[time.s == t.step[p+1] & node == (m-1), layer]]
-      k.dn <- k[pave.time[time.s == t.step[p+1] & node == (m+1), layer]]
+      k.up <- k[pave.time[time.s == t.step[p] & node == (m-1), layer]]
+      k.dn <- k[pave.time[time.s == t.step[p] & node == (m+1), layer]]
       
-      pave.time[time.s == t.step[p+1] & node == m, T.K := 
+      pave.time[time.s == t.step[p+1] & node == m, T.K := 273.15 +
                   ((k.up / k.dn) * (d.x.dn / d.x.up) * pave.time[time.s == t.step[p] & node == (m-1), T.K])
                 / (1 + ((k.up / k.dn) * (d.x.dn / d.x.up)))]
       
     } else { # otherwise calc for non-boundary
       
       # store k value at layer
-      k.m <- k[pave.time[time.s == t.step[p+1] & node == (m-1), layer]]
+      k.m <- k[pave.time[time.s == t.step[p+1] & node == (m), layer]]
+      rho.c.m <- rho.c[pave.time[time.s == t.step[p+1] & node == (m), layer]]
       
       # non-interface calc for  at p+1
       pave.time[time.s == t.step[p+1] & node == m, T.K := 
-                  ((k.m * delta.t / rho.c) * (pave.time[time.s == t.step[p] & node == (m-1), T.K]
+                  ((k.m * delta.t / rho.c.m) * (pave.time[time.s == t.step[p] & node == (m-1), T.K]
                                              + pave.time[time.s == t.step[p] & node == (m+1), T.K]
                                              - 2 * pave.time[time.s == t.step[p] & node == m, T.K])) 
                 + pave.time[time.s == t.step[p] & node == m, T.K]] 
@@ -235,7 +240,16 @@ t.end <- Sys.time()
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
 # end
 
-
+T.s[1:10] # pavement suface temp in K
+T.sky[1:10] # sky temperature in K
+T.inf[1:10] # atmospheric dry-bulb temperature in K
+solar[1:10] # solar radiation in W/m2
+winspd[1:10] # wind speed in m/s
+v.inf[1:10] # kinematic viscosity of air in m2/s [10E-6,14E-6]
+k.inf[1:10] # thermal conductivity of air in W/(m*degK) [0.02, 0.03] (for normal air temps)
+h.inf[1:10] # convective heat transfer coefficient in W/(m2*degK) [0.5, 1000]
+q.rad[1:10] # infrared radiation heat transfer W/m2
+h.rad[1:10] # radiative heat transfer coefficient in W/(m2*degK)
 
 
 
@@ -312,5 +326,8 @@ T.ref <- 0 #(max,min)
 
 # [3] https://www.maricopa.gov/3769/Weather-Sensor-Data
 
+# [4] https://www.engineeringtoolbox.com/air-absolute-kinematic-viscosity-d_601.html
+
+# [5] http://www-mdp.eng.cam.ac.uk/web/library/enginfo/aerothermal_dvd_only/aero/fprops/propsoffluids/node5.html
 
 

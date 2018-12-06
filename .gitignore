@@ -4,12 +4,15 @@
 .RData
 .Ruserdata
 
+# ignore .bat file until fixed
+*.bat
+
 # ignore osm shapefiles, temp files
 **/osm_formatted_unbuffered*
 data/outputs/temp/*
 
-# ignore word temp file
-~$utline.docx
+# ignore temp files (starting w/ "~")
+~* 
 
 # ignore my api token
 local-token.txt
