@@ -9,7 +9,7 @@ t.start <- Sys.time() # start script timestamp
 # list of all dependant packages
 list.of.packages <- c("tidyverse",
                       "lubridate",
-                      "data.table", 
+                      "data.table",
                       "here")
 
 # install missing packages
@@ -136,7 +136,7 @@ h.inf <- vector(mode = "numeric", length = p.n) # convective heat transfer coeff
 q.rad <- vector(mode = "numeric", length = p.n) # infrared radiation heat transfer W/m2
 h.rad <- vector(mode = "numeric", length = p.n) # radiative heat transfer coefficient in W/(m2*degK)
 
-for(p in 1:10){ #(p.n-1) state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
+for(p in 1:300){ #(p.n-1) state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
   
   # current pavement surface temp (in Kelvin)
   T.s[p] <- pave.time[time.s == t.step[p] & depth.m == 0, T.K]
@@ -152,6 +152,11 @@ for(p in 1:10){ #(p.n-1) state at time p is used to model time p+1, so stop and 
     v.inf[p] <- weather$v.inf[w]
     k.inf[p] <- weather$k.inf[w]
     h.inf[p] <- weather$h.inf[w]
+    
+    # add current timestep pavement surface and 12.7mm temperature in deg C to weather data
+    # (remember that each iteration calcualates the next time step, so we can store the current timestep)
+    weather$T.s[w] <- T.s[p] - 273.15
+    weather$T.n1[w] <- pave.time[time.s == t.step[p] & node == 1, T.K] - 273.15
 
   } else { # if there isn't a match, interpolate parameters linearlly (solar, temp)
     
@@ -232,6 +237,34 @@ for(p in 1:10){ #(p.n-1) state at time p is used to model time p+1, so stop and 
 }
 
 pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
+
+## replicate Gui et al. Fig. 2 
+
+# load windows fonts and store as string
+windowsFonts(Century=windowsFont("TT Century Gothic"))
+windowsFonts(Times=windowsFont("TT Times New Roman"))
+my.font <- "Century"
+
+#min.x <- weather$date.time[1]
+#max.x <- weather$date.time[which(t.step[p] == weather$time.s)]
+min.x <- t.step[1]
+max.x <- t.step[p]
+min.y <- min(pave.time[node == 0, T.degC]-1)
+max.y <- max(pave.time[node == 0, T.degC]+1)
+
+p1 <- (ggplot(data = pave.time[node == 0]) # weather
+       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
+       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
+       + geom_point(aes(y = T.degC, x = time.s)) #date.time
+       + geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) #date.time
+       + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
+       + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
+       + labs(x = "Time (s)", y = "Temperature (deg C)") # "Time of Day"
+       + theme_minimal()
+       + theme(text = element_text(family = my.font, size = 12),
+               plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt")))
+
+p1
 
 saveRDS(pave.time, here("data/outputs/1D-pave-heat-model-out.rds"))
 
