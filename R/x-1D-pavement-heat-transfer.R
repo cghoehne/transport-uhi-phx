@@ -129,7 +129,7 @@ h.rad <- vector(mode = "numeric", length = p.n) # radiative heat transfer coeffi
 
 ## MODEL HEAT TRANSFER OF PAVEMENT
 # iterate through time steps and model pavement heat transfer
-for(p in 2:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
+for(p in 1:20){ #(p.n-1) state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
   
   # current pavement surface temp (in Kelvin)
   T.s[p] <- pave.time[time.s == t.step[p] & depth.m == 0, T.K]
@@ -198,15 +198,16 @@ for(p in 2:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
     d.x.up <- pave.time[time.s == t.step[p] & node == (m), depth.m] - pave.time[time.s == t.step[p] & node == (m-1), depth.m]
     d.x.dn <- pave.time[time.s == t.step[p] & node == (m+1), depth.m] - pave.time[time.s == t.step[p] & node == (m), depth.m]
     
-    # if the node is a boundary node, use boundary condition to solve for the next time step, otherwise not
+    # if the node is a boundary node, use boundary condition to solve for the current boundary layer temp
     if(pave.time[time.s == t.step[p] & node == m, layer] == "boundary"){
   
       # store k values at above and below the boundary (they are different)
       k.up <- k[pave.time[time.s == t.step[p] & node == (m-1), layer]]
       k.dn <- k[pave.time[time.s == t.step[p] & node == (m+1), layer]]
       
-      pave.time[time.s == t.step[p+1] & node == m, T.K := 273.15 +
-                  ((k.up / k.dn) * (d.x.dn / d.x.up) * pave.time[time.s == t.step[p] & node == (m-1), T.K])
+      pave.time[time.s == t.step[p+1] & node == m, T.K := #273.15 +
+                  (((k.up / k.dn) * (d.x.dn / d.x.up) * pave.time[time.s == t.step[p] & node == (m-1), T.K]) 
+                   + pave.time[time.s == t.step[p] & node == (m+1), T.K])
                 / (1 + ((k.up / k.dn) * (d.x.dn / d.x.up)))]
       
     } else { # otherwise calc for non-boundary
@@ -220,21 +221,21 @@ for(p in 2:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
                   ((k.m * delta.t / rho.c.m) * (pave.time[time.s == t.step[p] & node == (m-1), T.K]
                                              + pave.time[time.s == t.step[p] & node == (m+1), T.K]
                                              - 2 * pave.time[time.s == t.step[p] & node == m, T.K])) 
-                + pave.time[time.s == t.step[p] & node == m, T.K]] 
+                + pave.time[time.s == t.step[p] & node == m, T.K]]
     }
   }
   
   # if timestep match is valid (there is a weather obs at this timestep in the model)
   # add current timestep pavement parameters to weather data
   if(length(w) == 1){ 
-    weather$q.rad <- q.rad[p] # outgoing infared radiation
-    weather$h.rad <- h.rad[p] # radiative coefficient
+    weather$q.rad[w] <- q.rad[p] # outgoing infared radiation
+    weather$h.rad[w] <- h.rad[p] # radiative coefficient
     weather$T.s[w] <- T.s[p] - 273.15 # pavement surface temp degC
     weather$T.n1[w] <- pave.time[time.s == t.step[p] & node == 1, T.K] - 273.15 # first node under pavement temp degC
-    weather$T.avg.layer1 <- mean(pave.time[time.s == t.step[p] & layer == "surface", T.K]) - 273.15 # temp avg for layer 1 degC
-    weather$T.avg.layer2 <- mean(pave.time[time.s == t.step[p] & layer == "base", T.K]) - 273.15 # temp avg for layer 2 degC
-    weather$T.avg.layer3 <- mean(pave.time[time.s == t.step[p] & layer == "subgrade", T.K]) - 273.15 # temp avg for layer 3 degC
-    weather$T.n238 <- pave.time[time.s == t.step[p] & node == 238, T.K] - 273.15 # 10ft (3m) temp degC
+    weather$T.avg.layer1[w] <- mean(pave.time[time.s == t.step[p] & layer == "surface", T.K]) - 273.15 # temp avg for layer 1 degC
+    weather$T.avg.layer2[w] <- mean(pave.time[time.s == t.step[p] & layer == "base", T.K]) - 273.15 # temp avg for layer 2 degC
+    weather$T.avg.layer3[w] <- mean(pave.time[time.s == t.step[p] & layer == "subgrade", T.K]) - 273.15 # temp avg for layer 3 degC
+    weather$T.n238[w] <- pave.time[time.s == t.step[p] & node == 238, T.K] - 273.15 # 10ft (3m) temp degC
   }
 }
 
@@ -282,6 +283,16 @@ p1 <- (ggplot(data = pave.time[node == 0]) # weather
 
 p1
 
+saveRDS(pave.time, here("data/outputs/1D-pave-heat-model-out.rds"))
+
+# print script endtime
+t.end <- Sys.time() 
+paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
+# end
+
+
+##################
+
 # plot interpolated sky temperatures
 temp.data <- cbind(pave.time[node == 0], T.sky)
 temp.data[,T.sky := V2 - 273.15]
@@ -305,16 +316,6 @@ p2 <- (ggplot(data = temp.data) # weather
 
 p2
 
-
-saveRDS(pave.time, here("data/outputs/1D-pave-heat-model-out.rds"))
-
-# print script endtime
-t.end <- Sys.time() 
-paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
-# end
-
-
-##################
 
 # check CFL boundary condition
 for(a in 1:nrow(weather)){
@@ -349,5 +350,40 @@ if(abs(t.step[1] - t.step[2]) <= min(c(weather$t.delta.max.L1, weather$t.delta.m
 # [4] https://www.engineeringtoolbox.com/air-absolute-kinematic-viscosity-d_601.html
 
 # [5] http://www-mdp.eng.cam.ac.uk/web/library/enginfo/aerothermal_dvd_only/aero/fprops/propsoffluids/node5.html
+
+
+##########################
+### sapply for nodal caluclations (currently slower than for loop)
+
+# last node isn't calc'd b/c you need +1 and -1 node for estiamte. after model, remove last 2 nodes to clean up at then bottom boundary
+# calculate the p+1 temps at node m based on temps at time p at nodes m, m-1, and m+1
+
+# interface/boundary condition to solve for the current boundary layer temp
+#pave.time[time.s == t.step[p] & layer == "boundary" & node != 0]$T.K <- sapply(1:nrow(pave.time[time.s == t.step[p] & layer == "boundary" & node != 0]),
+#                                                                               function (x) ((((k[pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]-1), layer]] 
+#                                                                                                / k[pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]+1), layer]]) 
+#                                                                                               * ((pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]+1), depth.m] 
+#                                                                                                   - pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]), depth.m]) 
+#                                                                                                  / (pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]), depth.m] 
+#                                                                                                     - pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]-1), depth.m])) 
+#                                                                                               * pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]-1), T.K]) 
+#                                                                                              + pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]+1), T.K])
+#                                                                                             / (1 + ((k[pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]-1), layer]] 
+#                                                                                                      / k[pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]+1), layer]]) 
+#                                                                                                     * ((pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]+1), depth.m] 
+#                                                                                                         - pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]), depth.m]) 
+#                                                                                                        / (pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]), depth.m] 
+#                                                                                                           - pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p] & layer == "boundary" & node != 0, node][x]-1), depth.m])))))
+#)
+
+# non-interface calc for  at p+1
+#pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0]$T.K <- as.numeric(sapply(1:nrow(pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0]),
+#                                                                                            function (x) ((k[pave.time[time.s == t.step[p+1] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]), layer]] * delta.t 
+#                                                                                                           / rho.c[pave.time[time.s == t.step[p+1] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]), layer]]) 
+#                                                                                                          * (pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]-1), T.K]
+#                                                                                                             + pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]+1), T.K]
+#                                                                                                             - 2 * pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]), T.K]))
+#                                                                                            + pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]), T.K])
+#)
 
 
