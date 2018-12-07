@@ -24,12 +24,21 @@ invisible(lapply(list.of.packages, library, character.only = T)) # invisible() j
 
 # import weather data
 w.data <- readRDS(here("data/outputs/temp/2017-weather-data.rds")) # all houlry weather data
-w.stations <- readRDS(here("data/outputs/temp/2017-station-data.rds")) # all station data
+#w.stations <- readRDS(here("data/outputs/temp/2017-station-data.rds")) # all station data
 
 # choose sample weather for hot day in 2017
-weather <- w.data[id == "City of Glendale" & date(date.time) == "2017-06-23" & !is.na(solar)]
-weather[, c("source","id","rh","qcflag","heat.f","heat.c","month","week","day","wday","date.time.round"):=NULL]
-plot(weather$date.time, weather$temp.f)
+#weather <- w.data[id == "City of Glendale" & date(date.time) == "2017-06-23" & !is.na(solar)]
+w.data[, min := lubridate::minute(w.data$date.time)]
+weather <- w.data[is.na(source) & date(date.time) == "2017-06-23", .(temp.c = mean(temp.c, na.rm = T), n = sum(!is.na(temp.c))), by = date.time]
+#weather[, c("source","id","rh","qcflag","heat.f","heat.c","month","week","day","wday","date.time.round"):=NULL]
+
+weather <- weather[temp.c > quantile(weather$temp.c, 0.2) & temp.c < quantile(weather$temp.c, 0.9)]
+
+plot(weather$date.time,weather$n)
+plot(weather$date.time,weather$temp.c)
+
+sum(!is.na(w.data$temp.c))
+sum(is.na(w.data$temp.c))
 
 ## PAVEMENT SPECIFICATIONS [1]
 
@@ -89,7 +98,7 @@ pave.time <- as.data.table(data.frame("time.s" = rep(t.step, each = nrow(p.data)
                                       "node" = rep(0:(nrow(p.data)-1), p.n),
                                       "depth.m" = rep(p.data$x, p.n),
                                       "layer" = rep(p.data$layer, p.n),
-                                      "T.K" = rep(seq(from = 38.6+273.15, to = 35+273.15, length.out = p.n)))) # surface temp in K (38.6 degC, down to 35 degC at 10m)
+                                      "T.K" = rep(seq(from = 37.4+273.15, to = 32.4+273.15, length.out = p.n)))) # surface temp in K from the pavement to 3m)
 
 # static parameters for pavement heat transfer
 alpha <- 4.0  # thermal diffusivity (m^2/s), typically range from 2 to 12; [1]
@@ -129,7 +138,7 @@ h.rad <- vector(mode = "numeric", length = p.n) # radiative heat transfer coeffi
 
 ## MODEL HEAT TRANSFER OF PAVEMENT
 # iterate through time steps and model pavement heat transfer
-for(p in 1:20){ #(p.n-1) state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
+for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
   
   # current pavement surface temp (in Kelvin)
   T.s[p] <- pave.time[time.s == t.step[p] & depth.m == 0, T.K]
@@ -293,6 +302,31 @@ paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start
 
 ##################
 
+for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
+
+  w <- which(t.step[p] == weather$time.s) # store location of timestep match (will be empty if no match)
+  if(length(w) == 1){ # if timestep match is valid (there is a weather obs at this timestep in the model)
+    
+    # use observation values for calculations
+    T.sky[p] <- weather$T.sky[w] 
+    
+  } else { # if there isn't a match, interpolate parameters linearlly (solar, temp)
+    
+    # find the closest two obsevations indices and store thier obs time
+    w1 <- which.min(abs(weather$time.s - t.step[p]))
+    w2 <- if(w1 == 1){2} else if(which.min(c(abs(weather$time.s[w1-1] - t.step[p]),abs(weather$time.s[w1+1] - t.step[p]))) == 1){w1-1} else {w1+1}
+    
+    t1 <- weather$time.s[w1]
+    t2 <- weather$time.s[w2]
+    
+    # iterpolate btwn necessary variables
+    T.sky[p] <- (weather$T.sky[w1] * (t.step[p] - t1) / (t2 - t1)) +
+      (weather$T.sky[w2] * (t2 - t.step[p]) / (t2 - t1))
+  }
+}
+    
+
+
 # plot interpolated sky temperatures
 temp.data <- cbind(pave.time[node == 0], T.sky)
 temp.data[,T.sky := V2 - 273.15]
@@ -305,8 +339,9 @@ max.y <- max(temp.data[,T.sky] + 1)
 p2 <- (ggplot(data = temp.data) # weather
        + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
        + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-       + geom_point(aes(y = T.sky, x = time.s)) #date.time
-       + geom_line(aes(y = T.sky, x = time.s), color = "grey50", linetype = 2, size = 0.75) #date.time
+       #+ geom_point(aes(y = T.sky, x = time.s)) #date.time
+       + geom_line(aes(y = T.sky, x = time.s), color = "grey80", linetype = 2, size = 0.75) #date.time
+       + geom_point(data = weather, aes(y = T.sky, x = time.s), size = 3, color = "black")
        + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
        + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
        + labs(x = "Time (s)", y = "Temperature (deg C)") # "Time of Day"
@@ -385,5 +420,65 @@ if(abs(t.step[1] - t.step[2]) <= min(c(weather$t.delta.max.L1, weather$t.delta.m
 #                                                                                                             - 2 * pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]), T.K]))
 #                                                                                            + pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]), T.K])
 #)
+
+y <- c(11.622967, 12.006081, 11.760928, 12.246830, 12.052126, 12.346154, 12.039262, 12.362163, 12.009269, 11.260743, 10.950483, 10.522091,  9.346292,  7.014578,  6.981853,  7.197708,  7.035624,  6.785289, 7.134426,  8.338514,  8.723832, 10.276473, 10.602792, 11.031908, 11.364901, 11.687638, 11.947783, 12.228909, 11.918379, 12.343574, 12.046851, 12.316508, 12.147746, 12.136446, 11.744371,  8.317413, 8.790837, 10.139807,  7.019035,  7.541484,  7.199672,  9.090377,  7.532161,  8.156842,  9.329572, 9.991522, 10.036448, 10.797905)
+t <- 18:65
+
+y <- rep(weather$temp.c, 3)
+t <- c(weather$time.s, weather$time.s + max(weather$time.s), weather$time.s + 2 * max(weather$time.s)) 
+y <- rollmean(y, 10, fill = T)
+length(t) == length(y)
+
+ssp <- spectrum(y)  
+per <- 1/ssp$freq[ssp$spec==max(ssp$spec)]
+reslm <- lm(y ~ sin(2*pi/per*t)+cos(2*pi/per*t))
+summary(reslm)
+
+rg <- diff(range(y))
+plot(y~t,ylim=c(min(y)-0.1*rg,max(y)+0.1*rg))
+lines(fitted(reslm)~t,col=4,lty=2)   # dashed blue line is sin fit
+
+# including 2nd harmonic really improves the fit
+reslm2 <- lm(y ~ sin(2*pi/per*t)+cos(2*pi/per*t)+sin(4*pi/per*t)+cos(4*pi/per*t))
+summary(reslm2)
+lines(fitted(reslm2)~t,col=3)    # solid green line is periodic with second harmonic
+
+raw.fft = fft(y)
+
+# Step 2: drop anything past the N/2 - 1th element.
+# This has something to do with the Nyquist-shannon limit, I believe
+# (https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem)
+truncated.fft = raw.fft[seq(1, length(y)/2 - 1)]
+
+# Step 3: drop the first element. It doesn't contain frequency information.
+truncated.fft[1] = 0
+
+# Step 4: the importance of each frequency corresponds to the absolute value of the FFT.
+# The 2, pi, and length(y) ensure that omega is on the correct scale relative to t.
+# Here, I set omega based on the largest value using which.max().
+omega = which.max(abs(truncated.fft)) * 2 * pi / length(y)
+omega
+
+##############
+
+Time <- c(weather$time.s, weather$time.s + max(weather$time.s)) 
+temperature <- rep(weather$temp.c, 2)
+per <- (weather$time.s[which.max(weather$temp.c)] - weather$time.s[which.min(weather$temp.c)])
+xc<-cos(2*pi*Time/per)
+xs<-sin(2*pi*Time/per)
+fit.lm <- lm(temperature~xc+xs)
+
+# access the fitted series (for plotting)
+fit <- fitted(fit.lm)  
+
+# find predictions for original time series
+pred <- predict(fit.lm, newdata=data.frame(Time=Time))    
+
+plot(temperature ~ Time, data= weather)
+lines(fit, col="red")
+lines(Time, pred, col="blue")
+
+
+
 
 
