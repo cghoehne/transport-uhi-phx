@@ -27,18 +27,13 @@ w.data <- readRDS(here("data/outputs/temp/2017-weather-data.rds")) # all houlry 
 #w.stations <- readRDS(here("data/outputs/temp/2017-station-data.rds")) # all station data
 
 # choose sample weather for hot day in 2017
-#weather <- w.data[id == "City of Glendale" & date(date.time) == "2017-06-23" & !is.na(solar)]
-w.data[, min := lubridate::minute(w.data$date.time)]
-weather <- w.data[is.na(source) & date(date.time) == "2017-06-23", .(temp.c = mean(temp.c, na.rm = T), n = sum(!is.na(temp.c))), by = date.time]
+weather <- w.data[id == "City of Glendale" & date(date.time) == "2017-06-23" & !is.na(solar)]
+#w.data[, min := lubridate::minute(w.data$date.time)]
+#weather <- w.data[is.na(source) & date(date.time) == "2017-06-23", .(temp.c = mean(temp.c, na.rm = T), n = sum(!is.na(temp.c))), by = date.time]
 #weather[, c("source","id","rh","qcflag","heat.f","heat.c","month","week","day","wday","date.time.round"):=NULL]
-
-weather <- weather[temp.c > quantile(weather$temp.c, 0.2) & temp.c < quantile(weather$temp.c, 0.9)]
-
-plot(weather$date.time,weather$n)
-plot(weather$date.time,weather$temp.c)
-
-sum(!is.na(w.data$temp.c))
-sum(is.na(w.data$temp.c))
+#weather <- weather[temp.c > quantile(weather$temp.c, 0.2) & temp.c < quantile(weather$temp.c, 0.9)]
+#plot(weather$date.time,weather$n)
+#plot(weather$date.time,weather$temp.c)
 
 ## PAVEMENT SPECIFICATIONS [1]
 
@@ -165,17 +160,17 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
     t2 <- weather$time.s[w2]
     
     # iterpolate btwn necessary variables
-    T.sky[p] <- (weather$T.sky[w1] * (t.step[p] - t1) / (t2 - t1)) +
-                (weather$T.sky[w2] * (t2 - t.step[p]) / (t2 - t1))
+    T.sky[p] <- (weather$T.sky[w2] * (t.step[p] - t1) / (t2 - t1)) +
+                (weather$T.sky[w1] * (t2 - t.step[p]) / (t2 - t1))
     
-    T.inf[p] <- (weather$T.inf[w1] * (t.step[p] - t1) / (t2 - t1)) +
-                (weather$T.inf[w2] * (t2 - t.step[p]) / (t2 - t1)) 
+    T.inf[p] <- (weather$T.inf[w2] * (t.step[p] - t1) / (t2 - t1)) +
+                (weather$T.inf[w1] * (t2 - t.step[p]) / (t2 - t1)) 
     
-    solar[p] <- (weather$solar[w1] * (t.step[p] - t1) / (t2 - t1)) +
-                (weather$solar[w2] * (t2 - t.step[p]) / (t2 - t1))
+    solar[p] <- (weather$solar[w2] * (t.step[p] - t1) / (t2 - t1)) +
+                (weather$solar[w1] * (t2 - t.step[p]) / (t2 - t1))
     
-    winspd[p] <- (weather$winspd[w1] * (t.step[p] - t1) / (t2 - t1)) +
-                 (weather$winspd[w2] * (t2 - t.step[p]) / (t2 - t1))
+    winspd[p] <- (weather$winspd[w2] * (t.step[p] - t1) / (t2 - t1)) +
+                 (weather$winspd[w1] * (t2 - t.step[p]) / (t2 - t1))
   }
   
   # estimate parameters
@@ -249,7 +244,9 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
 }
 
 pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
-pave.time <- pave.time[node != max(pave.time$node) | node != max(pave.time$node)-1] # remove last 2 nodes to eliminate fuzziness at end nodes
+#pave.time <- pave.time[node != max(pave.time$node) | node != max(pave.time$node)-1] # remove last 2 nodes to eliminate fuzziness at end nodes
+pave.time[, date.time := weather$date.time[1] + seconds(time.s)] # add date.time column
+
 
 # remove the last time step (not calculated) in relevant data
 pave.time <- pave.time[time.s != t.step[p.n]]
@@ -271,28 +268,100 @@ windowsFonts(Century=windowsFont("TT Century Gothic"))
 windowsFonts(Times=windowsFont("TT Times New Roman"))
 my.font <- "Century"
 
-#min.x <- weather$date.time[1]
-#max.x <- weather$date.time[which(t.step[p] == weather$time.s)]
-min.x <- t.step[1]
-max.x <- t.step[p]
-min.y <- min(pave.time[node == 0, T.degC]-1)
-max.y <- max(pave.time[node == 0, T.degC]+1)
+p0.data <- pave.time[node == 0 & time.s <= t.step[p]]
+min.x <- min(p0.data$date.time)
+max.x <- max(p0.data$date.time)
+min.y <- pmin(signif(min(p0.data[, T.degC]) - (0.1 * diff(range(p0.data[, T.degC]))),4), min(weather$temp.c))
+max.y <- signif(max(p0.data[, T.degC]) + (0.1 * diff(range(p0.data[, T.degC]))),4)
 
-p1 <- (ggplot(data = pave.time[node == 0]) # weather
+p0 <- (ggplot(data = p0.data) # weather
        + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
        + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-       + geom_point(aes(y = T.degC, x = time.s)) #date.time
-       + geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) #date.time
-       + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
+       + geom_point(aes(y = T.degC, x = date.time)) #date.time
+       + geom_point(aes(y = T.degC, x = date.time), data = p0.data[date.time %in% weather$date.time], color = "red")
+       + geom_point(aes(y = temp.c, x = date.time), data = weather, color = "blue")
+       #+ geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "blue") # sky temp
+       #+ geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) #date.time
+       #+ scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
+       + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "2 hours")
        + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
-       + labs(x = "Time (s)", y = "Temperature (deg C)") # "Time of Day"
+       + ggtitle("Modeled Surface Pavement Temperature")
+       + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
        + theme_minimal()
        + theme(text = element_text(family = my.font, size = 12),
-               plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt")))
+               plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"),
+               axis.text.x = element_text(angle = 45, vjust = 0.5),
+               axis.title.x = element_text(vjust = 0.3)))
 
+p0
+
+ggsave("1D-modeled-surface-pave-temp.png", p0, 
+       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
+
+# depth temp
+p1.data <- pave.time[node == my.node & time.s <= t.step[p]]
+my.node <- 1
+min.x <- min(p1.data$date.time)
+max.x <- max(p1.data$date.time)
+min.y <- signif(min(p1.data[, T.degC]) - (0.1 * diff(range(p1.data[, T.degC]))),4)
+max.y <- signif(max(p1.data[, T.degC]) + (0.1 * diff(range(p1.data[, T.degC]))),4)
+
+p1 <- (ggplot(data = p1.data) # weather
+       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
+       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
+       + geom_point(aes(y = T.degC, x = date.time)) #date.time
+       + geom_point(aes(y = T.degC, x = date.time), data = p1.data[date.time %in% weather$date.time], color = "red")
+       #+ geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "blue") # sky temp
+       #+ geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) #date.time
+       #+ scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
+       + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "2 hours")
+       + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
+       + ggtitle(paste0("Modeled ", p1.data[, depth.m][1]*1000,"mm Pavement Temperature"))
+       + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
+       + theme_minimal()
+       + theme(text = element_text(family = my.font, size = 12),
+               plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"),
+               axis.text.x = element_text(angle = 45, vjust = 0.5),
+               axis.title.x = element_text(vjust = 0.3)))
 p1
 
-saveRDS(pave.time, here("data/outputs/1D-pave-heat-model-out.rds"))
+ggsave(paste0("1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
+       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
+
+# depth temp 2
+p10.data <- pave.time[node == my.node & time.s <= t.step[p]]
+my.node <- 10
+min.x <- min(p10.data$date.time)
+max.x <- max(p10.data$date.time)
+min.y <- signif(min(p10.data[, T.degC]) - (0.1 * diff(range(p10.data[, T.degC]))),4)
+max.y <- signif(max(p10.data[, T.degC]) + (0.1 * diff(range(p10.data[, T.degC]))),4)
+
+p10 <- (ggplot(data = p10.data) # weather
+       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
+       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
+       + geom_point(aes(y = T.degC, x = date.time)) #date.time
+       + geom_point(aes(y = T.degC, x = date.time), data = p10.data[date.time %in% weather$date.time], color = "red")
+       #+ geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "blue") # sky temp
+       #+ geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) #date.time
+       #+ scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
+       + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "2 hours")
+       + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
+       + ggtitle(paste0("Modeled ", p10.data[, depth.m][1]*1000,"mm Pavement Temperature"))
+       + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
+       + theme_minimal()
+       + theme(text = element_text(family = my.font, size = 12),
+               plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"),
+               axis.text.x = element_text(angle = 45, vjust = 0.5),
+               axis.title.x = element_text(vjust = 0.3)))
+p10
+
+ggsave(paste0("1D-modeled-", round(p10.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p10, 
+       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
+
+save.image(here("data/outputs/1D-pave-heat-model-out.RData"))
+#load(here("data/outputs/1D-pave-heat-model-out.RData"))
+#saveRDS(pave.time, here("data/outputs/1D-pave-heat-model-out.rds"))
+#pave.time <- readRDS(here("data/outputs/1D-pave-heat-model-out.rds"))
 
 # print script endtime
 t.end <- Sys.time() 
@@ -303,7 +372,7 @@ paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start
 ##################
 
 for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
-
+  
   w <- which(t.step[p] == weather$time.s) # store location of timestep match (will be empty if no match)
   if(length(w) == 1){ # if timestep match is valid (there is a weather obs at this timestep in the model)
     
@@ -320,28 +389,26 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
     t2 <- weather$time.s[w2]
     
     # iterpolate btwn necessary variables
-    T.sky[p] <- (weather$T.sky[w1] * (t.step[p] - t1) / (t2 - t1)) +
-      (weather$T.sky[w2] * (t2 - t.step[p]) / (t2 - t1))
+    T.sky[p] <- (weather$T.sky[w2] * (t.step[p] - t1) / (t2 - t1)) +
+      (weather$T.sky[w1] * (t2 - t.step[p]) / (t2 - t1))
   }
 }
-    
-
 
 # plot interpolated sky temperatures
-temp.data <- cbind(pave.time[node == 0], T.sky)
-temp.data[,T.sky := V2 - 273.15]
+temp.data <- as.data.table(cbind(t.step, T.sky))
+temp.data[,T.sky := T.sky - 273.15]
 
 min.x <- t.step[1]
 max.x <- t.step[p]
-min.y <- min(temp.data[,T.sky] - 1)
-max.y <- max(temp.data[,T.sky] + 1)
+min.y <- min(temp.data[t.step <= t.step[p], T.sky] - 1)
+max.y <- max(temp.data[t.step <= t.step[p], T.sky] + 1)
 
 p2 <- (ggplot(data = temp.data) # weather
        + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
        + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-       #+ geom_point(aes(y = T.sky, x = time.s)) #date.time
-       + geom_line(aes(y = T.sky, x = time.s), color = "grey80", linetype = 2, size = 0.75) #date.time
-       + geom_point(data = weather, aes(y = T.sky, x = time.s), size = 3, color = "black")
+       + geom_line(aes(y = T.sky, x = t.step), color = "grey80", linetype = 2, size = 0.75) #date.time
+       + geom_point(aes(y = T.sky, x = t.step), color = "black", size = 0.5) #date.time
+       + geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "red", size = 2)  
        + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
        + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
        + labs(x = "Time (s)", y = "Temperature (deg C)") # "Time of Day"
@@ -350,6 +417,7 @@ p2 <- (ggplot(data = temp.data) # weather
                plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt")))
 
 p2
+
 
 
 # check CFL boundary condition
@@ -479,6 +547,12 @@ lines(fit, col="red")
 lines(Time, pred, col="blue")
 
 
+
+##################################################################
+
+
+
+  
 
 
 
