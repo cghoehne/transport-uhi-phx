@@ -108,7 +108,7 @@ L <- 1 #  characteristic length of pavement (m);
 k	<- c("surface" = 1.21, "base" = 1.21, "subgrade" = 1.00) #  thermal conductivity (W/(m2*degK))
 rho <- c("surface" = 2238, "base" = 2238, "subgrade" = 1500) #  pavement density (kg/m3);
 c	<- c("surface" = 921, "base" = 921, "subgrade" = 1900) # specific heat (J/(kg*degK);
-rho.c <- rho * c #  volumetric heat capacity (J/(m3 degK)); [1]
+rho.c <- rho * c #  volumetric heat capacity (J/(m3 degK)); [1] concrete: ~2.07E6; ashpalt ~1.42E6 [6]
 
 # calculate parameters that vary by time/weather
 weather$time.s <- as.numeric(difftime(weather$date.time, weather$date.time[1], units = "secs")) # time.s to match with iterations in weather data (assuming first obs is time zero)
@@ -133,6 +133,8 @@ h.rad <- vector(mode = "numeric", length = p.n) # radiative heat transfer coeffi
 
 ## MODEL HEAT TRANSFER OF PAVEMENT
 # iterate through time steps and model pavement heat transfer
+for(iteration in 1:5){
+
 for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
   
   # current pavement surface temp (in Kelvin)
@@ -243,6 +245,8 @@ for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-
   }
 }
 
+}
+
 pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
 #pave.time <- pave.time[node != max(pave.time$node) | node != max(pave.time$node)-1] # remove last 2 nodes to eliminate fuzziness at end nodes
 pave.time[, date.time := weather$date.time[1] + seconds(time.s)] # add date.time column
@@ -328,34 +332,36 @@ p1
 ggsave(paste0("1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
        device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
 
-# depth temp 2
-p10.data <- pave.time[node == my.node & time.s <= t.step[p]]
-my.node <- 10
-min.x <- min(p10.data$date.time)
-max.x <- max(p10.data$date.time)
-min.y <- signif(min(p10.data[, T.degC]) - (0.1 * diff(range(p10.data[, T.degC]))),4)
-max.y <- signif(max(p10.data[, T.degC]) + (0.1 * diff(range(p10.data[, T.degC]))),4)
+# depth temps
+min.x <- signif(min(pave.time[, T.degC]) - (0.1 * diff(range(pave.time[, T.degC]))),4)
+max.x <- signif(max(pave.time[, T.degC]) + (0.1 * diff(range(pave.time[, T.degC]))),4)
+min.y <- 0 # 0 depth
+max.y <- max(pave.time[, depth.m])
 
-p10 <- (ggplot(data = p10.data) # weather
+my.date <- ymd(pave.time$date.time[1])
+p.depth <- (ggplot(data = pave.time) # weather
        + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
        + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-       + geom_point(aes(y = T.degC, x = date.time)) #date.time
-       + geom_point(aes(y = T.degC, x = date.time), data = p10.data[date.time %in% weather$date.time], color = "red")
+       + geom_line(aes(y = depth.m, x = T.degC, color = "1pm"), data = pave.time[date.time == paste(my.date,"13:00:00")], size = 1.5) # 1pm temperatures at depth
+       + geom_line(aes(y = depth.m, x = T.degC, color = "5pm"), data = pave.time[date.time == paste(my.date, "17:00:00")], size = 1.5) # 5pm temperatures at depth
+       + geom_line(aes(y = depth.m, x = T.degC, color = "9pm"), data = pave.time[date.time == paste(my.date, "21:00:00")], size = 1.5) # 9pm temperatures at depth
+       #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date,"13:00:00")], name = "1pm", shape = 1) # 1pm temperatures at depth
+       #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date, "17:00:00")], name = "5pm", shape = 2) # 5pm temperatures at depth
+       #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date, "21:00:00")], name = "9pm", shape = 3) # 9pm temperatures at depth
        #+ geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "blue") # sky temp
        #+ geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) #date.time
        #+ scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
-       + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "2 hours")
-       + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
-       + ggtitle(paste0("Modeled ", p10.data[, depth.m][1]*1000,"mm Pavement Temperature"))
-       + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
+       + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x), position = "top")
+       + scale_y_reverse(expand = c(0,0), limits = c(max.y,min.y))
+       + ggtitle(paste0("Modeled Pavement Temperature at Depth"))
+       + labs(x = "Temperature (deg C)", y = "Depth (m)") # "Time of Day"
        + theme_minimal()
        + theme(text = element_text(family = my.font, size = 12),
                plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"),
-               axis.text.x = element_text(angle = 45, vjust = 0.5),
                axis.title.x = element_text(vjust = 0.3)))
-p10
+p.depth
 
-ggsave(paste0("1D-modeled-", round(p10.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p10, 
+ggsave(paste0("1D-modeled-pave-temp-at-depth.png"), p.depth, 
        device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
 
 save.image(here("data/outputs/1D-pave-heat-model-out.RData"))
@@ -453,6 +459,8 @@ if(abs(t.step[1] - t.step[2]) <= min(c(weather$t.delta.max.L1, weather$t.delta.m
 # [4] https://www.engineeringtoolbox.com/air-absolute-kinematic-viscosity-d_601.html
 
 # [5] http://www-mdp.eng.cam.ac.uk/web/library/enginfo/aerothermal_dvd_only/aero/fprops/propsoffluids/node5.html
+
+# [6] https://doi.org/10.1016/1352-2310(94)00140-5
 
 
 ##########################
