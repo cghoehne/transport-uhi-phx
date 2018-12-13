@@ -28,7 +28,7 @@ w.data <- readRDS(here("data/outputs/temp/2017-weather-data.rds")) # all houlry 
 #w.stations <- readRDS(here("data/outputs/temp/2017-station-data.rds")) # all station data
 
 # choose sample weather for hot day in 2017
-weather <- w.data[id == "City of Glendale" & date(date.time) == "2017-06-23" & !is.na(solar)]
+weather <- w.data[id == "City of Glendale" & date(date.time) >= "2017-06-25" & date(date.time) <= "2017-06-27" & !is.na(solar)]
 #w.data[, min := lubridate::minute(w.data$date.time)]
 #weather <- w.data[is.na(source) & date(date.time) == "2017-06-23", .(temp.c = mean(temp.c, na.rm = T), n = sum(!is.na(temp.c))), by = date.time]
 #weather[, c("source","id","rh","qcflag","heat.f","heat.c","month","week","day","wday","date.time.round"):=NULL]
@@ -89,12 +89,12 @@ t.step <- seq(from = 0, # from time zero
 p.n <- length(t.step) # store final time step n
 delta.t <- t.step[2] - t.step[1] # change in time step (constant)
 
-# intitalize pavement time series data for modeling
+# intitalize data.table for store model output data of pavement heat transfer time series modeling
 pave.time <- as.data.table(data.frame("time.s" = rep(t.step, each = nrow(p.data)),
                                       "node" = rep(0:(nrow(p.data)-1), p.n),
                                       "depth.m" = rep(p.data$x, p.n),
                                       "layer" = rep(p.data$layer, p.n),
-                                      "T.K" = rep(seq(from = 37.4+273.15, to = 32.4+273.15, length.out = p.n)))) # surface temp in K from the pavement to 3m)
+                                      "T.K" = rep(seq(from = 33.5+273.15, to = 33.5+273.15, length.out = p.n)))) # surface temp in K from the pavement to 3m)
 
 # static parameters for pavement heat transfer
 alpha <- 4.0  # thermal diffusivity (m^2/s), typically range from 2 to 12; [1]
@@ -122,8 +122,6 @@ weather$h.inf <- 0.664 * (weather$k.inf * (Pr.inf ^ 0.3) * (weather$v.inf ^ -0.5
 
 
 ## MODEL HEAT TRANSFER OF PAVEMENT
-# iterate through time steps and model pavement heat transfer
-#load(here("data/outputs/1D-pave-heat-model-out.RData"))
 
 # iterpolate between all observation data to create weather data at each timestep
 # first create new data.table for a single node with all obervational weather data matched by timestep (timesteps match)
@@ -151,51 +149,66 @@ up.dn[, x.up := abs(shift(depth.m, type = "lag") - depth.m)]
 up.dn[, x.dn := abs(shift(depth.m, type = "lead") - depth.m)]
 pave.time <- merge(pave.time, up.dn[, .(node, k.up, k.dn, x.up, x.dn)], by = "node", all.x = T)
 
-# also store a few other things
+# also create/store a few other things
 pave.time[, k.m := k[layer]] # thermal conductivity by layer 
 pave.time[, rho.c.m := rho.c[layer]] # voumetric heat capacity
 pave.time[, date.time := weather$date.time[1] + seconds(time.s)] # add date.time column
-
+pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
 T.s <- vector(mode = "numeric", length = p.n) # pavement suface temp in K
-for(p in 1:(p.n-1)){ #(p.n-1) state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
-  
-  # for timestep p, store the pavement surface temperature at timestep p (in Kelvin)
-  T.s[p] <- pave.time[time.s == t.step[p] & node == 0, T.K]
-  
-  # for timestep p, calc the radiative coefficient and outgoing infared radiation based on parameters at timestep p
-  pave.time[, h.rad := SVF * epsilon * sigma * ((T.s[p]^2) + (T.sky^2)) * (T.s[p] + T.sky)] # radiative heat transfer coefficient in W/(m2*degK) 
-  pave.time[, q.rad := h.rad * (T.s[p] - T.sky)] # outgoing infared radiation W/m2
-  
-  # for timestep p+1, calc the surface pavement temperature based on parameters at timestep p
-  # i.e. surface node s (node = 0), eqn 10 in [1]
-  pave.time[time.s == t.step[p+1] & node == 0, T.K := T.s[p] +
-              ((((1 - albedo) * solar)
-                + (h.inf * (T.inf - T.s[p]))
-                + (h.rad * (T.sky - T.s[p]))
-                + ((k["surface"] * (pave.time[time.s == t.step[p] & node == 1, T.K] - T.s[p]))
-                   / delta.x))
-               * (2 * delta.t / (rho.c["surface"] * delta.x)))]
-  
-  # store a temp dt to calulate boundary temp at all nodes (b/c 'shift' won't work corretly in when subsetting)
-  tmp <- pave.time[time.s == t.step[p]] 
-  
-  # calculate boundary/interface nodes at timestep p+1
-  tmp[, T.K.b := 
-              (((k.up / k.dn) * (x.dn / x.up) * tmp[, shift(T.K, type = "lag")]) 
-               + tmp[, shift(T.K, type = "lead")])
-            / (1 + ((k.up / k.dn) * (x.dn / x.up)))]
-  pave.time[time.s == t.step[p+1] & node != 0 & layer == "boundary", T.K := tmp[node != 0 & layer == "boundary", T.K.b]] # store only the boundary temps 
-  
-  # calculate interior nodes at timestep p+1 (non-boundary/non-interface nodes)
-  tmp[, T.K.i := 
-              ((k.m * delta.t / rho.c.m) * (tmp[, shift(T.K, type = "lag")]
-                                            + tmp[, shift(T.K, type = "lead")]
-                                            - 2 * T.K)) + T.K]  
-  pave.time[time.s == t.step[p+1] & node != 0 & node != max(node) & layer != "boundary", T.K := tmp[node != 0 & node != max(node) & layer != "boundary", T.K.i]] # store only the interior temps 
 
+# iterate through from time p to time p.n and model pavement heat transfer at surface, boundary/interface, and interior nodes 
+iterations <- 1:10 # 10 iteration cycles in [1] was found to produce the most accurate results
+for(iteration in iterations){
+  for(p in 1:(p.n-1)){ #(p.n-1) state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
+    
+    # for timestep p, store the pavement surface temperature at timestep p (in K)
+    T.s[p] <- pave.time[time.s == t.step[p] & node == 0, T.K]
+    
+    # for timestep p, calc the radiative coefficient and outgoing infared radiation based on parameters at timestep p
+    pave.time[time.s == t.step[p], h.rad := SVF * epsilon * sigma * ((T.s[p]^2) + (T.sky^2)) * (T.s[p] + T.sky)] # radiative heat transfer coefficient in W/(m2*degK) 
+    pave.time[time.s == t.step[p], q.rad := SVF * epsilon * sigma * ((T.s[p]^4) - (T.sky^4))] # outgoing infared radiation W/m2
+    
+    # store a temporary data.table at this timestep to store and transfer all node calculations to master data.table .
+    # we do this because the 'shift' function does not work as needed within data.table subsets, 
+    # i.e. it does not refrence the immediately above or below node/timestep when subsetting in data.table.
+    # this way 'shift' works as expected because the subset data.table is only the relevant ordered data for the current timestep.
+    tmp <- pave.time[time.s == t.step[p]] 
+    
+    # for timestep p+1, calc the surface pavement temperature based on parameters at timestep p
+    # i.e. surface node s (node = 0), eqn 10 in [1]
+    
+    pave.time[time.s == t.step[p+1] & node == 0, T.K := T.s[p] +  # T.K at node 0 is pavement surface temp (at time p+1)
+                ((((1 - albedo) * tmp[node == 0, solar])
+                  + (tmp[node == 0, h.inf] * (tmp[node == 0, T.inf] - T.s[p]))
+                  + (tmp[node == 0, h.rad] * (tmp[node == 0, T.sky] - T.s[p]))
+                  + ((k["surface"] * (tmp[node == 1, T.K] - T.s[p]))
+                     / delta.x))
+                 * (2 * delta.t / (rho.c["surface"] * delta.x)))]
+    
+    # calculate boundary/interface nodes at timestep p+1
+    tmp[, T.C.b :=  
+          (((k.up / k.dn) * (x.dn / x.up) * tmp[, shift(T.K, type = "lag")]) 
+           + tmp[, shift(T.K, type = "lead")])
+        / (1 + ((k.up / k.dn) * (x.dn / x.up)))]
+    
+    # store only the boundary temps at time p+1 from boundary calc in output pave.time data
+    pave.time[time.s == t.step[p+1] & node != 0 & layer == "boundary", T.K := tmp[node != 0 & layer == "boundary", T.C.b]] 
+    
+    # calculate interior nodes at timestep p+1 (non-boundary/non-interface nodes)
+    tmp[, T.C.i := 
+          ((k.m * delta.t / rho.c.m) * (tmp[, shift(T.K, type = "lag")]
+                                        + tmp[, shift(T.K, type = "lead")]
+                                        - 2 * tmp[, T.K])) + tmp[, T.K]]
+    
+    # store only the interior node temps at time p+1 from interior calc in output pave.time data
+    pave.time[time.s == t.step[p+1] & node != 0 & node != max(node) & layer != "boundary", T.K := tmp[node != 0 & node != max(node) & layer != "boundary", T.C.i]]
+    
+  }
+  # store the final time step pavement temps as the initial temps for new run
+  pave.time[time.s == 0, T.K := pave.time[time.s == max(time.s), T.K]]
 }
 
-pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
+#pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
 #pave.time <- pave.time[node != max(pave.time$node) | node != max(pave.time$node)-1] # remove last 2 nodes to eliminate fuzziness at end nodes
 pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step (not calculated). timesteps were given such that p.n-1 is the final weather obs
 
@@ -210,18 +223,19 @@ my.font <- "Century"
 p0.data <- pave.time[node == 0 & time.s <= t.step[p]]
 min.x <- min(p0.data$date.time, na.rm = T)
 max.x <- max(p0.data$date.time, na.rm = T)
-min.y <- pmin(signif(min(p0.data[, T.degC]) - (0.1 * diff(range(p0.data[, T.degC]))),4), min(weather$temp.c), na.rm = T)
-max.y <- signif(max(p0.data[, T.degC], na.rm = T) + (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4)
+min.y <- signif(min(p0.data[, T.degC], na.rm = T) - (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4)
+max.y <- signif(max(p0.data[, T.degC], na.rm = T) + (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4) 
 
-p0 <- (ggplot(data = p0.data) # weather
-       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
-       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-       + geom_point(aes(y = T.degC, x = date.time)) #date.time
+# for including air temps, instead use:
+#min.y <- pmin(signif(min(p0.data[, T.degC], na.rm = T) - (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4), min(weather$temp.c), na.rm = T) 
+#max.y <- signif(max(p0.data[, T.degC], na.rm = T) + (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4) 
+
+p0 <- (ggplot(data = p0.data) 
+       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border: (x,y) (xend,yend)
+       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border: (x,y) (xend,yend)
+       + geom_point(aes(y = T.degC, x = date.time))
        + geom_point(aes(y = T.degC, x = date.time), data = p0.data[date.time %in% weather$date.time], color = "red")
-       + geom_point(aes(y = temp.c, x = date.time), data = weather, color = "blue")
-       #+ geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "blue") # sky temp
-       #+ geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) #date.time
-       #+ scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
+       #+ geom_point(aes(y = temp.c, x = date.time), data = weather, color = "blue") # for inlcuding air temp on plot
        + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "2 hours")
        + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
        + ggtitle("Modeled Surface Pavement Temperature")
@@ -234,12 +248,9 @@ p0 <- (ggplot(data = p0.data) # weather
 
 p0
 
-ggsave("1D-modeled-surface-pave-temp.png", p0, 
-       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
-
 # depth temp
-p1.data <- pave.time[node == my.node & time.s <= t.step[p]]
 my.node <- 1
+p1.data <- pave.time[node == my.node & time.s <= t.step[p]]
 min.x <- min(p1.data$date.time)
 max.x <- max(p1.data$date.time)
 min.y <- signif(min(p1.data[, T.degC]) - (0.1 * diff(range(p1.data[, T.degC]))),4)
@@ -263,9 +274,6 @@ p1 <- (ggplot(data = p1.data) # weather
                axis.text.x = element_text(angle = 45, vjust = 0.5),
                axis.title.x = element_text(vjust = 0.3)))
 p1
-
-ggsave(paste0("1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
-       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
 
 # depth temps
 min.x <- signif(min(pave.time[, T.degC]) - (0.1 * diff(range(pave.time[, T.degC]))),4)
@@ -296,18 +304,22 @@ p.depth <- (ggplot(data = pave.time) # weather
                axis.title.x = element_text(vjust = 0.3)))
 p.depth
 
+
+t.end <- Sys.time() 
+paste0("Completed model run at ", t.end, ". Model run took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
+
+
+## SAVES
+# save plots
+ggsave("1D-modeled-surface-pave-temp.png", p0, 
+       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
+ggsave(paste0("1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
+       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
 ggsave(paste0("1D-modeled-pave-temp-at-depth.png"), p.depth, 
        device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
 
+# save workspace
 save.image(here("data/outputs/1D-pave-heat-model-out.RData"))
-load(here("data/outputs/1D-pave-heat-model-out.RData"))
-#saveRDS(pave.time, here("data/outputs/1D-pave-heat-model-out.rds"))
-#pave.time <- readRDS(here("data/outputs/1D-pave-heat-model-out.rds"))
-
-# print script endtime
-t.end <- Sys.time() 
-paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
-# end
 
 
 ##################
