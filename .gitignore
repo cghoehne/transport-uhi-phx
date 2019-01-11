@@ -20,3 +20,7 @@ local-token.txt
 # keep the daymet folder but not data, download through script
 data/daymet/*
 !data/daymet/.gitkeep 
+
+# ignore 1D-heat-model runs (figs & data)
+data/outputs/1D-heat-model-runs/*
+figures/1D-heat-model-runs/*

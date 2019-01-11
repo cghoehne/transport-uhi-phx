@@ -263,7 +263,7 @@ for(run in 1:nrow(model.runs) ){ #
     
     # save model run output
     ggsave(paste0("run_",run,"_1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
-           device = "png", path = here("figures/1D-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
+           device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
     
     saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
     model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),1)) # store runtime of model iteration in minutes
