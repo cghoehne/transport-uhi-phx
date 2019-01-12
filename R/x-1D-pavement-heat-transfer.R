@@ -30,20 +30,36 @@ my.font <- "Century"
 # create list of models to run with varied inputs to check sentivity/error
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
 # this is assumed to be the model run we check error against to compare model preformance
-models <- list(nodal.spacing = c(12.5,25),# nodal spacing in millimeters
+models <- list(run.t = c("a","b","c"), # create three 'types' to change the top to bottom starting temps
+               run.n = c(0), # dummy run number (replace below)
+               nodal.spacing = c(12.5,25),# nodal spacing in millimeters
                n.iterations = c(10,30), # number of iterations to repeat each model run for
-               i.top.temp = c(40), # starting top boundary layer temperature in deg C
-               i.bot.temp = c(30), # starting bottom boundary layer temperature in deg C
-               time.step = c(120,60,30), # time step in seconds
+               time.step = c(120,60), # time step in seconds
                pave.length = c(5,40), # characteristic length of pavement in meters
                run.time = c(0), # initialize model run time (store at end of run)
                RMSE = c(0) # initialize model root mean square error (store at end of run)
 )
+model.runs <- as.data.table(expand.grid(models)) # create all combinations of the above varied inputs
 
-model.runs <- expand.grid(models) # create all combinations of the above varied inputs
+# create different starting top and bottom temperatures by "run.t"
+model.runs[run.t == "a", i.top.temp := 40]
+model.runs[run.t == "a", i.bot.temp := 30]
+
+model.runs[run.t == "b", i.top.temp := 50]
+model.runs[run.t == "b", i.bot.temp := 40]
+
+model.runs[run.t == "c", i.top.temp := 50]
+model.runs[run.t == "c", i.bot.temp := 30]
+
+model.runs[run.t == "a", run.n := seq(from = 1, to = model.runs[run.t == "a", .N], by = 1)]
+model.runs[run.t == "b", run.n := seq(from = 1, to = model.runs[run.t == "b", .N], by = 1)]
+model.runs[run.t == "c", run.n := seq(from = 1, to = model.runs[run.t == "c", .N], by = 1)]
+
+# this means runs 1a, 1b, 1c, ect.. are the default model runs for calculating relative RMSE
+
 nrow(model.runs) # total runs
 
-for(run in 1:nrow(model.runs) ){ #
+for(run in 1:4 ){ #nrow(model.runs)
   tryCatch({  # catch and print errors, avoids stopping model run
     
     t.start <- Sys.time() # start model run timestamp
@@ -67,7 +83,7 @@ for(run in 1:nrow(model.runs) ){ #
     # subgrade: soil
     
     # input pavement layer thickness data
-    x <- 3.048 #  ground depth (m);
+    x <- 1 #  ground depth (m);  GUI ET AL: 3.048m
     delta.x <- model.runs$nodal.spacing[run]/1000 # chosen nodal spacing within pavement (m). default is 12.7mm (0.5in)
     
     thickness <- c("surface" = 0.1, "base" = 0.1, "subgrade" = 0) # 0.1m surface thickness, 0.1m base thickness
@@ -221,8 +237,14 @@ for(run in 1:nrow(model.runs) ){ #
                   + tmp[, shift(T.K, type = "lead")] # T at node m+1 and p
                   - 2 * tmp[, T.K])) + tmp[, T.K]] # T at node m and p
         
+        tmp[, h.flux := # heat flux in w/m2
+              ((2 * k.m / delta.x) * (tmp[, shift(T.K, type = "lag")]  # T at node m-1 and p
+                     + tmp[, shift(T.K, type = "lead")] # T at node m+1 and p
+                     - 2 * tmp[, T.K])) ]
+        
         # store only the interior node temps at time p+1 from interior calc in output pave.time data
         pave.time[time.s == t.step[p+1] & node != 0 & node != max(node) & layer != "boundary", T.K := tmp[node != 0 & node != max(node) & layer != "boundary", T.C.i]]
+        pave.time[time.s == t.step[p+1] & node != 0 & node != max(node) & layer != "boundary", heat.flux := tmp[node != 0 & node != max(node) & layer != "boundary", h.flux]]
         
       }
       # store the final time step pavement temps as the initial temps for new run
@@ -262,104 +284,25 @@ for(run in 1:nrow(model.runs) ){ #
                    plot.title = element_text(hjust = 0.75)))
     
     # save model run output
-    ggsave(paste0("run_",run,"_1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
+    ggsave(paste0("run_",model.runs$run.n[run],model.runs$run.t[run],"_1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
            device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
     
-    saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
+    saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",model.runs$run.n[run],model.runs$run.t[run],"_output.rds"))) # save model iteration R object
     model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),1)) # store runtime of model iteration in minutes
     
     # if run isn't first run, then store RSME compared to run 1 (validated run for comparison)
-    if(run != 1){
-      pave.time.ref <- readRDS(here("data/outputs/1D-heat-model-runs/run_1_output.rds"))
+    if(model.runs$run.n[run] != 1){ # if the model isn't a refrence run (refrence runs are alwasy run.n == 1 )
+      pave.time.ref <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/run_1",model.runs$run.t[run],"_output.rds"))) # load the refrence run for this type
       model.runs$RMSE[run] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,T.degC), on = c("time.s","depth.m")][!is.na(T.degC), T.degC] - 
                                            pave.time.ref[pave.time, .(time.s,depth.m,T.degC), on = c("time.s","depth.m")][!is.na(T.degC), T.degC])^2))
     }
     
-    
     }, error = function(e){cat("ERROR :",conditionMessage(e), "\n")}) # print error message if run had error
 } # end run, go to next run
 
-
-
-
-p0.data <- pave.time[node == 0 & time.s <= t.step[p]]
-min.x <- min(p0.data$date.time, na.rm = T)
-max.x <- ceiling_date(max(weather$date.time, na.rm = T), unit = "hours")
-min.y <- signif(min(p0.data[, T.degC], na.rm = T) - (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4)
-max.y <- ceiling(signif(max(p0.data[, T.degC], na.rm = T) + (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4))
-
-# for including air temps, instead use:
-#min.y <- pmin(signif(min(p0.data[, T.degC], na.rm = T) - (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4), min(weather$temp.c), na.rm = T) 
-#max.y <- signif(max(p0.data[, T.degC], na.rm = T) + (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4) 
-
-p0 <- (ggplot(data = p0.data) 
-       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border: (x,y) (xend,yend)
-       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border: (x,y) (xend,yend)
-       + geom_point(aes(y = T.degC, x = date.time))
-       + geom_point(aes(y = T.degC, x = date.time), data = p0.data[date.time %in% weather$date.time], color = "red")
-       #+ geom_point(aes(y = temp.c, x = date.time), data = weather, color = "blue") # for inlcuding air temp on plot
-       + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "6 hours")
-       + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
-       + ggtitle("Modeled Surface Pavement Temperature")
-       + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
-       + theme_minimal()
-       + theme(text = element_text(family = my.font, size = 12),
-               plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
-               axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
-               axis.title.x = element_text(vjust = 0.3),
-               plot.title = element_text(hjust = 0.75)))
-
-p0
-ggsave("1D-modeled-surface-pave-temp_new.png", p0, 
-       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
-
-
-
-
-
-
-
-# depth temps
-min.x <- signif(min(pave.time[, T.degC]) - (0.1 * diff(range(pave.time[, T.degC]))),4)
-max.x <- signif(max(pave.time[, T.degC]) + (0.1 * diff(range(pave.time[, T.degC]))),4)
-min.y <- 0 # 0 depth
-max.y <- max(pave.time[, depth.m])
-
-my.date <- ymd(pave.time$date.time[1])
-p.depth <- (ggplot(data = pave.time) # weather
-       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
-       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-       + geom_line(aes(y = depth.m, x = T.degC, color = "1pm"), data = pave.time[date.time == paste(my.date,"13:00:00")], size = 1.5) # 1pm temperatures at depth
-       + geom_line(aes(y = depth.m, x = T.degC, color = "5pm"), data = pave.time[date.time == paste(my.date, "17:00:00")], size = 1.5) # 5pm temperatures at depth
-       + geom_line(aes(y = depth.m, x = T.degC, color = "9pm"), data = pave.time[date.time == paste(my.date, "21:00:00")], size = 1.5) # 9pm temperatures at depth
-       #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date,"13:00:00")], name = "1pm", shape = 1) # 1pm temperatures at depth
-       #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date, "17:00:00")], name = "5pm", shape = 2) # 5pm temperatures at depth
-       #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date, "21:00:00")], name = "9pm", shape = 3) # 9pm temperatures at depth
-       #+ geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "blue") # sky temp
-       #+ geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) #date.time
-       #+ scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
-       + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x), position = "top")
-       + scale_y_reverse(expand = c(0,0), limits = c(max.y,min.y))
-       + ggtitle(paste0("Modeled Pavement Temperature at Depth"))
-       + labs(x = "Temperature (deg C)", y = "Depth (m)") # "Time of Day"
-       + theme_minimal()
-       + theme(text = element_text(family = my.font, size = 12),
-               plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"),
-               axis.title.x = element_text(vjust = 0.3)))
-#p.depth
-
-t.end <- Sys.time() 
+write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv")) # output model run metadata
+save.image(here("data/outputs/1D-heat-model-runs/1D-pave-heat-model-out.RData")) # save workspace (for troubleshooting)
 paste0("Completed model run at ", t.end, ". Model run took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
-
-
-## SAVES
-# save plots
-#ggsave(paste0("1D-modeled-pave-temp-at-depth_new.png"), p.depth, 
-#       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
-
-# save workspace
-save.image(here("data/outputs/1D-pave-heat-model-out.RData"))
-
 
 ##################
 ## check CFL boundary condition
@@ -395,6 +338,70 @@ paste0("The mean of all timesteps to satifiy the CFL stability condition is ",
        " seconds compared to a (max) delta t of ", delta.t, " seconds.") 
 
 
+# SURFACE TEMP PLOT
+
+# for including air temps, instead use:
+#min.y <- pmin(signif(min(p0.data[, T.degC], na.rm = T) - (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4), min(weather$temp.c), na.rm = T) 
+#max.y <- signif(max(p0.data[, T.degC], na.rm = T) + (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4) 
+
+p0.data <- pave.time[node == 0 & time.s <= t.step[p]]
+min.x <- min(p0.data$date.time, na.rm = T)
+max.x <- ceiling_date(max(weather$date.time, na.rm = T), unit = "hours")
+min.y <- signif(min(p0.data[, T.degC], na.rm = T) - (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4)
+max.y <- ceiling(signif(max(p0.data[, T.degC], na.rm = T) + (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4))
+
+p0 <- (ggplot(data = p0.data) 
+       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border: (x,y) (xend,yend)
+       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border: (x,y) (xend,yend)
+       + geom_point(aes(y = T.degC, x = date.time))
+       + geom_point(aes(y = T.degC, x = date.time), data = p0.data[date.time %in% weather$date.time], color = "red")
+       #+ geom_point(aes(y = temp.c, x = date.time), data = weather, color = "blue") # for inlcuding air temp on plot
+       + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "6 hours")
+       + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
+       + ggtitle("Modeled Surface Pavement Temperature")
+       + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
+       + theme_minimal()
+       + theme(text = element_text(family = my.font, size = 12),
+               plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
+               axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+               axis.title.x = element_text(vjust = 0.3),
+               plot.title = element_text(hjust = 0.75)))
+
+p0
+ggsave("1D-modeled-surface-pave-temp_new.png", p0, 
+       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
+
+
+
+# depth temps
+min.x <- 20 #signif(min(pave.time[, T.degC]) - (0.1 * diff(range(pave.time[, T.degC]))),4)
+max.x <- 80 #signif(max(pave.time[, T.degC]) + (0.1 * diff(range(pave.time[, T.degC]))),4)
+min.y <- 0 # 0 depth
+max.y <- max(pave.time[, depth.m])
+
+my.date <- date(max(pave.time$date.time))
+
+p.depth <- (ggplot(data = pave.time) # weather
+            + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
+            + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
+            + geom_line(aes(y = depth.m, x = T.degC, color = "1pm"), data = pave.time[date.time == paste(my.date,"13:00:00")], size = 1.5) # 1pm temperatures at depth
+            + geom_line(aes(y = depth.m, x = T.degC, color = "5pm"), data = pave.time[date.time == paste(my.date, "17:00:00")], size = 1.5) # 5pm temperatures at depth
+            #+ geom_line(aes(y = depth.m, x = T.degC, color = "9pm"), data = pave.time[date.time == paste(my.date, "21:00:00")], size = 1.5) # 9pm temperatures at depth
+            #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date,"13:00:00")], name = "1pm", shape = 1) # 1pm temperatures at depth
+            #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date, "17:00:00")], name = "5pm", shape = 2) # 5pm temperatures at depth
+            #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date, "21:00:00")], name = "9pm", shape = 3) # 9pm temperatures at depth
+            + geom_hline(yintercept = p.data[layer == "boundary" & x != 0, x], linetype = "dotted")
+            #+ scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
+            + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x), position = "top")
+            + scale_y_reverse(expand = c(0,0), limits = c(max.y,min.y))
+            + ggtitle(paste0("Modeled Pavement Temperature at Depth"))
+            + labs(x = "Temperature (deg C)", y = "Depth (m)") # "Time of Day"
+            + theme_minimal()
+            + theme(text = element_text(family = my.font, size = 12),
+                    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"),
+                    axis.title.x = element_text(vjust = 0.3)))
+p.depth
+t.end <- Sys.time() 
                                                                                                                                             
 
 ##################
@@ -565,3 +572,5 @@ for(iteration in 1:5){
 #                                                                                                             - 2 * pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]), T.K]))
 #                                                                                            + pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]), T.K])
 #)
+
+
