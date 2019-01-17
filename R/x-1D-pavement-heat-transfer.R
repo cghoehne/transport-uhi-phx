@@ -1,17 +1,24 @@
 # 1D model based on fundamental energy balance to calculate the pavement near-surface temperatures
 # based on model outlined in Gui et al. (2007) [1]
 
+# only for first time setup, install and intialize packrat
+#install.packages("packrat") 
+#packrat::init(here())
+
 # clear space and allocate memory
 gc()
 memory.limit(size = 56000) 
 t.start <- Sys.time() # start script timestamp
 
 # list of all dependant packages
-list.of.packages <- c("tidyverse",
+list.of.packages <- c("packrat",
+                      "tidyverse",
                       "zoo",
                       "lubridate",
                       "data.table",
                       "here")
+
+
 
 # install missing packages
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]

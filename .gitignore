@@ -24,3 +24,6 @@ data/daymet/*
 # ignore 1D-heat-model runs (figs & data)
 data/outputs/1D-heat-model-runs/*
 figures/1D-heat-model-runs/*
+
+# packrat ignore
+packrat/lib*/
