@@ -14,8 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #extrafont::loadfonts(device = "win") 
 
 # list of all dependant packages
-list.of.packages <- c("tidyverse",
-                      "data.table", 
+list.of.packages <- c("data.table", 
                       "lubridate",
                       "weathermetrics",
                       "rgdal",

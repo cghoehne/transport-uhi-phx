@@ -5,7 +5,6 @@
 extrafont::loadfonts(device = "win") # load fonts
 cat("\014")     # clear console (Cntl + L)
 
-library(tidyverse)
 library(data.table)
 library(lubridate)
 library(rgdal)

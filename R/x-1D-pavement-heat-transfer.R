@@ -1,31 +1,33 @@
 # 1D model based on fundamental energy balance to calculate the pavement near-surface temperatures
 # based on model outlined in Gui et al. (2007) [1]
 
-# only for first time setup, install and intialize packrat
-#install.packages("packrat") 
-#packrat::init(here())
+# ** It is recommended to use Microsoft Open R (v3.5.1) for improved performance without compromsing compatibility **
 
 # clear space and allocate memory
 gc()
 memory.limit(size = 56000) 
 t.start <- Sys.time() # start script timestamp
 
-# list of all dependant packages
-list.of.packages <- c("packrat",
-                      "tidyverse",
-                      "zoo",
-                      "lubridate",
-                      "data.table",
-                      "here")
+# in case we need to revert or packages are missing
+#if (!require("here")) install.packages("here")
+#if (!require("checkpoint")) install.packages("checkpoint")
 
+# load checkpoint package to insure you call local package dependcies
+library(checkpoint)
+#checkpoint("2019-01-17") # static checkpoint
 
+# if desired, update packages to a new snapshot, and remove old snapshot b/c we use GitHub to track updates/changes
+checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday
+           R.version = "3.5.1", # will only work if using the same version of R
+           checkpointLocation = here::here(), # calls here package
+           verbose = T) 
+#checkpointRemove(Sys.Date() - 1, allUntilSnapshot = TRUE, here::here()) # this removes all previous checkpoints before today
 
-# install missing packages
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
-
-# load packages
-invisible(lapply(list.of.packages, library, character.only = T)) # invisible() just hides printing stuff in console
+# load dependant packages
+library(zoo)
+library(lubridate)
+library(data.table)
+library(here)
 
 # load windows fonts and store as string
 windowsFonts(Century=windowsFont("TT Century Gothic"))
@@ -37,36 +39,20 @@ my.font <- "Century"
 # create list of models to run with varied inputs to check sentivity/error
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
 # this is assumed to be the model run we check error against to compare model preformance
-models <- list(run.t = c("a","b","c"), # create three 'types' to change the top to bottom starting temps
-               run.n = c(0), # dummy run number (replace below)
+models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5,25),# nodal spacing in millimeters
-               n.iterations = c(10,30), # number of iterations to repeat each model run for
+               n.iterations = c(1), # number of iterations to repeat each model run for
+               i.top.temp = c(40,30,50), # starting top boundary layer temperature in deg C
+               i.bot.temp = c(30,20), # starting bottom boundary layer temperature in deg C
                time.step = c(120,60), # time step in seconds
-               pave.length = c(5,40), # characteristic length of pavement in meters
+               pave.length = c(5), # characteristic length of pavement in meters
                run.time = c(0), # initialize model run time (store at end of run)
                RMSE = c(0) # initialize model root mean square error (store at end of run)
 )
 model.runs <- as.data.table(expand.grid(models)) # create all combinations of the above varied inputs
-
-# create different starting top and bottom temperatures by "run.t"
-model.runs[run.t == "a", i.top.temp := 40]
-model.runs[run.t == "a", i.bot.temp := 30]
-
-model.runs[run.t == "b", i.top.temp := 50]
-model.runs[run.t == "b", i.bot.temp := 40]
-
-model.runs[run.t == "c", i.top.temp := 50]
-model.runs[run.t == "c", i.bot.temp := 30]
-
-model.runs[run.t == "a", run.n := seq(from = 1, to = model.runs[run.t == "a", .N], by = 1)]
-model.runs[run.t == "b", run.n := seq(from = 1, to = model.runs[run.t == "b", .N], by = 1)]
-model.runs[run.t == "c", run.n := seq(from = 1, to = model.runs[run.t == "c", .N], by = 1)]
-
-# this means runs 1a, 1b, 1c, ect.. are the default model runs for calculating relative RMSE
-
 nrow(model.runs) # total runs
 
-for(run in 1:4 ){ #nrow(model.runs)
+for(run in 1:nrow(model.runs)){ #
   tryCatch({  # catch and print errors, avoids stopping model run
     
     t.start <- Sys.time() # start model run timestamp
@@ -90,7 +76,7 @@ for(run in 1:4 ){ #nrow(model.runs)
     # subgrade: soil
     
     # input pavement layer thickness data
-    x <- 1 #  ground depth (m);  GUI ET AL: 3.048m
+    x <- 0.5 #  ground depth (m);  GUI ET AL: 3.048m
     delta.x <- model.runs$nodal.spacing[run]/1000 # chosen nodal spacing within pavement (m). default is 12.7mm (0.5in)
     
     thickness <- c("surface" = 0.1, "base" = 0.1, "subgrade" = 0) # 0.1m surface thickness, 0.1m base thickness
@@ -297,9 +283,13 @@ for(run in 1:4 ){ #nrow(model.runs)
     saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",model.runs$run.n[run],model.runs$run.t[run],"_output.rds"))) # save model iteration R object
     model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),1)) # store runtime of model iteration in minutes
     
+    # if the run is the first run (defualt to validate other runs against), store it as the reference run
+    if(model.runs$run.n[run] == 1){
+      pave.time.ref <- pave.time
+    }
+    
     # if run isn't first run, then store RSME compared to run 1 (validated run for comparison)
-    if(model.runs$run.n[run] != 1){ # if the model isn't a refrence run (refrence runs are alwasy run.n == 1 )
-      pave.time.ref <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/run_1",model.runs$run.t[run],"_output.rds"))) # load the refrence run for this type
+    if(model.runs$run.n[run] != 1){ # if the model isn't the refrence run
       model.runs$RMSE[run] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,T.degC), on = c("time.s","depth.m")][!is.na(T.degC), T.degC] - 
                                            pave.time.ref[pave.time, .(time.s,depth.m,T.degC), on = c("time.s","depth.m")][!is.na(T.degC), T.degC])^2))
     }
@@ -309,6 +299,7 @@ for(run in 1:4 ){ #nrow(model.runs)
 
 write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv")) # output model run metadata
 save.image(here("data/outputs/1D-heat-model-runs/1D-pave-heat-model-out.RData")) # save workspace (for troubleshooting)
+t.end <- Sys.time() 
 paste0("Completed model run at ", t.end, ". Model run took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
 
 ##################
@@ -408,7 +399,7 @@ p.depth <- (ggplot(data = pave.time) # weather
                     plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"),
                     axis.title.x = element_text(vjust = 0.3)))
 p.depth
-t.end <- Sys.time() 
+
                                                                                                                                             
 
 ##################
@@ -579,5 +570,15 @@ for(iteration in 1:5){
 #                                                                                                             - 2 * pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]), T.K]))
 #                                                                                            + pave.time[time.s == t.step[p] & node == (pave.time[time.s == t.step[p+1] & layer != "boundary" & node != 0, node][x]), T.K])
 #)
+
+mean(pave.time$T.degC) - pave.time$T.degC
+mean(pave.time.2$T.degC) - pave.time.2$T.degC
+
+quantile(pave.time$T.degC, .8) -  quantile(pave.time$T.degC, .2)
+quantile(pave.time.2$T.degC, .8) -  quantile(pave.time.2$T.degC, .2)
+
+tryCatch({
+  hi
+}, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if run had error
 
 

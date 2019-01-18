@@ -9,8 +9,9 @@ memory.limit(size = 56000)
 t.start <- Sys.time() # start script timestamp
 
 # list of all dependant packages
-list.of.packages <- c("tidyverse",
-                      "data.table", 
+list.of.packages <- c(
+  "data.table",
+                      "XML",
                       "rgdal",
                       "rgeos",
                       "maptools",
@@ -35,6 +36,10 @@ fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by 
 radii.buffers <- readRDS(here("data/outputs/temp/radii-buffers.rds")) # vector of station buffer radii chosen
 stations.buffered <- readRDS(here("data/outputs/temp/stations-buffered-prep.rds")) # buffered stations by various buffer radii chosen
 uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds"))
+traffic.net <- xmlParse(here("data/icarus network/optimizedNetwork.xml"))
+traffic <- fread(here("data/icarus_osm_traffic.csv")) # import traffic data aggregated by osm link id and hour
+
+traffic.net.dt <- xmlToList(traffic.net)
 
 # OSM DATA FORMAT
 # **Curently, OSM data in Phoenix does not have lane data. in light of this:
@@ -67,10 +72,7 @@ osm.dt[fclass %in% c("track","track_grade1","track_grade2","track_grade3","track
 # create final buffer variable (in feet b/c proj is uses units of feet)
 osm.dt[, buf.ft := ifelse(oneway == "B", wdth.1way.ft,  # if roadway is bi-directional the buffer radius is equal to the one-way roadway width in feet
                           wdth.1way.ft / 2)] # otherwise divide by 2 as only 1 of 2 directions: buffer raduis = half of 1way width
-
-# import traffic data aggregated by osm link id and hour
-traffic <- fread(here("data/icarus_osm_traffic.csv"))
-setnames(traffic, "link_id", "osm_id") 
+# setnames(traffic, "link_id", "osm_id") 
 
 # merge traffic data to osm data by link id
 #osm.dt <- merge(osm.dt, traffic, by = "id")

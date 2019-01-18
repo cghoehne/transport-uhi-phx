@@ -5,8 +5,7 @@
 extrafont::loadfonts(device = "win") # load fonts
 
 # list of all dependant packages
-list.of.packages <- c("tidyverse",
-                      "data.table", 
+list.of.packages <- c("data.table", 
                       "rgdal",
                       "rgeos",
                       "sp",

@@ -5,7 +5,6 @@
 # list of all dependant packages
 list.of.packages <- c("lubridate",
                       "weathermetrics",
-                      "tidyverse",
                       "data.table",
                       "rnoaa",
                       "here")

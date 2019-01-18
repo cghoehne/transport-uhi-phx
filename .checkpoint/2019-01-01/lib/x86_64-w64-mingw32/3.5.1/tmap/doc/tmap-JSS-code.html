@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+<title>reproduction code from JSS article tmap: Thematic Maps in R</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">reproduction code from JSS article ‘tmap: Thematic Maps in R’</h1>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#section-1.1">Section 1.1</a></li>
+<li><a href="#section-3.1">Section 3.1</a></li>
+<li><a href="#section-3.2">Section 3.2</a></li>
+<li><a href="#section-4.1">Section 4.1</a></li>
+<li><a href="#section-4.2">Section 4.2</a></li>
+<li><a href="#section-4.3">Section 4.3</a></li>
+<li><a href="#section-4.4">Section 4.4</a></li>
+<li><a href="#section-4.5">Section 4.5</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level3">
+<h3>Introduction</h3>
+<p>The article <em>Tennekes, M. tmap: Thematic Maps in R (2018), Journal of Statistical Software 84(6), 1-39,</em> <a href="http://dx.doi.org/10.18637/jss.v084.i06" class="uri">http://dx.doi.org/10.18637/jss.v084.i06</a> describes version 1.x of tmap and tmaptools. Since tmap and tmaptools version 2.0 are based on <code>sf</code> objects instead of <code>sp</code> objects, there are some changes in the code, especially regarding the necessary processing step. The code for the plotting methods is fully backward compatible, although some messages or warnings may be given for deprecated functions or arguments.</p>
+<p>This code replaces the script v84i06.R for tmap and tmaptools version 2.0. The produced figures are identical to those included in the article.</p>
+<p>See <a href="../doc/tmap-changes-v2.html"><code>vignette(&quot;tmap-changes-v2&quot;)</code></a> for changes in version 2.0, which is recommended for people who have read the JSS article. For people who are new to tmap, see <a href="../doc/tmap-getstarted.html"><code>vignette(&quot;tmap-getstarted&quot;)</code></a>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">###########################################################################
+## This script will replicate the figures (except the screenshots)
+## and write them to files.
+## The working directory should be set the the parent folder of this script.
+###########################################################################
+
+## install.packages(c(&quot;tmap&quot;, &quot;tmaptools&quot;))
+<span class="kw">library</span>(<span class="st">&quot;tmap&quot;</span>) <span class="co"># required version 2.0 or later</span>
+<span class="kw">library</span>(<span class="st">&quot;tmaptools&quot;</span>) <span class="co"># required version 2.0 or later</span>
+
+<span class="kw">data</span>(<span class="st">&quot;World&quot;</span>, <span class="st">&quot;metro&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;tmap&quot;</span>)
+metro<span class="op">$</span>growth &lt;-<span class="st"> </span>(metro<span class="op">$</span>pop2020 <span class="op">-</span><span class="st"> </span>metro<span class="op">$</span>pop2010) <span class="op">/</span><span class="st"> </span>(metro<span class="op">$</span>pop2010 <span class="op">*</span><span class="st"> </span><span class="dv">10</span>) <span class="op">*</span><span class="st"> </span><span class="dv">100</span></code></pre></div>
+</div>
+<div id="section-1.1" class="section level3">
+<h3>Section 1.1</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 1
+#############################
+
+m1 &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(World) <span class="op">+</span>
+<span class="st">    </span><span class="kw">tm_polygons</span>(<span class="st">&quot;income_grp&quot;</span>, <span class="dt">palette =</span> <span class="st">&quot;-Blues&quot;</span>, 
+      <span class="dt">title =</span> <span class="st">&quot;Income class&quot;</span>, <span class="dt">contrast =</span> <span class="fl">0.7</span>, <span class="dt">border.col =</span> <span class="st">&quot;grey30&quot;</span>, <span class="dt">id =</span> <span class="st">&quot;name&quot;</span>) <span class="op">+</span>
+<span class="st">    </span><span class="kw">tm_text</span>(<span class="st">&quot;iso_a3&quot;</span>, <span class="dt">size =</span> <span class="st">&quot;AREA&quot;</span>, <span class="dt">col =</span> <span class="st">&quot;grey30&quot;</span>, <span class="dt">root =</span> <span class="dv">3</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_shape</span>(metro) <span class="op">+</span>
+<span class="st">    </span><span class="kw">tm_bubbles</span>(<span class="st">&quot;pop2010&quot;</span>, <span class="dt">col =</span> <span class="st">&quot;growth&quot;</span>, <span class="dt">border.col =</span> <span class="st">&quot;black&quot;</span>,
+      <span class="dt">border.alpha =</span> <span class="fl">0.5</span>,
+      <span class="dt">breaks =</span> <span class="kw">c</span>(<span class="op">-</span><span class="ot">Inf</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="ot">Inf</span>) ,
+      <span class="dt">palette =</span> <span class="st">&quot;-RdYlGn&quot;</span>,
+      <span class="dt">title.size =</span> <span class="st">&quot;Metro population (2010)&quot;</span>, 
+      <span class="dt">title.col =</span> <span class="st">&quot;Annual growth rate (%)&quot;</span>,
+      <span class="dt">id =</span> <span class="st">&quot;name&quot;</span>,
+      <span class="dt">popup.vars =</span> <span class="kw">c</span>(<span class="st">&quot;pop2010&quot;</span>, <span class="st">&quot;pop2020&quot;</span>, <span class="st">&quot;growth&quot;</span>)) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">tm_style</span>(<span class="st">&quot;gray&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_format</span>(<span class="st">&quot;World&quot;</span>, <span class="dt">frame.lwd =</span> <span class="dv">2</span>)
+<span class="kw">tmap_save</span>(m1, <span class="st">&quot;bubble.png&quot;</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">height =</span> <span class="dv">3</span>, <span class="dt">scale =</span> .<span class="dv">75</span>, <span class="dt">dpi =</span> <span class="dv">300</span>, <span class="dt">asp =</span> <span class="dv">0</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+</div>
+<div id="section-3.1" class="section level3">
+<h3>Section 3.1</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 2
+#############################
+
+m0 &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(metro) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">tm_bubbles</span>(<span class="dt">size =</span> <span class="st">&quot;pop2030&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_style</span>(<span class="st">&quot;cobalt&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_format</span>(<span class="st">&quot;World&quot;</span>)
+<span class="kw">tmap_save</span>(m0, <span class="st">&quot;metro2030.png&quot;</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">scale =</span> .<span class="dv">5</span>, <span class="dt">dpi =</span> <span class="dv">300</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+</div>
+<div id="section-3.2" class="section level3">
+<h3>Section 3.2</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 3
+#############################
+m21 &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(World) <span class="op">+</span><span class="st"> </span><span class="kw">tm_polygons</span>(<span class="kw">c</span>(<span class="st">&quot;blue&quot;</span>, <span class="st">&quot;red&quot;</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">tm_layout</span>(<span class="dt">frame.lwd =</span> <span class="fl">1.5</span>)
+<span class="kw">tmap_save</span>(m21, <span class="st">&quot;facets1.png&quot;</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">height =</span> <span class="fl">1.54</span>, <span class="dt">scale =</span> .<span class="dv">75</span>, <span class="dt">dpi =</span> <span class="dv">300</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 4
+#############################
+m22 &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(World) <span class="op">+</span><span class="st"> </span><span class="kw">tm_polygons</span>(<span class="st">&quot;red&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">tm_facets</span>(<span class="dt">by =</span> <span class="st">&quot;continent&quot;</span>, <span class="dt">free.coords =</span> <span class="ot">FALSE</span>)
+<span class="kw">tmap_save</span>(m22, <span class="st">&quot;facets2.png&quot;</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">height =</span> <span class="fl">1.8</span>, <span class="dt">scale =</span> .<span class="dv">75</span>, <span class="dt">dpi =</span> <span class="dv">300</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 5
+#############################
+tm1 &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(World) <span class="op">+</span><span class="st"> </span><span class="kw">tm_polygons</span>()
+tm2 &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(metro) <span class="op">+</span><span class="st"> </span><span class="kw">tm_dots</span>()
+<span class="kw">png</span>(<span class="st">&quot;facets3.png&quot;</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">height =</span> <span class="fl">1.54</span>, <span class="dt">units =</span> <span class="st">&quot;in&quot;</span>, <span class="dt">res =</span> <span class="dv">300</span>)
+  <span class="kw">tmap_arrange</span>(tm1, tm2, <span class="dt">outer.margins =</span> .<span class="dv">01</span>)
+<span class="kw">dev.off</span>()</code></pre></div>
+</div>
+<div id="section-4.1" class="section level3">
+<h3>Section 4.1</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 6
+#############################
+
+<span class="kw">tmap_mode</span>(<span class="st">&quot;view&quot;</span>)
+m1</code></pre></div>
+</div>
+<div id="section-4.2" class="section level3">
+<h3>Section 4.2</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 7
+#############################
+<span class="kw">data</span>(<span class="st">&quot;land&quot;</span>, <span class="st">&quot;rivers&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;tmap&quot;</span>)
+m2 &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(land) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_raster</span>(<span class="st">&quot;elevation&quot;</span>, <span class="dt">breaks =</span> <span class="kw">c</span>(<span class="op">-</span><span class="ot">Inf</span>, <span class="dv">250</span>, <span class="dv">500</span>, <span class="dv">1000</span>, <span class="dv">1500</span>, <span class="dv">2000</span>, <span class="dv">2500</span>, <span class="dv">3000</span>, <span class="dv">4000</span>, <span class="ot">Inf</span>),  
+            <span class="dt">palette =</span> <span class="kw">terrain.colors</span>(<span class="dv">9</span>), <span class="dt">title =</span> <span class="st">&quot;Elevation (m)&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_shape</span>(rivers) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">tm_lines</span>(<span class="st">&quot;lightblue&quot;</span>, <span class="dt">lwd =</span> <span class="st">&quot;strokelwd&quot;</span>, <span class="dt">scale =</span> <span class="fl">1.5</span>, <span class="dt">legend.lwd.show =</span> <span class="ot">FALSE</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_shape</span>(World, <span class="dt">is.master =</span> <span class="ot">TRUE</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_borders</span>(<span class="st">&quot;grey20&quot;</span>, <span class="dt">lwd =</span> .<span class="dv">5</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_grid</span>(<span class="dt">projection =</span> <span class="st">&quot;longlat&quot;</span>, <span class="dt">labels.size =</span> <span class="fl">0.4</span>, <span class="dt">lwd =</span> <span class="fl">0.25</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_text</span>(<span class="st">&quot;name&quot;</span>, <span class="dt">size =</span> <span class="st">&quot;AREA&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_compass</span>(<span class="dt">position =</span> <span class="kw">c</span>(<span class="fl">0.08</span>, <span class="fl">0.45</span>), <span class="dt">color.light =</span> <span class="st">&quot;grey90&quot;</span>, <span class="dt">size =</span> <span class="dv">3</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_credits</span>(<span class="st">&quot;Eckert IV projection&quot;</span>, <span class="dt">position =</span> <span class="kw">c</span>(<span class="st">&quot;RIGHT&quot;</span>, <span class="st">&quot;BOTTOM&quot;</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_style</span>(<span class="st">&quot;classic&quot;</span>,
+         <span class="dt">bg.color =</span> <span class="st">&quot;lightblue&quot;</span>,
+         <span class="dt">space.color =</span> <span class="st">&quot;grey90&quot;</span>,
+         <span class="dt">inner.margins =</span> <span class="kw">c</span>(<span class="fl">0.04</span>, <span class="fl">0.04</span>, <span class="fl">0.03</span>, <span class="fl">0.02</span>), 
+         <span class="dt">earth.boundary =</span> <span class="ot">TRUE</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_legend</span>(<span class="dt">position =</span> <span class="kw">c</span>(<span class="st">&quot;left&quot;</span>, <span class="st">&quot;bottom&quot;</span>), 
+            <span class="dt">frame =</span> <span class="ot">TRUE</span>,
+            <span class="dt">bg.color =</span> <span class="st">&quot;lightblue&quot;</span>)
+<span class="kw">tmap_save</span>(m2, <span class="st">&quot;classic.png&quot;</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">scale =</span> .<span class="dv">7</span>, <span class="dt">dpi =</span> <span class="dv">300</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+</div>
+<div id="section-4.3" class="section level3">
+<h3>Section 4.3</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 8
+#############################
+m3 &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(World, <span class="dt">projection =</span> <span class="st">&quot;robin&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_polygons</span>(<span class="kw">c</span>(<span class="st">&quot;HPI&quot;</span>, <span class="st">&quot;gdp_cap_est&quot;</span>),
+              <span class="dt">palette =</span> <span class="kw">list</span>(<span class="st">&quot;RdYlGn&quot;</span>, <span class="st">&quot;Purples&quot;</span>),
+              <span class="dt">style =</span> <span class="kw">c</span>(<span class="st">&quot;pretty&quot;</span>, <span class="st">&quot;fixed&quot;</span>), <span class="dt">n =</span> <span class="dv">7</span>, 
+              <span class="dt">breaks =</span> <span class="kw">list</span>(<span class="ot">NULL</span>, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">500</span>, <span class="dv">2000</span>, <span class="dv">5000</span>, <span class="dv">10000</span>, <span class="dv">25000</span>, <span class="dv">50000</span>, <span class="ot">Inf</span>)),
+              <span class="dt">title =</span> <span class="kw">c</span>(<span class="st">&quot;Happy Planet Index&quot;</span>, <span class="st">&quot;GDP per capita&quot;</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_style</span>(<span class="st">&quot;natural&quot;</span>, <span class="dt">earth.boundary =</span> <span class="kw">c</span>(<span class="op">-</span><span class="dv">180</span>, <span class="op">-</span><span class="dv">87</span>, <span class="dv">180</span>, <span class="dv">87</span>))  <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_format</span>(<span class="st">&quot;World&quot;</span>, <span class="dt">inner.margins =</span> <span class="fl">0.02</span>, <span class="dt">frame =</span> <span class="ot">FALSE</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_legend</span>(<span class="dt">position =</span> <span class="kw">c</span>(<span class="st">&quot;left&quot;</span>, <span class="st">&quot;bottom&quot;</span>), <span class="dt">bg.color =</span> <span class="st">&quot;gray95&quot;</span>, <span class="dt">frame =</span> <span class="ot">TRUE</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_credits</span>(<span class="kw">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;Robinson projection&quot;</span>), <span class="dt">position =</span> <span class="kw">c</span>(<span class="st">&quot;RIGHT&quot;</span>, <span class="st">&quot;BOTTOM&quot;</span>))
+  
+<span class="kw">tmap_save</span>(m3, <span class="st">&quot;world_facets2.png&quot;</span>, <span class="dt">width =</span> <span class="dv">5</span>, <span class="dt">scale =</span> .<span class="dv">7</span>, <span class="dt">dpi =</span> <span class="dv">300</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+</div>
+<div id="section-4.4" class="section level3">
+<h3>Section 4.4</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 9
+#############################
+<span class="kw">library</span>(<span class="st">&quot;readxl&quot;</span>)
+<span class="kw">library</span>(<span class="st">&quot;grid&quot;</span>)
+
+<span class="co"># function to obtain Food Environment Atlas data (2014)</span>
+get_food_envir_data &lt;-<span class="st"> </span><span class="cf">function</span>() {
+  dir &lt;-<span class="st"> </span><span class="kw">tempdir</span>()
+  <span class="cf">if</span> (<span class="op">!</span><span class="kw">file.exists</span>(<span class="kw">file.path</span>(dir, <span class="st">&quot;DataDownload.xls&quot;</span>))) {
+    <span class="kw">download.file</span>(<span class="st">&quot;https://www.ers.usda.gov/webdocs/DataFiles/48731/February2014.xls?v=41688&quot;</span>, <span class="dt">destfile =</span> <span class="kw">file.path</span>(dir, <span class="st">&quot;DataDownload.xls&quot;</span>), <span class="dt">mode =</span> <span class="st">&quot;wb&quot;</span>)
+  }
+  res &lt;-<span class="st"> </span><span class="kw">tryCatch</span>({
+    <span class="kw">read_excel</span>(<span class="kw">file.path</span>(dir, <span class="st">&quot;DataDownload.xls&quot;</span>), <span class="dt">sheet =</span> <span class="st">&quot;HEALTH&quot;</span>)    
+  }, <span class="dt">error =</span> <span class="cf">function</span>(e) {
+    <span class="kw">stop</span>(<span class="st">&quot;The excel file cannot be read. Please open it, and remove all sheets except HEALTH. The location of the file is: &quot;</span>, <span class="kw">normalizePath</span>(<span class="kw">file.path</span>(dir, <span class="st">&quot;DataDownload.xls&quot;</span>)))
+  })
+}
+
+<span class="co"># function to obtain US county shape</span>
+get_US_county_2010_shape &lt;-<span class="st"> </span><span class="cf">function</span>() {
+  dir &lt;-<span class="st"> </span><span class="kw">tempdir</span>()
+  <span class="kw">download.file</span>(<span class="st">&quot;http://www2.census.gov/geo/tiger/GENZ2010/gz_2010_us_050_00_20m.zip&quot;</span>, <span class="dt">destfile =</span> <span class="kw">file.path</span>(dir, <span class="st">&quot;gz_2010_us_050_00_20m.zip&quot;</span>))
+  <span class="kw">unzip</span>(<span class="kw">file.path</span>(dir, <span class="st">&quot;gz_2010_us_050_00_20m.zip&quot;</span>), <span class="dt">exdir =</span> dir)
+  US &lt;-<span class="st"> </span><span class="kw">read_shape</span>(<span class="kw">file.path</span>(dir, <span class="st">&quot;gz_2010_us_050_00_20m.shp&quot;</span>))
+  <span class="kw">levels</span>(US<span class="op">$</span>NAME) &lt;-<span class="st"> </span><span class="kw">iconv</span>(<span class="kw">levels</span>(US<span class="op">$</span>NAME), <span class="dt">from =</span> <span class="st">&quot;latin1&quot;</span>, <span class="dt">to =</span> <span class="st">&quot;utf8&quot;</span>)
+  US
+}
+
+<span class="co"># obtain Food Environment Atlas data</span>
+FEA &lt;-<span class="st"> </span><span class="kw">get_food_envir_data</span>()
+
+<span class="co"># obtain US county shape</span>
+US &lt;-<span class="st"> </span><span class="kw">get_US_county_2010_shape</span>()
+
+us1 &lt;-<span class="st"> </span><span class="kw">qtm</span>(US)
+
+<span class="kw">tmap_save</span>(us1, <span class="st">&quot;US1.png&quot;</span>, <span class="dt">scale =</span> .<span class="dv">5</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">asp =</span> <span class="dv">0</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)
+
+#############################
+## Figure 10
+#############################
+US<span class="op">$</span>FIPS &lt;-<span class="st"> </span><span class="kw">paste0</span>(US<span class="op">$</span>STATE, US<span class="op">$</span>COUNTY)
+
+<span class="co"># append data to shape</span>
+US &lt;-<span class="st"> </span><span class="kw">append_data</span>(US, FEA, <span class="dt">key.shp =</span> <span class="st">&quot;FIPS&quot;</span>, <span class="dt">key.data =</span> <span class="st">&quot;FIPS&quot;</span>, <span class="dt">ignore.duplicates =</span> <span class="ot">TRUE</span>)
+
+unmatched_data &lt;-<span class="st"> </span><span class="kw">over_coverage</span>()
+<span class="kw">str</span>(unmatched_data)
+
+<span class="kw">tmap_mode</span>(<span class="st">&quot;view&quot;</span>)
+<span class="kw">qtm</span>(US, <span class="dt">fill =</span> <span class="st">&quot;PCT_OBESE_ADULTS10&quot;</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 11
+#############################
+<span class="kw">library</span>(<span class="st">&quot;dplyr&quot;</span>)
+
+US_cont &lt;-<span class="st"> </span>US <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">subset</span>(<span class="op">!</span>STATE <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;02&quot;</span>, <span class="st">&quot;15&quot;</span>, <span class="st">&quot;72&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">simplify_shape</span>(<span class="fl">0.2</span>) 
+
+US_AK &lt;-<span class="st"> </span>US <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">subset</span>(STATE <span class="op">==</span><span class="st"> &quot;02&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">simplify_shape</span>(<span class="fl">0.2</span>) 
+
+US_HI &lt;-<span class="st"> </span>US <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">subset</span>(STATE <span class="op">==</span><span class="st"> &quot;15&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">simplify_shape</span>(<span class="fl">0.2</span>) 
+
+<span class="co"># create state boundaries</span>
+US_states &lt;-<span class="st"> </span>US_cont <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">    </span>dplyr<span class="op">::</span><span class="kw">select</span>(geometry) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">    </span><span class="kw">aggregate</span>(<span class="dt">by =</span> <span class="kw">list</span>(US_cont<span class="op">$</span>STATE), <span class="dt">FUN =</span> mean)
+
+
+<span class="co"># contiguous US</span>
+m_cont &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(US_cont, <span class="dt">projection =</span> <span class="dv">2163</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_polygons</span>(<span class="st">&quot;PCT_OBESE_ADULTS10&quot;</span>, <span class="dt">border.col =</span> <span class="st">&quot;gray50&quot;</span>, <span class="dt">border.alpha =</span> .<span class="dv">5</span>, <span class="dt">title =</span> <span class="st">&quot;&quot;</span>, <span class="dt">showNA =</span> <span class="ot">TRUE</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_shape</span>(US_states) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_borders</span>(<span class="dt">lwd =</span> <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;black&quot;</span>, <span class="dt">alpha =</span> .<span class="dv">5</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_credits</span>(<span class="st">&quot;Data @ Unites States Department of Agriculture</span><span class="ch">\n</span><span class="st">Shape @ Unites States Census Bureau&quot;</span>, <span class="dt">position =</span> <span class="kw">c</span>(<span class="st">&quot;right&quot;</span>, <span class="st">&quot;bottom&quot;</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_layout</span>(<span class="dt">title =</span> <span class="st">&quot;2010 Adult Obesity by County, percent&quot;</span>, 
+            <span class="dt">title.position =</span> <span class="kw">c</span>(<span class="st">&quot;center&quot;</span>, <span class="st">&quot;top&quot;</span>), 
+            <span class="dt">legend.position =</span> <span class="kw">c</span>(<span class="st">&quot;right&quot;</span>, <span class="st">&quot;bottom&quot;</span>), 
+            <span class="dt">frame =</span> <span class="ot">FALSE</span>, 
+            <span class="dt">inner.margins =</span> <span class="kw">c</span>(<span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.05</span>, <span class="fl">0.05</span>))
+
+<span class="co"># Alaska inset</span>
+m_AK &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(US_AK, <span class="dt">projection =</span> <span class="dv">3338</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_polygons</span>(<span class="st">&quot;PCT_OBESE_ADULTS10&quot;</span>, <span class="dt">border.col =</span> <span class="st">&quot;gray50&quot;</span>, <span class="dt">border.alpha =</span> .<span class="dv">5</span>, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="dv">10</span>, <span class="dv">50</span>, <span class="dt">by =</span> <span class="dv">5</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_layout</span>(<span class="st">&quot;Alaska&quot;</span>, <span class="dt">legend.show =</span> <span class="ot">FALSE</span>, <span class="dt">bg.color =</span> <span class="ot">NA</span>, <span class="dt">title.size =</span> <span class="fl">0.8</span>, <span class="dt">frame =</span> <span class="ot">FALSE</span>)
+
+<span class="co"># Hawaii inset</span>
+m_HI &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(US_HI, <span class="dt">projection =</span> <span class="dv">3759</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_polygons</span>(<span class="st">&quot;PCT_OBESE_ADULTS10&quot;</span>, <span class="dt">border.col =</span> <span class="st">&quot;gray50&quot;</span>, <span class="dt">border.alpha =</span> .<span class="dv">5</span>, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="dv">10</span>, <span class="dv">50</span>, <span class="dt">by =</span> <span class="dv">5</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_layout</span>(<span class="st">&quot;Hawaii&quot;</span>, <span class="dt">legend.show =</span> <span class="ot">FALSE</span>, <span class="dt">bg.color =</span> <span class="ot">NA</span>, <span class="dt">title.position =</span> <span class="kw">c</span>(<span class="st">&quot;LEFT&quot;</span>, <span class="st">&quot;BOTTOM&quot;</span>), <span class="dt">title.size =</span> <span class="fl">0.8</span>, <span class="dt">frame =</span> <span class="ot">FALSE</span>)
+
+<span class="co"># specify viewports for Alaska and Hawaii</span>
+vp_AK &lt;-<span class="st"> </span><span class="kw">viewport</span>(<span class="dt">x =</span> <span class="fl">0.15</span>, <span class="dt">y =</span> <span class="fl">0.15</span>, <span class="dt">width =</span> <span class="fl">0.3</span>, <span class="dt">height =</span> <span class="fl">0.3</span>)
+vp_HI &lt;-<span class="st"> </span><span class="kw">viewport</span>(<span class="dt">x =</span> <span class="fl">0.4</span>, <span class="dt">y =</span> <span class="fl">0.1</span>, <span class="dt">width =</span> <span class="fl">0.2</span>, <span class="dt">height =</span> <span class="fl">0.1</span>)
+
+<span class="co"># save map</span>
+<span class="kw">tmap_mode</span>(<span class="st">&quot;plot&quot;</span>)
+<span class="kw">tmap_save</span>(m_cont, <span class="st">&quot;USchoro.png&quot;</span>, <span class="dt">scale =</span> <span class="fl">0.7</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>,
+          <span class="dt">insets_tm =</span> <span class="kw">list</span>(m_AK, m_HI), 
+          <span class="dt">insets_vp =</span> <span class="kw">list</span>(vp_AK, vp_HI))</code></pre></div>
+</div>
+<div id="section-4.5" class="section level3">
+<h3>Section 4.5</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 12a
+#############################
+<span class="kw">library</span>(<span class="st">&quot;sf&quot;</span>)
+<span class="kw">library</span>(<span class="st">&quot;rnaturalearth&quot;</span>)
+
+<span class="co"># functions to obtain crimes data</span>
+get_crimes_data &lt;-<span class="st"> </span><span class="cf">function</span>(path) {
+  <span class="kw">stopifnot</span>(<span class="kw">file.exists</span>(path), (<span class="st">&quot;crimes_in_Greater_London_2015-10.zip&quot;</span> <span class="op">%in%</span><span class="st"> </span><span class="kw">list.files</span>(path)))
+  tmp_dir &lt;-<span class="st"> </span><span class="kw">tempdir</span>()
+  <span class="kw">unzip</span>(<span class="kw">file.path</span>(path, <span class="st">&quot;crimes_in_Greater_London_2015-10.zip&quot;</span>), <span class="dt">exdir =</span> tmp_dir)
+  <span class="kw">rbind</span>(<span class="kw">read.csv</span>(<span class="kw">file.path</span>(tmp_dir, <span class="st">&quot;2015-10-city-of-london-street.csv&quot;</span>)),
+        <span class="kw">read.csv</span>(<span class="kw">file.path</span>(tmp_dir, <span class="st">&quot;2015-10-metropolitan-street.csv&quot;</span>)))
+}
+
+<span class="co"># please download the file &quot;crimes_in_Greater_London_2015-10.zip&quot; (available on https://www.jstatsoft.org as a supplement of this paper), and change the path argument below to the location of the downloaded file:</span>
+crimes &lt;-<span class="st"> </span><span class="kw">get_crimes_data</span>(<span class="dt">path =</span> <span class="st">&quot;./&quot;</span>)
+
+<span class="co"># create sf of known locations</span>
+crimes &lt;-<span class="st"> </span>crimes[<span class="op">!</span><span class="kw">is.na</span>(crimes<span class="op">$</span>Longitude) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.na</span>(crimes<span class="op">$</span>Latitude), ]
+crimes &lt;-<span class="st"> </span><span class="kw">st_as_sf</span>(crimes, <span class="dt">coords =</span> <span class="kw">c</span>(<span class="st">&quot;Longitude&quot;</span>, <span class="st">&quot;Latitude&quot;</span>))
+
+<span class="co"># set map projection to British National Grid</span>
+crimes &lt;-<span class="st"> </span><span class="kw">set_projection</span>(crimes, <span class="dt">current.projection =</span> <span class="st">&quot;longlat&quot;</span>, <span class="dt">projection =</span> <span class="dv">27700</span>)
+
+c1 &lt;-<span class="st"> </span><span class="kw">qtm</span>(crimes)
+<span class="kw">tmap_save</span>(c1, <span class="st">&quot;crimes1.png&quot;</span>, <span class="dt">scale =</span> .<span class="dv">6</span>, <span class="dt">width =</span> <span class="dv">3</span>, <span class="dt">units =</span> <span class="st">&quot;in&quot;</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 12b
+#############################
+crimes_osm &lt;-<span class="st"> </span><span class="kw">read_osm</span>(crimes)
+c2 &lt;-<span class="st"> </span><span class="kw">qtm</span>(crimes_osm) <span class="op">+</span><span class="st"> </span><span class="kw">qtm</span>(crimes, <span class="dt">symbols.col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">symbols.size =</span> <span class="fl">0.5</span>)
+<span class="kw">tmap_save</span>(c2, <span class="st">&quot;crimes2.jpg&quot;</span>, <span class="dt">scale =</span> .<span class="dv">6</span>, <span class="dt">width =</span> <span class="dv">3</span>, <span class="dt">units =</span> <span class="st">&quot;in&quot;</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 13
+#############################
+c3 &lt;-<span class="st"> </span><span class="kw">qtm</span>(crimes_osm, <span class="dt">raster.saturation =</span> <span class="dv">0</span>, <span class="dt">raster.alpha =</span> <span class="dv">1</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">qtm</span>(crimes, <span class="dt">symbols.col =</span> <span class="st">&quot;Crime.type&quot;</span>, <span class="dt">symbols.size =</span> <span class="fl">0.5</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_legend</span>(<span class="dt">outside =</span> <span class="ot">TRUE</span>)
+<span class="kw">tmap_save</span>(c3, <span class="st">&quot;crimes3.png&quot;</span>, <span class="dt">scale =</span> .<span class="dv">8</span>, <span class="dt">width =</span> <span class="dv">5</span>, <span class="dt">height =</span> <span class="dv">4</span>, <span class="dt">units =</span> <span class="st">&quot;in&quot;</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 14
+#############################
+regions &lt;-<span class="st"> </span><span class="kw">ne_download</span>(<span class="dt">scale =</span> <span class="st">&quot;large&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;states&quot;</span>, <span class="dt">category =</span> <span class="st">&quot;cultural&quot;</span>)
+london &lt;-<span class="st"> </span>regions[<span class="kw">which</span>(regions<span class="op">$</span>region <span class="op">==</span><span class="st"> &quot;Greater London&quot;</span>),]
+london &lt;-<span class="st"> </span><span class="kw">set_projection</span>(london, <span class="dt">projection =</span> <span class="dv">27700</span>)
+
+<span class="co"># remove crimes outside Greater London</span>
+crimes_london &lt;-<span class="st"> </span><span class="kw">crop_shape</span>(crimes, london, <span class="dt">polygon =</span>  <span class="ot">TRUE</span>)
+
+c3b &lt;-<span class="st"> </span><span class="kw">qtm</span>(crimes_london, <span class="dt">dots.alpha =</span> <span class="fl">0.1</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_shape</span>(london) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">tm_borders</span>()
+<span class="kw">tmap_save</span>(c3b, <span class="st">&quot;crimes3b.png&quot;</span>, <span class="dt">scale =</span> .<span class="dv">7</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">units =</span> <span class="st">&quot;in&quot;</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 15
+#############################
+crime_densities &lt;-<span class="st"> </span><span class="kw">smooth_map</span>(crimes_london, <span class="dt">bandwidth =</span> <span class="fl">0.5</span>, <span class="dt">breaks =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">250</span>, <span class="dv">500</span>, <span class="dv">1000</span>), <span class="dt">cover =</span> london)
+
+<span class="co"># download rivers, and get Thames shape</span>
+rivers &lt;-<span class="st"> </span><span class="kw">ne_download</span>(<span class="dt">scale =</span> <span class="st">&quot;large&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;rivers_lake_centerlines&quot;</span>, <span class="dt">category =</span> <span class="st">&quot;physical&quot;</span>)
+thames &lt;-<span class="st"> </span><span class="kw">crop_shape</span>(rivers, london)
+
+c4 &lt;-<span class="st"> </span><span class="kw">tm_shape</span>(crime_densities<span class="op">$</span>polygons) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_fill</span>(<span class="dt">col =</span> <span class="st">&quot;level&quot;</span>, <span class="dt">palette =</span> <span class="st">&quot;YlOrRd&quot;</span>, <span class="dt">title =</span> <span class="kw">expression</span>(<span class="st">&quot;Crimes per &quot;</span> <span class="op">*</span><span class="st"> </span>km<span class="op">^</span><span class="dv">2</span>)) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">tm_shape</span>(london) <span class="op">+</span><span class="st"> </span><span class="kw">tm_borders</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_shape</span>(thames) <span class="op">+</span><span class="st"> </span><span class="kw">tm_lines</span>(<span class="dt">col =</span> <span class="st">&quot;steelblue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">4</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_compass</span>(<span class="dt">position =</span> <span class="kw">c</span>(<span class="st">&quot;left&quot;</span>, <span class="st">&quot;bottom&quot;</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_scale_bar</span>(<span class="dt">position =</span> <span class="kw">c</span>(<span class="st">&quot;left&quot;</span>, <span class="st">&quot;bottom&quot;</span>)) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">tm_style</span>(<span class="st">&quot;gray&quot;</span>, <span class="dt">title =</span> <span class="st">&quot;Crimes in Greater London</span><span class="ch">\n</span><span class="st">October 2015&quot;</span>)
+<span class="kw">tmap_save</span>(c4, <span class="st">&quot;crimes4.png&quot;</span>, <span class="dt">scale =</span> .<span class="dv">7</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">units =</span> <span class="st">&quot;in&quot;</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 16
+#############################
+london_city &lt;-<span class="st"> </span>london[london<span class="op">$</span>name <span class="op">==</span><span class="st"> &quot;City&quot;</span>,]
+crimes_city &lt;-<span class="st"> </span><span class="kw">crop_shape</span>(crimes_london, london_city, <span class="dt">polygon =</span> <span class="ot">TRUE</span>)
+london_osm &lt;-<span class="st"> </span><span class="kw">read_osm</span>(london_city, <span class="dt">type =</span> <span class="st">&quot;stamen-watercolor&quot;</span>, <span class="dt">zoom =</span> <span class="dv">13</span>)
+
+c5 &lt;-<span class="st"> </span><span class="kw">qtm</span>(london_osm) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_shape</span>(crimes_city) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_dots</span>(<span class="dt">size =</span> .<span class="dv">2</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_facets</span>(<span class="st">&quot;Crime.type&quot;</span>, <span class="dt">free.coords =</span> <span class="ot">FALSE</span>)
+<span class="kw">tmap_save</span>(c5, <span class="st">&quot;crimes5.png&quot;</span>, <span class="dt">scale =</span> <span class="dv">1</span>, <span class="dt">width =</span> <span class="fl">6.125</span>, <span class="dt">asp =</span> <span class="ot">NA</span>, <span class="dt">outer.margins =</span> <span class="dv">0</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#############################
+## Figure 17
+#############################
+crime_lookup &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Anti-social behaviour&quot;</span> =<span class="st"> </span><span class="dv">2</span>, 
+                  <span class="st">&quot;Bicycle theft&quot;</span> =<span class="st"> </span><span class="dv">1</span>, 
+                  <span class="st">&quot;Burglary&quot;</span> =<span class="st"> </span><span class="dv">1</span>,
+                  <span class="st">&quot;Criminal damage and arson&quot;</span> =<span class="st"> </span><span class="dv">2</span>,
+                  <span class="st">&quot;Drugs&quot;</span> =<span class="st"> </span><span class="dv">6</span>, 
+                  <span class="st">&quot;Other crime&quot;</span> =<span class="st"> </span><span class="dv">7</span>,
+                  <span class="st">&quot;Other theft&quot;</span> =<span class="st"> </span><span class="dv">1</span>, 
+                  <span class="st">&quot;Possession of weapons&quot;</span> =<span class="st"> </span><span class="dv">3</span>, 
+                  <span class="st">&quot;Public order&quot;</span> =<span class="st"> </span><span class="dv">2</span>, 
+                  <span class="st">&quot;Robbery&quot;</span> =<span class="st"> </span><span class="dv">1</span>, 
+                  <span class="st">&quot;Shoplifting&quot;</span> =<span class="st"> </span><span class="dv">1</span>,
+                  <span class="st">&quot;Theft from the person&quot;</span> =<span class="st"> </span><span class="dv">1</span>,
+                  <span class="st">&quot;Vehicle crime&quot;</span> =<span class="st"> </span><span class="dv">4</span>,
+                  <span class="st">&quot;Violence and sexual offences&quot;</span> =<span class="st"> </span><span class="dv">5</span>)
+crime_categories &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Property Crime&quot;</span>,
+                      <span class="st">&quot;Criminal damage and anti-social behaviour&quot;</span>,
+                      <span class="st">&quot;Possession of weapons&quot;</span>,
+                      <span class="st">&quot;Vehicle crime&quot;</span>,
+                      <span class="st">&quot;Violence and sexual offences&quot;</span>,
+                      <span class="st">&quot;Drugs&quot;</span>,
+                      <span class="st">&quot;Other crime&quot;</span>)
+crimes_city<span class="op">$</span>Crime.group &lt;-<span class="st"> </span><span class="kw">factor</span>(crime_lookup[crimes_city<span class="op">$</span>Crime.type], <span class="dt">labels =</span> crime_categories)
+
+<span class="kw">tmap_mode</span>(<span class="st">&quot;view&quot;</span>)
+<span class="kw">tm_shape</span>(crimes_city) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_dots</span>(<span class="dt">jitter =</span> <span class="fl">0.2</span>, <span class="dt">col =</span> <span class="st">&quot;Crime.group&quot;</span>, <span class="dt">palette =</span> <span class="st">&quot;Dark2&quot;</span>, <span class="dt">popup.vars =</span> <span class="ot">TRUE</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">tm_view</span>(<span class="dt">alpha =</span> <span class="dv">1</span>,
+    <span class="dt">basemaps =</span> <span class="st">&quot;Esri.WorldTopoMap&quot;</span>)</code></pre></div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

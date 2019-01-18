@@ -1,0 +1,43 @@
++.tmap                  Stacking of tmap elements
+World                   World and Netherlands map
+land                    Spatial data of global land cover
+metro                   Spatial data of metropolitan areas
+print.tmap              Draw thematic map
+qtm                     Quick thematic map plot
+rivers                  Spatial data of rivers
+theme_ps                ggplot2 theme for proportional symbols
+tm_add_legend           Add manual legend
+tm_basemap              Draw a tile layer
+tm_compass              Map compass
+tm_credits              Credits text
+tm_facets               Small multiples
+tm_fill                 Draw polygons
+tm_grid                 Coordinate grid lines
+tm_iso                  Draw iso (contour) lines with labels
+tm_layout               Layout of cartographic maps
+tm_lines                Draw spatial lines
+tm_logo                 Logo
+tm_minimap              Minimap
+tm_raster               Draw a raster
+tm_scale_bar            Scale bar
+tm_sf                   Draw simple features
+tm_shape                Specify the shape object
+tm_symbols              Draw symbols
+tm_text                 Add text labels
+tm_view                 Options for the interactive tmap viewer
+tm_xlab                 Axis labels
+tmap-element            tmap element
+tmap-package            Thematic Map Visualization
+tmap_animation          Create animation
+tmap_arrange            Arrange small multiples in grid layout
+tmap_format             Get or add format options
+tmap_icons              Specify icons
+tmap_last               Retrieve the last map to be modified or created
+tmap_leaflet            Create a leaflet widget from a tmap object
+tmap_mode               Set tmap mode to static plotting or interactive
+                        viewing
+tmap_options            Options for tmap
+tmap_save               Save tmap
+tmap_style              Set or get the default tmap style
+tmap_style_catalogue    Create a style catalogue
+tmap_tip                Get a tip about tmap

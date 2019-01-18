@@ -6,8 +6,7 @@ t.start <- Sys.time() # start script timestamp
 #memory.limit(size = 56000) 
 
 # list of all dependant packages
-list.of.packages <- c("tidyverse",
-                      "data.table", 
+list.of.packages <- c("data.table", 
                       "rgdal",
                       "rgeos",
                       "maptools",

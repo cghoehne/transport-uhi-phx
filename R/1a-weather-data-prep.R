@@ -8,7 +8,6 @@ list.of.packages <- c("httr",
                       "jsonlite",
                       "lubridate",
                       "weathermetrics",
-                      "tidyverse",
                       "data.table",
                       "rnoaa",
                       "here")

@@ -1,0 +1,35 @@
+%>%                     Pipe operator
+aggregate_map           Aggregate map
+append_data             Append data to a shape object
+approx_areas            Approximate area sizes of the shapes
+approx_distances        Approximate distances
+bb                      Bounding box generator
+bb_poly                 Convert bounding box to a spatial polygon
+calc_densities          Calculate densities
+crop_shape              Crop shape object
+geocode_OSM             Geocodes a location using OpenStreetMap
+                        Nominatim
+get_IDs                 Get ID's of the shape items of sp objects
+get_asp_ratio           Get aspect ratio
+get_brewer_pal          Get and plot a (modified) Color Brewer palette
+get_neighbours          Get neighbours list from spatial objects
+get_proj4               Get a PROJ.4 character string
+is_projected            Is the shape projected?
+map_coloring            Map coloring
+offset_line             Create a double line or offset line
+palette_explorer        Explore color palettes
+points_to_raster        Bin spatial points to a raster
+poly_to_raster          Convert spatial polygons to a raster
+read_GPX                Read GPX file
+read_osm                Read Open Street Map data
+read_shape              Read shape file
+rev_geocode_OSM         Reverse geocodes a location using OpenStreetMap
+                        Nominatim
+sample_dots             Sample dots from spatial polygons
+sbind                   Combine shape objects (from sp)
+set_projection          Set and get the map projection
+simplify_shape          Simplify shape
+smooth_map              Create a smooth map
+smooth_raster_cover     Get a smoothed cover of a raster object
+tmaptools-package       Thematic Map Tools
+write_shape             Write shape file
