@@ -16,7 +16,7 @@ t.start <- Sys.time() # start script timestamp
 library(checkpoint)
 #checkpoint("2019-01-17") # static checkpoint
 
-# if desired, update packages to a new snapshot, and remove old snapshot b/c we use GitHub to track updates/changes
+# archive/update snapshot of packages at checkpoint date
 checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday
            R.version = "3.5.1", # will only work if using the same version of R
            checkpointLocation = here::here(), # calls here package
@@ -24,6 +24,7 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
 #checkpointRemove(Sys.Date() - 1, allUntilSnapshot = TRUE, here::here()) # this removes all previous checkpoints before today
 
 # load dependant packages
+library(ggplot2)
 library(zoo)
 library(lubridate)
 library(data.table)
@@ -41,7 +42,7 @@ my.font <- "Century"
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5,25),# nodal spacing in millimeters
-               n.iterations = c(1), # number of iterations to repeat each model run for
+               n.iterations = c(1,2,5,10,25), # number of iterations to repeat each model run; 1,2,5,10,25
                i.top.temp = c(40,30,50), # starting top boundary layer temperature in deg C
                i.bot.temp = c(30,20), # starting bottom boundary layer temperature in deg C
                time.step = c(120,60), # time step in seconds
@@ -49,15 +50,17 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                run.time = c(0), # initialize model run time (store at end of run)
                RMSE = c(0) # initialize model root mean square error (store at end of run)
 )
-model.runs <- as.data.table(expand.grid(models)) # create all combinations of the above varied inputs
-nrow(model.runs) # total runs
 
-for(run in 1:nrow(model.runs)){ #
+model.runs <- as.data.table(expand.grid(models)) # create all combinations of the above varied inputs
+model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1)
+model.runs[,.N] # total runs
+
+for(run in 1:model.runs[,.N]){ #   nrow(model.runs)
   tryCatch({  # catch and print errors, avoids stopping model run
     
     t.start <- Sys.time() # start model run timestamp
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run","model.runs","t.start","my.font")))
+    rm(list=setdiff(ls(), c("run","model.runs","t.start","my.font","pave.time.ref")))
     gc()
     
     # read in sample weather data 
@@ -276,31 +279,48 @@ for(run in 1:nrow(model.runs)){ #
                    axis.title.x = element_text(vjust = 0.3),
                    plot.title = element_text(hjust = 0.75)))
     
-    # save model run output
-    ggsave(paste0("run_",model.runs$run.n[run],model.runs$run.t[run],"_1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
+    # save plot
+    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
            device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
     
-    saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",model.runs$run.n[run],model.runs$run.t[run],"_output.rds"))) # save model iteration R object
-    model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),1)) # store runtime of model iteration in minutes
+    pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # Temp at time and node difference from 3 day mean, use for RMSE
+    saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
+    model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
     
     # if the run is the first run (defualt to validate other runs against), store it as the reference run
-    if(model.runs$run.n[run] == 1){
+    if(run == 1){
       pave.time.ref <- pave.time
     }
     
     # if run isn't first run, then store RSME compared to run 1 (validated run for comparison)
-    if(model.runs$run.n[run] != 1){ # if the model isn't the refrence run
-      model.runs$RMSE[run] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,T.degC), on = c("time.s","depth.m")][!is.na(T.degC), T.degC] - 
-                                           pave.time.ref[pave.time, .(time.s,depth.m,T.degC), on = c("time.s","depth.m")][!is.na(T.degC), T.degC])^2))
-    }
+    if(run != 1){ # if the model isn't the refrence run
+      model.runs$RMSE[run] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean] - 
+                                           pave.time.ref[pave.time, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean])^2))
+    } # note that RMSE is mean centered temperature across all nodes and timesteps.
     
-    }, error = function(e){cat("ERROR :",conditionMessage(e), "\n")}) # print error message if run had error
+    }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if run had error
 } # end run, go to next run
 
 write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv")) # output model run metadata
 save.image(here("data/outputs/1D-heat-model-runs/1D-pave-heat-model-out.RData")) # save workspace (for troubleshooting)
 t.end <- Sys.time() 
 paste0("Completed model run at ", t.end, ". Model run took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
+
+
+
+
+run <- 5
+pave.time <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds")))
+
+
+
+
+
+
+
+
+
+
 
 ##################
 ## check CFL boundary condition
