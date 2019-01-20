@@ -41,11 +41,11 @@ my.font <- "Century"
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
-               nodal.spacing = c(12.5,25),# nodal spacing in millimeters
-               n.iterations = c(1,2,5,10,25), # number of iterations to repeat each model run; 1,2,5,10,25
+               nodal.spacing = c(12.5,25,50),# nodal spacing in millimeters
+               n.iterations = c(25,15,5), # number of iterations to repeat each model run; 1,2,5,10,25
                i.top.temp = c(40,30,50), # starting top boundary layer temperature in deg C
                i.bot.temp = c(30,20), # starting bottom boundary layer temperature in deg C
-               time.step = c(120,60), # time step in seconds
+               time.step = c(30,60,120), # time step in seconds
                pave.length = c(5), # characteristic length of pavement in meters
                run.time = c(0), # initialize model run time (store at end of run)
                RMSE = c(0) # initialize model root mean square error (store at end of run)
@@ -305,12 +305,6 @@ write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.
 save.image(here("data/outputs/1D-heat-model-runs/1D-pave-heat-model-out.RData")) # save workspace (for troubleshooting)
 t.end <- Sys.time() 
 paste0("Completed model run at ", t.end, ". Model run took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
-
-
-
-
-run <- 5
-pave.time <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds")))
 
 
 
