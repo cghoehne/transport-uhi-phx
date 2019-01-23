@@ -9,8 +9,8 @@ memory.limit(size = 56000)
 script.start <- Sys.time() # start script timestamp
 
 # in case we need to revert or packages are missing
-#if (!require("here")) install.packages("here")
-#if (!require("checkpoint")) install.packages("checkpoint")
+#if (!require("here")){install.packages("here")}
+#if (!require("checkpoint")){install.packages("checkpoint")}
 
 # load checkpoint package to insure you call local package dependcies
 library(checkpoint)
@@ -29,12 +29,8 @@ library(lubridate)
 library(data.table)
 library(here)
 
-# load windows fonts and store as string
-windowsFonts(Century=windowsFont("TT Century Gothic"))
-windowsFonts(Times=windowsFont("TT Times New Roman"))
-my.font <- "Century"
 
-## MODEL RUN SPECFICATIONS
+## SPECIFY MODEL RUN SCENARIOS (use for evaluating sensitivity or mulitple types of pavement scenarios)
 
 # create list of models to run with varied inputs to check sentivity/error
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
@@ -48,8 +44,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                pave.length = c(5), # characteristic length of pavement in meters
                run.time = c(0), # initialize model run time (store at end of run)
                RMSE = c(0), # initialize model root mean square error (store at end of run)
-               CFL = c("UNKNOWN"), # initialize CFL condition satification
-               CFL_fail = c(0) # initialize CFL condition fail % of obs
+               CFL_fail = c(0) # initialize CFL condition fail fraction of obs 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations of the above varied inputs
@@ -59,12 +54,15 @@ model.runs[,.N] # total runs
 # read in sample weather data 
 weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # 3 day period of weather data at 15 min
 
+# read in reference pavement model run if repeating runs
+pave.time.ref <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/20190121/run_1_output.rds")))
+
 # BEGIN MODEL
-for(run in c(62,63,116,117)){ #  1:model.runs[,.N]    nrow(model.runs)  
+for(run in c(109:114,118:132,136:162)){ #  1:model.runs[,.N]    nrow(model.runs)  
   tryCatch({  # catch and print errors, avoids stopping model run 
     
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run","model.runs","script.start","my.font","pave.time.ref","weather")))
+    rm(list=setdiff(ls(), c("run","model.runs","script.start","pave.time.ref","weather")))
     gc()
     t.start <- Sys.time() # start model run timestamp
     
@@ -260,9 +258,9 @@ for(run in c(62,63,116,117)){ #  1:model.runs[,.N]    nrow(model.runs)
                                            pave.time.ref[pave.time, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean])^2))
     } # note that RMSE is mean centered temperature across all nodes and timesteps.
     
-    ## check finite difference solving method satisfied the Courant-Friedrichs-Lewy (CFL) condition for stability
-    ## and store if all instances are satisfied in the model.runs metadata
-    ## in other words, this checks that delta.t and delta.x are sufficently small such that the solving method is stable/reliable
+    # check finite difference solving method satisfied the Courant-Friedrichs-Lewy (CFL) condition for stability
+    # and store if all instances are satisfied in the model.runs metadata
+    # in other words, this checks that delta.t and delta.x are sufficently small such that the solving method is stable/reliable
     
     # store variables as vector
     h.rad <- pave.time[, h.rad] # radiative heat transfer coefficient in W/(m2*degK) 
@@ -273,27 +271,22 @@ for(run in c(62,63,116,117)){ #  1:model.runs[,.N]    nrow(model.runs)
     t.delta.min.L2 <- vector(mode = "numeric", length = length(h.rad))
     t.delta.min.L3 <- vector(mode = "numeric", length = length(h.rad))
     
-    # calc values for CFL check for each timestep
+    # calc values for CFL check for each timestep (RHS eqn. 13 in [1])
     for(a in 1:length(h.rad)){
-      
-      # check the time steps obey the CFL condition for stability
-      # (each timestep must staisfy the explicit finite difference condition for stability)
       t.delta.min.L1[a] <- (rho.c["surface"] * (delta.x^2)) / (2 * (h.rad[a] * delta.x + h.inf[a] * delta.x + k["surface"])) # in seconds
       t.delta.min.L2[a] <-  (rho.c["base"] * (delta.x^2)) / (2 * (h.rad[a] * delta.x + h.inf[a] * delta.x + k["base"])) # in seconds
       t.delta.min.L3[a] <- (rho.c["subgrade"] * (delta.x^2)) / (2 * (h.rad[a] * delta.x + h.inf[a] * delta.x + k["subgrade"])) # in seconds
     }
     
-    # check if CFL condition met for the chosen delta.t, if so delete the cols for checking
-    if(delta.t <= min(pmin(t.delta.min.L1, t.delta.min.L2, t.delta.min.L3))){
-      #print("CFL condition met for all timesteps")
-      model.runs$CFL[run] <- "YES"
-    } else {
-      model.runs$CFL[run] <- "NO"
-      model.runs$CFL_fail[run] <- 100 * round(sum(ifelse(delta.t <= t.delta.min.L1, 1, 0), 
-                                                  ifelse(delta.t <= t.delta.min.L2, 1, 0), 
-                                                  ifelse(delta.t <= t.delta.min.L3, 1, 0)) / sum(length(t.delta.min.L1),
-                                                                                                 length(t.delta.min.L1),
-                                                                                                 length(t.delta.min.L3)), 2)
+    # delta.t must be less than or equal to the t.delta.min values to satisfy CFL condition
+    # so it is not if it is greater than the minimum observed t.delta.min values
+    # if so calculate the fraction of non-satifiying instances
+    if(delta.t > min(pmin(t.delta.min.L1, t.delta.min.L2, t.delta.min.L3))){
+      model.runs$CFL_fail[run] <- round(sum(ifelse(delta.t <= t.delta.min.L1, 1, 0), 
+                                            ifelse(delta.t <= t.delta.min.L2, 1, 0), 
+                                            ifelse(delta.t <= t.delta.min.L3, 1, 0)) / sum(length(t.delta.min.L1),
+                                                                                           length(t.delta.min.L1),
+                                                                                           length(t.delta.min.L3)), 2)
     } # end CFL condition checking
     
     }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
