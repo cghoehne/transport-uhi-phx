@@ -36,12 +36,13 @@ library(here)
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
-               nodal.spacing = c(12.5,25,50),# nodal spacing in millimeters
-               n.iterations = c(25,15,5), # number of iterations to repeat each model run; 1,2,5,10,25
-               i.top.temp = c(40,30,50), # starting top boundary layer temperature in deg C
-               i.bot.temp = c(30,20), # starting bottom boundary layer temperature in deg C
-               time.step = c(30,60,120), # time step in seconds
+               nodal.spacing = c(12.5),# nodal spacing in millimeters
+               n.iterations = c(5), # number of iterations to repeat each model run; 1,2,5,10,25
+               i.top.temp = c(40), # starting top boundary layer temperature in deg C
+               i.bot.temp = c(33.5), #  ,40   starting bottom boundary layer temperature in deg C
+               time.step = c(120), # time step in seconds
                pave.length = c(5), # characteristic length of pavement in meters
+               pave.depth = c(0.610),#  , 3.048 pavement depth (after which it is soil/ground)
                run.time = c(0), # initialize model run time (store at end of run)
                RMSE = c(0), # initialize model root mean square error (store at end of run)
                CFL_fail = c(0) # initialize CFL condition fail fraction of obs 
@@ -52,13 +53,17 @@ model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1)
 model.runs[,.N] # total runs
 
 # read in sample weather data 
-weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # 3 day period of weather data at 15 min
+#weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # 3 day period of weather data at 15 min
+weather <- readRDS(here("data/outputs/temp/2017-weather-data.rds"))
+weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun" & # choose station for desired period of time
+                   !is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
+weather <- weather[date.time <= (min(date.time) + days(12))] # trim to 12 days long
 
 # read in reference pavement model run if repeating runs
-pave.time.ref <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/20190121/run_1_output.rds")))
+#pave.time.ref <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/20190121/run_1_output.rds")))
 
 # BEGIN MODEL
-for(run in c(109:114,118:132,136:162)){ #  1:model.runs[,.N]    nrow(model.runs)  
+for(run in 1:model.runs[,.N]){ #      nrow(model.runs)  
   tryCatch({  # catch and print errors, avoids stopping model run 
     
     # first clear up space for new run
@@ -67,7 +72,7 @@ for(run in c(109:114,118:132,136:162)){ #  1:model.runs[,.N]    nrow(model.runs)
     t.start <- Sys.time() # start model run timestamp
     
     # input pavement layer thickness data
-    x <- 0.5 #  ground depth (m);  GUI ET AL: 3.048m
+    x <- model.runs$pave.depth[run]  #  ground depth (m);  GUI ET AL: 3.048m
     delta.x <- model.runs$nodal.spacing[run]/1000 # chosen nodal spacing within pavement (m). default is 12.7mm (0.5in)
     
     thickness <- c("surface" = 0.1, "base" = 0.1, "subgrade" = 0) # 0.1m surface thickness, 0.1m base thickness
