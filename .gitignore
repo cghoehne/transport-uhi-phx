@@ -14,8 +14,9 @@ data/outputs/temp/*
 # ignore temp files (starting w/ "~")
 ~* 
 
-# ignore my api token
+# ignore personal api tokens and email creds
 local-token.txt
+email.txt
 
 # keep the daymet folder but not data, download through script
 data/daymet/*

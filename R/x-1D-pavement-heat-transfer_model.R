@@ -24,6 +24,7 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
 #checkpointRemove(Sys.Date() - 1, allUntilSnapshot = TRUE, here::here()) # this removes all previous checkpoints before today
 
 # load dependant packages
+library(mailR)
 library(zoo)
 library(lubridate)
 library(data.table)
@@ -38,19 +39,21 @@ library(here)
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
                n.iterations = c(5), # number of iterations to repeat each model run; 1,2,5,10,25
-               i.top.temp = c(40,30), # starting top boundary layer temperature in deg C
-               i.bot.temp = c(30,40), #     starting bottom boundary layer temperature in deg C
+               i.top.temp = c(40,33.5), # starting top boundary layer temperature in deg C
+               i.bot.temp = c(33.5,40), #     starting bottom boundary layer temperature in deg C
                time.step = c(120), # time step in seconds
                pave.length = c(5), # characteristic length of pavement in meters
-               pave.depth = c(3.048,0.610),#  , 3.048 pavement depth (after which it is soil/ground)
+               pave.depth = c(0.5),#  , 0.2m pavement depth (after which it is soil/ground), [1] modeled to 3.048m.
+               #vary.albedo = c(0,1), # vary albedo diurnally? 1 = yes, 0 = no
+               # albedo should vary from ~5am to 7pm (or when solar radiation is > 0)
                run.time = c(0), # initialize model run time (store at end of run)
                RMSE = c(0), # initialize model root mean square error (store at end of run)
                CFL_fail = c(0) # initialize CFL condition fail fraction of obs 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations of the above varied inputs
-model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1)
 model.runs <- model.runs[i.top.temp == i.bot.temp,] # keep scenarios where the top starting temp is higher than bot temp
+model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1)
 model.runs[,.N] # total runs
 
 # read in sample weather data 
@@ -299,8 +302,18 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
 } # end run, go to next run
 
 write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv"), row.names = F) # output model run metadata
-paste0("Completed model run at ", Sys.time(), ". Model run took ", round(difftime(Sys.time(),script.start, units = "mins"),0)," minutes to complete.") # paste total script time
 
+# load email creds and construct msg to notify you by email the script has finished
+my.email <- as.character(fread(here("email.txt"), header = F)[1]) 
+my.pass <- as.character(fread(here("email.txt"), header = F)[2])
+msg <- paste0("Completed model run at ", Sys.time(), ". Model run took ", round(difftime(Sys.time(),script.start, units = "mins"),0)," minutes to complete.")
+send.mail(from = my.email,
+          to = my.email,
+          subject = "R Script Finished",
+          body = msg,
+          smtp = list(host.name = "smtp.gmail.com", port = 465, user.name = my.email, passwd = my.pass, ssl = T),
+          authenticate = T,
+          send = T)
 
 ##################
 ### References ###

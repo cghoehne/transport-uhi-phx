@@ -32,16 +32,16 @@ my.font <- "Century"
 
 
 # read in sample weather data 
-#weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # 3 day period of weather data at 15 min intervals
-weather <- readRDS(here("data/outputs/temp/2017-weather-data.rds"))
-weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun" & # choose station for desired period of time
-                     !is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
-weather <- weather[date.time <= (min(date.time) + days(12))] # trim to 12 days long
+weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # 3 day period of weather data at 15 min intervals
+#weather <- readRDS(here("data/outputs/temp/2017-weather-data.rds"))
+#weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun" & # choose station for desired period of time
+#                     !is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
+#weather <- weather[date.time <= (min(date.time) + days(12))] # trim to 12 days long
 
 # read in model simulation metadata
-model.runs <- fread(here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv")) # 20190121/20190121_
+model.runs <- fread(here("data/outputs/1D-heat-model-runs/20190121/20190121_model_runs_metadata.csv")) # 
 runs <- model.runs[run.n == 1 | RMSE != 0, run.n] # store all runs that are archived
-  
+
 # create summary variable for max temp by day for each day in sample weather data
 n.days <- ceiling(difftime(max(weather$date.time),min(weather$date.time), units = "days"))
 model.runs[, paste0(rep(paste0("Tmax"),n.days),1:n.days) := 0]
@@ -49,11 +49,13 @@ model.runs[, paste0(rep(paste0("Tmin"),n.days),1:n.days) := 0]
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
+should.plot <- "no" # "yes" or "no"
+
 for(run in runs){
   tryCatch({  # catch and print errors, avoids stopping model run 
   
   # read simulation data
-  pave.time <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # 20190121/
+  pave.time <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/20190121/run_",run,"_output.rds"))) # 20190121/
   
   # record max temp at surface for every day
   for(d in 1:n.days){
@@ -61,38 +63,78 @@ for(run in runs){
     model.runs[run.n == run ,eval(paste0("Tmin",d)) := min(pave.time[node == 0 & as.Date(date.time) == as.Date(min(date.time) + days(d-1)), T.degC])]
   }
   
-  ## replicate Gui et al. Fig. 2 
+  # record Range and IQR for key depths
+  model.runs[run.n == run, T.degC_Range_L1 := max(pave.time[layer == "surface", T.degC], na.rm = T) - min(pave.time[, T.degC], na.rm = T)]
+  model.runs[run.n == run, T.degC_IQR_L1 := IQR(pave.time[layer == "surface", T.degC], na.rm = T)]
+  model.runs[run.n == run, T.degC_Range_L2 := max(pave.time[layer == "base", T.degC], na.rm = T) - min(pave.time[, T.degC], na.rm = T)]
+  model.runs[run.n == run, T.degC_IQR_L2 := IQR(pave.time[layer == "base", T.degC], na.rm = T)]
+  model.runs[run.n == run, T.degC_Range_L3 := max(pave.time[layer == "subgrade", T.degC], na.rm = T) - min(pave.time[, T.degC], na.rm = T)]
+  model.runs[run.n == run, T.degC_IQR_L3 := IQR(pave.time[layer == "subgrade", T.degC], na.rm = T)]
+  
+  if(should.plot == "yes"){
+    ## replicate Gui et al. Fig. 2 
     # depth temp
-  my.node <- 1
-  p1.data <- pave.time[node == my.node]
-  min.x <- min(p1.data$date.time, na.rm = T)
-  max.x <- ceiling_date(max(weather$date.time, na.rm = T), unit = "hours")
-  min.y <- 20 #signif(min(p1.data[, T.degC]) - (0.1 * diff(range(p1.data[, T.degC]))),4)
-  max.y <- 80 #ceiling(signif(max(p1.data[, T.degC]) + (0.1 * diff(range(p1.data[, T.degC]))),4))
-  
-  p1 <- (ggplot(data = p1.data) # weather
-         + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
-         + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-         + geom_point(aes(y = T.degC, x = date.time)) #date.time
-         + geom_point(aes(y = T.degC, x = date.time), data = p1.data[date.time %in% weather$date.time], color = "red")
-         #+ geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "blue") # points of sky temp
-         #+ geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) # line of temp
-         + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "2 days")
-         + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y), breaks = seq(min.y,max.y,5))
-         + ggtitle(paste0("Modeled ", p1.data[, depth.m][1]*1000,"mm Pavement Temperature"))
-         + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
-         + theme_minimal()
-         + theme(text = element_text(family = my.font, size = 12),
-                 plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
-                 axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
-                 axis.title.x = element_text(vjust = 0.3),
-                 plot.title = element_text(hjust = 0.75)))
-  
-  # save plot
-  ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
-         device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
-  
+    my.node <- quantile(pave.time$node, probs = .9)
+    p1.data <- pave.time[node == my.node]
+    min.x <- min(p1.data$date.time, na.rm = T)
+    max.x <- ceiling_date(max(weather$date.time, na.rm = T), unit = "hours")
+    min.y <- 20 #signif(min(p1.data[, T.degC]) - (0.1 * diff(range(p1.data[, T.degC]))),4)
+    max.y <- 80 #ceiling(signif(max(p1.data[, T.degC]) + (0.1 * diff(range(p1.data[, T.degC]))),4))
+    
+    p1 <- (ggplot(data = p1.data) # weather
+           + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
+           + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
+           + geom_point(aes(y = T.degC, x = date.time)) #date.time
+           + geom_point(aes(y = T.degC, x = date.time), data = p1.data[date.time %in% weather$date.time], color = "red")
+           #+ geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "blue") # points of sky temp
+           #+ geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) # line of temp
+           + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "2 days")
+           + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y), breaks = seq(min.y,max.y,5))
+           + ggtitle(paste0("Modeled ", p1.data[, depth.m][1]*1000,"mm Pavement Temperature"))
+           + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
+           + theme_minimal()
+           + theme(text = element_text(family = my.font, size = 12),
+                   plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
+                   axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+                   axis.title.x = element_text(vjust = 0.3),
+                   plot.title = element_text(hjust = 0.75)))
+    
+    # save plot
+    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
+           device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
+    
+    # Deviation (boxplot) of single scenario by nodes
+    p.node.box <- (ggplot(data = pave.time[depth.m < 0.3],
+                          aes(x = depth.m, y = T.degC, group = factor(depth.m)))
+                   + geom_boxplot()
+                   + geom_vline(xintercept = unique(pave.time[layer == "boundary" & depth.m != 0, depth.m]), linetype = "dotted")
+                   + annotate("text", label = "Layer 1: Surface", x = 0.05, y = 67.5)
+                   + annotate("text", label = "Layer 2: Base", x = 0.15, y = 67.5)
+                   + annotate("text", label = "Layer 3: Subbase", x = 0.25, y = 67.5)
+                   + labs(x = "Pavement Depth (m)", y = "Temperature (deg C)")
+                   + theme_light()
+                   + theme(text = element_text(family = my.font, size = 12),
+                           plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
+                           axis.title.x = element_text(vjust = -2),
+                           axis.title.y = element_text(vjust = 5))
+    )
+    
+    # save plot
+    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-pave-temp-box_0-0.3m.png"), p.node.box, 
+           device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
+    
+  } # end optional plotting
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
+}
+
+
+
+# check pavement temperature quantiles at depths
+depths <- c(0,0.05,0.1,0.2,0.45)
+for(depth in depths){
+  print(paste0("At ",depth, " meters, T.degC quantiles are:"))
+  print(pave.time[depth.m == depth, quantile(T.degC, probs = c(0,0.1,0.25,0.5,0.75,0.9,1))])
+  cat("\n") # Enter
 }
 
 
@@ -113,9 +155,10 @@ p.all <- (ggplot(data = model.runs.tmax, aes(x = variable, y = value, col = fact
           + theme_minimal()
           + theme(text = element_text(family = my.font, size = 12),
                   plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
-                  axis.title.x = element_text(vjust = 0.3)))
+                  axis.title.x = element_text(vjust = 0.3))
+          )
 p.all
-#
+
 
 ################
 # BACKUP PLOTS #
