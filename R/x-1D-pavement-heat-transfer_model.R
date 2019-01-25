@@ -56,12 +56,17 @@ model.runs <- model.runs[i.top.temp == i.bot.temp,] # keep scenarios where the t
 model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1)
 model.runs[,.N] # total runs
 
-# read in sample weather data 
-#weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # 3 day period of weather data at 15 min
-weather <- readRDS(here("data/outputs/temp/2017-weather-data.rds"))
-weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun" & # choose station for desired period of time
-                   !is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
+# LOAD WEATHER DATA 
+#weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # sample 3 day period of weather data
+#weather <- readRDS(here("data/outputs/temp/2017-weather-data.rds")) # all weather data from cleaning script
+weather <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")), # all weather data saved to repo
+                          readRDS(here("data/outputs/2017-weather-data-2.rds")),
+                          readRDS(here("data/outputs/2017-weather-data-3.rds"))))
+
+# FILTER WEATHER DATA
+#weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun",] # choose station for desired period of time
 #weather <- weather[date.time <= (min(date.time) + days(12))] # trim to 12 days long
+weather <- weather[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
 
 # read in reference pavement model run if repeating runs
 #pave.time.ref <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/20190121/run_1_output.rds")))

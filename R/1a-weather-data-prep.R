@@ -434,6 +434,11 @@ w.data[is.na(id), id := station.name]
 saveRDS(w.data, here("data/outputs/temp/2017-weather-data.rds")) # all houlry weather data
 saveRDS(w.stations, here("data/outputs/temp/2017-station-data.rds")) # all station data
 
+# save output in multiple files so it can sync to github
+#saveRDS(w.data[1:floor(.N/3)], here("data/outputs/2017-weather-data-1.rds"))
+#saveRDS(w.data[(floor(.N/3)+1):floor(.N*2/3)], here("data/outputs/2017-weather-data-2.rds"))
+#saveRDS(w.data[(floor(.N*2/3)+1):(.N)], here("data/outputs/2017-weather-data-3.rds"))
+
 # print script endtime
 t.end <- Sys.time() 
 paste0("Completed task at ", t.end, ". Task took ", round(difftime(t.end,t.start, units = "mins"),1)," minutes to complete.") # paste total script time
