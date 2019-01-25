@@ -18,7 +18,17 @@ data/outputs/temp/*
 local-token.txt
 email.txt
 
-# keep the daymet folder but not data, download through script
+# keep the some empty folders but not data, download through script
+data/daymet/*
+!data/daymet/.gitkeep 
+
+data\outputs\1D-heat-model-runs/*
+!data\outputs\1D-heat-model-runs/.gitkeep 
+
+data/outputs/temp/*
+!data/outputs/temp/.gitkeep 
+
+
 data/daymet/*
 !data/daymet/.gitkeep 
 

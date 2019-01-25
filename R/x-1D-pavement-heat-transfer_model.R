@@ -9,8 +9,8 @@ memory.limit(size = 56000)
 script.start <- Sys.time() # start script timestamp
 
 # in case we need to revert or packages are missing
-#if (!require("here")){install.packages("here")}
-#if (!require("checkpoint")){install.packages("checkpoint")}
+if (!require("here")){install.packages("here")}
+if (!require("checkpoint")){install.packages("checkpoint")}
 
 # load checkpoint package to insure you call local package dependcies
 library(checkpoint)
@@ -38,9 +38,9 @@ library(here)
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(5), # number of iterations to repeat each model run; 1,2,5,10,25
-               i.top.temp = c(40,33.5), # starting top boundary layer temperature in deg C
-               i.bot.temp = c(33.5,40), #     starting bottom boundary layer temperature in deg C
+               n.iterations = c(1), # number of iterations to repeat each model run; 1,2,5,10,25
+               i.top.temp = c(40), # ,33.5 starting top boundary layer temperature in deg C
+               i.bot.temp = c(40), #  33.5,  starting bottom boundary layer temperature in deg C
                time.step = c(120), # time step in seconds
                pave.length = c(5), # characteristic length of pavement in meters
                pave.depth = c(0.5),#  , 0.2m pavement depth (after which it is soil/ground), [1] modeled to 3.048m.
@@ -65,7 +65,7 @@ weather <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")),
 
 # FILTER WEATHER DATA
 #weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun",] # choose station for desired period of time
-#weather <- weather[date.time <= (min(date.time) + days(12))] # trim to 12 days long
+weather <- weather[date.time <= (min(date.time) + days(12))] # trim to 12 days long
 weather <- weather[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
 
 # read in reference pavement model run if repeating runs
@@ -311,7 +311,7 @@ write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.
 # load email creds and construct msg to notify you by email the script has finished
 my.email <- as.character(fread(here("email.txt"), header = F)[1]) 
 my.pass <- as.character(fread(here("email.txt"), header = F)[2])
-msg <- paste0("Completed model run at ", Sys.time(), ". Model run took ", round(difftime(Sys.time(),script.start, units = "mins"),0)," minutes to complete.")
+msg <- paste0("Completed model run on ", Sys.info()[4]," at ", Sys.time(), ". Model run took ", round(difftime(Sys.time(),script.start, units = "mins"),0)," minutes to complete.")
 send.mail(from = my.email,
           to = my.email,
           subject = "R Script Finished",
