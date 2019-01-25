@@ -44,7 +44,8 @@ runs <- model.runs[run.n == 1 | RMSE != 0, run.n] # store all runs that are arch
   
 # create summary variable for max temp by day for each day in sample weather data
 n.days <- ceiling(difftime(max(weather$date.time),min(weather$date.time), units = "days"))
-model.runs[, paste0(rep(paste0("Tmax"),n.days),1:n.days) := 0] 
+model.runs[, paste0(rep(paste0("Tmax"),n.days),1:n.days) := 0]
+model.runs[, paste0(rep(paste0("Tmin"),n.days),1:n.days) := 0] 
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
@@ -57,6 +58,7 @@ for(run in runs){
   # record max temp at surface for every day
   for(d in 1:n.days){
     model.runs[run.n == run ,eval(paste0("Tmax",d)) := max(pave.time[node == 0 & as.Date(date.time) == as.Date(min(date.time) + days(d-1)), T.degC])]
+    model.runs[run.n == run ,eval(paste0("Tmin",d)) := min(pave.time[node == 0 & as.Date(date.time) == as.Date(min(date.time) + days(d-1)), T.degC])]
   }
   
   ## replicate Gui et al. Fig. 2 
@@ -96,27 +98,24 @@ for(run in runs){
 
 # tmax surface diff with mean starting temp
 model.runs[, paste0(rep(paste0("Tmax.dif"),n.days),1:n.days) := 0] 
-model.runs[, Tmax.dif1 := Tmax1 - (i.top.temp + i.bot.temp)/2]
-model.runs[, Tmax.dif2 := Tmax2 - (i.top.temp + i.bot.temp)/2]
-model.runs[, Tmax.dif3 := Tmax3 - (i.top.temp + i.bot.temp)/2]
+model.runs[, avg.i.T := (i.top.temp + i.bot.temp)/2]
 
+# melt all temp max into data.table for easier plotting
+model.runs.tmax <- melt(model.runs[, .SD, .SDcols = c("run.n",paste0("Tmax",1:n.days))] , id.vars = "run.n")
+model.runs.tmin <- melt(model.runs[, .SD, .SDcols = c("run.n",paste0("Tmin",1:n.days))] , id.vars = "run.n")
+model.runs.tmax <- merge(model.runs.tmax, model.runs[, .(run.n, avg.i.T, pave.depth)], by = "run.n")
+model.runs.tmin <- merge(model.runs.tmin, model.runs[, .(run.n, avg.i.T, pave.depth)], by = "run.n")
 
-
-# max surface temperature by mean day initialized pave temperature
-p <- (ggplot(data = model.runs[run.n == 1 | RMSE != 0,], aes(x = (i.top.temp + i.bot.temp)/2))
-      + geom_point(aes(y = Tmax1, color = "Day 1"))
-      + geom_point(aes(y = Tmax2, color = "Day 2"))
-      + geom_point(aes(y = Tmax3, color = "Day 3"))
-      + geom_smooth(method = 'lm', formula = y~x, aes(y = Tmax1, color = "Day 1"), se = F)
-      + geom_smooth(method = 'lm', formula = y~x, aes(y = Tmax2, color = "Day 2"), se = F)
-      + geom_smooth(method = 'lm', formula = y~x, aes(y = Tmax3, color = "Day 3"), se = F)
-      + labs(x = "Mean Initialized Pavement Temperature", y = "Max Surface Temperature") # "Time of Day"
-      + theme_minimal()
-      + theme(text = element_text(family = my.font, size = 12),
-              plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
-              axis.title.x = element_text(vjust = 0.3)))
-p
-
+p.all <- (ggplot(data = model.runs.tmax, aes(x = variable, y = value, col = factor(avg.i.T), shape = factor(pave.depth)))
+          + geom_point()
+          + labs(x = "Day", y = "Max Simulated Surface Temperature", col = "Mean \nInitialized \nPavement \nTemperature \n(deg C)", shape = "Pavement \nDepth \n(m)")
+          + scale_color_manual(values=c('red','blue'))
+          + theme_minimal()
+          + theme(text = element_text(family = my.font, size = 12),
+                  plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
+                  axis.title.x = element_text(vjust = 0.3)))
+p.all
+#
 
 ################
 # BACKUP PLOTS #

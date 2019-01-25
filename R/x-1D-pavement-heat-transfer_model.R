@@ -38,11 +38,11 @@ library(here)
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
                n.iterations = c(5), # number of iterations to repeat each model run; 1,2,5,10,25
-               i.top.temp = c(40), # starting top boundary layer temperature in deg C
-               i.bot.temp = c(33.5), #  ,40   starting bottom boundary layer temperature in deg C
+               i.top.temp = c(40,30), # starting top boundary layer temperature in deg C
+               i.bot.temp = c(30,40), #     starting bottom boundary layer temperature in deg C
                time.step = c(120), # time step in seconds
                pave.length = c(5), # characteristic length of pavement in meters
-               pave.depth = c(0.610),#  , 3.048 pavement depth (after which it is soil/ground)
+               pave.depth = c(3.048,0.610),#  , 3.048 pavement depth (after which it is soil/ground)
                run.time = c(0), # initialize model run time (store at end of run)
                RMSE = c(0), # initialize model root mean square error (store at end of run)
                CFL_fail = c(0) # initialize CFL condition fail fraction of obs 
@@ -50,6 +50,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations of the above varied inputs
 model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1)
+model.runs <- model.runs[i.top.temp == i.bot.temp,] # keep scenarios where the top starting temp is higher than bot temp
 model.runs[,.N] # total runs
 
 # read in sample weather data 
@@ -57,7 +58,7 @@ model.runs[,.N] # total runs
 weather <- readRDS(here("data/outputs/temp/2017-weather-data.rds"))
 weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun" & # choose station for desired period of time
                    !is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
-weather <- weather[date.time <= (min(date.time) + days(12))] # trim to 12 days long
+#weather <- weather[date.time <= (min(date.time) + days(12))] # trim to 12 days long
 
 # read in reference pavement model run if repeating runs
 #pave.time.ref <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/20190121/run_1_output.rds")))
@@ -123,8 +124,8 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
     
     # static parameters for pavement heat transfer
     alpha <- 4.0  # thermal diffusivity (m^2/s), typically range from 2 to 12; [1]
-    albedo <- 0.17 #  albedo (dimensionless); [1]
-    epsilon <- 0.8 #  emissivity (dimensionless); [1]
+    albedo <- 0.17 #  albedo (dimensionless) [1]; can be: 1 - epsilon for opaque objects
+    epsilon <- 0.8 #  emissivity (dimensionless) [1]; can be: 1 - albedo for opaque objects
     sigma <- 5.67*10^(-8) #  Stefan-Boltzmann constant (W/(m2*K4); [1]
     SVF <- 1	# sky view factor (dimensionless [0,1]). assume 1.0: pavement is completely visible to sky
     Pr.inf <- 0.7085 #  Prandtl number (dimensionless) [0.708, 0.719] (50 to -50 degC range)
