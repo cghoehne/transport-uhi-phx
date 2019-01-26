@@ -38,13 +38,13 @@ library(here)
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(5,10,15), # number of iterations to repeat each model run; 1,2,5,10,25
-               i.top.temp = c(40, 33.5), # starting top boundary layer temperature in deg C
-               i.bot.temp = c(33.5, 40), # starting bottom boundary layer temperature in deg C
+               n.iterations = c(15,10,5), # number of iterations to repeat each model run; 1,2,5,10,25
+               i.top.temp = c(33.5,40), # starting top boundary layer temperature in deg C
+               i.bot.temp = c(33.5,40), # starting bottom boundary layer temperature in deg C
                time.step = c(120), # time step in seconds
-               pave.length = c(5,20), # characteristic length of pavement in meters
-               pave.depth = c(0.5,1),#  , 0.2m pavement depth (after which it is soil/ground), [1] modeled to 3.048m.
-               n.days = c(3,7,14), # number of days to simulate. note that the month defaults to June so 30 days is max 
+               pave.length = c(20,5), # characteristic length of pavement in meters
+               pave.depth = c(1,0.5),#  , 0.2m pavement depth (after which it is soil/ground), [1] modeled to 3.048m.
+               n.days = c(14), # number of days to simulate. note that the month defaults to June so 30 days is max 
                #vary.albedo = c(0,1), # vary albedo diurnally? 1 = yes, 0 = no
                # albedo should vary from ~5am to 7pm (or when solar radiation is > 0)
                run.time = c(0), # initialize model run time (store at end of run)
