@@ -9,8 +9,8 @@ memory.limit(size = 56000)
 script.start <- Sys.time() # start script timestamp
 
 # in case we need to revert or packages are missing
-if (!require("here")){install.packages("here")}
-if (!require("checkpoint")){install.packages("checkpoint")}
+#if (!require("here")){install.packages("here")}
+#if (!require("checkpoint")){install.packages("checkpoint")}
 
 # load checkpoint package to insure you call local package dependcies
 library(checkpoint)
@@ -20,7 +20,7 @@ library(checkpoint)
 checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday
            R.version = "3.5.1", # will only work if using the same version of R
            checkpointLocation = here::here(), # calls here package
-           verbose = T) 
+           verbose = F) 
 #checkpointRemove(Sys.Date() - 1, allUntilSnapshot = TRUE, here::here()) # this removes all previous checkpoints before today
 
 # load dependant packages
@@ -38,12 +38,13 @@ library(here)
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(1), # number of iterations to repeat each model run; 1,2,5,10,25
-               i.top.temp = c(40), # ,33.5 starting top boundary layer temperature in deg C
-               i.bot.temp = c(40), #  33.5,  starting bottom boundary layer temperature in deg C
+               n.iterations = c(5,10,15), # number of iterations to repeat each model run; 1,2,5,10,25
+               i.top.temp = c(40, 33.5), # starting top boundary layer temperature in deg C
+               i.bot.temp = c(33.5, 40), # starting bottom boundary layer temperature in deg C
                time.step = c(120), # time step in seconds
-               pave.length = c(5), # characteristic length of pavement in meters
-               pave.depth = c(0.5),#  , 0.2m pavement depth (after which it is soil/ground), [1] modeled to 3.048m.
+               pave.length = c(5,20), # characteristic length of pavement in meters
+               pave.depth = c(0.5,1),#  , 0.2m pavement depth (after which it is soil/ground), [1] modeled to 3.048m.
+               n.days = c(3,7,14), # number of days to simulate. note that the month defaults to June so 30 days is max 
                #vary.albedo = c(0,1), # vary albedo diurnally? 1 = yes, 0 = no
                # albedo should vary from ~5am to 7pm (or when solar radiation is > 0)
                run.time = c(0), # initialize model run time (store at end of run)
@@ -53,20 +54,19 @@ models <- list(run.n = c(0), # dummy run number (replace below)
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations of the above varied inputs
 model.runs <- model.runs[i.top.temp == i.bot.temp,] # keep scenarios where the top starting temp is higher than bot temp
-model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1)
+model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1) # create run number id
 model.runs[,.N] # total runs
 
 # LOAD WEATHER DATA 
 #weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # sample 3 day period of weather data
 #weather <- readRDS(here("data/outputs/temp/2017-weather-data.rds")) # all weather data from cleaning script
-weather <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")), # all weather data saved to repo
+weather.raw <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")), # all weather data saved to repo
                           readRDS(here("data/outputs/2017-weather-data-2.rds")),
                           readRDS(here("data/outputs/2017-weather-data-3.rds"))))
 
 # FILTER WEATHER DATA
-#weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun",] # choose station for desired period of time
-weather <- weather[date.time <= (min(date.time) + days(12))] # trim to 12 days long
-weather <- weather[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
+weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun",] # choose station for desired period of time
+weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
 
 # read in reference pavement model run if repeating runs
 #pave.time.ref <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/20190121/run_1_output.rds")))
@@ -79,6 +79,9 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
     rm(list=setdiff(ls(), c("run","model.runs","script.start","pave.time.ref","weather")))
     gc()
     t.start <- Sys.time() # start model run timestamp
+    
+    # trim weather data to number of days specified
+    weather <- weather.raw[date.time <= (min(date.time) + days(model.runs$n.days[run]))] 
     
     # input pavement layer thickness data
     x <- model.runs$pave.depth[run]  #  ground depth (m);  GUI ET AL: 3.048m

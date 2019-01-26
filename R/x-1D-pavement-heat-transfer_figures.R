@@ -38,18 +38,12 @@ weather <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")),
                           readRDS(here("data/outputs/2017-weather-data-3.rds"))))
                           
 # FILTER WEATHER DATA
-#weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun",] # choose station for desired period of time
-#weather <- weather[date.time <= (min(date.time) + days(12))] # trim to 12 days long
+weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun",] # choose station for desired period of time
 weather <- weather[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
 
 # read in model simulation metadata
 model.runs <- fread(here("data/outputs/1D-heat-model-runs/20190121/20190121_model_runs_metadata.csv")) # 
 runs <- model.runs[run.n == 1 | RMSE != 0, run.n] # store all runs that are archived
-
-# create summary variable for max temp by day for each day in sample weather data
-n.days <- ceiling(difftime(max(weather$date.time),min(weather$date.time), units = "days"))
-model.runs[, paste0(rep(paste0("Tmax"),n.days),1:n.days) := 0]
-model.runs[, paste0(rep(paste0("Tmin"),n.days),1:n.days) := 0] 
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
@@ -61,11 +55,10 @@ for(run in runs){
   # read simulation data
   pave.time <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/20190121/run_",run,"_output.rds"))) # 20190121/
   
-  # record max temp at surface for every day
-  for(d in 1:n.days){
-    model.runs[run.n == run ,eval(paste0("Tmax",d)) := max(pave.time[node == 0 & as.Date(date.time) == as.Date(min(date.time) + days(d-1)), T.degC])]
-    model.runs[run.n == run ,eval(paste0("Tmin",d)) := min(pave.time[node == 0 & as.Date(date.time) == as.Date(min(date.time) + days(d-1)), T.degC])]
-  }
+  # record avg max temp and final day max temp at surface
+  n.days <- model.runs$n.days[run]
+  model.runs[run.n == run, T.degC_Avg_Day_Max_0m := max(pave.time[node == 0, by = as.Date(date.time)])]
+  model.runs[run.n == run, T.degC_Fnl_Day_Max_0m := max(pave.time[node == 0 & as.Date(date.time) == max(as.Date(date.time))])]
   
   # record Range and IQR for key depths
   model.runs[run.n == run, T.degC_Range_L1 := max(pave.time[layer == "surface", T.degC], na.rm = T) - min(pave.time[, T.degC], na.rm = T)]
