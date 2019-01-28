@@ -38,13 +38,13 @@ library(here)
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(15,10,5), # number of iterations to repeat each model run; 1,2,5,10,25
-               i.top.temp = c(33.5,40), # starting top boundary layer temperature in deg C
-               i.bot.temp = c(33.5,40), # starting bottom boundary layer temperature in deg C
+               n.iterations = c(5), # number of iterations to repeat each model run; 1,2,5,10,25
+               i.top.temp = c(40,45,50), # starting top boundary layer temperature in deg C
+               i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C
                time.step = c(120), # time step in seconds
-               pave.length = c(20,5), # characteristic length of pavement in meters
-               pave.depth = c(1,0.5),#  , 0.2m pavement depth (after which it is soil/ground), [1] modeled to 3.048m.
-               n.days = c(14), # number of days to simulate. note that the month defaults to June so 30 days is max 
+               pave.length = c(10,7.5), # characteristic length of pavement in meters
+               pave.depth = c(0.5), # depth to bottom boundary, [1] modeled to 3.048m.
+               n.days = c(30), # number of days to simulate. note that the month defaults to June so 30 days is max 
                #vary.albedo = c(0,1), # vary albedo diurnally? 1 = yes, 0 = no
                # albedo should vary from ~5am to 7pm (or when solar radiation is > 0)
                run.time = c(0), # initialize model run time (store at end of run)
@@ -53,7 +53,6 @@ models <- list(run.n = c(0), # dummy run number (replace below)
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations of the above varied inputs
-model.runs <- model.runs[i.top.temp == i.bot.temp,] # keep scenarios where the top starting temp is higher than bot temp
 model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1) # create run number id
 model.runs[,.N] # total runs
 
@@ -76,7 +75,7 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
   tryCatch({  # catch and print errors, avoids stopping model run 
     
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run","model.runs","script.start","pave.time.ref","weather")))
+    rm(list=setdiff(ls(), c("run","model.runs","script.start","pave.time.ref","weather","weather.raw")))
     gc()
     t.start <- Sys.time() # start model run timestamp
     
@@ -134,19 +133,24 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
                                                           length.out = p.n)))) # surface temp in K from the pavement to 3m)
     
     # static parameters for pavement heat transfer
-    alpha <- 4.0  # thermal diffusivity (m^2/s), typically range from 2 to 12; [1]
     albedo <- 0.17 #  albedo (dimensionless) [1]; can be: 1 - epsilon for opaque objects
     epsilon <- 0.8 #  emissivity (dimensionless) [1]; can be: 1 - albedo for opaque objects
     sigma <- 5.67*10^(-8) #  Stefan-Boltzmann constant (W/(m2*K4); [1]
     SVF <- 1	# sky view factor (dimensionless [0,1]). assume 1.0: pavement is completely visible to sky
     Pr.inf <- 0.7085 #  Prandtl number (dimensionless) [0.708, 0.719] (50 to -50 degC range)
-    L <- model.runs$pave.length[run] #  characteristic length of pavement (m);
+    
+    # L in (m) is the characteristic length of the pavement at the test site taken as the ratio of
+    L <- model.runs$pave.length[run] # the slab length in the direction of the wind to the perimeter
+    # assume horizontal & flat, width b and infinite length L, hotter than the environment -> L = b/2
+    # L could vary, but minimum for a pavement should be 2 lanes, or about ~10 meters
     
     # parameters that vary by pavement layer
     k	<- c("surface" = 1.21, "base" = 1.21, "subgrade" = 1.00) #  thermal conductivity (W/(m2*degK))
     rho <- c("surface" = 2238, "base" = 2238, "subgrade" = 1500) #  pavement density (kg/m3);
     c	<- c("surface" = 921, "base" = 921, "subgrade" = 1900) # specific heat (J/(kg*degK);
     rho.c <- rho * c #  volumetric heat capacity (J/(m3 degK)); [1] concrete: ~2.07E6; ashpalt ~1.42E6 [6]
+    alpha <- 4.0  # thermal diffusivity (m^2/s), typically range from 2 to 12; [1]. 
+    # alpha ==  k / ( c * rho );thermal conductivity divided by density and specific heat capacity at constant pressure
     
     # calculate parameters that vary by time/weather
     weather$time.s <- as.numeric(difftime(weather$date.time, weather$date.time[1], units = "secs")) # time.s to match with iterations in weather data (assuming first obs is time zero)

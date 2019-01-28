@@ -30,35 +30,37 @@ windowsFonts(Century=windowsFont("TT Century Gothic"))
 windowsFonts(Times=windowsFont("TT Times New Roman"))
 my.font <- "Century"
 
-# LOAD WEATHER DATA 
+# load model simulation metadata
+model.runs <- fread(here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv")) # 20190121/20190121_
+runs <- model.runs[run.n == 1 | RMSE != 0, run.n] # store all runs that are archived
+
+# load weather data
 #weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # sample 3 day period of weather data
 #weather <- readRDS(here("data/outputs/temp/2017-weather-data.rds")) # all weather data from cleaning script
 weather <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")), # all weather data saved to repo
                           readRDS(here("data/outputs/2017-weather-data-2.rds")),
                           readRDS(here("data/outputs/2017-weather-data-3.rds"))))
                           
-# FILTER WEATHER DATA
+# filter weather data
 weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun",] # choose station for desired period of time
 weather <- weather[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
-
-# read in model simulation metadata
-model.runs <- fread(here("data/outputs/1D-heat-model-runs/20190121/20190121_model_runs_metadata.csv")) # 
-runs <- model.runs[run.n == 1 | RMSE != 0, run.n] # store all runs that are archived
+weather <- weather[date.time <= (min(date.time) + days(max(model.runs$n.days, na.rm = T))),] # trim to max range of dates observed in sim data
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
-should.plot <- "no" # "yes" or "no"
+should.plot <- "yes" # "yes" or "no"
 
 for(run in runs){
   tryCatch({  # catch and print errors, avoids stopping model run 
   
   # read simulation data
-  pave.time <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/20190121/run_",run,"_output.rds"))) # 20190121/
+  pave.time <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # 20190121/
   
   # record avg max temp and final day max temp at surface
   n.days <- model.runs$n.days[run]
-  model.runs[run.n == run, T.degC_Avg_Day_Max_0m := max(pave.time[node == 0, by = as.Date(date.time)])]
-  model.runs[run.n == run, T.degC_Fnl_Day_Max_0m := max(pave.time[node == 0 & as.Date(date.time) == max(as.Date(date.time))])]
+
+  model.runs[run.n == run, T.degC_Avg_Day_Max_0m := pave.time[node == 0, max(T.degC, na.rm = T), by = as.Date(date.time)][, mean(V1, na.rm = T)]]
+  model.runs[run.n == run, T.degC_Fnl_Day_Max_0m := pave.time[node == 0, max(T.degC, na.rm = T), by = as.Date(date.time)][.N - 1, V1]]
   
   # record Range and IQR for key depths
   model.runs[run.n == run, T.degC_Range_L1 := max(pave.time[layer == "surface", T.degC], na.rm = T) - min(pave.time[, T.degC], na.rm = T)]
@@ -71,7 +73,7 @@ for(run in runs){
   if(should.plot == "yes"){
     ## replicate Gui et al. Fig. 2 
     # depth temp
-    my.node <- quantile(pave.time$node, probs = .9)
+    my.node <- 0 #quantile(pave.time$node, probs = .9)
     p1.data <- pave.time[node == my.node]
     min.x <- min(p1.data$date.time, na.rm = T)
     max.x <- ceiling_date(max(weather$date.time, na.rm = T), unit = "hours")
@@ -124,7 +126,7 @@ for(run in runs){
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 
-
+write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata_stats.csv"), row.names = F) # output model run metadata
 
 # check pavement temperature quantiles at depths
 depths <- c(0,0.05,0.1,0.2,0.45)
@@ -135,15 +137,22 @@ for(depth in depths){
 }
 
 
-# tmax surface diff with mean starting temp
-model.runs[, paste0(rep(paste0("Tmax.dif"),n.days),1:n.days) := 0] 
-model.runs[, avg.i.T := (i.top.temp + i.bot.temp)/2]
+# min mean max by depth & date
+pave.time[, .(min.T = min(T.degC, na.rm = T),
+                 avg.T = mean(T.degC, na.rm = T),
+                 max.T = max(T.degC, na.rm = T)), by = depth.m]
+
+pave.time[, .(min.T = min(T.degC, na.rm = T),
+              avg.T = mean(T.degC, na.rm = T),
+              max.T = max(T.degC, na.rm = T)), by = as.Date(date.time)]
+                 
+
 
 # melt all temp max into data.table for easier plotting
-model.runs.tmax <- melt(model.runs[, .SD, .SDcols = c("run.n",paste0("Tmax",1:n.days))] , id.vars = "run.n")
-model.runs.tmin <- melt(model.runs[, .SD, .SDcols = c("run.n",paste0("Tmin",1:n.days))] , id.vars = "run.n")
-model.runs.tmax <- merge(model.runs.tmax, model.runs[, .(run.n, avg.i.T, pave.depth)], by = "run.n")
-model.runs.tmin <- merge(model.runs.tmin, model.runs[, .(run.n, avg.i.T, pave.depth)], by = "run.n")
+#model.runs.tmax <- melt(model.runs[, .SD, .SDcols = c("run.n",paste0("Tmax",1:n.days))] , id.vars = "run.n")
+#model.runs.tmin <- melt(model.runs[, .SD, .SDcols = c("run.n",paste0("Tmin",1:n.days))] , id.vars = "run.n")
+#model.runs.tmax <- merge(model.runs.tmax, model.runs[, .(run.n, avg.i.T, pave.depth)], by = "run.n")
+#model.runs.tmin <- merge(model.runs.tmin, model.runs[, .(run.n, avg.i.T, pave.depth)], by = "run.n")
 
 p.all <- (ggplot(data = model.runs.tmax, aes(x = variable, y = value, col = factor(avg.i.T), shape = factor(pave.depth)))
           + geom_point()
