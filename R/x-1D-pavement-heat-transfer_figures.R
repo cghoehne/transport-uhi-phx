@@ -103,13 +103,14 @@ for(run in runs){
            device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
     
     # Deviation (boxplot) of single scenario by nodes
-    p.node.box <- (ggplot(data = pave.time[depth.m < 0.3],
+    y.an <-  0.9 * ceiling(max(pave.time$T.degC, na.rm = T))
+    p.node.box <- (ggplot(data = pave.time[depth.m < (model.runs$L1.depth[run] + model.runs$L2.depth[run]) * 1.1],
                           aes(x = depth.m, y = T.degC, group = factor(depth.m)))
                    + geom_boxplot()
                    + geom_vline(xintercept = unique(pave.time[layer == "boundary" & depth.m != 0, depth.m]), linetype = "dotted")
-                   + annotate("text", label = "Layer 1: Surface", x = 0.05, y = 67.5)
-                   + annotate("text", label = "Layer 2: Base", x = 0.15, y = 67.5)
-                   + annotate("text", label = "Layer 3: Subbase", x = 0.25, y = 67.5)
+                   + annotate("text", label = "Layer 1: Surface", x = model.runs$L1.depth * 0.5, y = y.an, family = my.font)
+                   + annotate("text", label = "Layer 2: Base", x = model.runs$L1.depth + (model.runs$L2.depth * 0.5), y = y.an, family = my.font)
+                   #+ annotate("text", label = "Layer 3: Subbase", x = 0.25, y = y.an, family = my.font)
                    + labs(x = "Pavement Depth (m)", y = "Temperature (deg C)")
                    + theme_light()
                    + theme(text = element_text(family = my.font, size = 12),
@@ -145,8 +146,11 @@ pave.time[, .(min.T = min(T.degC, na.rm = T),
 pave.time[, .(min.T = min(T.degC, na.rm = T),
               avg.T = mean(T.degC, na.rm = T),
               max.T = max(T.degC, na.rm = T)), by = as.Date(date.time)]
-                 
+              
 
+################
+# BACKUP PLOTS #
+################
 
 # melt all temp max into data.table for easier plotting
 #model.runs.tmax <- melt(model.runs[, .SD, .SDcols = c("run.n",paste0("Tmax",1:n.days))] , id.vars = "run.n")
@@ -162,13 +166,8 @@ p.all <- (ggplot(data = model.runs.tmax, aes(x = variable, y = value, col = fact
           + theme(text = element_text(family = my.font, size = 12),
                   plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
                   axis.title.x = element_text(vjust = 0.3))
-          )
+)
 p.all
-
-
-################
-# BACKUP PLOTS #
-################
 
 # SURFACE TEMP PLOT
 
