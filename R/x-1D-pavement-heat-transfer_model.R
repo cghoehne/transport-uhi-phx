@@ -39,15 +39,24 @@ library(here)
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(3), # number of iterations to repeat each model run; 1,2,5,10,25
+               n.iterations = c(5), # number of iterations to repeat each model run; 1,2,5,10,25
                i.top.temp = c(33.5,30), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C
                time.step = c(120), # time step in seconds
-               pave.length = c(7.5), # characteristic length of pavement in meters
+               pave.length = c(7.5,50), # characteristic length of pavement in meters
                pave.depth = c(0.5), # depth to bottom boundary, [1] modeled to 3.048m.
                n.days = c(3), # number of days to simulate. note that the month defaults to June so 30 days is max 
-               L1.depth = c(0.1,0.11), # layer 1 depth in meters
-               L2.depth = c(0.1,0.11), # layer 2 depth in meters
+               L1.depth = c(0.1), # layer 1 depth in meters
+               L2.depth = c(0.1), # layer 2 depth in meters
+               k.L1 = c(0.5,2.2), # layer 1 thermal conductivity (W/(m*degK)) 1.21
+               k.L2 = c(1.21) ,# layer 2 thermal conductivity (W/(m*degK)) 
+               k.L3 = c(1.00), # layer 3 thermal conductivity (W/(m*degK))
+               rho.L1 = c(2500,1500), # layer 1 pavement density (kg/m3) 2238
+               rho.L2 = c(2238), # layer 2 pavement density (kg/m3) 
+               rho.L3 = c(1500), # layer 3 pavement density (kg/m3)
+               c.L1 = c(921,897), # layer 1 specific heat (J/(kg*degK)
+               c.L2 = c(921,897), # layer 2 specific heat (J/(kg*degK)
+               c.L3 = c(1900,800), # layer 3 specific heat (J/(kg*degK)
                #vary.albedo = c(0,1), # vary albedo diurnally? 1 = yes, 0 = no
                # albedo should vary from ~5am to 7pm (or when solar radiation is > 0)
                run.time = c(0), # initialize model run time (store at end of run)
@@ -140,10 +149,10 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
     
     # assign boundary labels
     pave.time[1, boundary := "1U"] # layer 1 Upper
-    pave.time[depth.m == model.runs$L1.depth & layer == "surface", boundary := "1L"] # layer 1 Lower
-    pave.time[depth.m == model.runs$L1.depth & layer == "base", boundary := "2U"] # layer 2 Upper
-    pave.time[depth.m == model.runs$L1.depth + model.runs$L2.depth & layer == "base", boundary := "2L"] # layer 2 Upper
-    pave.time[depth.m == model.runs$L1.depth + model.runs$L2.depth & layer == "subgrade", boundary := "3U"] # layer 3 Upper
+    pave.time[depth.m == model.runs$L1.depth[run] & layer == "surface", boundary := "1L"] # layer 1 Lower
+    pave.time[depth.m == model.runs$L1.depth[run] & layer == "base", boundary := "2U"] # layer 2 Upper
+    pave.time[depth.m == model.runs$L1.depth[run] + model.runs$L2.depth[run] & layer == "base", boundary := "2L"] # layer 2 Upper
+    pave.time[depth.m == model.runs$L1.depth[run] + model.runs$L2.depth[run] & layer == "subgrade", boundary := "3U"] # layer 3 Upper
     
     # static parameters for pavement heat transfer
     albedo <- 0.17 #  albedo (dimensionless) [1]; can be: 1 - epsilon for opaque objects
@@ -158,11 +167,11 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
     # L could vary, but minimum for a pavement should be 2 lanes, or about ~10 meters
     
     # parameters that vary by pavement layer
-    k	<- c("surface" = 1.21, "base" = 1.21, "subgrade" = 1.00) #  thermal conductivity (W/(m2*degK))
-    rho <- c("surface" = 2238, "base" = 2238, "subgrade" = 1500) #  pavement density (kg/m3);
-    c	<- c("surface" = 921, "base" = 921, "subgrade" = 1900) # specific heat (J/(kg*degK);
+    k	<- c("surface" = model.runs$k.L1[run], "base" = model.runs$k.L2[run], "subgrade" = model.runs$k.L3[run]) #  thermal conductivity (W/(m2*degK))
+    rho <- c("surface" = model.runs$rho.L1[run], "base" = model.runs$rho.L2[run], "subgrade" = model.runs$rho.L3[run]) #  pavement density (kg/m3);
+    c	<- c("surface" = model.runs$c.L1[run], "base" = model.runs$c.L2[run], "subgrade" = model.runs$c.L3[run]) # specific heat (J/(kg*degK);
     rho.c <- rho * c #  volumetric heat capacity (J/(m3 degK)); [1] concrete: ~2.07E6; ashpalt ~1.42E6 [6]
-    R.c <- c("1U" = NA, "1L" = 0, "2U" = 0, "2L" = 0.1, "3U" = 0.1, "no" = NA) # thermal contact resistance between layers [0,1], assume 0
+    R.c <- c("1U" = NA, "1L" = 0, "2U" = 0, "2L" = 0, "3U" = 0, "no" = NA) # thermal contact resistance between layers [0,1], assume 0
     alpha <- 4.0  # thermal diffusivity (m^2/s), typically range from 2 to 12; [1]. 
     # alpha ==  k / ( c * rho );thermal conductivity divided by density and specific heat capacity at constant pressure
     
@@ -221,7 +230,7 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
     for(iteration in iterations){
       for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
         
-        # for timestep p, store the pavement surface temperature at timestep p (in K)
+        # for the current timestep p, store the pavement surface temperature (in K) 
         T.s[p] <- pave.time[time.s == t.step[p] & node == 0, T.K]
         
         # for timestep p, calc the radiative coefficient based on parameters
@@ -230,11 +239,9 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
         # for timestep p, calc the surface heat transfer parameters (infrared radiation & convection)
         pave.time[time.s == t.step[p] & node == 0, q.rad := SVF * epsilon * sigma * ((T.s[p]^4) - (T.sky^4))] # infrared radiation heat transfer W/m2
         pave.time[time.s == t.step[p] & node == 0, q.cnv := h.inf * (T.s[p] - T.inf)] # convection heat transfer W/m2
-
-        # store a temporary data.table at this timestep to store and transfer all node calculations to master data.table .
-        # we do this because the 'shift' function does not work as needed within data.table subsets, 
-        # i.e. it does not refrence the immediately above or below node/timestep when subsetting in data.table.
-        # this way 'shift' works as expected because the subset data.table is only the relevant ordered data for the current timestep.
+        
+        # store a temporary data.table at this timestep to store and transfer all node calculations to master data.table.
+        # we do this because the 'shift' function is troublesome within data.table subsets so this is safer
         tmp <- pave.time[time.s == t.step[p]] 
         
         # for timestep p+1, calc the surface pavement temperature based on parameters at timestep p
@@ -246,7 +253,7 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
                       + (k["surface"] * (tmp[node == 1, T.K] - T.s[p]) / delta.x)) # plus conduction
                      * (2 * delta.t / (rho.c["surface"] * delta.x)))] # all multiplied by the proportional change in temp per change in depth 
         
-        # calculate interior nodes at timestep p+1 (non-boundary/non-interface nodes)
+        # calculate interior nodes at current timestep p (non-boundary/non-interface nodes) and store into timestep p+1
         tmp[, T.C.i := 
               ((k.m * delta.t / (rho.c.m * (delta.x^2))) 
                * (tmp[, shift(T.K, type = "lag")]  # T at node m-1 and p
@@ -254,30 +261,30 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
                   - 2 * tmp[, T.K])) + tmp[, T.K]] # T at node m and p
         pave.time[time.s == t.step[p+1] & node != 0 & node != max(node), T.K := 
                     tmp[node != 0 & node != max(node), T.C.i]]
+        pave.time[time.s == t.step[p+1] & node == max(node), T.K := pave.time[time.s == t.step[p+1] & node == max(node)-1, T.K]] # make last node m-1 T
         
-        # calculate the heat flux at time p for all nodes
+        # calculate the heat flux at time p for all nodes (use for estimating boundary temps)
         tmp[, up.flux := # heat flux from above node m-1 in w/m2; negative is downward flux, positive is upward (positive flow "from.up")
               ((k.m / x.up) * (tmp[, T.K] # T at node m and p
                                - tmp[, shift(T.K, type = "lag")]))]  # T at node m-1 and p
-
+        
         tmp[, dn.flux := # heat flux from below node m+1 in w/m2; negative is downward flux, positive is upward (positive flow "to.below")
               ((k.m / x.dn) * (tmp[, T.K] # T at node m and p
                                - tmp[, shift(T.K, type = "lead")]))] # T at node m+1 and p
         
         # fix infinite resutls from dividing by 0 in dual boundary node cases to NA,
-        # so that flux through the boundary is only provide once in each direction
+        # so that flux through the boundary is only provide once in each direction (just in case)
         tmp[!is.finite(up.flux), up.flux := NA]
         tmp[!is.finite(dn.flux), dn.flux := NA]
         
-        # store heat fluxes into pave.time
-        pave.time[time.s == t.step[p+1], h.flux.up := tmp[, up.flux]]
-        pave.time[time.s == t.step[p+1], h.flux.dn := tmp[, dn.flux]]
+        # store heat fluxes into pave.time at time p
+        pave.time[time.s == t.step[p], h.flux.up := tmp[, up.flux]]
+        pave.time[time.s == t.step[p], h.flux.dn := tmp[, dn.flux]]
         
-        # calculate boundary/interface nodes at timestep p+1 by solving for both cases of R.c zero and non-zero then choose correct values
-        
+        # calculate boundary/interface nodes at current timestep p by solving for both cases of R.c zero and non-zero then choose correct values
         # solution for non-zero layer resistance (R.c != 0)
         tmp[, T.C.b.l_n0 :=
-              ((R.c.m * (-up.flux + tmp[, shift(dn.flux, type = "lead")])) # flux through interface; negative is downward flux. lead = m+1
+              ((R.c.m * (up.flux - tmp[, shift(dn.flux, type = "lead")])) # flux through interface; negative is downward flux. lead = m+1
                + tmp[, shift(T.K, type = "lag")] # lag = m-1 (above node)
                - (tmp[, shift(T.K, n = 2, type = "lead")] # lead = node m+2 (skip boundary node below at same depth)
                   * (tmp[, shift(k.dn, type = "lead")] # lead = node m+2 (skip boundary node below at same depth)
@@ -285,7 +292,7 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
             * k.up * tmp[, shift(x.dn, type = "lead")]  # lead = node m+2 (skip boundary node below at same depth)
             / ((k.up * tmp[, shift(x.dn, type = "lead")]) - (tmp[, shift(k.dn, type = "lead")] * x.up))]
         
-        tmp[, T.C.b.u_n0 := (R.c.m * (-tmp[, shift(up.flux, type = "lag")] + dn.flux)) + tmp[, shift(T.C.b.l_n0, type = "lag")]] # solve for other node at interface with R.c
+        tmp[, T.C.b.u_n0 := (R.c.m * (tmp[, shift(up.flux, type = "lag")] - dn.flux)) + tmp[, shift(T.C.b.l_n0, type = "lag")]] # solve for other node at interface with R.c
         
         # solution for zero layer resistance (R.c == 0)
         tmp[, T.C.b.l :=  # only need to calc either the up or down boundary, both are same in this case
@@ -297,14 +304,14 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
         
         tmp[, T.C.b.u := tmp[, shift(T.C.b.l, type = "lag")]] # upper == lower T at interface/boundaries (R.c == 0 only)
         
-        # store non-zero R.c interface temps
+        # adjust non-zero R.c interface temps
         pave.time[time.s == t.step[p+1] & boundary %in% int.nodes.l & R.c.m != 0, T.K := tmp[boundary %in% int.nodes.l & R.c.m != 0, T.C.b.l_n0]]
         pave.time[time.s == t.step[p+1] & boundary %in% int.nodes.u & R.c.m != 0, T.K := tmp[boundary %in% int.nodes.u & R.c.m != 0, T.C.b.u_n0]]
         
-        # store zero R.c interface temps
+        # adjust zero R.c interface temps
         pave.time[time.s == t.step[p+1] & boundary %in% int.nodes.l & R.c.m == 0, T.K := tmp[boundary %in% int.nodes.l & R.c.m == 0, T.C.b.l]]
         pave.time[time.s == t.step[p+1] & boundary %in% int.nodes.u & R.c.m == 0, T.K := tmp[boundary %in% int.nodes.u & R.c.m == 0, T.C.b.u]]
-
+  
       } # end time step p, go to time p+1
       
       # if the iteration is not the last iteration and all pavement temp values in the timestep N days in the future are finite, then
@@ -320,7 +327,7 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
     # once model iteration are complete, some housekeeping:
     pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
     pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step (not calculated). timesteps were given such that p.n-1 is the final weather obs
-    pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # Temp at time and node difference from 3 day mean, use for RMSE
+    #pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # Temp at time and node difference from 3 day mean, use for RMSE
     saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
     model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
     

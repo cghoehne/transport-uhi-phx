@@ -32,7 +32,6 @@ my.font <- "Century"
 
 # load model simulation metadata
 model.runs <- fread(here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv")) # 20190121/20190121_
-runs <- model.runs[run.n == 1 | RMSE != 0, run.n] # store all runs that are archived
 
 # load weather data
 #weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # sample 3 day period of weather data
@@ -50,7 +49,7 @@ weather <- weather[date.time <= (min(date.time) + days(max(model.runs$n.days, na
 # and summaring/ploting as necessary
 should.plot <- "yes" # "yes" or "no"
 
-for(run in runs){
+for(run in 1:max(model.runs$run.n)){
   tryCatch({  # catch and print errors, avoids stopping model run 
   
   # read simulation data
@@ -77,8 +76,8 @@ for(run in runs){
     p1.data <- pave.time[node == my.node]
     min.x <- min(p1.data$date.time, na.rm = T)
     max.x <- ceiling_date(max(weather$date.time, na.rm = T), unit = "hours")
-    min.y <- 20 #signif(min(p1.data[, T.degC]) - (0.1 * diff(range(p1.data[, T.degC]))),4)
-    max.y <- 80 #ceiling(signif(max(p1.data[, T.degC]) + (0.1 * diff(range(p1.data[, T.degC]))),4))
+    min.y <- round(signif(min(p1.data[, T.degC]) - (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
+    max.y <- round(signif(max(p1.data[, T.degC]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
     
     p1 <- (ggplot(data = p1.data) # weather
            + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
@@ -103,14 +102,15 @@ for(run in runs){
            device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
     
     # Deviation (boxplot) of single scenario by nodes
-    y.an <-  0.9 * ceiling(max(pave.time$T.degC, na.rm = T))
-    p.node.box <- (ggplot(data = pave.time[depth.m < (model.runs$L1.depth[run] + model.runs$L2.depth[run]) * 1.1],
+    int.nodes <- c("1L","2U","2L","3U") # to mark the boundaries
+    max.depth <- (model.runs$L1.depth[run] + model.runs$L2.depth[run]) * 1.5
+    p.node.box <- (ggplot(data = pave.time[depth.m < max.depth],
                           aes(x = depth.m, y = T.degC, group = factor(depth.m)))
                    + geom_boxplot()
-                   + geom_vline(xintercept = unique(pave.time[layer == "boundary" & depth.m != 0, depth.m]), linetype = "dotted")
-                   + annotate("text", label = "Layer 1: Surface", x = model.runs$L1.depth * 0.5, y = y.an, family = my.font)
-                   + annotate("text", label = "Layer 2: Base", x = model.runs$L1.depth + (model.runs$L2.depth * 0.5), y = y.an, family = my.font)
-                   #+ annotate("text", label = "Layer 3: Subbase", x = 0.25, y = y.an, family = my.font)
+                   + geom_vline(xintercept = unique(pave.time[boundary %in% int.nodes & depth.m != 0, depth.m]), linetype = "dotted")
+                   + annotate("text", label = "Layer 1: \nSurface", x = model.runs$L1.depth[run] * 0.5, y = 0.9 * max.y, family = my.font)
+                   + annotate("text", label = "Layer 2: \nBase", x = model.runs$L1.depth[run] + (model.runs$L2.depth[run] * 0.5), y =  0.9 * max.y, family = my.font)
+                   + annotate("text", label = "Layer 3: \nSubbase", x = max.depth - (max.depth - model.runs$L1.depth[run] - model.runs$L2.depth[run])/2, y = 0.9 * max.y, family = my.font)
                    + labs(x = "Pavement Depth (m)", y = "Temperature (deg C)")
                    + theme_light()
                    + theme(text = element_text(family = my.font, size = 12),
