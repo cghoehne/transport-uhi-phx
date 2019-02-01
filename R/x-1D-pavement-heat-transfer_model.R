@@ -8,28 +8,28 @@ gc()
 memory.limit(size = 56000) 
 script.start <- Sys.time() # start script timestamp
 
-# in case we need to revert or packages are missing
-#if (!require("here")){install.packages("here")}
-#if (!require("checkpoint")){install.packages("checkpoint")}
+# first make sure checkpoint is installed locally
+# this is the only package that is ok to not use a 'checkpointed' (i.e. archived version of a package)
+# checkpoint does not archive itself and it should not create dependency issues
+if (!require("checkpoint")){
+  install.packages("checkpoint")
+  library(checkpoint)
+  }
 
-# load checkpoint package to insure you call local package dependcies
-library(checkpoint)
-#checkpoint("2019-01-17") # static checkpoint
+# load all other dependant packages from the local repo
+lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
+library(mailR, lib.loc = lib.path)
+library(zoo, lib.loc = lib.path)
+library(lubridate, lib.loc = lib.path)
+library(data.table, lib.loc = lib.path)
+library(here, lib.loc = lib.path)
 
 # archive/update snapshot of packages at checkpoint date
 checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday
            R.version = "3.5.1", # will only work if using the same version of R
-           checkpointLocation = here::here(), # calls here package
+           checkpointLocation = here(), # calls here package
            verbose = F) 
 #checkpointRemove(Sys.Date() - 1, allUntilSnapshot = TRUE, here::here()) # this removes all previous checkpoints before today
-
-# load dependant packages
-library(mailR)
-library(zoo)
-library(lubridate)
-library(data.table)
-library(here)
-
 
 ## SPECIFY MODEL RUN SCENARIOS & PARAMETERS 
 # useful for evaluating  mulitple types of pavement scenarios and model senstivity in a batch of simulations
@@ -44,19 +44,19 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C
                time.step = c(120), # time step in seconds
                pave.length = c(7.5,50), # characteristic length of pavement in meters
-               pave.depth = c(0.5), # depth to bottom boundary, [1] modeled to 3.048m.
+               pave.depth = c(3.048), # depth to bottom boundary, [1] modeled to 3.048m.
                n.days = c(3), # number of days to simulate. note that the month defaults to June so 30 days is max 
                L1.depth = c(0.1), # layer 1 depth in meters
                L2.depth = c(0.1), # layer 2 depth in meters
-               k.L1 = c(0.5,2.2), # layer 1 thermal conductivity (W/(m*degK)) 1.21
+               k.L1 = c(1.21), # layer 1 thermal conductivity (W/(m*degK)) 1.21
                k.L2 = c(1.21) ,# layer 2 thermal conductivity (W/(m*degK)) 
                k.L3 = c(1.00), # layer 3 thermal conductivity (W/(m*degK))
-               rho.L1 = c(2500,1500), # layer 1 pavement density (kg/m3) 2238
+               rho.L1 = c(2238), # layer 1 pavement density (kg/m3) 2238
                rho.L2 = c(2238), # layer 2 pavement density (kg/m3) 
                rho.L3 = c(1500), # layer 3 pavement density (kg/m3)
-               c.L1 = c(921,897), # layer 1 specific heat (J/(kg*degK)
-               c.L2 = c(921,897), # layer 2 specific heat (J/(kg*degK)
-               c.L3 = c(1900,800), # layer 3 specific heat (J/(kg*degK)
+               c.L1 = c(921), # layer 1 specific heat (J/(kg*degK)
+               c.L2 = c(921), # layer 2 specific heat (J/(kg*degK)
+               c.L3 = c(1900), # layer 3 specific heat (J/(kg*degK)
                #vary.albedo = c(0,1), # vary albedo diurnally? 1 = yes, 0 = no
                # albedo should vary from ~5am to 7pm (or when solar radiation is > 0)
                run.time = c(0), # initialize model run time (store at end of run)
@@ -327,7 +327,8 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
     # once model iteration are complete, some housekeeping:
     pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
     pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step (not calculated). timesteps were given such that p.n-1 is the final weather obs
-    #pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # Temp at time and node difference from 3 day mean, use for RMSE
+    pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # Temp at time and node difference from 3 day mean, use for RMSE
+    dir.create(here("data/outputs/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
     saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
     model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
     
