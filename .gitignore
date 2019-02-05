@@ -33,3 +33,5 @@ data/daymet/*
 
 data/outputs/1D-heat-model-runs/*
 figures/1D-heat-model-runs/*
+
+figures/landsat/*

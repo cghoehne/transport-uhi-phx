@@ -98,6 +98,7 @@ for(run in 1:max(model.runs$run.n)){
                    plot.title = element_text(hjust = 0.75)))
     
     # save plot
+    dir.create(here("figures/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
     ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
            device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
     
