@@ -22,19 +22,14 @@ email.txt
 data/daymet/*
 !data/daymet/.gitkeep 
 
-data\outputs\1D-heat-model-runs/*
-!data\outputs\1D-heat-model-runs/.gitkeep 
+data/landsat/*
+!data/landsat/.gitkeep 
 
 data/outputs/temp/*
 !data/outputs/temp/.gitkeep 
 
-
 data/daymet/*
 !data/daymet/.gitkeep 
 
-# ignore 1D-heat-model runs (figs & data)
 data/outputs/1D-heat-model-runs/*
 figures/1D-heat-model-runs/*
-
-# packrat ignore
-packrat/lib*/

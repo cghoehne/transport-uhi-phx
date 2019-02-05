@@ -1,23 +1,15 @@
-Location,X,Y,Descrip,trees,other.green,other.shade
-A1,-112.157072,33.606754,asphalt parking lot; 100m by 180m,none,none,none
-A2,-112.227425,33.640428,"asphalt parking lot; 100m by 100m; irregular shape; Glendale Arrowhead Mall, southwest lot",low,none,low; building one side
-A3,-111.881101,33.631816,asphalt parking lot; 300m by 140m; low use; West World of Scottsdale,none,none,none
-A4,-112.05754,33.440295,asphalt parking lot; 300m by 140m;,none,none,none
-,,,,,,
-,,,,,,
-,,,,,,
-B1,-112.153271,33.608759,bare ground/dirt lot; 600m by 300m,none,none,none
-B2,,,,,,
-B3,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-C1,-112.04495,33.433293,concrete parking lot; 100m by 100m; moderate use towards east side of lot,low; near edges,low; near edges,"low; building one side, two tents"
-C2,-111.853764,33.282862,concrete parking lot; 100m by 100m; no to moderate use depending on day; church,,,
-C3,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-M1,,,,,,
-M2,,,,,,
-M3,,,,,,
+Location,X,Y,dom.type,Descrip,trees,other.green,other.shade
+A1,-112.157072,33.606754,asphalt,asphalt parking lot; 100m by 180m,none,none,none
+A2,-112.227425,33.640428,asphalt,"asphalt parking lot; 100m by 100m; irregular shape; Glendale Arrowhead Mall, southwest lot",low,none,low; building one side
+A3,-111.881101,33.631816,asphalt,asphalt parking lot; 300m by 140m; low use; West World of Scottsdale,none,none,none
+A4,-112.05754,33.440295,asphalt,asphalt parking lot; 300m by 140m;,none,none,none
+A5,-112.028267,33.433527,asphalt,asphalt tarmac,none,none,none
+A6,-112.258155,33.52847,asphalt,"asphalt parking lot; U Phx Stadium; East part finished by late 2016, unfinished dirt early 2016 ",low,low,none
+B1,-112.153271,33.608759,bare ground,bare ground/dirt lot; 600m by 300m,none,none,none
+B2,-112.095158,33.41734,bare ground,bare ground/dirt lot; 1000m by 700m; 1-5% paved paths,,low,none
+B3,-112.385565,33.432938,bare ground,bare ground/dirt; 700m by 450m,none,medium,none
+C1,-112.04495,33.433293,concrete,concrete parking lot; 100m by 100m; moderate use towards east side of lot,low; near edges,low; near edges,"low; building one side, two tents"
+C2,-111.853764,33.282862,concrete,concrete (or light asphalt) parking lot; 100m by 100m; no to moderate use depending on day; church,,,
+C3,112.492907,33.793523,concrete,"likely concrete, brushed; Arizona Proving Ground (Wittmann, Arizona) formerly owned by Chrystler",none,none,none
+C4,-112.017517,33.424793,concrete,concrete tarmac;  270m by 500m; Phoenix Sky Harbor international airport,none,none,none
+M1,-111.890077,33.480361,mixed,"mixed materials; concrete, asphalt, and bare ground/dirt; 101 and Thomas interchange in Scottsdale",none,none,none
