@@ -72,7 +72,7 @@ st.tile.list <- lapply(1:length(st.tiles), function (x)
 # and under it is the stacked geotifs. e.g. to refrence 1st day 2nd layer/band: stack[[1]][[2]]
 st.tile.stack <- lapply(st.tile.list, stack)
 
-# load tile metadata (all available tiles of Phx metro in 2016)
+# load tile metadata (all intersecting tiles of Phoenix metro in Landsat 7 & 8 since May 1st 2013 to Dec 31st 2018)
 tile.metadata <- fread(here("data/landsat/tile-metadata.csv"), check.names = T)
 
 # filter metadata to tiles downloaded
@@ -105,8 +105,6 @@ for(r in 1:length(st.tile.stack)){
 
 ## PLOTTING of LANDSAT DATA
 
-
-
 # get Phoenix Urbanized Area (UZA) data and match projection to overlay UZA boundary on plots
 longlat.prj <- "+proj=longlat +datum=WGS84 +units=m +ellps=WGS84 +towgs84=0,0,0" # lat lon projection that matches Landsat
 
@@ -122,21 +120,26 @@ uza.bbox <- bbox(uza.bbox)
 uza.buffer.prj <- spTransform(uza.buffer, crs(st.tile.stack[[1]]))
 uza.border.prj <- spTransform(uza.border, crs(st.tile.stack[[1]]))
 
+# merge the tiles into one
+#tiles.m <- do.call(merge, c(tiles.raw, tolerance = 1))
+
 # crop the merged tiles by the projected uza buffer
 #tiles.mc <- crop(tiles.m, uza.buffer.prj)
 
-
+# set the extent options for tmap to handle the large raster size
 tmap_options(max.raster = c(plot = 2.5e+07, view = 2.5e+07))
 
 # loop through all raster stacks and create surface temperature plots
 for(s in 1:length(st.tile.stack)){
   tryCatch({  # catch and print errors, avoids stopping model run 
-  tile.crop <- crop(st.tile.stack[[s]][[9]], uza.buffer.prj)
+  tile.crop <- crop(st.tile.stack[[s]][[9]], uza.buffer.prj) # crop to uza buffered extent
   
+  # create labels for plot
   my.date <- ymd(substr((names(tile.crop)), 16, 23))
   my.sat <- paste0("Landsat ",substr((names(tile.crop)), 4, 4))
   my.tile <- paste0("Tile ", substr((names(tile.crop)), 9, 14))
   
+  # create plot
   plot.1 <- tm_shape(tile.crop) + 
     tm_raster(palette = rev(heat.colors(40)),
               style = "cont",
@@ -155,8 +158,25 @@ for(s in 1:length(st.tile.stack)){
               title.position = c(0.08,0.08))
   
   dir.create(here("figures/landsat/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-  tmap_save(plot.1, filename = here(paste0("figures/landsat/", names(tile.crop),".png"))) #width = 3509, height = 2482
+  tmap_save(plot.1, filename = here(paste0("figures/landsat/", names(tile.crop),".png"))) # save plot
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
+
+# Landsat approximate pass times
+# Landsat 8 North America: https://www.ssec.wisc.edu/datacenter/LANDSAT-8/archive/NA/
+# Landsat 7 North America: https://www.ssec.wisc.edu/datacenter/LANDSAT-7/archive/NA/
+
+# tile 007013
+# 2016-01-02: 18:04 UTC or 11:04 am local time
+# 2016-01-11: 17:58 UTC or 10:58 am local time
+# 2016-06-19: 17:58 UTC or 10:58 am local time
+
+
+
+
+
+
+
+
 
 
