@@ -24,6 +24,7 @@ if (!require("checkpoint")){
 # load all other dependant packages from the local repo
 lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
 library(mailR, lib.loc = lib.path)
+library(RColorBrewer, lib.loc = lib.path)
 library(zoo, lib.loc = lib.path)
 library(lubridate, lib.loc = lib.path)
 library(sp, lib.loc = lib.path)
@@ -126,11 +127,14 @@ uza.border.prj <- spTransform(uza.border, crs(st.tile.stack[[1]]))
 # crop the merged tiles by the projected uza buffer
 #tiles.mc <- crop(tiles.m, uza.buffer.prj)
 
-# set the extent options for tmap to handle the large raster size
-tmap_options(max.raster = c(plot = 2.5e+07, view = 2.5e+07))
+
+# set plot options
+tmap_options(max.raster = c(plot = 2.5e+07, view = 2.5e+07)) # expand max extent of raster for tmap
+my.palette <- rev(RColorBrewer::brewer.pal(11, "Spectral")) # color palette
+#my.palette <- rev(heat.colors(40))
 
 # loop through all raster stacks and create surface temperature plots
-for(s in 1:length(st.tile.stack)){
+for(s in 1:length(st.tile.stack)){ #
   tryCatch({  # catch and print errors, avoids stopping model run 
   tile.crop <- crop(st.tile.stack[[s]][[9]], uza.buffer.prj) # crop to uza buffered extent
   
@@ -141,7 +145,7 @@ for(s in 1:length(st.tile.stack)){
   
   # create plot
   plot.1 <- tm_shape(tile.crop) + 
-    tm_raster(palette = rev(heat.colors(40)),
+    tm_raster(palette = my.palette,
               style = "cont",
               title = "Surface Temperature \n(deg C)") +
     tm_shape(uza.border.prj) +
