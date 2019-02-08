@@ -34,32 +34,62 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # useful for evaluating  mulitple types of pavement scenarios and model senstivity in a batch of simulations
 
 # specify layer profiles as list of data.tables 
+# note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
+# if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
-  data.table(
+  data.table( # light weight asphalt layer 1
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 0.5 - 0.1 - 0.1), # layer thickness (m)
-    k = c(1.21, 1.21, 1), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2238, 2000, 1500), # layer density (kg/m3)
+    thickness = c(0.1, 0.1, 0.3), # layer thickness (m)
+    k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(1686, 2000, 1500), # layer density (kg/m3)
     c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  ),
-  data.table(
-    layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.11, 0.5 - 0.1 - 0.11), # layer thickness (m)
-    k = c(1.21, 1.21, 1), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2238, 2000, 1500), # layer density (kg/m3)
-    c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-    R.c.top = c(NA,0.01,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
+  ,data.table( # normal weight asphalt layer 1,
+    layer = c("surface","base","subgrade"),
+    thickness = c(0.075, 0.10, 0.3), # layer thickness (m)
+    k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2585, 2000, 1400), # layer density (kg/m3)
+    c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
+  #,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
+  #  layer = c("surface","base","subgrade"),
+  #  thickness = c(0.1, 0.2, 0.3), # layer thickness (m)
+  #  k = c(0.2, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
+  #  rho = c(1094, 1111, 1400), # layer density (kg/m3)
+  #  c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+  #  R.c.top = c(NA,5.0E-4,0) # thermal contact resistance at top boundary of layer (dimensionless) 
+  #)
 )
+
+# The specific heat of dense-graded asphalt and concrete are very similar [7]
+
+# for Phoenix City streets, the following are provided as minimum thicknesses for asphaltic concrete and base materials:
+# Arterial: 152.4 mm (6in)
+# Major Collector Street: 114.3 mm (4.5 in)
+# Residential Collector Street: 76.2 mm (3 in)
+# Local Street: 50.8 mm (2 in)
+
+# Base materials may not be required for full depth asphaltic concrete design. 
+# However, if base materials are required, then the minimum thickness will be: 152.4 mm (6in) for all base material types
+
+# Design structural number (SN) can be converted to thickness of various flexible pavement layers by using structural layer coefficients.
+# In the absence of specific values, the following structural coefficients are recommended: 
+# Asphaltic concrete 0.39
+# Aggregate base 0.12
+# Select material 0.11
+# Cement treated base 0.27
+# Bituminous Treated Base 0.31 
 
 # create list of models to run with varied inputs to check sentivity/error
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
-               nodal.spacing = c(12.5),# nodal spacing in millimeters
+               nodal.spacing = c(5,10,12.5),# nodal spacing in millimeters
                n.iterations = c(2), # number of iterations to repeat each model run; 1,2,5,10,25
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C
@@ -72,6 +102,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
 model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1) # create run number id
 model.runs[,`:=`(run.time = 0, RMSE = 0, CFL_fail = 0)] # create output model run summary variables
+model.runs[, ref := min(run.n), by = layer.profile] # create refrence model for each unique layer profile (defaults to first scenario of parameters)
 model.runs[,.N] # total runs
 
 # LOAD & FILTER WEATHER DATA 
@@ -259,8 +290,8 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
         # calculate interior nodes at current timestep p (non-boundary/non-interface nodes) and store into timestep p+1
         tmp[, T.C.i := 
               ((k * delta.t / (rho.c * (delta.x^2))) 
-               * (tmp[, shift(T.K, type = "lag")]  # T at node m-1 and p
-                  + tmp[, shift(T.K, type = "lead")] # T at node m+1 and p
+               * (tmp[, shift(T.K, type = "lag")]  # T at node m-1 (above) and p
+                  + tmp[, shift(T.K, type = "lead")] # T at node m+1 (below) and p
                   - 2 * tmp[, T.K])) + tmp[, T.K]] # T at node m and p
         
         pave.time[time.s == t.step[p+1] & node != 0 & node != max(node), T.K := 
@@ -271,11 +302,11 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
         # calculate the heat flux at time p for all nodes (use for estimating boundary temps)
         tmp[, up.flux := # heat flux to/from above node m-1 in w/m2; negative is downward flux (into m from m-1), positive is upward (out of m to m-1)
               ((k / x.up) * (tmp[, T.K] # T at node m and p
-                               - tmp[, shift(T.K, type = "lag")]))]  # T at node m-1 and p
+                               - tmp[, shift(T.K, type = "lag")]))]  # T at node m-1 (above) and p
         
         tmp[, dn.flux := # heat flux from below node m+1 in w/m2; negative is downward flux (out of m to m-1), positive is upward (out of m to m-1)
               ((k / x.dn) * (tmp[, T.K] # T at node m and p
-                               - tmp[, shift(T.K, type = "lead")]))] # T at node m+1 and p
+                               - tmp[, shift(T.K, type = "lead")]))] # T at node m+1 (below) and p
         
         # fix infinite resutls from dividing by 0 in dual boundary node cases to NA,
         # so that flux through the boundary is only provide once in each direction (just in case)
@@ -286,43 +317,34 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
         pave.time[time.s == t.step[p], h.flux.up := tmp[, up.flux]]
         pave.time[time.s == t.step[p], h.flux.dn := tmp[, dn.flux]]
         pave.time[time.s == t.step[p] & node == 0, h.flux.up := ((1 - albedo) * tmp[node == 0, solar]) - q.rad[p] - q.cnv[p]] # incoming solar radiation minus outgoing convection and radiation
-        pave.time[time.s == t.step[p] & node == 0, h.flux.dn := tmp[, shift(up.flux, type = "lead")][1]] # conduction from below node
+        pave.time[time.s == t.step[p] & node == 0, h.flux.dn := tmp[, shift(up.flux, type = "lead")][1]] # conduction from node m+1 (below node)
         
         # calculate boundary/interface nodes at current timestep p by solving for both cases of R.c zero and non-zero then choose correct values
         # because boundary/interface is treated as one node, need to calc both interface temperatures (upper and lower layer T's)
         # for temp at boundary/interface node, just use average of upper and lower T 
         
-        # solution for non-zero layer resistance (R.c != 0)
-        
-        # first calc upper and lower boundary temps
+        # solution for non-zero layer resistance (R.c != 0, therfore upper and lower boundary temps are different)
         tmp[, T.C.b.l_n0 :=
-              ((R.c * (tmp[, shift(up.flux, type = "lag")] - tmp[, shift(dn.flux, type = "lead")])) # flux through interface; negative is downward flux. lead = m+1
+              ((R.c * (tmp[, shift(dn.flux, type = "lead")] - tmp[, shift(up.flux, type = "lag")])) # flux through interface; negative is downward flux. lead = m+1
                + tmp[, shift(T.K, type = "lag")] # lag = m-1 (above node)
-               - (tmp[, shift(T.K, type = "lead")] # lead = node m+2 (skip boundary node below at same depth)
-                  * (tmp[, shift(k.dn, type = "lead")] # lead = node m+2 (skip boundary node below at same depth)
-                     * x.up / k.up / tmp[, shift(x.dn, type = "lead")]))) # lead = node m+2 (skip boundary node below at same depth)
-            * k.up * tmp[, shift(x.dn, type = "lead")]  # lead = node m+2 (skip boundary node below at same depth)
-            / ((k.up * tmp[, shift(x.dn, type = "lead")]) - (tmp[, shift(k.dn, type = "lead")] * x.up))]
+               - (tmp[, shift(T.K, type = "lead")] # lead = m+1 (below node)
+                  * (k.dn * x.up / k.up / x.dn))) 
+            * k.up * x.dn / ((k.up * x.dn) - (k.dn * x.up))]
         
-        tmp[, T.C.b.u_n0 := (R.c * (tmp[, shift(up.flux, type = "lag")] - dn.flux)) + tmp[, shift(T.C.b.l_n0, type = "lag")]] # solve for other node at interface with R.c
+        # solve for other node at interface with R.c
+        tmp[, T.C.b.u_n0 := (R.c * (tmp[, shift(dn.flux, type = "lead")] - tmp[, shift(up.flux, type = "lag")])) + tmp[, shift(T.C.b.l_n0, type = "lag")]] 
         
-        # solution for zero layer resistance (R.c == 0)
-        tmp[, T.C.b.l :=  # only need to calc either the up or down boundary, both are same in this case
-              (((k.up / tmp[, shift(k.dn, type = "lead")]) * # shift down one more for k.dn at m+2 (skip boundary node below at same depth)
-                  (tmp[, shift(x.dn, type = "lead")] / x.up) * # shift down one more for x.dn at m+2 (skip boundary node below at same depth)
-                  tmp[, shift(T.K, type = "lag")])  # T at node m-1 and p
-               + tmp[, shift(T.K, n = 2, type = "lead")]) # T at node m+2 and p (skip boundary node below at same depth)
-            / (1 + ((k.up / tmp[, shift(k.dn, type = "lead")]) * (tmp[, shift(x.dn, type = "lead")] / x.up)))]
+        # solution for zero layer resistance (R.c == 0 therefore upper layer interface T == lower layer interface T)
+        tmp[, T.C.b :=
+              (((k.up / k.dn) * (x.dn / x.up) * tmp[, shift(T.K, type = "lag")]) 
+               + tmp[, shift(T.K, type = "lead")])
+            / (1 + ((k.up / k.dn) * (x.dn / x.up)))]
+              
+        # store any non-zero R.c interface temps (assume single boundary node is the average of the upper and lower layer interface temps)
+        pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c != 0, T.K := tmp[node %in% boundary.nodes & R.c != 0, (T.C.b.l_n0 + T.C.b.u_n0) / 2]]
         
-        tmp[, T.C.b.u := tmp[, shift(T.C.b.l, type = "lag")]] # upper == lower T at interface/boundaries (R.c == 0 only)
-        
-        # adjust non-zero R.c interface temps
-        pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c != 0, T.K := tmp[node %in% boundary.nodes & R.c != 0, T.C.b.l_n0]]
-        pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c != 0, T.K := tmp[node %in% boundary.nodes & R.c != 0, T.C.b.u_n0]]
-        
-        # adjust zero R.c interface temps
-        pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c == 0, T.K := tmp[node %in% boundary.nodes & R.c == 0, T.C.b.l]]
-        pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c == 0, T.K := tmp[node %in% boundary.nodes & R.c == 0, T.C.b.u]]
+        # store any zero R.c interface temps
+        pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c == 0, T.K := tmp[node %in% boundary.nodes & R.c == 0, T.C.b]]
   
       } # end time step p, go to time p+1
       
@@ -332,7 +354,7 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
          all(is.finite(pave.time[date.time == min(date.time) + days(model.runs$n.days[run]), T.K]))){
         pave.time[time.s == 0, T.K := 
                     pave.time[date.time == min(date.time) + days(model.runs$n.days[run]), T.K]]
-      }
+      } 
       
     } # end model iteration and continue to next 
     
@@ -344,13 +366,13 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
     saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
     model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
     
-    # if the run is the first run (defualt to validate other runs against), store it as the reference run
-    if(run == 1){
+    # if the run is a reference run (first run of a unique layer profile scheme), store it as the reference run for other scenarios under the same layer profile scheme
+    if(run == model.runs[run.n == run, ref]){
       pave.time.ref <- pave.time
     }
     
-    # if run isn't first run, then store RSME compared to run 1 (validated run for comparison)
-    if(run != 1){ # if the model isn't the refrence run
+    # if run isn't a reference run, then store RSME compared to the appropriate ref run
+    if(run != model.runs[run.n == run, ref]){ # if the model isn't the refrence run
       model.runs$RMSE[run] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean] - 
                                            pave.time.ref[pave.time, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean])^2))
     } # note that RMSE is mean centered temperature across all nodes and timesteps.
@@ -365,19 +387,14 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
       v <- vector(mode = "numeric", length = length(h.rad)) # first create empty vectors to store of min allowed change in time (RHS of eqn 13 from [1])
       for(a in 1:length(h.rad)){ # calc values for CFL check for each timestep (RHS eqn. 13 in [1])
         v[a] <- (layer.dt$rho.c[layer.i] * (delta.x^2)) / (2 * (h.rad[a] * delta.x + h.inf[a] * delta.x + layer.dt$k[layer.i])) # in seconds
-      }
-      #assign(paste0("t.delta.min.L", layer.i), v)
+        }
       layer.dt[layer.i, min.delta.t := min(v, na.rm = T)]
+      layer.dt[layer.i, p.fail.CFL := round(sum(ifelse(delta.t <= v, 1, 0), na.rm = T) / sum(length(v), na.rm = T), 2)]
     }
-
-    if(delta.t > pmin(layer.dt$min.delta.t, na.rm = T)){
+    if(delta.t > min(layer.dt$min.delta.t, na.rm = T)){
       model.runs$CFL_fail[run] <- "TRUE"
-      #model.runs$CFL_fail[run] <- round(sum(ifelse(delta.t <= t.delta.min.L1, 1, 0), 
-      #                                      ifelse(delta.t <= t.delta.min.L2, 1, 0), 
-      #                                      ifelse(delta.t <= t.delta.min.L3, 1, 0)) / sum(length(t.delta.min.L1),
-      #                                                                                     length(t.delta.min.L1),
-      #                                                                                     length(t.delta.min.L3)), 2)
-    } # end CFL condition checking
+      } 
+    # end CFL condition checking
     
     }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 } # end run, go to next run
@@ -412,3 +429,5 @@ msg
 # [5] http://www-mdp.eng.cam.ac.uk/web/library/enginfo/aerothermal_dvd_only/aero/fprops/propsoffluids/node5.html
 
 # [6] https://doi.org/10.1016/1352-2310(94)00140-5
+
+# [7] https://www.fhwa.dot.gov/pavement/sustainability/articles/pavement_thermal.cfm

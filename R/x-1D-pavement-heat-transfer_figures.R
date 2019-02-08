@@ -103,12 +103,12 @@ for(run in 1:max(model.runs$run.n)){
            device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
     
     # Deviation (boxplot) of single scenario by nodes
-    int.nodes <- c("1L","2U","2L","3U") # to mark the boundaries
+    boundary.nodes <- pave.time[layer == "boundary" & time.s == 0, node] # to mark the boundaries
     max.depth <- (model.runs$L1.depth[run] + model.runs$L2.depth[run]) * 1.5
     p.node.box <- (ggplot(data = pave.time[depth.m < max.depth],
                           aes(x = depth.m, y = T.degC, group = factor(depth.m)))
                    + geom_boxplot()
-                   + geom_vline(xintercept = unique(pave.time[boundary %in% int.nodes & depth.m != 0, depth.m]), linetype = "dotted")
+                   + geom_vline(xintercept = unique(pave.time[node %in% boundary.nodes & depth.m != 0, depth.m]), linetype = "dotted")
                    + annotate("text", label = "Layer 1: \nSurface", x = model.runs$L1.depth[run] * 0.5, y = 0.9 * max.y, family = my.font)
                    + annotate("text", label = "Layer 2: \nBase", x = model.runs$L1.depth[run] + (model.runs$L2.depth[run] * 0.5), y =  0.9 * max.y, family = my.font)
                    + annotate("text", label = "Layer 3: \nSubbase", x = max.depth - (max.depth - model.runs$L1.depth[run] - model.runs$L2.depth[run])/2, y = 0.9 * max.y, family = my.font)
