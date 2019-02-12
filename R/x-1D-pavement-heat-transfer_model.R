@@ -39,40 +39,40 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 layer.profiles <- list(
   data.table( # light weight asphalt layer 1
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 0.610 - 0.2), # layer thickness (m)
+    thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
     k = c(1.21, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2238, 2238, 1500), # layer density (kg/m3)
     c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  )#,
-  #data.table( # light weight asphalt layer 1
-  #  layer = c("surface","base","subgrade"),
-  #  thickness = c(0.1, 0.1, 0.3), # layer thickness (m)
-  #  k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
-  #  rho = c(1686, 2000, 1500), # layer density (kg/m3)
-  #  c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  #),
-  #data.table( # normal weight asphalt layer 1,
-  #  layer = c("surface","base","subgrade"),
-  #  thickness = c(0.075, 0.10, 0.3), # layer thickness (m)
-  #  k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
-  #  rho = c(2585, 2000, 1400), # layer density (kg/m3)
-  #  c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
-  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  #)
-  #,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
-  #  layer = c("surface","base","subgrade"),
-  #  thickness = c(0.1, 0.2, 0.3), # layer thickness (m)
-  #  k = c(0.2, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
-  #  rho = c(1094, 1111, 1400), # layer density (kg/m3)
-  #  c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
-  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-  #  R.c.top = c(NA,5.0E-4,0) # thermal contact resistance at top boundary of layer (dimensionless) 
-  #)
+  )
+  ,data.table( # light weight asphalt layer 1
+    layer = c("surface","base","subgrade"),
+    thickness = c(0.1, 0.1, 2), # layer thickness (m)
+    k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(1686, 2000, 1500), # layer density (kg/m3)
+    c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
+  ,data.table( # normal weight asphalt layer 1,
+    layer = c("surface","base","subgrade"),
+    thickness = c(0.075, 0.10, 2), # layer thickness (m)
+    k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2585, 2000, 1400), # layer density (kg/m3)
+    c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
+  ,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
+    layer = c("surface","base","subgrade"),
+    thickness = c(0.1, 0.2, 2.5), # layer thickness (m)
+    k = c(0.2, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(1094, 1111, 1400), # layer density (kg/m3)
+    c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    R.c.top = c(NA,5.0E-4,0) # thermal contact resistance at top boundary of layer (dimensionless) 
+  )
 )
 
 # The specific heat of dense-graded asphalt and concrete are very similar [7]
@@ -98,21 +98,28 @@ layer.profiles <- list(
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
-               nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(1), # number of iterations to repeat each model run
+               nodal.spacing = c(12.5,10),# nodal spacing in millimeters
+               n.iterations = c(5,20), # number of iterations to repeat each model run
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(120), # time step in seconds
-               pave.length = c(5), # characteristic length of pavement in meters
+               pave.length = c(10,75), # characteristic length of pavement in meters
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id 
-               n.days = c(3) # number of days to simulate 
+               n.days = c(7) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
 model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1) # create run number id
 model.runs[,`:=`(run.time = 0, RMSE = 0, CFL_fail = 0)] # create output model run summary variables
 model.runs[, ref := min(run.n), by = layer.profile] # create refrence model for each unique layer profile (defaults to first scenario of parameters)
-model.runs[,.N] # total runs
+paste0("Estimated run time for all ",model.runs[,.N], " runs: ", round(sum(
+       model.runs$n.iterations * # number of iterations
+       model.runs$n.days *  # number of days to simulate
+       model.runs$layer.profile * sapply(1:length(layer.profiles), # depth of pavement
+                                         function (x) sum(layer.profiles[[x]]$thickness)) *
+       model.runs$time.step /
+       model.runs$nodal.spacing) / 1420, digits = 2),
+       " hrs")
 
 # LOAD & FILTER WEATHER DATA 
 #weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # sample 3 day period of weather data
@@ -400,7 +407,7 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
       layer.dt[layer.i, p.fail.CFL := round(sum(ifelse(delta.t <= v, 1, 0), na.rm = T) / sum(length(v), na.rm = T), 2)]
     }
     if(delta.t > min(layer.dt$min.delta.t, na.rm = T)){
-      model.runs$CFL_fail[run] <- "TRUE"
+      model.runs$CFL_fail[run] <- 1
       } 
     # end CFL condition checking
     
@@ -408,6 +415,7 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
 } # end run, go to next run
 
 write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv"), row.names = F) # output model run metadata
+saveRDS(layer.profiles, here("data/outputs/1D-heat-model-runs/layer_profiles.rds"))
 
 # load email creds and construct msg to notify you by email the script has finished
 my.email <- as.character(fread(here("email.txt"), header = F)[1]) 
@@ -439,3 +447,9 @@ msg
 # [6] https://doi.org/10.1016/1352-2310(94)00140-5
 
 # [7] https://www.fhwa.dot.gov/pavement/sustainability/articles/pavement_thermal.cfm
+
+
+
+#plot(pave.time[node == 0, .(date.time, T.degC)],type="l",col="red")
+#plot(pave.time[node == max(node), .(date.time, T.degC)],type="l",col="red")
+#plot(pave.time[node == max(node)-1, .(date.time, T.degC)],type="l",col="red")

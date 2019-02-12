@@ -45,6 +45,9 @@ weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & mont
 weather <- weather[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
 weather <- weather[date.time <= (min(date.time) + days(max(model.runs$n.days, na.rm = T))),] # trim to max range of dates observed in sim data
 
+# layer profile data
+layer.profiles <- readRDS(here("data/outputs/1D-heat-model-runs/layer_profiles.rds"))
+
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
 should.plot <- "yes" # "yes" or "no"
@@ -103,15 +106,14 @@ for(run in 1:max(model.runs$run.n)){
            device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
     
     # Deviation (boxplot) of single scenario by nodes
+    # only will show first three layers with the third layer partially shown if very deep
     boundary.nodes <- pave.time[layer == "boundary" & time.s == 0, node] # to mark the boundaries
-    max.depth <- (model.runs$L1.depth[run] + model.runs$L2.depth[run]) * 1.5
+    max.depth <- (sum(layer.profiles[[model.runs$layer.profile[run]]]$thickness[1:2])) * 3 #pave.time[, max(depth.m)]
+    layers <- nrow(layer.profiles[[model.runs$layer.profile[run]]])
     p.node.box <- (ggplot(data = pave.time[depth.m < max.depth],
                           aes(x = depth.m, y = T.degC, group = factor(depth.m)))
-                   + geom_boxplot()
+                   + geom_boxplot(outlier.alpha = 0.1, outlier.size = 0.7)
                    + geom_vline(xintercept = unique(pave.time[node %in% boundary.nodes & depth.m != 0, depth.m]), linetype = "dotted")
-                   + annotate("text", label = "Layer 1: \nSurface", x = model.runs$L1.depth[run] * 0.5, y = 0.9 * max.y, family = my.font)
-                   + annotate("text", label = "Layer 2: \nBase", x = model.runs$L1.depth[run] + (model.runs$L2.depth[run] * 0.5), y =  0.9 * max.y, family = my.font)
-                   + annotate("text", label = "Layer 3: \nSubbase", x = max.depth - (max.depth - model.runs$L1.depth[run] - model.runs$L2.depth[run])/2, y = 0.9 * max.y, family = my.font)
                    + labs(x = "Pavement Depth (m)", y = "Temperature (deg C)")
                    + theme_light()
                    + theme(text = element_text(family = my.font, size = 12),
@@ -119,6 +121,17 @@ for(run in 1:max(model.runs$run.n)){
                            axis.title.x = element_text(vjust = -2),
                            axis.title.y = element_text(vjust = 5))
     )
+    for(l in 1:layers){ # add text annotating each layer
+      an.x <- ifelse(l == max(layers), # if last layer, different label x position
+                     max.depth - (0.5 * (max.depth - sum(layer.profiles[[model.runs$layer.profile[run]]]$thickness[1:(l-1)]))),
+                     sum(layer.profiles[[model.runs$layer.profile[run]]]$thickness[1:l],-0.5*layer.profiles[[model.runs$layer.profile[run]]]$thickness[l]))
+      
+      p.node.box <- p.node.box + annotate("text", label = layer.profiles[[model.runs$layer.profile[run]]]$layer[l],
+                                          x = an.x,
+                                          y = 0.9 * max.y, family = my.font)
+    }
+    #+ annotate("text", label = "Layer 2: \nBase", x = model.runs$L1.depth[run] + (model.runs$L2.depth[run] * 0.5), y =  0.9 * max.y, family = my.font)
+    #+ annotate("text", label = "Layer 3: \nSubbase", x = max.depth - (max.depth - model.runs$L1.depth[run] - model.runs$L2.depth[run])/2, y = 0.9 * max.y, family = my.font)
     
     # save plot
     ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-pave-temp-box_0-0.3m.png"), p.node.box, 
@@ -186,7 +199,7 @@ p0 <- (ggplot(data = p0.data)
        + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border: (x,y) (xend,yend)
        + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border: (x,y) (xend,yend)
        + geom_point(aes(y = T.degC, x = date.time))
-       + geom_point(aes(y = T.degC, x = date.time), data = p0.data[date.time %in% weather$date.time], color = "red")
+       #+ geom_point(aes(y = T.degC, x = date.time), data = p0.data[date.time %in% weather$date.time], color = "red")
        #+ geom_point(aes(y = temp.c, x = date.time), data = weather, color = "blue") # for inlcuding air temp on plot
        + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "6 hours")
        + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
@@ -206,23 +219,24 @@ ggsave("1D-modeled-surface-pave-temp_new.png", p0,
 
 
 # depth temps
-min.x <- 20 #signif(min(pave.time[, T.degC]) - (0.1 * diff(range(pave.time[, T.degC]))),4)
-max.x <- 80 #signif(max(pave.time[, T.degC]) + (0.1 * diff(range(pave.time[, T.degC]))),4)
+min.x <- 30 #signif(min(pave.time[, T.degC]) - (0.1 * diff(range(pave.time[, T.degC]))),4)
+max.x <- 90 #signif(max(pave.time[, T.degC]) + (0.1 * diff(range(pave.time[, T.degC]))),4)
 min.y <- 0 # 0 depth
 max.y <- max(pave.time[, depth.m])
 
-my.date <- date(max(pave.time$date.time))
+my.date <- date(max(pave.time$date.time) - days(1))
 
 p.depth <- (ggplot(data = pave.time) # weather
             + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
             + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
+            + geom_line(aes(y = depth.m, x = T.degC, color = "9am"), data = pave.time[date.time == paste(my.date,"9:00:00")], size = 1.5) # 9am temperatures at depth
             + geom_line(aes(y = depth.m, x = T.degC, color = "1pm"), data = pave.time[date.time == paste(my.date,"13:00:00")], size = 1.5) # 1pm temperatures at depth
             + geom_line(aes(y = depth.m, x = T.degC, color = "5pm"), data = pave.time[date.time == paste(my.date, "17:00:00")], size = 1.5) # 5pm temperatures at depth
-            #+ geom_line(aes(y = depth.m, x = T.degC, color = "9pm"), data = pave.time[date.time == paste(my.date, "21:00:00")], size = 1.5) # 9pm temperatures at depth
+            + geom_line(aes(y = depth.m, x = T.degC, color = "9pm"), data = pave.time[date.time == paste(my.date, "21:00:00")], size = 1.5) # 9pm temperatures at depth
             #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date,"13:00:00")], name = "1pm", shape = 1) # 1pm temperatures at depth
             #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date, "17:00:00")], name = "5pm", shape = 2) # 5pm temperatures at depth
             #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date, "21:00:00")], name = "9pm", shape = 3) # 9pm temperatures at depth
-            + geom_hline(yintercept = p.data[layer == "boundary" & x != 0, x], linetype = "dotted")
+            + geom_hline(yintercept = unique(pave.time[node %in% boundary.nodes & depth.m != 0, depth.m]), linetype = "dotted")
             #+ scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
             + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x), position = "top")
             + scale_y_reverse(expand = c(0,0), limits = c(max.y,min.y))
