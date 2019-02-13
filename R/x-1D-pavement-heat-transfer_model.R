@@ -37,16 +37,16 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
+  #data.table( # light weight asphalt layer 1
+  #  layer = c("surface","base","subgrade"),
+  #  thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
+  #  k = c(1.21, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
+  #  rho = c(2238, 2238, 1500), # layer density (kg/m3)
+  #  c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
+  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  #),
   data.table( # light weight asphalt layer 1
-    layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
-    k = c(1.21, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2238, 2238, 1500), # layer density (kg/m3)
-    c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  )
-  ,data.table( # light weight asphalt layer 1
     layer = c("surface","base","subgrade"),
     thickness = c(0.1, 0.1, 2), # layer thickness (m)
     k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
@@ -64,15 +64,15 @@ layer.profiles <- list(
     albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  ,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
-    layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.2, 2.5), # layer thickness (m)
-    k = c(0.2, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(1094, 1111, 1400), # layer density (kg/m3)
-    c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
-    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-    R.c.top = c(NA,5.0E-4,0) # thermal contact resistance at top boundary of layer (dimensionless) 
-  )
+  #,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
+  #  layer = c("surface","base","subgrade"),
+  #  thickness = c(0.1, 0.2, 2.5), # layer thickness (m)
+  #  k = c(0.2, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
+  #  rho = c(1094, 1111, 1400), # layer density (kg/m3)
+  #  c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+  #  R.c.top = c(NA,5.0E-4,0) # thermal contact resistance at top boundary of layer (dimensionless) 
+  #)
 )
 
 # The specific heat of dense-graded asphalt and concrete are very similar [7]
@@ -98,27 +98,27 @@ layer.profiles <- list(
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
-               nodal.spacing = c(12.5,10),# nodal spacing in millimeters
-               n.iterations = c(5,20), # number of iterations to repeat each model run
+               nodal.spacing = c(15),# nodal spacing in millimeters
+               n.iterations = c(2), # number of iterations to repeat each model run
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
-               time.step = c(120), # time step in seconds
-               pave.length = c(10,75), # characteristic length of pavement in meters
+               time.step = c(180,300), # time step in seconds
+               pave.length = c(10), # characteristic length of pavement in meters
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id 
-               n.days = c(7) # number of days to simulate 
+               n.days = c(3) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
 model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1) # create run number id
-model.runs[,`:=`(run.time = 0, RMSE = 0, CFL_fail = 0)] # create output model run summary variables
+model.runs[,`:=`(run.time = 0, RMSE = 0, CFL_fail = 0, broke = 0)] # create output model run summary variables
 model.runs[, ref := min(run.n), by = layer.profile] # create refrence model for each unique layer profile (defaults to first scenario of parameters)
 paste0("Estimated run time for all ",model.runs[,.N], " runs: ", round(sum(
        model.runs$n.iterations * # number of iterations
        model.runs$n.days *  # number of days to simulate
-       model.runs$layer.profile * sapply(1:length(layer.profiles), # depth of pavement
-                                         function (x) sum(layer.profiles[[x]]$thickness)) *
+       sapply(1:length(layer.profiles), # depth of pavement
+              function (x) sum(layer.profiles[[x]]$thickness)) *
        model.runs$time.step /
-       model.runs$nodal.spacing) / 1420, digits = 2),
+       model.runs$nodal.spacing) / 550, digits = 2),
        " hrs")
 
 # LOAD & FILTER WEATHER DATA 
@@ -362,6 +362,12 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
         # store any zero R.c interface temps
         pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c == 0, T.K := tmp[node %in% boundary.nodes & R.c == 0, T.C.b]]
       
+        # if within this timestep, T.K ended up non-finite due to an error or convergance issue, break the loop (to prevent wasted time)
+        if(any(!is.finite(pave.time[time.s == t.step[p+1], T.K]))){
+          model.runs$broke[run] <- 1
+          break
+        } 
+          
       } # end time step p, go to time p+1
       
       # if the iteration is not the last iteration and all pavement temp values in the timestep N days in the future are finite, then
@@ -371,12 +377,15 @@ for(run in 1:model.runs[,.N]){ #      nrow(model.runs)
         pave.time[time.s == 0, T.K := pave.time[date.time == min(date.time) + days(model.runs$n.days[run]), T.K]]
       } 
       
+      # also break the iterations loop if previously non-finite results were discovered
+      if(model.runs$broke[run] == 1){break}
+      
     } # end model iteration and continue to next 
     
     # once model iteration are complete, some housekeeping:
     pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
-    pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step (not calculated). timesteps were given such that p.n-1 is the final weather obs
-    pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # Temp at time and node difference from 3 day mean, use for RMSE
+    pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step (not calculated). p.n-1 occurs on the final weather obs
+    pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # Temp at time and node difference from all obs mean, use for RMSE
     dir.create(here("data/outputs/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
     saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
     model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
@@ -447,7 +456,6 @@ msg
 # [6] https://doi.org/10.1016/1352-2310(94)00140-5
 
 # [7] https://www.fhwa.dot.gov/pavement/sustainability/articles/pavement_thermal.cfm
-
 
 
 #plot(pave.time[node == 0, .(date.time, T.degC)],type="l",col="red")
