@@ -37,33 +37,33 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
-  #data.table( # light weight asphalt layer 1
-  #  layer = c("surface","base","subgrade"),
-  #  thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
-  #  k = c(1.21, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
-  #  rho = c(2238, 2238, 1500), # layer density (kg/m3)
-  #  c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  #),
   data.table( # light weight asphalt layer 1
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, .5), # layer thickness (m)
+    thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
+    k = c(1.21, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2238, 2238, 1500), # layer density (kg/m3)
+    c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  ),
+  data.table( # light weight asphalt layer 1
+    layer = c("surface","base","subgrade"),
+    thickness = c(0.1, 0.1, 2.18), # layer thickness (m)
     k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
     rho = c(1686, 2000, 1500), # layer density (kg/m3)
     c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  #,data.table( # normal weight asphalt layer 1,
-  #  layer = c("surface","base","subgrade"),
-  #  thickness = c(0.075, 0.10, 2), # layer thickness (m)
-  #  k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
-  #  rho = c(2585, 2000, 1400), # layer density (kg/m3)
-  #  c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
-  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  #)
+  ,data.table( # normal weight asphalt layer 1,
+    layer = c("surface","base","subgrade"),
+    thickness = c(0.075, 0.10, 2.8), # layer thickness (m)
+    k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2585, 2000, 1400), # layer density (kg/m3)
+    c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
   #,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
   #  layer = c("surface","base","subgrade"),
   #  thickness = c(0.1, 0.2, 2.5), # layer thickness (m)
@@ -98,24 +98,27 @@ layer.profiles <- list(
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
 # this is assumed to be the model run we check error against to compare model preformance
 models <- list(run.n = c(0), # dummy run number (replace below)
-               nodal.spacing = c(10),# nodal spacing in millimeters
-               n.iterations = c(1), # number of iterations to repeat each model run
+               nodal.spacing = c(12.5),# nodal spacing in millimeters
+               n.iterations = c(2), # number of iterations to repeat each model run
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(60), # time step in seconds
                pave.length = c(10), # characteristic length of pavement in meters
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id 
-               n.days = c(2) # number of days to simulate 
+               n.days = c(3) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
 model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1) # create run number id
 model.runs[,`:=`(run.time = 0, RMSE = 0, CFL_fail = 0, broke.t = NA)] # create output model run summary variables
 model.runs[, ref := min(run.n), by = layer.profile] # create refrence model for each unique layer profile (defaults to first scenario of parameters)
+model.runs[, depth := rep(sapply(1:length(layer.profiles), function (x) sum(layer.profiles[[x]]$thickness)), each = model.runs[layer.profile == 1, .N])]
 
 # estimated model runs time(s)
-est.run.time <- model.runs$n.iterations * model.runs$n.days * sapply(1:length(layer.profiles), function (x) sum(layer.profiles[[x]]$thickness)) / model.runs$time.step / model.runs$nodal.spacing
-est.run.time <- (516.43 * est.run.time) + 33.065 # linear regression on parameters predicting acutal run time
+#coeff <- c(53.07303146,-2.892908439,21.56150488,-3.539206763,19.82022792,10.24411276)
+#est.run.time <- coeff[2]*model.runs$nodal.spacing + coeff[3]*model.runs$n.iterations + coeff[4]*model.runs$time.step + coeff[5]*model.runs$depth + coeff[6]*model.runs$n.days
+est.run.time <- model.runs$n.iterations * model.runs$n.days * model.runs$depth / model.runs$time.step / model.runs$nodal.spacing
+est.run.time <- (432.39 * est.run.time) + 0.7298   #(516.43 * est.run.time) + 33.065 # linear regression on parameters predicting acutal run time
 for(a in 1:model.runs[,.N]){cat("run",model.runs$run.n[a],":",round(sum(est.run.time[a]), 0), "mins (", round(sum(est.run.time[a])/60, 2)," hrs) \n")}
 paste0("Estimated run time for all ",model.runs[,.N], " runs: ", round(sum(est.run.time), 0), " mins (", round(sum(est.run.time)/60, 2)," hrs)")
 
@@ -125,8 +128,9 @@ paste0("Estimated run time for all ",model.runs[,.N], " runs: ", round(sum(est.r
 weather.raw <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")), # all weather data saved to repo
                           readRDS(here("data/outputs/2017-weather-data-2.rds")),
                           readRDS(here("data/outputs/2017-weather-data-3.rds"))))
-weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun",] # choose station for desired period of time
-weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
+weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs with no NA of desired vars
+weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero becuase this is the most likely to be missing weather variable
+weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD" & month == "Mar",] # choose station for desired period of time
 
 # funcion to create layers by layer specifications
 create.layer <- function(thickness, name, start.depth, nodal.spacing){ # create a layer with defined *thickness* and *name*
@@ -154,6 +158,9 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     
     # trim weather data to number of days specified
     weather <- weather.raw[date.time <= (min(date.time) + days(model.runs$n.days[run]))] 
+    if(weather[,.N] < 12 * model.runs$n.days[run]){
+      cat("stopped because too few weather obs \n")
+      break} # break the run if there are fewer than 12 obs a day
     
     # store layer dt
     layer.dt <- layer.profiles[[model.runs$layer.profile[run]]]
@@ -280,7 +287,7 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
         # if it takes more than 1000 times and they aren't converging, end loop to avoid inf looping if no feasible solution
         # it will otherwise break after one run if the nodes at p and p+1 have converged
         # therefore allowing all p+2 and beyond calculations to always loop only once (intital and p+1 shouldn't change)
-        for(z in 1:200){
+        for(z in 1:50){
           
           # store a temporary data.table at this timestep to store and transfer all node calculations to master data.table.
           # we do this because the 'shift' function is troublesome within data.table subsets so this is safer and possibly quicker
@@ -374,7 +381,7 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
           # store any zero R.c interface temps
           pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c == 0, T.K := tmp[node %in% boundary.nodes & R.c == 0, T.C.b]]
           
-          # break before 100 iterations if the first and second timestep pavement temperatures at each node have converged (within 1/100 of each other)
+          # break before 200 iterations if the first and second timestep pavement temperatures at each node have converged (within 1/100 of each other)
           # as the initial (p) and p+1 conditions won't change once first converged, this loop breaks always after 1 iteration for all times after p+1
           if(all(is.finite(pave.time[time.s == t.step[2], T.K])) & # all pave temps at p==2 also need to be finite (b/c below check doesn't work for all NAs)
              all(round(pave.time[time.s == t.step[1], T.K], 1) == round(pave.time[time.s == t.step[2], T.K], 1), na.rm = T) == T){break}
@@ -399,6 +406,13 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
       
       # also break the iterations loop if previously non-finite results were discovered
       if(!is.na(model.runs$broke.t[run])){break}
+      
+      # if the iteration is not the last iteration and all pavement temp values in the timestep N days in the future are finite, then
+      # store these pavement temp values from the future time step as the initial pavement temps for the new iteration
+      if(iteration != max(iterations) & 
+         all(is.finite(pave.time[date.time == min(date.time) + days(model.runs$n.days[run]), T.K]))){
+        pave.time[time.s == 0, T.K := pave.time[date.time == min(date.time) + days(model.runs$n.days[run]), T.K]]
+      } 
       
     } # end model iteration and continue to next 
     

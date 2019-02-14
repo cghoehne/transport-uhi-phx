@@ -41,7 +41,7 @@ weather <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")),
                           readRDS(here("data/outputs/2017-weather-data-3.rds"))))
                           
 # filter weather data
-weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Jun",] # choose station for desired period of time
+weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Nov",] # choose station for desired period of time
 weather <- weather[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
 weather <- weather[date.time <= (min(date.time) + days(max(model.runs$n.days, na.rm = T))),] # trim to max range of dates observed in sim data
 
