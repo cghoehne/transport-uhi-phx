@@ -39,31 +39,31 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 layer.profiles <- list(
   data.table( # light weight asphalt layer 1
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
+    thickness = c(0.1, 0.1, 1), # layer thickness (m)
     k = c(1.21, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2238, 2238, 1500), # layer density (kg/m3)
     c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  ),
-  data.table( # light weight asphalt layer 1
-    layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 2.18), # layer thickness (m)
-    k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(1686, 2000, 1500), # layer density (kg/m3)
-    c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  )
-  ,data.table( # normal weight asphalt layer 1,
-    layer = c("surface","base","subgrade"),
-    thickness = c(0.075, 0.10, 2.8), # layer thickness (m)
-    k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2585, 2000, 1400), # layer density (kg/m3)
-    c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
-    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  )
+  )#,
+  #data.table( # light weight asphalt layer 1
+  #  layer = c("surface","base","subgrade"),
+  #  thickness = c(0.1, 0.1, 1.5), # layer thickness (m)
+  #  k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
+  #  rho = c(1686, 2000, 1500), # layer density (kg/m3)
+  #  c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
+  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  #)
+  #,data.table( # normal weight asphalt layer 1,
+  #  layer = c("surface","base","subgrade"),
+  #  thickness = c(0.075, 0.10, 2.8), # layer thickness (m)
+  #  k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
+  #  rho = c(2585, 2000, 1400), # layer density (kg/m3)
+  #  c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  #)
   #,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
   #  layer = c("surface","base","subgrade"),
   #  thickness = c(0.1, 0.2, 2.5), # layer thickness (m)
@@ -102,10 +102,10 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                n.iterations = c(2), # number of iterations to repeat each model run
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
-               time.step = c(60), # time step in seconds
+               time.step = c(30), # time step in seconds
                pave.length = c(10), # characteristic length of pavement in meters
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id 
-               n.days = c(3) # number of days to simulate 
+               n.days = c(2) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
@@ -115,12 +115,13 @@ model.runs[, ref := min(run.n), by = layer.profile] # create refrence model for 
 model.runs[, depth := rep(sapply(1:length(layer.profiles), function (x) sum(layer.profiles[[x]]$thickness)), each = model.runs[layer.profile == 1, .N])]
 
 # estimated model runs time(s)
-#coeff <- c(53.07303146,-2.892908439,21.56150488,-3.539206763,19.82022792,10.24411276)
-#est.run.time <- coeff[2]*model.runs$nodal.spacing + coeff[3]*model.runs$n.iterations + coeff[4]*model.runs$time.step + coeff[5]*model.runs$depth + coeff[6]*model.runs$n.days
+#coeff <- c(1.551634368,-0.039871215,0.079319245,-0.035625977,0.246614492,0.862178686)
+#est.run.time <- exp(coeff[1] + coeff[2]*model.runs$nodal.spacing + coeff[3]*model.runs$n.iterations + coeff[4]*model.runs$time.step + coeff[5]*model.runs$depth + coeff[6]*model.runs$n.days)
 est.run.time <- model.runs$n.iterations * model.runs$n.days * model.runs$depth / model.runs$time.step / model.runs$nodal.spacing
 est.run.time <- (432.39 * est.run.time) + 0.7298   #(516.43 * est.run.time) + 33.065 # linear regression on parameters predicting acutal run time
 for(a in 1:model.runs[,.N]){cat("run",model.runs$run.n[a],":",round(sum(est.run.time[a]), 0), "mins (", round(sum(est.run.time[a])/60, 2)," hrs) \n")}
 paste0("Estimated run time for all ",model.runs[,.N], " runs: ", round(sum(est.run.time), 0), " mins (", round(sum(est.run.time)/60, 2)," hrs)")
+
 
 # LOAD & FILTER WEATHER DATA 
 #weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # sample 3 day period of weather data
@@ -145,6 +146,9 @@ create.layer <- function(thickness, name, start.depth, nodal.spacing){ # create 
   }
 }
 
+# create empty object to store error messages
+my.errors <- NULL
+
 # BEGIN MODEL LOGIC
 for(run in 1:model.runs[,.N]){#      nrow(model.runs)  
   tryCatch({  # catch and print errors, avoids stopping model runs 
@@ -152,14 +156,14 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     # SETUP FOR MODEL
     
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run","model.runs","layer.profiles","script.start","pave.time.ref","weather","weather.raw","create.layer")))
+    rm(list=setdiff(ls(), c("run","model.runs","layer.profiles","script.start","pave.time.ref","weather","weather.raw","create.layer","my.errors")))
     gc()
     t.start <- Sys.time() # start model run timestamp
     
     # trim weather data to number of days specified
     weather <- weather.raw[date.time <= (min(date.time) + days(model.runs$n.days[run]))] 
     if(weather[,.N] < 12 * model.runs$n.days[run]){
-      cat("stopped because too few weather obs \n")
+      assign("my.errors", c(my.errors, paste("stopped at run",run,"because too few weather obs")), envir = .GlobalEnv) # store error msg
       break} # break the run if there are fewer than 12 obs a day
     
     # store layer dt
@@ -265,13 +269,7 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     pave.time[, date.time := weather$date.time[1] + seconds(time.s)] # add date.time column 
     pave.time[time.s != 0, T.K := NA] # only initial temps are assumed, else NA
     pave.time[, layer := as.character(layer)] # to avoid issues w/ factors
-    
-    # parameters at surface that change by timestep
-    T.s <- vector(mode = "numeric", length = p.n) # pavement suface temp in K
-    h.rad <- vector(mode = "numeric", length = p.n) # radiative heat transfer coefficient in W/(m2*degK) 
-    q.rad <- vector(mode = "numeric", length = p.n) # infrared radiation heat transfer at surfaceW/m2
-    q.cnv <- vector(mode = "numeric", length = p.n) # convection heat transfer W/m2
-    
+
     # MODEL HEAT TRANSFER OF PAVEMENT
     
     # iterate through from time p to time p.n and model pavement heat transfer at surface, boundary/interface, and interior nodes 
@@ -287,39 +285,29 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
         # if it takes more than 1000 times and they aren't converging, end loop to avoid inf looping if no feasible solution
         # it will otherwise break after one run if the nodes at p and p+1 have converged
         # therefore allowing all p+2 and beyond calculations to always loop only once (intital and p+1 shouldn't change)
-        for(z in 1:50){
+        for(z in 1:200){
+          
+          # for timestep p, calc the surface heat transfer parameters (surface radiative coefficient, infrared radiation & convection)
+          pave.time[time.s == t.step[p] & node == 0, h.rad := SVF * epsilon * sigma * ((T.K^2) + (T.sky^2)) * (T.K + T.sky)]  # radiative heat transfer coefficient in W/(m2*degK) 
+          pave.time[time.s == t.step[p] & node == 0, q.rad := SVF * epsilon * sigma * ((T.K^4) - (T.sky^4))] # infrared radiation heat transfer at surfaceW/m2
+          pave.time[time.s == t.step[p] & node == 0, q.cnv := h.inf * (T.K - T.inf)] # convection heat transfer W/m2
+          
+          # store these values for surface for all layers to calc CFL later
+          pave.time[time.s == t.step[p], h.rad := pave.time[time.s == t.step[p] & node == 0, h.rad]]
+          pave.time[time.s == t.step[p], q.rad := pave.time[time.s == t.step[p] & node == 0, q.rad]]
+          pave.time[time.s == t.step[p], q.cnv := pave.time[time.s == t.step[p] & node == 0, q.cnv]]
           
           # store a temporary data.table at this timestep to store and transfer all node calculations to master data.table.
           # we do this because the 'shift' function is troublesome within data.table subsets so this is safer and possibly quicker
           tmp <- pave.time[time.s == t.step[p]] 
           
-          # *THIS MAY NOT BE NECESSARY*
-          # reset the very bottom node to its starting temperature 
-          # we assume that all material below our bottom boundary is always cooler or at equilibrium with our bottom node
-          # and in this way it acts as a heat sink: any heat that would cross this boundary disipates in the depths below
-          # we do this first to ensure time p+1 calculates using this condition of a constant bottom boundary
-          pave.time[time.s == t.step[p] & node == max(node), T.K := model.runs$i.bot.temp[run] + 273.15]
-          
-          # for the current timestep p, store the pavement surface temperature (in K) 
-          T.s[p] <- pave.time[time.s == t.step[p] & node == 0, T.K]
-          
-          # for the current timestep p, store the intial pavement temperature at all nodes
-          T.i <- pave.time[time.s == t.step[p], T.K]
-          
-          # for timestep p, calc the surface radiative coefficient
-          h.rad[p] <- SVF * epsilon * sigma * ((T.s[p]^2) + (pave.time[time.s == t.step[p] & node == 0, T.sky]^2)) * (T.s[p] + pave.time[time.s == t.step[p] & node == 0, T.sky]) # radiative heat transfer coefficient in W/(m2*degK) 
-          
-          # for timestep p, calc the surface heat transfer parameters (infrared radiation & convection)
-          q.rad[p] <- SVF * epsilon * sigma * ((T.s[p]^4) - (pave.time[time.s == t.step[p] & node == 0, T.sky]^4)) # infrared radiation heat transfer at surfaceW/m2
-          q.cnv[p] <- pave.time[time.s == t.step[p] & node == 0, h.inf] * (T.s[p] - pave.time[time.s == t.step[p] & node == 0, T.inf]) # convection heat transfer W/m2
-          
           # for timestep p+1, calc the surface pavement temperature based on parameters at timestep p
           # i.e. surface node s (node = 0), eqn 10 in [1]
-          pave.time[time.s == t.step[p+1] & node == 0, T.K := T.s[p] +  # T.K at node 0 is pavement surface temp (at time p+1)
+          pave.time[time.s == t.step[p+1] & node == 0, T.K := tmp[node == 0, T.K] +  # T.K at node 0 is pavement surface temp (at time p+1)
                       ((((1 - albedo) * tmp[node == 0, solar]) # incoming solar radiation (after albedo reflection)
-                        - q.cnv[p]  # minus convective heat transfer at surface
-                        - q.rad[p]  # minus outgoing longwave/infrared radiation at surface
-                        + (layer.dt$k[1] * (tmp[node == 1, T.K] - T.s[p]) / delta.x)) # plus conduction
+                        - tmp[node == 0, q.cnv]  # minus convective heat transfer at surface
+                        - tmp[node == 0, q.rad] # minus outgoing longwave/infrared radiation at surface
+                        + (layer.dt$k[1] * (tmp[node == 1, T.K] - tmp[node == 0, T.K]) / delta.x)) # plus conduction
                        * (2 * delta.t / (layer.dt$rho.c[1] * delta.x)))] # all multiplied by the proportional change in temp per change in depth 
           
           # calculate interior nodes at current timestep p (non-boundary/non-interface nodes) and store into timestep p+1
@@ -381,6 +369,11 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
           # store any zero R.c interface temps
           pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c == 0, T.K := tmp[node %in% boundary.nodes & R.c == 0, T.C.b]]
           
+          # check finite difference solving method satisfied the Courant-Friedrichs-Lewy (CFL) condition for stability from p to p+1
+          pave.time[time.s == t.step[p], CFL := (rho.c * (delta.x^2)) / (2 * (h.rad * delta.x + h.inf * delta.x + k))] # in seconds
+          pave.time[time.s == t.step[p] & delta.t <= CFL, CFL_fail := 0] # no fail
+          pave.time[time.s == t.step[p] & delta.t > CFL, CFL_fail := 1] # yes fail
+          
           # break before 200 iterations if the first and second timestep pavement temperatures at each node have converged (within 1/100 of each other)
           # as the initial (p) and p+1 conditions won't change once first converged, this loop breaks always after 1 iteration for all times after p+1
           if(all(is.finite(pave.time[time.s == t.step[2], T.K])) & # all pave temps at p==2 also need to be finite (b/c below check doesn't work for all NAs)
@@ -388,27 +381,36 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
           
           # for the first time step only re-adjust the initial pavement temps
           # to ensure convergence before of intital state before solving past the initial timestep of model
-          # we do this after the check to break becasue if the initial condition has converged, this isn't needed
+          # we do this after the check to break because if the initial condition has converged, this isn't needed
           if(p == 1){
             pave.time[time.s == t.step[1], T.K := pave.time[time.s %in% t.step[1:2], mean(T.K), by = node][,V1] ] # mean of t1 and 12 T.K
             #pave.time[time.s == t.step[1], T.K := pave.time[time.s == t.step[2], T.K] ]
-          }
+          } else { break } # if not first time step, always only go through each time step once
           
         } # end z loop that repeats only when times p=1 and p=2 haven't converged
         
         # if within this timestep, T.K at p+1 ended up non-finite due to an error or convergance issue, break the loop (to prevent wasted time)
         if(any(!is.finite(pave.time[time.s == t.step[p+1], T.K]))){
-          model.runs$broke.t[run] <- t.step[p]
+          model.runs$broke.t[run] <- t.step[p] # store time model stopped
+          assign("my.errors", c(my.errors, paste("stopped model run",run,"at",model.runs$broke.t[run],"secs due to non-finite temperatures detected")), envir = .GlobalEnv) # store error msg
+          break
+        } 
+        
+        # if within this timestep, the CFL condition fails anywhere, break the loop (to prevent wasted time)
+        if(sum(pave.time[time.s == t.step[p], CFL_fail], na.rm = T) > 0){
+          model.runs$broke.t[run] <- t.step[p] # store time model stopped
+          assign("my.errors", c(my.errors, paste("stopped model run",run,"at",model.runs$broke.t[run],"secs due to CFL stability condition not satisfied")), envir = .GlobalEnv) # store error msg
           break
         } 
           
       } # end time step p, go to time p+1
       
-      # also break the iterations loop if previously non-finite results were discovered
+      # also break the iterations loop too (another iteration is unlikely to fix unstability b/c parameters for this run need changing)
       if(!is.na(model.runs$broke.t[run])){break}
       
       # if the iteration is not the last iteration and all pavement temp values in the timestep N days in the future are finite, then
-      # store these pavement temp values from the future time step as the initial pavement temps for the new iteration
+      # store these pavement temp values from the future time step as the initial pavement temps for the new iteration 
+      # because these are likely to be more accurate than the chosen initials
       if(iteration != max(iterations) & 
          all(is.finite(pave.time[date.time == min(date.time) + days(model.runs$n.days[run]), T.K]))){
         pave.time[time.s == 0, T.K := pave.time[date.time == min(date.time) + days(model.runs$n.days[run]), T.K]]
@@ -419,7 +421,7 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     # once model iteration are complete, some housekeeping:
     pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
     pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step (not calculated). p.n-1 occurs on the final weather obs
-    pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # Temp at time and node difference from all obs mean, use for RMSE
+    pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # mean change in temp by node, use for RMSE
     dir.create(here("data/outputs/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
     saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
     model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
@@ -435,7 +437,6 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
                                            pave.time.ref[pave.time, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean])^2))
     } # note that RMSE is mean centered temperature across all nodes and timesteps.
     
-    # check finite difference solving method satisfied the Courant-Friedrichs-Lewy (CFL) condition for stability
     # and store if all instances are satisfied in the model.runs metadata
     # in other words, this checks that delta.t and delta.x are sufficently small such that the solving method is stable/reliable
     # delta.t must be less than or equal to the t.delta.min values to satisfy CFL condition
@@ -454,7 +455,9 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
       } 
     # end CFL condition checking
     
-    }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
+    }, error = function(e){
+      cat("ERROR:",conditionMessage(e), "\n") # print error msg in console
+      assign("my.errors", c(my.errors, conditionMessage(e)), envir = .GlobalEnv)}) # store error message in list 
 } # end run, go to next run
 
 write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv"), row.names = F) # output model run metadata
@@ -464,6 +467,8 @@ saveRDS(layer.profiles, here("data/outputs/1D-heat-model-runs/layer_profiles.rds
 my.email <- as.character(fread(here("email.txt"), header = F)[1]) 
 my.pass <- as.character(fread(here("email.txt"), header = F)[2])
 msg <- paste0("Completed model run on ", Sys.info()[4]," at ", Sys.time(), ". Model run took ", round(difftime(Sys.time(),script.start, units = "mins"),0)," minutes to complete.")
+my.errors <- paste0(my.errors,". ")
+msg <- paste(msg,"ERRORS:",paste(my.errors, collapse =""))
 send.mail(from = my.email,
           to = my.email,
           subject = "R Script Finished",
@@ -490,6 +495,7 @@ msg
 # [6] https://doi.org/10.1016/1352-2310(94)00140-5
 
 # [7] https://www.fhwa.dot.gov/pavement/sustainability/articles/pavement_thermal.cfm
+
 
 
 

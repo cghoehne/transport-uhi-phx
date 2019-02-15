@@ -41,8 +41,9 @@ weather <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")),
                           readRDS(here("data/outputs/2017-weather-data-3.rds"))))
                           
 # filter weather data
-weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Nov",] # choose station for desired period of time
-weather <- weather[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) & !is.na(windir),] # make sure only to select obs with no NA of desired vars
+weather <- weather[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs with no NA of desired vars
+weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero becuase this is the most likely to be missing weather variable
+weather <- weather[station.name == "City of Glendale" & source == "MCFCD" & month == "Mar",] # choose station for desired period of time
 weather <- weather[date.time <= (min(date.time) + days(max(model.runs$n.days, na.rm = T))),] # trim to max range of dates observed in sim data
 
 # layer profile data
@@ -78,15 +79,20 @@ for(run in 1:max(model.runs$run.n)){
     my.node <- 0 #quantile(pave.time$node, probs = .9)
     p1.data <- pave.time[node == my.node]
     min.x <- min(p1.data$date.time, na.rm = T)
-    max.x <- ceiling_date(max(weather$date.time, na.rm = T), unit = "hours")
-    min.y <- round(signif(min(p1.data[, T.degC]) - (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
-    max.y <- round(signif(max(p1.data[, T.degC]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
+    max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
+    #min.y <- round(signif(min(p1.data[, T.degC]) - (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
+    min.y <- 0 #round(signif(min(weather[, temp.c]) - (0.1 * diff(range(weather[, temp.c]))),4), -1)
+    max.y <- round(signif(max(weather[, solar / 10]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
     
-    p1 <- (ggplot(data = p1.data) # weather
+    p1 <- (ggplot(data = p1.data) 
            + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
            + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
            + geom_point(aes(y = T.degC, x = date.time)) #date.time
-           + geom_point(aes(y = T.degC, x = date.time), data = p1.data[date.time %in% weather$date.time], color = "red")
+           + geom_point(aes(y = T.degC, x = date.time), data = p1.data[date.time %in% weather$date.time], color = "gray")
+           + geom_line(data = weather, aes(y = temp.c, x = date.time), color = "blue")
+           + geom_point(data = weather, aes(y = temp.c, x = date.time), color = "blue", shape = 4)
+           + geom_line(data = weather, aes(y = solar/10, x = date.time), color = "red")
+           + geom_point(data = weather, aes(y = solar/10, x = date.time), color = "red", shape = 2)
            #+ geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "blue") # points of sky temp
            #+ geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) # line of temp
            + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "2 days")
@@ -106,6 +112,11 @@ for(run in 1:max(model.runs$run.n)){
            device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
     
     # Deviation (boxplot) of single scenario by nodes
+    min.x <- min(p1.data$date.time, na.rm = T)
+    max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
+    min.y <- round(signif(min(pave.time[, T.degC]) - (0.1 * diff(range(pave.time[, T.degC]))),4), -1)
+    max.y <- round(signif(max(pave.time[, T.degC]) + (0.1 * diff(range(pave.time[, T.degC]))),4), -1)
+    
     # only will show first three layers with the third layer partially shown if very deep
     boundary.nodes <- pave.time[layer == "boundary" & time.s == 0, node] # to mark the boundaries
     max.depth <- (sum(layer.profiles[[model.runs$layer.profile[run]]]$thickness[1:2])) * 3 #pave.time[, max(depth.m)]
@@ -247,3 +258,22 @@ p.depth <- (ggplot(data = pave.time) # weather
                     plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"),
                     axis.title.x = element_text(vjust = 0.3)))
 p.depth
+
+
+p1 <- (ggplot(data = weather) 
+       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
+       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
+       + geom_line(aes(y = solar/10, x = date.time), color = "red")
+       #+ geom_point( aes(y = solar, x = date.time), color = "red", shape = 2)
+       + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "3 hours")
+       + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y), breaks = seq(min.y,max.y,10))
+       + ggtitle(paste0("Modeled ", p1.data[, depth.m][1]*1000,"mm Pavement Temperature"))
+       + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
+       + theme_minimal()
+       + theme(text = element_text(family = my.font, size = 12),
+               plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
+               axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+               axis.title.x = element_text(vjust = 0.3),
+               plot.title = element_text(hjust = 0.75)))
+
+p1
