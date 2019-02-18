@@ -39,40 +39,40 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 layer.profiles <- list(
   data.table( # light weight asphalt layer 1
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 1), # layer thickness (m)
+    thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
     k = c(1.21, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2238, 2238, 1500), # layer density (kg/m3)
     c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  )#,
-  #data.table( # light weight asphalt layer 1
-  #  layer = c("surface","base","subgrade"),
-  #  thickness = c(0.1, 0.1, 1.5), # layer thickness (m)
-  #  k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
-  #  rho = c(1686, 2000, 1500), # layer density (kg/m3)
-  #  c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  #)
-  #,data.table( # normal weight asphalt layer 1,
-  #  layer = c("surface","base","subgrade"),
-  #  thickness = c(0.075, 0.10, 2.8), # layer thickness (m)
-  #  k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
-  #  rho = c(2585, 2000, 1400), # layer density (kg/m3)
-  #  c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
-  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  #)
-  #,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
-  #  layer = c("surface","base","subgrade"),
-  #  thickness = c(0.1, 0.2, 2.5), # layer thickness (m)
-  #  k = c(0.2, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
-  #  rho = c(1094, 1111, 1400), # layer density (kg/m3)
-  #  c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
-  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-  #  R.c.top = c(NA,5.0E-4,0) # thermal contact resistance at top boundary of layer (dimensionless) 
-  #)
+  ),
+  data.table( # light weight asphalt layer 1
+    layer = c("surface","base","subgrade"),
+    thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
+    k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(1686, 2000, 1500), # layer density (kg/m3)
+    c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
+  ,data.table( # normal weight asphalt layer 1,
+    layer = c("surface","base","subgrade"),
+    thickness = c(0.075, 0.10, 2.825), # layer thickness (m)
+    k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2585, 2000, 1400), # layer density (kg/m3)
+    c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
+  ,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
+    layer = c("surface","base","subgrade"),
+    thickness = c(0.1, 0.2, 2.7), # layer thickness (m)
+    k = c(0.2, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(1094, 1111, 1400), # layer density (kg/m3)
+    c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    R.c.top = c(NA,5.0E-4,0) # thermal contact resistance at top boundary of layer (dimensionless) 
+  )
 )
 
 # The specific heat of dense-graded asphalt and concrete are very similar [7]
@@ -103,9 +103,9 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
-               pave.length = c(10), # characteristic length of pavement in meters
+               pave.length = c(10,75), # characteristic length of pavement in meters
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id 
-               n.days = c(2) # number of days to simulate 
+               n.days = c(7) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
@@ -115,8 +115,8 @@ model.runs[, ref := min(run.n), by = layer.profile] # create refrence model for 
 model.runs[, depth := rep(sapply(1:length(layer.profiles), function (x) sum(layer.profiles[[x]]$thickness)), each = model.runs[layer.profile == 1, .N])]
 
 # estimated model runs time(s)
-#coeff <- c(1.551634368,-0.039871215,0.079319245,-0.035625977,0.246614492,0.862178686)
-#est.run.time <- exp(coeff[1] + coeff[2]*model.runs$nodal.spacing + coeff[3]*model.runs$n.iterations + coeff[4]*model.runs$time.step + coeff[5]*model.runs$depth + coeff[6]*model.runs$n.days)
+coeff <- c(1.551634368,-0.039871215,0.079319245,-0.035625977,0.246614492,0.862178686)
+est.run.time <- exp(coeff[1] + coeff[2]*model.runs$nodal.spacing + coeff[3]*model.runs$n.iterations + coeff[4]*model.runs$time.step + coeff[5]*model.runs$depth + coeff[6]*model.runs$n.days)
 est.run.time <- model.runs$n.iterations * model.runs$n.days * model.runs$depth / model.runs$time.step / model.runs$nodal.spacing
 est.run.time <- (432.39 * est.run.time) + 0.7298   #(516.43 * est.run.time) + 33.065 # linear regression on parameters predicting acutal run time
 for(a in 1:model.runs[,.N]){cat("run",model.runs$run.n[a],":",round(sum(est.run.time[a]), 0), "mins (", round(sum(est.run.time[a])/60, 2)," hrs) \n")}
@@ -436,24 +436,6 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
       model.runs$RMSE[run] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean] - 
                                            pave.time.ref[pave.time, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean])^2))
     } # note that RMSE is mean centered temperature across all nodes and timesteps.
-    
-    # and store if all instances are satisfied in the model.runs metadata
-    # in other words, this checks that delta.t and delta.x are sufficently small such that the solving method is stable/reliable
-    # delta.t must be less than or equal to the t.delta.min values to satisfy CFL condition
-    # so it is not if it is greater than the minimum observed t.delta.min values
-    h.inf <- pave.time[node == 0, h.inf]
-    for(layer.i in 1:n.layers){
-      v <- vector(mode = "numeric", length = length(h.rad)) # first create empty vectors to store of min allowed change in time (RHS of eqn 13 from [1])
-      for(a in 1:length(h.rad)){ # calc values for CFL check for each timestep (RHS eqn. 13 in [1])
-        v[a] <- (layer.dt$rho.c[layer.i] * (delta.x^2)) / (2 * (h.rad[a] * delta.x + h.inf[a] * delta.x + layer.dt$k[layer.i])) # in seconds
-        }
-      layer.dt[layer.i, min.delta.t := min(v, na.rm = T)]
-      layer.dt[layer.i, p.fail.CFL := round(sum(ifelse(delta.t <= v, 1, 0), na.rm = T) / sum(length(v), na.rm = T), 2)]
-    }
-    if(delta.t > min(layer.dt$min.delta.t, na.rm = T)){
-      model.runs$CFL_fail[run] <- 1
-      } 
-    # end CFL condition checking
     
     }, error = function(e){
       cat("ERROR:",conditionMessage(e), "\n") # print error msg in console

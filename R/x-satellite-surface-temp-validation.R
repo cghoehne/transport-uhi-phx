@@ -246,3 +246,6 @@ for(s in 1:length(st.tile.stack)){ #
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 
+path <- "C:/Users/cghoehne/GitHub Projects/transport-uhi-phx/data/aster/AST_08_00301012005054020_20190206151852_27906/AST_08_00301012005054020_20190206151852_27906.SurfaceKineticTemperature.KineticTemperature.tif.met"
+
+info <- fread(path, fill = T, sep2 = "=", blank.lines.skip = T)
