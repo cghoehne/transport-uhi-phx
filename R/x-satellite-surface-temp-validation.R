@@ -1,7 +1,7 @@
 ## INTRO
 
-# this script details the surface temperature validation via Landsat 8 Analysis Ready Data (ARD)
-# and ASTER Surface Kinetic Temperature (AST_08)
+# this script details the surface temperature validation via
+# ASTER Surface Kinetic Temperature (AST_08)
 # at custom chosen sites to validate the 1D heat transfer model
 
 # ** It is recommended to use Microsoft Open R (v3.5.1) for improved performance without compromsing compatibility **
@@ -24,15 +24,15 @@ if (!require("checkpoint")){
 
 # load all other dependant packages from the local repo
 lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
-library(mailR, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(RColorBrewer, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(zoo, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(lubridate, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(sp, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(raster, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(rgdal, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(gdalUtils, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(rgeos, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(tmap, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(raster, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(data.table, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(here, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 
@@ -44,139 +44,27 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
 
 # load windows fonts and store as string
 windowsFonts(Century=windowsFont("TT Century Gothic"))
-#windowsFonts(Times=windowsFont("TT Times New Roman"))
 my.font <- "Century"
 
 ## IMPORT VALIDATION SITE DATA 
 
 # load csv with site lat longs (change to your points of intreset)
 my.sites <- fread(here("data/validation_sites.csv"))
+n.sites <- my.sites[,.N]
 sites.proj <- my.sites # convert data frame of lat-long points to coordinates (SpatialPointDataFrame)
 coordinates(sites.proj) <- c("X", "Y") # assign X & Y
 proj4string(sites.proj) <- CRS("+proj=longlat +datum=WGS84") # project points to long-lat projection WSG84
 print(sites.proj@coords, digits = 10) # check coords are correct
 
-# get Phoenix Urbanized Area (UZA) data and match projection to overlay UZA boundary on plots
-longlat.prj <- "+proj=longlat +datum=WGS84 +units=m +ellps=WGS84 +towgs84=0,0,0" # lat lon projection that matches Landsat
-
 # buffer uza boundary by 1 mile (1.6 km)
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # import Maricopa County UZA boundary
 uza.buffer <- gBuffer(uza.border, byid = F, width = 5280) # add a one mile buffer to ensure no L8 data is lost when clipped
-
-# create bounding box for UZA
-uza.bbox <- spTransform(uza.buffer, longlat.prj)
-uza.bbox <- bbox(uza.bbox)
 
 # set plot options
 tmap_options(max.raster = c(plot = 2.5e+07, view = 2.5e+07)) # expand max extent of raster for tmap
 my.palette <- rev(RColorBrewer::brewer.pal(11, "Spectral")) # color palette
 
-
-
-## IMPORTING and PROCESSING LANDSAT DATA
-
-# Landsat 8 (L8) ARD data is in .tif files 
-# 30-meter spatial resolution in Albers Equal Area (AEA) projection 
-# World Geodetic System 1984 (WGS84) datum 
-
-# list the subfolders that contain collections of geotif files for each day for each Landsat product
-st.tiles <- list.dirs(here("data/landsat/ST"), recursive = F, full.names = F)
-
-# create a list of lists that contain the .tif files by day
-st.tile.list <- lapply(1:length(st.tiles), function (x) 
-  list.files(here(paste0("data/landsat/ST/", st.tiles[x])), recursive= T, pattern="tif$", full.names = T))
-
-# create a raster stack from the list of lists such that each top level is a day
-# and under it is the stacked geotifs. e.g. to refrence 1st day 2nd layer/band: stack[[1]][[2]]
-st.tile.stack <- lapply(st.tile.list, stack)
-
-# load tile metadata (all intersecting tiles of Phoenix metro in Landsat 7 & 8 since May 1st 2013 to Dec 31st 2018)
-tile.metadata <- fread(here("data/landsat/tile-metadata.csv"), check.names = T)
-
-# filter metadata to tiles downloaded
-tile.metadata <- tile.metadata[Tile.Identifier %in% gsub("_ST", "", st.tiles),] # remove "_ST" from end of folder names to match
-
-# order the metadata to follow the same order as the files were imported in the the list of raster stacks
-tile.metadata <- tile.metadata[order(match(Tile.Identifier, gsub("_ST", "", st.tiles)))]
-
-# Variables (via https://www.usgs.gov/land-resources/nli/landsat/landsat-provisional-surface-temperature?qt-science_support_page_related_con=0#qt-science_support_page_related_con)
-# Atmospheric Transmittance layer (ATRAN): Displays the ratio of the transmitted radiation to the total radiation incident upon the medium (atmosphere).
-# Distance to Cloud (CDIST): Represents the distance, in kilometers, that a pixel is from the nearest cloud pixel. 
-
-# Thermal Radiance layer (TRAD): Displays the values produced when thermal band reflectance is converted to radiance.
-# Upwelled Radiance layer (URAD): Displays the amount of electromagnetic radiation reflected upward from the ground's surface.
-# Downwelled Radiance layer (DRAD): Displays the thermal energy radiated onto the ground by all objects in a hemisphere surrounding it.
-# Emissivity layer (EMIS): Displays the ratio of the energy radiated from a material's surface to that radiated from a blackbody.
-# Emissivity Standard Deviation (EMSD): The extent of deviation of the emissivity product.
-# Surface Temperature Quality Assessment (STQA): Provides the Surface Temperature product uncertainty using a combination of uncertainty values and distance to cloud values
-# ok this works # Surface Temperature (ST): Represents the temperature of the Earth's surface in Kelvin (K). Divide by 100. Hottest ever: 344 K
-# can merge tiles to get complete coveage of metro area but note that dates are usually different for these mosaics
-#tile.merge <- do.call(merge, c(tile.stack, tolerance = 1))
-
-
-# convert surface temps to celcius with decimal. -273.15 C == 0 K.
-for(r in 1:length(st.tile.stack)){
-  values(st.tile.stack[[r]][[9]]) <- (values(st.tile.stack[[r]][[9]]) - (273.15 * 10)) / 10
-}
-
-## PLOTTING of LANDSAT DATA
-
-# project uza buffer to crs of daymet data to crop
-uza.buffer.prj <- spTransform(uza.buffer, crs(st.tile.stack[[1]]))
-uza.border.prj <- spTransform(uza.border, crs(st.tile.stack[[1]]))
-
-# merge the tiles into one
-#tiles.m <- do.call(merge, c(tiles.raw, tolerance = 1))
-
-# crop the merged tiles by the projected uza buffer
-#tiles.mc <- crop(tiles.m, uza.buffer.prj)
-#my.palette <- rev(heat.colors(40))
-
-# loop through all raster stacks and create surface temperature plots
-for(s in 1:length(st.tile.stack)){ #
-  tryCatch({  # catch and print errors, avoids stopping model run 
-  #tile.crop <- crop(st.tile.stack[[s]][[9]], uza.buffer.prj) # crop to uza buffered extent
-  tile.crop <- st.tile.stack[[s]] # uncropped
-  
-  # create labels for plot
-  my.date <- ymd(substr((names(tile.crop)), 16, 23))
-  my.sat <- paste0("Landsat ",substr((names(tile.crop)), 4, 4))
-  my.tile <- paste0("Tile ", substr((names(tile.crop)), 9, 14))
-  
-  # create plot
-  plot.1 <- tm_shape(tile.crop) + 
-    tm_raster(palette = my.palette,
-              style = "cont",
-              title = "Surface Temperature \n(deg C)") +
-    tm_shape(uza.border.prj) +
-    tm_borders(lwd = 0.1, 
-               lty = "solid",
-               col = "grey50",
-               alpha = 1) +
-    tm_layout(fontfamily = my.font, 
-              legend.title.size = 0.9, 
-              legend.text.size = 0.8,
-              legend.position = c(0.02,0.72),
-              title = paste0(my.date,"\n",my.sat,"\n",my.tile),
-              title.size = 0.7,
-              title.position = c(0.08,0.08))
-  
-  dir.create(here("figures/landsat/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-  tmap_save(plot.1, filename = here(paste0("figures/landsat/", names(tile.crop),".png"))) # save plot
-  }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
-}
-
-# Landsat approximate pass times
-# Landsat 8 North America: https://www.ssec.wisc.edu/datacenter/LANDSAT-8/archive/NA/
-# Landsat 7 North America: https://www.ssec.wisc.edu/datacenter/LANDSAT-7/archive/NA/
-
-# tile 007013
-# 2016-01-02: 18:04 UTC or 11:04 am local time
-# 2016-01-11: 17:58 UTC or 10:58 am local time
-# 2016-06-19: 17:58 UTC or 10:58 am local time
-
-
-## ASTER
+## ASTER DATA:
 # Coordinate System	Universal Transverse Mercator (UTM)
 # Datum WGS84
 # units: Kelvin
@@ -186,7 +74,7 @@ for(s in 1:length(st.tile.stack)){ #
 # Scale Factor: 0.1
 
 # list the subfolders that contain collections of geotif files for each day for each Landsat product
-st.tiles <- list.dirs(here("data/aster"), recursive = F, full.names = F)[-1]
+st.tiles <- list.dirs(here("data/aster"), recursive = F, full.names = F)
 
 # create a list of lists that contain the .tif files by day
 st.tile.list <- lapply(1:length(st.tiles), function (x) 
@@ -196,24 +84,22 @@ st.tile.list <- lapply(1:length(st.tiles), function (x)
 # and under it is the stacked geotifs. e.g. to refrence 1st day 2nd layer/band: stack[[1]][[2]]
 st.tile.stack <- lapply(st.tile.list, stack)
 
-# load tile metadata (all intersecting tiles of Phoenix metro in Landsat 7 & 8 since May 1st 2013 to Dec 31st 2018)
-#tile.metadata <- fread(here("data/landsat/tile-metadata.csv"), check.names = T)
-
 # convert surface temps to celcius with decimal. -273.15 C == 0 K.
 # if a temp is 2000 (200 K, - 73 C), it is outside the scope and should be adjusted to NA
 for(r in 1:length(st.tile.stack)){
   values(st.tile.stack[[r]]) <- ifelse(values(st.tile.stack[[r]]) == 2000, NA, (values(st.tile.stack[[r]]) - (273.15 * 10)) / 10)
 }
 
-# project uza buffer to crs of daymet data to crop
+# project uza buffer to crs of aster data to crop
 uza.buffer.prj <- spTransform(uza.buffer, crs(st.tile.stack[[1]]))
 uza.border.prj <- spTransform(uza.border, crs(st.tile.stack[[1]]))
 
-#rotated(st.tile.stack[[1]])
-#tmp <- rectify(st.tile.stack[[1]])
+#AST_08_00301082010053509_20190206152154_16709.SurfaceKineticTemperature.KineticTemperature
+rotated(st.tile.stack[[29]])
+tmp <- rectify(st.tile.stack[[29]], method = "bilinear")
 
 # loop through all raster stacks and create surface temperature plots
-for(s in 1:length(st.tile.stack)){ #
+for(s in 28:30){ #length(st.tile.stack)
   tryCatch({  # catch and print errors, avoids stopping model run 
     #tile.crop <- crop(st.tile.stack[[s]][[9]], uza.buffer.prj) # crop to uza buffered extent
     tile.crop <- st.tile.stack[[s]] # uncropped
@@ -231,7 +117,7 @@ for(s in 1:length(st.tile.stack)){ #
       tm_shape(uza.border.prj) +
       tm_borders(lwd = 0.1, 
                  lty = "dashed", #"dashed", "dotted", "dotdash", "longdash", or "twodash"
-                 col = "grey70",
+                 col = "grey50",
                  alpha = 0.7) +
       tm_layout(fontfamily = my.font, 
                 legend.title.size = 0.9, 
@@ -246,6 +132,122 @@ for(s in 1:length(st.tile.stack)){ #
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 
-path <- "C:/Users/cghoehne/GitHub Projects/transport-uhi-phx/data/aster/AST_08_00301012005054020_20190206151852_27906/AST_08_00301012005054020_20190206151852_27906.SurfaceKineticTemperature.KineticTemperature.tif.met"
+# get file paths and names for all aster metadata files
+meta.files <- list.files(here("data/aster"), recursive = F, full.names = T, pattern = "met$")
+meta.names <- gsub(".zip.met", "", list.files(here("data/aster"), recursive = F, full.names = F, pattern = "met$"))
 
-info <- fread(path, fill = T, sep2 = "=", blank.lines.skip = T)
+# create empty data.table then bind file names (stripped of extensions) as id to match with tiff file names 
+meta.data <- data.table(date = character(), time = character())
+meta.data <- rbind(list(id = meta.names), meta.data, fill = T)
+
+# loop through each .met file and use readLines and force strip relevant data and store into master metadata dt
+# indexing was done manually so this requires the formatting to be consistent
+for(m in 1:length(meta.files)){
+  a <- readLines(meta.files[m])
+  
+  # strip date & time of scene
+  meta.data[m, date := gsub("\"", "", gsub(".*=  \"", "", a[131]))]
+  meta.data[m, time := gsub("\"", "", gsub(".*=  \"", "", a[127]))]
+  
+  # strip lat/lon at 4 corners of scene 
+  meta.data[m, lon1 := unlist(strsplit(gsub(".*\\(", "", a[99]), ","))[1]]
+  meta.data[m, lon2 := gsub( " ", "", unlist(strsplit(gsub(".*\\(", "", a[99]), ","))[2])]
+  meta.data[m, lon3 := gsub( " ", "", unlist(strsplit(gsub(".*\\(", "", a[99]), ","))[3])]
+  meta.data[m, lon4 := gsub( "\\)", "", gsub( " ", "", unlist(strsplit(gsub(".*\\(", "", a[99]), ","))[4]))]
+  
+  meta.data[m, lat1 := unlist(strsplit(gsub(".*\\(", "", a[104]), ","))[1]]
+  meta.data[m, lat2 := gsub( " ", "", unlist(strsplit(gsub(".*\\(", "", a[104]), ","))[2])]
+  meta.data[m, lat3 := gsub( " ", "", unlist(strsplit(gsub(".*\\(", "", a[104]), ","))[3])]
+  meta.data[m, lat4 := gsub( "\\)", "", gsub( " ", "", unlist(strsplit(gsub(".*\\(", "", a[104]), ","))[4]))]
+  
+  # strip cloud cover
+  meta.data[m, cloud := gsub("\\\"", "", gsub(".*=  \\\"", "", a[249]))] # strip total cloud coverage (%)
+  meta.data[m, cloud.UL := gsub("\\\"", "", gsub(".*=  \\\"", "", a[217]))] # strip cloud coverage (%) upper left (UL)
+  meta.data[m, cloud.UR := gsub("\\\"", "", gsub(".*=  \\\"", "", a[233]))] # strip cloud coverage (%) upper right (UR)
+  meta.data[m, cloud.LL := gsub("\\\"", "", gsub(".*=  \\\"", "", a[185]))] # strip cloud coverage (%) lower left (LL)
+  meta.data[m, cloud.LR := gsub("\\\"", "", gsub(".*=  \\\"", "", a[201]))] # strip cloud coverage (%) lower right (LR)
+}
+
+View(meta.data)
+
+# convert date and time to date/time class. Time is GMT [1]
+meta.data[, date.time := ymd_hms(paste(date, time), tz = "GMT")] # assign GMT timezone
+meta.data[, date.time := with_tz(date.time, tz = "US/Arizona")] # convert to local (AZ) time
+meta.data[, c("date","time") := NULL] # remove date & time cols now that we have date.time
+
+# convert other columns to correct classes
+meta.data[,2:9] <- lapply(meta.data[,2:9], as.numeric) # lat & lon
+meta.data[,10:13] <- lapply(meta.data[,10:13], as.integer) # cloud coverage
+#lapply(meta.data, class) # check
+
+
+# convert my.sites to projection of current ARD geotifs
+sites.crs <- spTransform(sites.proj, crs(st.tile.stack[[29]]))
+
+# create data.table to store surface temperature extracted from each scene 
+#st.by.site <- setnames(data.table(matrix(nrow = 0, ncol = length(my.sites$Location)+1)), c("id",my.sites$Location))
+st.by.site <- setnames(data.table(matrix(nrow = 0, ncol = length(my.sites$Location))), my.sites$Location)
+st.by.site <- rbind(list(id = meta.names), st.by.site, fill = T)
+st.by.site[,2:(n.sites+1)] <- lapply(st.by.site[,2:(n.sites+1)], as.numeric)
+
+# extract surface temps at locations
+# order is same so no need to check if each extraction id matches
+for(r in 1:st.by.site[,.N]){
+  
+  st.by.site[id == gsub(".SurfaceKineticTemperature.KineticTemperature", "", names(st.tile.stack[[r]])), 
+             names(st.by.site[,2:(my.sites[,.N]+1)]) := 
+               as.list(raster::extract(st.tile.stack[[r]], sites.crs, method = 'simple', small = F, cellnumbers = F,
+                                       df = F, factors = F))]
+}
+
+# merge surface temp data to meta.data
+meta.data <- merge(meta.data, st.by.site, by = "id", all = T)
+
+# day or night?
+meta.data[hour(meta.data$date.time) >= 7 & hour(meta.data$date.time) < 18, day.time := "day"]
+meta.data[hour(meta.data$date.time) < 7 | hour(meta.data$date.time) >= 18, day.time := "night"]
+
+# cloud coverage quantiles
+meta.data[, quantile(cloud, probs = c(0,0.1,0.25,0.5,0.6,0.7,0.75,0.8,0.9,1))]
+
+# summaries of surface temps at night
+meta.data[day.time == "day" & 
+          cloud <= 10 & 
+          lubridate::month(date.time, label = T, abbr = T) %in% c("May","Jun","Jul","Aug"), 
+          max(A4, na.rm = T)]
+
+
+
+# determine the bounding box of the raster cell for each validation site for the relevant scenes 
+
+
+# function to calculate distance in kilometers between two lat/lon points
+earth.dist <- function (long1, lat1, long2, lat2){
+  rad <- pi/180
+  a1 <- lat1 * rad
+  a2 <- long1 * rad
+  b1 <- lat2 * rad
+  b2 <- long2 * rad
+  dlon <- b2 - a2
+  dlat <- b1 - a1
+  a <- (sin(dlat/2))^2 + cos(a1) * cos(b1) * (sin(dlon/2))^2
+  c <- 2 * atan2(sqrt(a), sqrt(1 - a))
+  R <- 6378.145
+  d <- R * c
+  return(d)
+}
+
+#meta.data[, border1.km := earth.dist(lon1, lat1, lon2, lat2)]
+#meta.data[, border2.km := earth.dist(lon1, lat1, lon3, lat3)]
+#meta.data[, border3.km := earth.dist(lon2, lat2, lon4, lat4)]
+#meta.data[, border4.km := earth.dist(lon3, lat3, lon4, lat4)]
+
+
+
+
+
+
+
+# References
+
+# [1] https://asterweb.jpl.nasa.gov/content/03_data/04_Documents/ASTERHigherLevelUserGuideVer2May01.pdf

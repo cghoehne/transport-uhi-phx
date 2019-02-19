@@ -3,27 +3,26 @@ gc()
 memory.limit(size = 56000) 
 t.start <- Sys.time() # start script timestamp
 
-# in case we need to revert or packages are missing
-#if (!require("here")) install.packages("here")
-#if (!require("checkpoint")) install.packages("checkpoint")
+# first make sure checkpoint is installed locally
+# this is the only package that is ok to not use a 'checkpointed' (i.e. archived version of a package)
+# checkpoint does not archive itself and it should not create dependency issues
+if (!require("checkpoint")){
+  install.packages("checkpoint")
+  library(checkpoint, quietly = T)
+}
 
-# load checkpoint package to insure you call local package dependcies
-library(checkpoint)
-#checkpoint("2019-01-17") # static checkpoint
+# load all other dependant packages from the local repo
+lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
+library(zoo, lib.loc = lib.path, quietly = T)
+library(lubridate, lib.loc = lib.path, quietly = T)
+library(data.table, lib.loc = lib.path, quietly = T)
+library(here, lib.loc = lib.path, quietly = T)
 
 # archive/update snapshot of packages at checkpoint date
-checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday
+checkpoint("2019-01-01", # archive date for all used packages (besides checkpoint itself!)
            R.version = "3.5.1", # will only work if using the same version of R
-           checkpointLocation = here::here(), # calls here package
-           verbose = T) 
-#checkpointRemove(Sys.Date() - 1, allUntilSnapshot = TRUE, here::here()) # this removes all previous checkpoints before today
-
-# load dependant packages
-library(ggplot2)
-library(zoo)
-library(lubridate)
-library(data.table)
-library(here)
+           checkpointLocation = here(), # calls here package
+           verbose = F) 
 
 # load windows fonts and store as string
 windowsFonts(Century=windowsFont("TT Century Gothic"))
