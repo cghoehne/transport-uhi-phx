@@ -1,0 +1,694 @@
+<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<qgis version="3.0.0-Girona" projectname="">
+  <title></title>
+  <autotransaction active="0"/>
+  <evaluateDefaultValues active="0"/>
+  <trust active="0"/>
+  <projectCrs>
+    <spatialrefsys>
+      <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+      <srsid>3096</srsid>
+      <srid>32612</srid>
+      <authid>EPSG:32612</authid>
+      <description>WGS 84 / UTM zone 12N</description>
+      <projectionacronym>utm</projectionacronym>
+      <ellipsoidacronym>WGS84</ellipsoidacronym>
+      <geographicflag>false</geographicflag>
+    </spatialrefsys>
+  </projectCrs>
+  <layer-tree-group>
+    <customproperties/>
+    <layer-tree-layer source="../data/shapefiles/boundaries/maricopa_county_uza.shp" expanded="1" checked="Qt::Checked" providerKey="ogr" name="maricopa_county_uza" id="maricopa_county_uza_1441bee1_bdce_4aa7_a278_01bdf33d08e6">
+      <customproperties/>
+    </layer-tree-layer>
+    <layer-tree-layer source="../data/aster/AST_08_00309122018182238_20190206150335_420/AST_08_00309122018182238_20190206150335_420.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0" checked="Qt::Checked" providerKey="gdal" name="AST_08_00309122018182238_20190206150335_420.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00309122018182238_20190206150335_420_SurfaceKineticTemperature_KineticTemperature_1777c5d7_b4d0_4b43_a285_98cd41d316d3">
+      <customproperties/>
+    </layer-tree-layer>
+    <layer-tree-layer source="type=xyz&amp;url=https://mt1.google.com/vt/lyrs%3Ds%26x%3D%7Bx%7D%26y%3D%7By%7D%26z%3D%7Bz%7D&amp;zmax=19&amp;zmin=0" expanded="1" checked="Qt::Checked" providerKey="wms" name="Google Satellite" id="Google_Satellite_e787715a_3e9d_4849_b853_f5debb3ea776">
+      <customproperties/>
+    </layer-tree-layer>
+    <custom-order enabled="0">
+      <item>AST_08_00309122018182238_20190206150335_420_SurfaceKineticTemperature_KineticTemperature_1777c5d7_b4d0_4b43_a285_98cd41d316d3</item>
+      <item>maricopa_county_uza_1441bee1_bdce_4aa7_a278_01bdf33d08e6</item>
+      <item>Google_Satellite_e787715a_3e9d_4849_b853_f5debb3ea776</item>
+    </custom-order>
+  </layer-tree-group>
+  <snapping-settings intersection-snapping="0" tolerance="12" enabled="0" mode="2" type="1" unit="1">
+    <individual-layer-settings>
+      <layer-setting tolerance="12" enabled="0" type="1" units="1" id="maricopa_county_uza_1441bee1_bdce_4aa7_a278_01bdf33d08e6"/>
+    </individual-layer-settings>
+  </snapping-settings>
+  <relations/>
+  <mapcanvas annotationsVisible="1" name="theMapCanvas">
+    <units>meters</units>
+    <extent>
+      <xmin>343871.80540993111208081</xmin>
+      <ymin>3666079.40727789793163538</ymin>
+      <xmax>433036.16838906006887555</xmax>
+      <ymax>3757537.52777041587978601</ymax>
+    </extent>
+    <rotation>0</rotation>
+    <destinationsrs>
+      <spatialrefsys>
+        <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+        <srsid>3096</srsid>
+        <srid>32612</srid>
+        <authid>EPSG:32612</authid>
+        <description>WGS 84 / UTM zone 12N</description>
+        <projectionacronym>utm</projectionacronym>
+        <ellipsoidacronym>WGS84</ellipsoidacronym>
+        <geographicflag>false</geographicflag>
+      </spatialrefsys>
+    </destinationsrs>
+    <rendermaptile>0</rendermaptile>
+  </mapcanvas>
+  <legend updateDrawingOrder="true">
+    <legendlayer showFeatureCount="0" drawingOrder="-1" checked="Qt::Checked" open="true" name="maricopa_county_uza">
+      <filegroup open="true" hidden="false">
+        <legendlayerfile isInOverview="0" layerid="maricopa_county_uza_1441bee1_bdce_4aa7_a278_01bdf33d08e6" visible="1"/>
+      </filegroup>
+    </legendlayer>
+    <legendlayer showFeatureCount="0" drawingOrder="-1" checked="Qt::Checked" open="false" name="AST_08_00309122018182238_20190206150335_420.SurfaceKineticTemperature.KineticTemperature">
+      <filegroup open="false" hidden="false">
+        <legendlayerfile isInOverview="0" layerid="AST_08_00309122018182238_20190206150335_420_SurfaceKineticTemperature_KineticTemperature_1777c5d7_b4d0_4b43_a285_98cd41d316d3" visible="1"/>
+      </filegroup>
+    </legendlayer>
+    <legendlayer showFeatureCount="0" drawingOrder="-1" checked="Qt::Checked" open="true" name="Google Satellite">
+      <filegroup open="true" hidden="false">
+        <legendlayerfile isInOverview="0" layerid="Google_Satellite_e787715a_3e9d_4849_b853_f5debb3ea776" visible="1"/>
+      </filegroup>
+    </legendlayer>
+  </legend>
+  <mapViewDocks/>
+  <mapViewDocks3D/>
+  <projectlayers>
+    <maplayer hasScaleBasedVisibilityFlag="0" refreshOnNotifyMessage="" minScale="1e+8" autoRefreshTime="0" refreshOnNotifyEnabled="0" type="raster" autoRefreshEnabled="0" maxScale="0">
+      <extent>
+        <xmin>348180.81565270858118311</xmin>
+        <ymin>3680454.39959581289440393</ymin>
+        <xmax>433230.81565270858118311</xmax>
+        <ymax>3756144.39959581289440393</ymax>
+      </extent>
+      <id>AST_08_00309122018182238_20190206150335_420_SurfaceKineticTemperature_KineticTemperature_1777c5d7_b4d0_4b43_a285_98cd41d316d3</id>
+      <datasource>../data/aster/AST_08_00309122018182238_20190206150335_420/AST_08_00309122018182238_20190206150335_420.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00309122018182238_20190206150335_420.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent>
+          <spatial minz="0" maxy="0" maxx="0" miny="0" maxz="0" crs="" dimensions="2" minx="0"/>
+          <temporal>
+            <period>
+              <start></start>
+              <end></end>
+            </period>
+          </temporal>
+        </extent>
+        <contact>
+          <name></name>
+          <organization></organization>
+          <position></position>
+          <voice></voice>
+          <fax></fax>
+          <email></email>
+          <role></role>
+        </contact>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="false" key="WMSBackgroundLayer"/>
+        <property value="false" key="WMSPublishDataSourceUrl"/>
+        <property value="0" key="embeddedWidgets/count"/>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="0"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer band="1" opacity="1" classificationMin="2900" type="singlebandpseudocolor" classificationMax="3371" alphaBand="-1">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>None</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <rastershader>
+            <colorrampshader clip="0" classificationMode="2" colorRampType="INTERPOLATED">
+              <colorramp type="gradient" name="[source]">
+                <prop v="43,131,186,255" k="color1"/>
+                <prop v="215,25,28,255" k="color2"/>
+                <prop v="0" k="discrete"/>
+                <prop v="gradient" k="rampType"/>
+                <prop v="0.25;171,221,164,255:0.5;255,255,191,255:0.75;253,174,97,255" k="stops"/>
+              </colorramp>
+              <item color="#2b83ba" alpha="255" label="2900" value="2900"/>
+              <item color="#4696b6" alpha="255" label="2925" value="2924.78947368421"/>
+              <item color="#61a9b1" alpha="255" label="2950" value="2949.57894736842"/>
+              <item color="#7cbcac" alpha="255" label="2974" value="2974.36842105263"/>
+              <item color="#97cfa8" alpha="255" label="2999" value="2999.15789473684"/>
+              <item color="#b0dfa6" alpha="255" label="3024" value="3023.94736842105"/>
+              <item color="#c1e6ab" alpha="255" label="3049" value="3048.73684210526"/>
+              <item color="#d3eeb1" alpha="255" label="3074" value="3073.52631578947"/>
+              <item color="#e5f5b7" alpha="255" label="3098" value="3098.31578947368"/>
+              <item color="#f7fcbc" alpha="255" label="3123" value="3123.10526315789"/>
+              <item color="#fff7b5" alpha="255" label="3148" value="3147.89473684211"/>
+              <item color="#ffe6a1" alpha="255" label="3173" value="3172.68421052632"/>
+              <item color="#fed58e" alpha="255" label="3197" value="3197.47368421053"/>
+              <item color="#fec47a" alpha="255" label="3222" value="3222.26315789474"/>
+              <item color="#feb266" alpha="255" label="3247" value="3247.05263157895"/>
+              <item color="#f79756" alpha="255" label="3272" value="3271.84210526316"/>
+              <item color="#ef7747" alpha="255" label="3297" value="3296.63157894737"/>
+              <item color="#e75839" alpha="255" label="3321" value="3321.42105263158"/>
+              <item color="#df382a" alpha="255" label="3346" value="3346.21052631579"/>
+              <item color="#d7191c" alpha="255" label="3371" value="3371"/>
+            </colorrampshader>
+          </rastershader>
+        </rasterrenderer>
+        <brightnesscontrast contrast="2" brightness="0"/>
+        <huesaturation colorizeRed="255" colorizeGreen="128" colorizeBlue="128" colorizeStrength="100" colorizeOn="0" saturation="0" grayscaleMode="0"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer hasScaleBasedVisibilityFlag="0" refreshOnNotifyMessage="" minScale="1e+8" autoRefreshTime="0" refreshOnNotifyEnabled="0" type="raster" autoRefreshEnabled="0" maxScale="0">
+      <extent>
+        <xmin>-20037508.34278924390673637</xmin>
+        <ymin>-20037508.34278925508260727</ymin>
+        <xmax>20037508.34278924390673637</xmax>
+        <ymax>20037508.34278924390673637</ymax>
+      </extent>
+      <id>Google_Satellite_e787715a_3e9d_4849_b853_f5debb3ea776</id>
+      <datasource>type=xyz&amp;url=https://mt1.google.com/vt/lyrs%3Ds%26x%3D%7Bx%7D%26y%3D%7By%7D%26z%3D%7Bz%7D&amp;zmax=19&amp;zmin=0</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>Google Satellite</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs</proj4>
+          <srsid>3857</srsid>
+          <srid>3857</srid>
+          <authid>EPSG:3857</authid>
+          <description>WGS 84 / Pseudo Mercator</description>
+          <projectionacronym>merc</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Undefined" key="identify/format"/>
+      </customproperties>
+      <provider>wms</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="0"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer band="1" opacity="1" type="singlebandcolordata" alphaBand="-1">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>None</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation colorizeRed="255" colorizeGreen="128" colorizeBlue="128" colorizeStrength="100" colorizeOn="0" saturation="0" grayscaleMode="0"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer hasScaleBasedVisibilityFlag="0" labelsEnabled="0" simplifyMaxScale="1" simplifyDrawingTol="1" refreshOnNotifyMessage="" minScale="1e+8" geometry="Polygon" autoRefreshTime="0" refreshOnNotifyEnabled="0" type="vector" simplifyAlgorithm="0" autoRefreshEnabled="0" simplifyLocal="1" maxScale="0" simplifyDrawingHints="1" readOnly="0">
+      <extent>
+        <xmin>437292.54521196224959567</xmin>
+        <ymin>801538.60071476921439171</ymin>
+        <xmax>818253.67307270725723356</xmax>
+        <ymax>1087291.44400212494656444</ymax>
+      </extent>
+      <id>maricopa_county_uza_1441bee1_bdce_4aa7_a278_01bdf33d08e6</id>
+      <datasource>../data/shapefiles/boundaries/maricopa_county_uza.shp</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>maricopa_county_uza</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=tmerc +lat_0=31 +lon_0=-111.9166666666667 +k=0.9999 +x_0=213360 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=ft +no_defs</proj4>
+          <srsid>205</srsid>
+          <srid>2223</srid>
+          <authid>EPSG:2223</authid>
+          <description>NAD83 / Arizona Central (ft)</description>
+          <projectionacronym>tmerc</projectionacronym>
+          <ellipsoidacronym>GRS80</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent>
+          <spatial minz="0" maxy="0" maxx="0" miny="0" maxz="0" crs="" dimensions="2" minx="0"/>
+          <temporal>
+            <period>
+              <start></start>
+              <end></end>
+            </period>
+          </temporal>
+        </extent>
+        <contact>
+          <name></name>
+          <organization></organization>
+          <position></position>
+          <voice></voice>
+          <fax></fax>
+          <email></email>
+          <role></role>
+        </contact>
+        <links/>
+      </resourceMetadata>
+      <provider encoding="UTF-8">ogr</provider>
+      <vectorjoins/>
+      <layerDependencies/>
+      <dataDependencies/>
+      <expressionfields/>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <auxiliaryLayer/>
+      <renderer-v2 type="singleSymbol" symbollevels="0" enableorderby="0" forceraster="0">
+        <symbols>
+          <symbol alpha="1" clip_to_extent="1" type="fill" name="0">
+            <layer enabled="1" pass="0" class="SimpleFill" locked="0">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="232,88,153,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="no" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" value="" name="name"/>
+                  <Option name="properties"/>
+                  <Option type="QString" value="collection" name="type"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+        </symbols>
+        <rotation/>
+        <sizescale/>
+      </renderer-v2>
+      <customproperties>
+        <property value="0" key="embeddedWidgets/count"/>
+        <property key="variableNames"/>
+        <property key="variableValues"/>
+      </customproperties>
+      <blendMode>0</blendMode>
+      <featureBlendMode>0</featureBlendMode>
+      <layerOpacity>1</layerOpacity>
+      <SingleCategoryDiagramRenderer attributeLegend="1" diagramType="Histogram">
+        <DiagramCategory labelPlacementMethod="XHeight" width="15" enabled="0" backgroundColor="#ffffff" minScaleDenominator="0" lineSizeScale="3x:0,0,0,0,0,0" penAlpha="255" scaleBasedVisibility="0" sizeScale="3x:0,0,0,0,0,0" opacity="1" maxScaleDenominator="1e+8" sizeType="MM" barWidth="5" penColor="#000000" scaleDependency="Area" diagramOrientation="Up" minimumSize="0" lineSizeType="MM" penWidth="0" backgroundAlpha="255" height="15" rotationOffset="270">
+          <fontProperties style="" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0"/>
+        </DiagramCategory>
+      </SingleCategoryDiagramRenderer>
+      <DiagramLayerSettings obstacle="0" placement="0" showAll="1" zIndex="0" linePlacementFlags="18" dist="0" priority="0">
+        <properties>
+          <Option type="Map">
+            <Option type="QString" value="" name="name"/>
+            <Option name="properties"/>
+            <Option type="QString" value="collection" name="type"/>
+          </Option>
+        </properties>
+      </DiagramLayerSettings>
+      <fieldConfiguration>
+        <field name="UACE10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="GEOID10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="NAME10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="NAMELSAD10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="LSAD10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="MTFCC10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="UATYP10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="FUNCSTAT10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="ALAND10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="AWATER10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="INTPTLAT10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="INTPTLON10">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="area_mi2">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+      </fieldConfiguration>
+      <aliases>
+        <alias index="0" field="UACE10" name=""/>
+        <alias index="1" field="GEOID10" name=""/>
+        <alias index="2" field="NAME10" name=""/>
+        <alias index="3" field="NAMELSAD10" name=""/>
+        <alias index="4" field="LSAD10" name=""/>
+        <alias index="5" field="MTFCC10" name=""/>
+        <alias index="6" field="UATYP10" name=""/>
+        <alias index="7" field="FUNCSTAT10" name=""/>
+        <alias index="8" field="ALAND10" name=""/>
+        <alias index="9" field="AWATER10" name=""/>
+        <alias index="10" field="INTPTLAT10" name=""/>
+        <alias index="11" field="INTPTLON10" name=""/>
+        <alias index="12" field="area_mi2" name=""/>
+      </aliases>
+      <excludeAttributesWMS/>
+      <excludeAttributesWFS/>
+      <defaults>
+        <default expression="" applyOnUpdate="0" field="UACE10"/>
+        <default expression="" applyOnUpdate="0" field="GEOID10"/>
+        <default expression="" applyOnUpdate="0" field="NAME10"/>
+        <default expression="" applyOnUpdate="0" field="NAMELSAD10"/>
+        <default expression="" applyOnUpdate="0" field="LSAD10"/>
+        <default expression="" applyOnUpdate="0" field="MTFCC10"/>
+        <default expression="" applyOnUpdate="0" field="UATYP10"/>
+        <default expression="" applyOnUpdate="0" field="FUNCSTAT10"/>
+        <default expression="" applyOnUpdate="0" field="ALAND10"/>
+        <default expression="" applyOnUpdate="0" field="AWATER10"/>
+        <default expression="" applyOnUpdate="0" field="INTPTLAT10"/>
+        <default expression="" applyOnUpdate="0" field="INTPTLON10"/>
+        <default expression="" applyOnUpdate="0" field="area_mi2"/>
+      </defaults>
+      <constraints>
+        <constraint field="UACE10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="GEOID10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="NAME10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="NAMELSAD10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="LSAD10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="MTFCC10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="UATYP10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="FUNCSTAT10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="ALAND10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="AWATER10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="INTPTLAT10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="INTPTLON10" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+        <constraint field="area_mi2" notnull_strength="0" unique_strength="0" constraints="0" exp_strength="0"/>
+      </constraints>
+      <constraintExpressions>
+        <constraint field="UACE10" desc="" exp=""/>
+        <constraint field="GEOID10" desc="" exp=""/>
+        <constraint field="NAME10" desc="" exp=""/>
+        <constraint field="NAMELSAD10" desc="" exp=""/>
+        <constraint field="LSAD10" desc="" exp=""/>
+        <constraint field="MTFCC10" desc="" exp=""/>
+        <constraint field="UATYP10" desc="" exp=""/>
+        <constraint field="FUNCSTAT10" desc="" exp=""/>
+        <constraint field="ALAND10" desc="" exp=""/>
+        <constraint field="AWATER10" desc="" exp=""/>
+        <constraint field="INTPTLAT10" desc="" exp=""/>
+        <constraint field="INTPTLON10" desc="" exp=""/>
+        <constraint field="area_mi2" desc="" exp=""/>
+      </constraintExpressions>
+      <attributeactions>
+        <defaultAction value="{00000000-0000-0000-0000-000000000000}" key="Canvas"/>
+      </attributeactions>
+      <attributetableconfig sortExpression="" sortOrder="0" actionWidgetStyle="dropDown">
+        <columns>
+          <column type="field" width="-1" name="UACE10" hidden="0"/>
+          <column type="field" width="-1" name="GEOID10" hidden="0"/>
+          <column type="field" width="-1" name="NAME10" hidden="0"/>
+          <column type="field" width="-1" name="NAMELSAD10" hidden="0"/>
+          <column type="field" width="-1" name="LSAD10" hidden="0"/>
+          <column type="field" width="-1" name="MTFCC10" hidden="0"/>
+          <column type="field" width="-1" name="UATYP10" hidden="0"/>
+          <column type="field" width="-1" name="FUNCSTAT10" hidden="0"/>
+          <column type="field" width="-1" name="ALAND10" hidden="0"/>
+          <column type="field" width="-1" name="AWATER10" hidden="0"/>
+          <column type="field" width="-1" name="INTPTLAT10" hidden="0"/>
+          <column type="field" width="-1" name="INTPTLON10" hidden="0"/>
+          <column type="field" width="-1" name="area_mi2" hidden="0"/>
+          <column type="actions" width="-1" hidden="1"/>
+        </columns>
+      </attributetableconfig>
+      <editform></editform>
+      <editforminit/>
+      <editforminitcodesource>0</editforminitcodesource>
+      <editforminitfilepath></editforminitfilepath>
+      <editforminitcode><![CDATA[# -*- coding: utf-8 -*-
+"""
+QGIS forms can have a Python function that is called when the form is
+opened.
+
+Use this function to add extra logic to your forms.
+
+Enter the name of the function in the "Python Init function"
+field.
+An example follows:
+"""
+from qgis.PyQt.QtWidgets import QWidget
+
+def my_form_open(dialog, layer, feature):
+	geom = feature.geometry()
+	control = dialog.findChild(QWidget, "MyLineEdit")
+]]></editforminitcode>
+      <featformsuppress>0</featformsuppress>
+      <editorlayout>generatedlayout</editorlayout>
+      <editable>
+        <field editable="1" name="ALAND10"/>
+        <field editable="1" name="AWATER10"/>
+        <field editable="1" name="FUNCSTAT10"/>
+        <field editable="1" name="GEOID10"/>
+        <field editable="1" name="INTPTLAT10"/>
+        <field editable="1" name="INTPTLON10"/>
+        <field editable="1" name="LSAD10"/>
+        <field editable="1" name="MTFCC10"/>
+        <field editable="1" name="NAME10"/>
+        <field editable="1" name="NAMELSAD10"/>
+        <field editable="1" name="UACE10"/>
+        <field editable="1" name="UATYP10"/>
+        <field editable="1" name="area_mi2"/>
+      </editable>
+      <labelOnTop>
+        <field labelOnTop="0" name="ALAND10"/>
+        <field labelOnTop="0" name="AWATER10"/>
+        <field labelOnTop="0" name="FUNCSTAT10"/>
+        <field labelOnTop="0" name="GEOID10"/>
+        <field labelOnTop="0" name="INTPTLAT10"/>
+        <field labelOnTop="0" name="INTPTLON10"/>
+        <field labelOnTop="0" name="LSAD10"/>
+        <field labelOnTop="0" name="MTFCC10"/>
+        <field labelOnTop="0" name="NAME10"/>
+        <field labelOnTop="0" name="NAMELSAD10"/>
+        <field labelOnTop="0" name="UACE10"/>
+        <field labelOnTop="0" name="UATYP10"/>
+        <field labelOnTop="0" name="area_mi2"/>
+      </labelOnTop>
+      <widgets/>
+      <conditionalstyles>
+        <rowstyles/>
+        <fieldstyles/>
+      </conditionalstyles>
+      <expressionfields/>
+      <previewExpression>GEOID10</previewExpression>
+      <mapTip></mapTip>
+    </maplayer>
+  </projectlayers>
+  <layerorder>
+    <layer id="AST_08_00309122018182238_20190206150335_420_SurfaceKineticTemperature_KineticTemperature_1777c5d7_b4d0_4b43_a285_98cd41d316d3"/>
+    <layer id="maricopa_county_uza_1441bee1_bdce_4aa7_a278_01bdf33d08e6"/>
+    <layer id="Google_Satellite_e787715a_3e9d_4849_b853_f5debb3ea776"/>
+  </layerorder>
+  <properties>
+    <PositionPrecision>
+      <Automatic type="bool">true</Automatic>
+      <DecimalPlaces type="int">2</DecimalPlaces>
+    </PositionPrecision>
+    <Measurement>
+      <AreaUnits type="QString"></AreaUnits>
+      <DistanceUnits type="QString"></DistanceUnits>
+    </Measurement>
+    <Measure>
+      <Ellipsoid type="QString">WGS84</Ellipsoid>
+    </Measure>
+    <Legend>
+      <filterByMap type="bool">false</filterByMap>
+    </Legend>
+    <SpatialRefSys>
+      <ProjectionsEnabled type="int">1</ProjectionsEnabled>
+    </SpatialRefSys>
+    <Gui>
+      <SelectionColorBluePart type="int">0</SelectionColorBluePart>
+      <CanvasColorRedPart type="int">255</CanvasColorRedPart>
+      <SelectionColorRedPart type="int">255</SelectionColorRedPart>
+      <SelectionColorAlphaPart type="int">255</SelectionColorAlphaPart>
+      <CanvasColorBluePart type="int">255</CanvasColorBluePart>
+      <CanvasColorGreenPart type="int">255</CanvasColorGreenPart>
+      <SelectionColorGreenPart type="int">255</SelectionColorGreenPart>
+    </Gui>
+    <Paths>
+      <Absolute type="bool">false</Absolute>
+    </Paths>
+  </properties>
+  <visibility-presets/>
+  <transformContext/>
+  <Annotations/>
+  <Layouts/>
+</qgis>

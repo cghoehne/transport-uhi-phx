@@ -53,7 +53,8 @@ my.sites <- fread(here("data/validation_sites.csv"))
 n.sites <- my.sites[,.N]
 sites.proj <- my.sites # convert data frame of lat-long points to coordinates (SpatialPointDataFrame)
 coordinates(sites.proj) <- c("X", "Y") # assign X & Y
-proj4string(sites.proj) <- CRS("+proj=longlat +datum=WGS84") # project points to long-lat projection WSG84
+lon.lat.prj <- crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+proj4string(sites.proj) <- lon.lat.prj # project points to long-lat projection WSG84   "+proj=longlat +datum=WGS84"
 print(sites.proj@coords, digits = 10) # check coords are correct
 
 # buffer uza boundary by 1 mile (1.6 km)
@@ -77,59 +78,23 @@ my.palette <- rev(RColorBrewer::brewer.pal(11, "Spectral")) # color palette
 st.tiles <- list.dirs(here("data/aster"), recursive = F, full.names = F)
 
 # create a list of lists that contain the .tif files by day
-st.tile.list <- lapply(1:length(st.tiles), function (x) 
-  list.files(here(paste0("data/aster/", st.tiles[x])), recursive= T, pattern="tif$", full.names = T))
+st.tile.list <- list.files(here("data/aster"), recursive = T, full.names = T, pattern="tif$")
 
 # create a raster stack from the list of lists such that each top level is a day
 # and under it is the stacked geotifs. e.g. to refrence 1st day 2nd layer/band: stack[[1]][[2]]
-st.tile.stack <- lapply(st.tile.list, stack)
+st.tile.stack <- stack(st.tile.list)
+st.tile.stack <- lapply(st.tile.stack, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
+
+# for qgis
+for(r in 1:length(st.tile.stack)){
+  writeRaster(st.tile.stack[[r]], here("data/aster/all",paste0(names(st.tile.stack[[r]]),".tif")))
+}
+
 
 # convert surface temps to celcius with decimal. -273.15 C == 0 K.
 # if a temp is 2000 (200 K, - 73 C), it is outside the scope and should be adjusted to NA
 for(r in 1:length(st.tile.stack)){
   values(st.tile.stack[[r]]) <- ifelse(values(st.tile.stack[[r]]) == 2000, NA, (values(st.tile.stack[[r]]) - (273.15 * 10)) / 10)
-}
-
-# project uza buffer to crs of aster data to crop
-uza.buffer.prj <- spTransform(uza.buffer, crs(st.tile.stack[[1]]))
-uza.border.prj <- spTransform(uza.border, crs(st.tile.stack[[1]]))
-
-#AST_08_00301082010053509_20190206152154_16709.SurfaceKineticTemperature.KineticTemperature
-rotated(st.tile.stack[[29]])
-tmp <- rectify(st.tile.stack[[29]], method = "bilinear")
-
-# loop through all raster stacks and create surface temperature plots
-for(s in 28:30){ #length(st.tile.stack)
-  tryCatch({  # catch and print errors, avoids stopping model run 
-    #tile.crop <- crop(st.tile.stack[[s]][[9]], uza.buffer.prj) # crop to uza buffered extent
-    tile.crop <- st.tile.stack[[s]] # uncropped
-    
-    # create labels for plot
-    #my.date <- ymd(substr((names(tile.crop)), 16, 23))
-    #my.sat <- paste0("Landsat ",substr((names(tile.crop)), 4, 4))
-    #my.tile <- paste0("Tile ", substr((names(tile.crop)), 9, 14))
-    
-    # create plot
-    plot.2 <- tm_shape(tile.crop) + 
-      tm_raster(palette = my.palette,
-                style = "cont",
-                title = "Surface Temperature \n(deg C)") +
-      tm_shape(uza.border.prj) +
-      tm_borders(lwd = 0.1, 
-                 lty = "dashed", #"dashed", "dotted", "dotdash", "longdash", or "twodash"
-                 col = "grey50",
-                 alpha = 0.7) +
-      tm_layout(fontfamily = my.font, 
-                legend.title.size = 0.9, 
-                legend.text.size = 0.8,
-                legend.position = c(0.02,0.72),
-                #title = paste0(my.date,"\n",my.sat,"\n",my.tile),
-                title.size = 0.7,
-                title.position = c(0.08,0.08))
-    
-    dir.create(here("figures/aster/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-    tmap_save(plot.2, filename = here(paste0("figures/aster/", names(tile.crop),".png"))) # save plot
-  }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 
 # get file paths and names for all aster metadata files
@@ -168,8 +133,6 @@ for(m in 1:length(meta.files)){
   meta.data[m, cloud.LR := gsub("\\\"", "", gsub(".*=  \\\"", "", a[201]))] # strip cloud coverage (%) lower right (LR)
 }
 
-View(meta.data)
-
 # convert date and time to date/time class. Time is GMT [1]
 meta.data[, date.time := ymd_hms(paste(date, time), tz = "GMT")] # assign GMT timezone
 meta.data[, date.time := with_tz(date.time, tz = "US/Arizona")] # convert to local (AZ) time
@@ -179,10 +142,6 @@ meta.data[, c("date","time") := NULL] # remove date & time cols now that we have
 meta.data[,2:9] <- lapply(meta.data[,2:9], as.numeric) # lat & lon
 meta.data[,10:13] <- lapply(meta.data[,10:13], as.integer) # cloud coverage
 #lapply(meta.data, class) # check
-
-
-# convert my.sites to projection of current ARD geotifs
-sites.crs <- spTransform(sites.proj, crs(st.tile.stack[[29]]))
 
 # create data.table to store surface temperature extracted from each scene 
 #st.by.site <- setnames(data.table(matrix(nrow = 0, ncol = length(my.sites$Location)+1)), c("id",my.sites$Location))
@@ -194,6 +153,7 @@ st.by.site[,2:(n.sites+1)] <- lapply(st.by.site[,2:(n.sites+1)], as.numeric)
 # order is same so no need to check if each extraction id matches
 for(r in 1:st.by.site[,.N]){
   
+  # extract data
   st.by.site[id == gsub(".SurfaceKineticTemperature.KineticTemperature", "", names(st.tile.stack[[r]])), 
              names(st.by.site[,2:(my.sites[,.N]+1)]) := 
                as.list(raster::extract(st.tile.stack[[r]], sites.crs, method = 'simple', small = F, cellnumbers = F,
@@ -202,6 +162,7 @@ for(r in 1:st.by.site[,.N]){
 
 # merge surface temp data to meta.data
 meta.data <- merge(meta.data, st.by.site, by = "id", all = T)
+meta.data[, idx := .I]
 
 # day or night?
 meta.data[hour(meta.data$date.time) >= 7 & hour(meta.data$date.time) < 18, day.time := "day"]
@@ -237,15 +198,303 @@ earth.dist <- function (long1, lat1, long2, lat2){
   return(d)
 }
 
-#meta.data[, border1.km := earth.dist(lon1, lat1, lon2, lat2)]
-#meta.data[, border2.km := earth.dist(lon1, lat1, lon3, lat3)]
-#meta.data[, border3.km := earth.dist(lon2, lat2, lon4, lat4)]
-#meta.data[, border4.km := earth.dist(lon3, lat3, lon4, lat4)]
+
+# we need to determine of the 4 lat and lon points, which are UL, LL, UR, LR
+# long: more negative (larger abs value in AZ) is west, closer to zero is east
+# lat: larger (more positive) values is north
+
+# determine min1st min2nd.... for all points at each row
+meta.data[, `:=` (min.lon.1 = min(.SD),
+                  min.lon.2 = quantile(c(lon1,lon2,lon3,lon4), 1/3),
+                  min.lon.3 = quantile(c(lon1,lon2,lon3,lon4), 2/3),
+                  min.lon.4 = max(.SD)),
+          .SDcols = c("lon1","lon2","lon3","lon4"),
+          by = 1:nrow(meta.data)]
+
+meta.data[, `:=` (min.lat.1 = min(.SD),
+                  min.lat.2 = quantile(c(lat1,lat2,lat3,lat4), 1/3),
+                  min.lat.3 = quantile(c(lat1,lat2,lat3,lat4), 2/3),
+                  min.lat.4 = max(.SD)),
+          .SDcols = c("lat1","lat2","lat3","lat4"),
+          by = 1:nrow(meta.data)]
+
+# upper left
+# if min.lon.2 and min.lat.4 are paired -> UL (slight right tilt)
+meta.data[lon1 == min.lon.2 & lat1 == min.lat.4, `:=` (lon.UL = lon1, lat.UL = lat1)]
+meta.data[lon2 == min.lon.2 & lat2 == min.lat.4, `:=` (lon.UL = lon2, lat.UL = lat2)]
+meta.data[lon3 == min.lon.2 & lat3 == min.lat.4, `:=` (lon.UL = lon3, lat.UL = lat3)]
+meta.data[lon4 == min.lon.2 & lat4 == min.lat.4, `:=` (lon.UL = lon4, lat.UL = lat4)]
+
+# if min.lon.1 and min.lat.3 are paired -> UL (slight left tilt)
+meta.data[lon1 == min.lon.1 & lat1 == min.lat.3, `:=` (lon.UL = lon1, lat.UL = lat1)]
+meta.data[lon2 == min.lon.1 & lat2 == min.lat.3, `:=` (lon.UL = lon2, lat.UL = lat2)]
+meta.data[lon3 == min.lon.1 & lat3 == min.lat.3, `:=` (lon.UL = lon3, lat.UL = lat3)]
+meta.data[lon4 == min.lon.1 & lat4 == min.lat.3, `:=` (lon.UL = lon4, lat.UL = lat4)]
+
+# lower left
+# if min.lon.1 and min.lat.2 are paired -> LL (slight right tilt)
+meta.data[lon1 == min.lon.1 & lat1 == min.lat.2, `:=` (lon.LL = lon1, lat.LL = lat1)]
+meta.data[lon2 == min.lon.1 & lat2 == min.lat.2, `:=` (lon.LL = lon2, lat.LL = lat2)]
+meta.data[lon3 == min.lon.1 & lat3 == min.lat.2, `:=` (lon.LL = lon3, lat.LL = lat3)]
+meta.data[lon4 == min.lon.1 & lat4 == min.lat.2, `:=` (lon.LL = lon4, lat.LL = lat4)]
+
+# if min.lon.2 and min.lat.1 are paired -> LL (slight left tilt)
+meta.data[lon1 == min.lon.2 & lat1 == min.lat.1, `:=` (lon.LL = lon1, lat.LL = lat1)]
+meta.data[lon2 == min.lon.2 & lat2 == min.lat.1, `:=` (lon.LL = lon2, lat.LL = lat2)]
+meta.data[lon3 == min.lon.2 & lat3 == min.lat.1, `:=` (lon.LL = lon3, lat.LL = lat3)]
+meta.data[lon4 == min.lon.2 & lat4 == min.lat.1, `:=` (lon.LL = lon4, lat.LL = lat4)]
+
+# upper right
+# if min.lon.4 and min.lat.3 are paired -> UL (slight right tilt)
+meta.data[lon1 == min.lon.4 & lat1 == min.lat.3, `:=` (lon.UR = lon1, lat.UR = lat1)]
+meta.data[lon2 == min.lon.4 & lat2 == min.lat.3, `:=` (lon.UR = lon2, lat.UR = lat2)]
+meta.data[lon3 == min.lon.4 & lat3 == min.lat.3, `:=` (lon.UR = lon3, lat.UR = lat3)]
+meta.data[lon4 == min.lon.4 & lat4 == min.lat.3, `:=` (lon.UR = lon4, lat.UR = lat4)]
+
+# if min.lon.3 and min.lat.4 are paired -> UL (slight left tilt)
+meta.data[lon1 == min.lon.3 & lat1 == min.lat.4, `:=` (lon.UR = lon1, lat.UR = lat1)]
+meta.data[lon2 == min.lon.3 & lat2 == min.lat.4, `:=` (lon.UR = lon2, lat.UR = lat2)]
+meta.data[lon3 == min.lon.3 & lat3 == min.lat.4, `:=` (lon.UR = lon3, lat.UR = lat3)]
+meta.data[lon4 == min.lon.3 & lat4 == min.lat.4, `:=` (lon.UR = lon4, lat.UR = lat4)]
+
+# lower right
+# if min.lon.3 and min.lat.1 are paired -> LL (slight right tilt)
+meta.data[lon1 == min.lon.3 & lat1 == min.lat.1, `:=` (lon.LR = lon1, lat.LR = lat1)]
+meta.data[lon2 == min.lon.3 & lat2 == min.lat.1, `:=` (lon.LR = lon2, lat.LR = lat2)]
+meta.data[lon3 == min.lon.3 & lat3 == min.lat.1, `:=` (lon.LR = lon3, lat.LR = lat3)]
+meta.data[lon4 == min.lon.3 & lat4 == min.lat.1, `:=` (lon.LR = lon4, lat.LR = lat4)]
+
+# if min.lon.4 and min.lat.2 are paired -> LL (slight left tilt)
+meta.data[lon1 == min.lon.4 & lat1 == min.lat.2, `:=` (lon.LR = lon1, lat.LR = lat1)]
+meta.data[lon2 == min.lon.4 & lat2 == min.lat.2, `:=` (lon.LR = lon2, lat.LR = lat2)]
+meta.data[lon3 == min.lon.4 & lat3 == min.lat.2, `:=` (lon.LR = lon3, lat.LR = lat3)]
+meta.data[lon4 == min.lon.4 & lat4 == min.lat.2, `:=` (lon.LR = lon4, lat.LR = lat4)]
+
+
+# with all UL/LL/UR/LR assigned correctly we can resample rasters
+
+# for every tile, extract the lat lon, convert to spatial points, 
+# convert to extent, and create raster with extent
+
+
+# update projections
+aster.crs <- crs(st.tile.stack[[1]])
+sites.crs <- spTransform(sites.proj, aster.crs)
+uza.border.prj <- spTransform(uza.border, aster.crs) # project uza buffer to kat lon
+
+# rectify
+#tile.crop <- rectify(st.tile.stack[[s]], method = "bilinear")
+#tile.crop <- rectify(st.tile.stack[[s]], method = "bilinear", res = c(90,90))
+#tile.crop <- rectify(st.tile.stack[[s]], method = "bilinear", ext = extent(corners))
+#tile.crop <- rectify(st.tile.stack[[s]], method = "bilinear", res = c(90,90), ext = extent(corners))
+
+#tile.crop <- st.tile.stack[[s]][[1]]
+#extent(tile.crop) <- extent(corners) # correct the extent
+
+#new.tile <- crop(extend(st.tile.stack[[s]][[1]], corners), corners)
+#all.equal(extent(st.tile.stack[[s]][[1]]), extent(new.tile))
+
+#tile.crop <- extent(st.tile.stack[[s]][[1]])
+#tile.crop <- spTransform(st.tile.stack[[s]][[1]], lon.lat.prj)
+
+
+#spts <- rasterToPoints(st.tile.stack[[s]][[1]], spatial = TRUE)
+#llpts <- spTransform(spts, lon.lat.prj)
+
+
+# loop through all raster stacks and create surface temperature plots
+for(s in 916){ #length(st.tile.stack)
+  tryCatch({  # catch and print errors, avoids stopping model run 
+
+    # corner points
+    corners <- rbind(meta.data[s, .(lon.UL,lat.UL)], 
+                     meta.data[s, .(lon.UR,lat.UR)],
+                     meta.data[s, .(lon.LL,lat.LL)],
+                     meta.data[s, .(lon.LR,lat.LR)], use.names = F)
+    
+    colnames(corners) <- c("X","Y") # name X & Y (lon & lat)
+    coordinates(corners) <- c("X", "Y") # assign X & Y
+    proj4string(corners) <- lon.lat.prj
+    corners <- spTransform(corners, aster.crs)
+
+    # fix the raster file parameters because the extents are incorrect 
+    # we can't rectify b/c rotation isn't recognized so forced to resample
+    tile.crop <- rectify(st.tile.stack[[s]], method = "bilinear", res = c(90,90))
+    crs(tile.crop) <- aster.crs
+    
+    #tile.crop <- resample(st.tile.stack[[s]], tile.crop, method = "bilinear") # resample to new extent w/ same resolution
+    #tile.crop <- raster(here("data/aster-test.tif"))
+
+
+    # create plot
+    plot.2 <- tm_shape(tile.crop) + 
+      tm_raster(palette = my.palette,
+                style = "cont",
+                title = "Surface Temperature \n(deg C)") +
+      tm_shape(uza.border.prj) +
+      tm_borders(lwd = 0.1, 
+                 lty = "dashed", #"dashed", "dotted", "dotdash", "longdash", or "twodash"
+                 col = "grey50",
+                 alpha = 0.5) +
+      tm_shape(sites.crs) +
+      tm_dots(size = 0.1, title = "Validation Sites", shape = 4) +
+      tm_shape(corners) +
+      tm_dots(size = 0.15, alpha = 0.5) +
+      tm_layout(fontfamily = my.font, 
+                legend.title.size = 0.9, 
+                legend.text.size = 0.8,
+                legend.position = c(0.02,0.72),
+                #title = paste0(my.date,"\n",my.sat,"\n",my.tile),
+                title.size = 0.7,
+                title.position = c(0.08,0.08))
+    
+    dir.create(here("figures/aster/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+    tmap_save(plot.2, filename = here(paste0("figures/aster-best/new", s,".png"))) # save plot
+  }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
+}
+
+
+##############
+
+test1 <- fread(here("data/aster/AST_08_00301012005054020_20190206151852_27906/AST_08_00301012005054020_20190206151852_27906.SurfaceKineticTemperature.Longitude.txt"))
+test2 <- fread(here("data/aster/AST_08_00301012005054020_20190206151852_27906/AST_08_00301012005054020_20190206151852_27906.SurfaceKineticTemperature.GeodeticLatitude.txt"))
+
+test1 <- melt(test1)[,X := as.numeric(value)][,variable := NULL][,value := NULL]
+test2 <- melt(test2)[,Y := as.numeric(value)][,variable := NULL][,value := NULL]
+
+test.xy <- cbind(test1,test2)
+coordinates(test.xy) <- c("X", "Y") # assign X & Y
+proj4string(test.xy) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+test.xy <- spTransform(test.xy, crs(uza.border))
+
+
+#corners1 <- rbind(meta.data[, .(lon1,lat1)])
+#corners2 <- rbind(meta.data[, .(lon2,lat2)])
+#corners3 <- rbind(meta.data[, .(lon3,lat3)])
+#corners4 <- rbind(meta.data[, .(lon4,lat4)])
+
+corners1 <- rbind(meta.data[, .(lon.UL,lat.UL)])
+corners2 <- rbind(meta.data[, .(lon.LL,lat.LL)])
+corners3 <- rbind(meta.data[, .(lon.UR,lat.UR)])
+corners4 <- rbind(meta.data[, .(lon.LR,lat.LR)])
+
+max.box <- data.table(rbind(c(max(meta.data$lon.UL),max(meta.data$lat.UL)),
+                            c(min(meta.data$lon.UL),min(meta.data$lat.UL))))
+
+colnames(max.box) <- c("X","Y") # name X & Y (lon & lat)
+coordinates(max.box) <- c("X", "Y") # assign X & Y
+proj4string(max.box) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+
+colnames(corners1) <- c("X","Y") # name X & Y (lon & lat)
+coordinates(corners1) <- c("X", "Y") # assign X & Y
+proj4string(corners1) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+colnames(corners2) <- c("X","Y") # name X & Y (lon & lat)
+coordinates(corners2) <- c("X", "Y") # assign X & Y
+proj4string(corners2) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+colnames(corners3) <- c("X","Y") # name X & Y (lon & lat)
+coordinates(corners3) <- c("X", "Y") # assign X & Y
+proj4string(corners3) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+colnames(corners4) <- c("X","Y") # name X & Y (lon & lat)
+coordinates(corners4) <- c("X", "Y") # assign X & Y
+proj4string(corners4) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+corners1 <- spTransform(corners1, crs(uza.border))
+corners2 <- spTransform(corners2, crs(uza.border))
+corners3 <- spTransform(corners3, crs(uza.border))
+corners4 <- spTransform(corners4, crs(uza.border))
+
+# create plot
+plot <- #tm_shape(uza.border.prj) +
+  #tm_borders(lwd = 0.1, 
+  #           lty = "dashed", #"dashed", "dotted", "dotdash", "longdash", or "twodash"
+  #           col = "grey50") +
+  tm_shape(max.box) +
+  tm_dots(size = 0.1, shape = 4, col = "gray") +
+  tm_shape(test.xy) +
+  tm_dots(size = 0.1, shape = 4, col = "gray") +
+  tm_shape(corners1) +
+  tm_dots(size = 0.1, shape = 4, col = "red") +
+  tm_shape(corners2) +
+  tm_dots(size = 0.1, shape = 4, col = "blue") +
+  tm_shape(corners3) +
+  tm_dots(size = 0.1, shape = 4, col = "green") +
+  tm_shape(corners4) +
+  tm_dots(size = 0.1, shape = 4, col = "black")
+
+dir.create(here("figures/aster/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+tmap_save(plot, filename = here(paste0("figures/aster-best/corners.png"))) # save plot
+
+###########
+test.xy.dt <- cbind(test1,test2)
+test.xy.dt[, dist.km := earth.dist(X, Y, shift(X, "lag", n = 1), shift(Y, "lag", n = 1))] 
+test.xy.dt[, dist.km]
 
 
 
-
-
+# CHECK ALL POINTS TO MAKE SURE THE ARE CORRECT
+for(s in 1:100){ #length(st.tile.stack)
+  tryCatch({  # catch and print errors, avoids stopping model run 
+    corners1 <- rbind(meta.data[, .(lon.UL,lat.UL)])
+    corners2 <- rbind(meta.data[, .(lon.LL,lat.LL)])
+    corners3 <- rbind(meta.data[, .(lon.UR,lat.UR)])
+    corners4 <- rbind(meta.data[, .(lon.LR,lat.LR)])
+    
+    max.box <- data.table(rbind(c(max(meta.data$lon.UL),max(meta.data$lat.UL)),
+                                c(max(meta.data$lon.UR),max(meta.data$lat.UR)),
+                                c(min(meta.data$lon.LL),min(meta.data$lat.LL)),
+                                c(min(meta.data$lon.LR),min(meta.data$lat.LR))))
+    
+    colnames(max.box) <- c("X","Y") # name X & Y (lon & lat)
+    coordinates(max.box) <- c("X", "Y") # assign X & Y
+    proj4string(max.box) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    
+    
+    colnames(corners1) <- c("X","Y") # name X & Y (lon & lat)
+    coordinates(corners1) <- c("X", "Y") # assign X & Y
+    proj4string(corners1) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    
+    colnames(corners2) <- c("X","Y") # name X & Y (lon & lat)
+    coordinates(corners2) <- c("X", "Y") # assign X & Y
+    proj4string(corners2) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    
+    colnames(corners3) <- c("X","Y") # name X & Y (lon & lat)
+    coordinates(corners3) <- c("X", "Y") # assign X & Y
+    proj4string(corners3) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    
+    colnames(corners4) <- c("X","Y") # name X & Y (lon & lat)
+    coordinates(corners4) <- c("X", "Y") # assign X & Y
+    proj4string(corners4) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    
+    corners1 <- spTransform(corners1, crs(uza.border))
+    corners2 <- spTransform(corners2, crs(uza.border))
+    corners3 <- spTransform(corners3, crs(uza.border))
+    corners4 <- spTransform(corners4, crs(uza.border))
+    
+    # create plot
+    plot <- 
+      tm_shape(max.box) +
+      tm_dots(size = 0.2, shape = 16, col = "black") +
+      tm_shape(uza.border.prj) +
+      tm_borders(lwd = 0.1, 
+                 lty = "dashed", #"dashed", "dotted", "dotdash", "longdash", or "twodash"
+                 col = "grey50") +
+      tm_shape(corners1) +
+      tm_dots(size = 0.2, shape = 4, col = "red") +
+      tm_shape(corners2) +
+      tm_dots(size = 0.2, shape = 4, col = "blue") +
+      tm_shape(corners3) +
+      tm_dots(size = 0.2, shape = 4, col = "green") +
+      tm_shape(corners4) +
+      tm_dots(size = 0.2, shape = 4, col = "black")
+    
+    dir.create(here("figures/aster-test/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+    tmap_save(plot, filename = here(paste0("figures/aster-test/corners_","all",".png"))) # save plot
+  }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
+}
 
 
 # References
