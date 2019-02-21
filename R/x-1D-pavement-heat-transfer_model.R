@@ -169,8 +169,9 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     t.start <- Sys.time() # start model run timestamp
     
     # trim weather data to number of days specified
-    weather <- weather.raw[date.time >= model.runs$start.day[run] & # date.time starts at start.day 
-                           date.time <= (model.runs$start.day[run] + days(model.runs$n.days[run]))] # ends n days later
+    my.date <- as.POSIXct(model.runs$start.day[run])
+    weather <- weather.raw[date.time >= my.date & # date.time starts at start.day 
+                           date.time <= (my.date + days(model.runs$n.days[run]))] # ends n days later
     
     if(weather[,.N] < 12 * model.runs$n.days[run]){
       assign("my.errors", c(my.errors, paste("stopped at run",run,"because too few weather obs")), envir = .GlobalEnv) # store error msg
