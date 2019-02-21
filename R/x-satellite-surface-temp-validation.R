@@ -82,13 +82,8 @@ st.tile.list <- list.files(here("data/aster"), recursive = T, full.names = T, pa
 
 # create a raster stack from the list of lists such that each top level is a day
 # and under it is the stacked geotifs. e.g. to refrence 1st day 2nd layer/band: stack[[1]][[2]]
-st.tile.stack <- stack(st.tile.list)
-st.tile.stack <- lapply(st.tile.stack, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
-
-# for qgis
-for(r in 1:length(st.tile.stack)){
-  writeRaster(st.tile.stack[[r]], here("data/aster/all",paste0(names(st.tile.stack[[r]]),".tif")))
-}
+#st.tile.stack <- stack(st.tile.list)
+st.tile.stack <- lapply(st.tile.list, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
 
 
 # convert surface temps to celcius with decimal. -273.15 C == 0 K.
@@ -96,6 +91,14 @@ for(r in 1:length(st.tile.stack)){
 for(r in 1:length(st.tile.stack)){
   values(st.tile.stack[[r]]) <- ifelse(values(st.tile.stack[[r]]) == 2000, NA, (values(st.tile.stack[[r]]) - (273.15 * 10)) / 10)
 }
+
+dir.create(here("data/aster/all"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+# for qgis
+for(r in 1:length(st.tile.stack)){
+  writeRaster(st.tile.stack[[r]], here("data/aster/all",paste0(names(st.tile.stack[[r]]),".tif")))
+}
+
+
 
 # get file paths and names for all aster metadata files
 meta.files <- list.files(here("data/aster"), recursive = F, full.names = T, pattern = "met$")
@@ -177,6 +180,27 @@ meta.data[day.time == "day" &
           lubridate::month(date.time, label = T, abbr = T) %in% c("May","Jun","Jul","Aug"), 
           max(A4, na.rm = T)]
 
+my.idx <- meta.data[cloud <= 30 & 
+           lubridate::month(date.time, label = T, abbr = T) %in% c("May","Jun","Jul","Aug") &
+           lubridate::year(date.time) == 2017, idx]
+
+# for qgis
+#dir.create(here("data/aster processed/all new"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+#for(i in 1:length(my.idx)){
+#  j <- as.integer(my.idx[i])
+#  writeRaster(st.tile.stack[[j]], here("data/aster processed/all new",paste0(names(st.tile.stack[[j]]),".tif")), overwrite = T)
+#}
+
+# days of reference
+meta.data[idx %in% my.idx, .(id,cloud,date.time,day.time)]
+
+# create a list of lists that contain the .tif files by day
+new.list <- list.files(here("data/aster processed/processed"), recursive = T, full.names = T, pattern="tif$")
+
+# create a raster stack from the list of lists such that each top level is a day
+# and under it is the stacked geotifs. e.g. to refrence 1st day 2nd layer/band: stack[[1]][[2]]
+#st.tile.stack <- stack(st.tile.list)
+new.stack <- lapply(new.list, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
 
 
 # determine the bounding box of the raster cell for each validation site for the relevant scenes 
@@ -303,7 +327,7 @@ uza.border.prj <- spTransform(uza.border, aster.crs) # project uza buffer to kat
 
 
 # loop through all raster stacks and create surface temperature plots
-for(s in 916){ #length(st.tile.stack)
+for(s in 1:length(new.stack)){ #length(st.tile.stack)
   tryCatch({  # catch and print errors, avoids stopping model run 
 
     # corner points
@@ -319,8 +343,8 @@ for(s in 916){ #length(st.tile.stack)
 
     # fix the raster file parameters because the extents are incorrect 
     # we can't rectify b/c rotation isn't recognized so forced to resample
-    tile.crop <- rectify(st.tile.stack[[s]], method = "bilinear", res = c(90,90))
-    crs(tile.crop) <- aster.crs
+    #tile.crop <- rectify(st.tile.stack[[s]], method = "bilinear", res = c(90,90))
+    tile.crop <- new.stack[[s]]
     
     #tile.crop <- resample(st.tile.stack[[s]], tile.crop, method = "bilinear") # resample to new extent w/ same resolution
     #tile.crop <- raster(here("data/aster-test.tif"))
@@ -348,8 +372,8 @@ for(s in 916){ #length(st.tile.stack)
                 title.size = 0.7,
                 title.position = c(0.08,0.08))
     
-    dir.create(here("figures/aster/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-    tmap_save(plot.2, filename = here(paste0("figures/aster-best/new", s,".png"))) # save plot
+    dir.create(here("figures/aster-best/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+    tmap_save(plot.2, filename = here(paste0("figures/aster-best/", s,".png"))) # save plot
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 

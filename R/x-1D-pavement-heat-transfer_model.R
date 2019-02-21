@@ -39,40 +39,44 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 layer.profiles <- list(
   data.table( # light weight asphalt layer 1
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
+    thickness = c(0.1, 0.1, 2.3), # layer thickness (m)
     k = c(1.21, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2238, 2238, 1500), # layer density (kg/m3)
     c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
+    #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
   ),
   data.table( # light weight asphalt layer 1
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
+    thickness = c(0.1, 0.1, 2.5), # layer thickness (m)
     k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
     rho = c(1686, 2000, 1500), # layer density (kg/m3)
     c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
+    #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # normal weight asphalt layer 1,
     layer = c("surface","base","subgrade"),
-    thickness = c(0.075, 0.10, 2.825), # layer thickness (m)
+    thickness = c(0.075, 0.10, 2.125), # layer thickness (m)
     k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2585, 2000, 1400), # layer density (kg/m3)
     c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
-    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+    #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
+    #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  ,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
-    layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.2, 2.7), # layer thickness (m)
-    k = c(0.2, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(1094, 1111, 1400), # layer density (kg/m3)
-    c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
-    albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-    R.c.top = c(NA,5.0E-4,0) # thermal contact resistance at top boundary of layer (dimensionless) 
-  )
+  #,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
+  #  layer = c("surface","base","subgrade"),
+  #  thickness = c(0.1, 0.2, 2), # layer thickness (m)
+  #  k = c(0.2, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
+  #  rho = c(1094, 1111, 1400), # layer density (kg/m3)
+  #  c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
+  #  SVF = c(0,NA,NA), # sky view factor
+  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless) 
+  #)
 )
 
 # The specific heat of dense-graded asphalt and concrete are very similar [7]
@@ -103,9 +107,12 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
-               pave.length = c(10,75), # characteristic length of pavement in meters
-               layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id 
-               n.days = c(7) # number of days to simulate 
+               pave.length = c(10), # characteristic length of pavement in meters
+               albedo = c(0.05,0.35), # surface albedo
+               SVF = c(0.75), # sky view factor
+               layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
+               start.day = c("2017-08-20 00:00"), # day and time to start model simualtion
+               n.days = c(3) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
@@ -131,7 +138,8 @@ weather.raw <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds
                           readRDS(here("data/outputs/2017-weather-data-3.rds"))))
 weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs with no NA of desired vars
 weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero becuase this is the most likely to be missing weather variable
-weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD" & month == "Mar",] # choose station for desired period of time
+#weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD" & month == "Mar",] # choose station for desired period of time
+weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD",] # choose station for desired period of time
 
 # funcion to create layers by layer specifications
 create.layer <- function(thickness, name, start.depth, nodal.spacing){ # create a layer with defined *thickness* and *name*
@@ -161,7 +169,9 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     t.start <- Sys.time() # start model run timestamp
     
     # trim weather data to number of days specified
-    weather <- weather.raw[date.time <= (min(date.time) + days(model.runs$n.days[run]))] 
+    weather <- weather.raw[date.time >= model.runs$start.day[run] & # date.time starts at start.day 
+                           date.time <= (model.runs$start.day[run] + days(model.runs$n.days[run]))] # ends n days later
+    
     if(weather[,.N] < 12 * model.runs$n.days[run]){
       assign("my.errors", c(my.errors, paste("stopped at run",run,"because too few weather obs")), envir = .GlobalEnv) # store error msg
       break} # break the run if there are fewer than 12 obs a day
@@ -206,10 +216,10 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
                                                           length.out = p.n)))) # surface temp in K from the pavement to 3m)
     
     # static parameters for pavement heat transfer
-    albedo <- layer.dt$albedo[1] #  albedo (dimensionless) [1]; can be: 1 - epsilon for opaque objects
+    albedo <- model.runs$albedo[run] #layer.dt$albedo[1] #  albedo (dimensionless) [1]; can be: 1 - epsilon for opaque objects
     epsilon <- 0.8 #  emissivity (dimensionless) [1]; can be: 1 - albedo for opaque objects
     sigma <- 5.67*10^(-8) #  Stefan-Boltzmann constant (W/(m2*K4); [1]
-    SVF <- 1	# sky view factor (dimensionless [0,1]). assume 1.0: pavement is completely visible to sky
+    SVF <- model.runs$SVF[run] #layer.dt$SVF[1]	# sky view factor (dimensionless [0,1]). assume 1.0: pavement is completely visible to sky
     Pr.inf <- 0.7085 #  Prandtl number (dimensionless) [0.708, 0.719] (50 to -50 degC range)
     
     # L in (m) is the characteristic length of the pavement at the test site taken as the ratio of
@@ -275,7 +285,12 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     # iterate through from time p to time p.n and model pavement heat transfer at surface, boundary/interface, and interior nodes 
     iterations <- 1:model.runs$n.iterations[run] # 10 iteration cycles in [1] was found to produce the most accurate results
     for(iteration in iterations){
+      
+      start.time <- Sys.time()
+      
       for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
+        
+        if(p%%100 == 0){cat("r =",run,":","p =",p,":", "i =", iteration,":", round(difftime(Sys.time(), start.time, units = "secs"), 2),"secs \n")}
         
         # if this is the first time step, we loop over time p == 1 and the initial conditions until we
         # reach a stable initial condition of pavement temps at depth to ensure the model will converge 
