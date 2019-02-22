@@ -1,0 +1,33 @@
+angeles                 Weather in Los Angeles, CA
+beijing                 Weather in Beijing, China
+breck                   Precipitation in Breckenridge, CO
+celsius.to.fahrenheit   Convert from Celsius to Fahrenheit.
+celsius.to.kelvin       Convert from Celsius to Kelvin.
+convert_precip          Convert between precipitation metrics
+convert_temperature     Convert from one temperature metric to another
+convert_wind_speed      Convert between wind speed metrics
+dewpoint.to.humidity    Calculate relative humidity.
+fahrenheit.to.celsius   Convert from Fahrenheit to Celsius.
+fahrenheit.to.kelvin    Convert from Fahrenheit to Kelvin.
+foco                    Weather in Fort Collins, CO
+heat.index              Calculate heat index.
+heat.index.algorithm    Algorithm for heat.index function.
+humidity.to.dewpoint    Calculate dew point temperature.
+inches_to_metric        Convert from inches to standard metric units of
+                        measure for precipitation
+kelvin.to.celsius       Convert from Kelvin to Celsius.
+kelvin.to.fahrenheit    Convert from Kelvin to Fahrenheit.
+knots_to_speed          Convert from knots to standard units of wind
+                        speed
+loveland                Precipitation in Loveland, CO
+lyon                    Weather in Lyon, France
+metric_to_inches        Convert between standard metric units of
+                        measure for precipitation to inches
+newhaven                Weather in New Haven, CT
+norfolk                 Weather in Norfolk, VA
+puravida                Weather in San Jose, Costa Rica
+speed_to_knots          Convert between standard units of measure for
+                        wind speed
+suffolk                 Weather in Suffolk, VA
+weathermetrics          weathermetrics: Functions to convert between
+                        weather metrics
