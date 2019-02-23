@@ -78,52 +78,145 @@ for(run in 1:max(model.runs$run.n)){
   model.runs[run.n == run, T.degC_Range_L3 := max(pave.time[layer == "subgrade", T.degC], na.rm = T) - min(pave.time[, T.degC], na.rm = T)]
   model.runs[run.n == run, T.degC_IQR_L3 := IQR(pave.time[layer == "subgrade", T.degC], na.rm = T)]
   
+  # minute and second variable to filter for weather obs
+  pave.time[, mins := minute(date.time)][, secs := second(date.time)] 
+  
+  # air temp in deg c
+  pave.time[, air.temp.c := T.inf - 273.15]
+  
   # custom ASTER temp validation
   if(run == 1){valids <- pave.time[0]} # create empty data.frame to bind to # exists("pave.time") == F
   valid.all <- pave.time[which(abs(difftime(pave.time[,date.time],"2017-08-22 22:35:36")) == 
                                  min(abs(difftime(pave.time[,date.time],"2017-08-22 22:35:36"))))]
   valids <- rbind(valids,valid.all[node == 0], fill = T) # should be between 30 C (bare ground) and 40 C (asphalt))
   valids[run, run.n := run]
-  
-  which.min(difftime(pave.time$date.time, as.POSIXct("2017-08-22 22:35:36")))
-  
+
   if(should.plot == "yes"){
-    ## replicate Gui et al. Fig. 2 
-    # depth temp
-    my.node <- 0 #quantile(pave.time$node, probs = .9)
-    p1.data <- pave.time[node == my.node]
+    
+    # specify plot info 
+    p1.data <- pave.time[node == 0]
     min.x <- min(p1.data$date.time, na.rm = T)
     max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
-    #min.y <- round(signif(min(p1.data[, T.degC]) - (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
-    min.y <- 0 #round(signif(min(weather[, temp.c]) - (0.1 * diff(range(weather[, temp.c]))),4), -1)
-    max.y <- round(signif(max(weather[, solar / 10]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
-    
-    p1 <- (ggplot(data = p1.data) 
+    min.y <- 0 # solar rad is always 0 at night
+    max.y <- round(signif(max(p1.data[, solar / 10]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
+    max.y <- round(max(p1.data[, solar/10]), - 1) + 5
+    surf.col <- c("Modeled Pavement \nSurface Temperature" = "#0D1B1E", "Observed Air Temperature" = "#10316B", "Observed Solar Radiation" = "#BF1C3D")
+    surf.shp <- c("Modeled Pavement \nSurface Temperature" = 32, "Observed Air Temperature" = 4, "Observed Solar Radiation" = 2)
+    surf.siz <- c("Modeled Pavement \nSurface Temperature" = 1, "Observed Air Temperature" = 0.75, "Observed Solar Radiation" = 0.75)
+      
+    p.surf <- (ggplot(data = p1.data) 
+               
+           # custom border
            + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
            + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-           + geom_point(aes(y = T.degC, x = date.time)) #date.time
-           + geom_point(aes(y = T.degC, x = date.time), data = p1.data[date.time %in% weather$date.time], color = "gray")
-           + geom_line(data = weather, aes(y = temp.c, x = date.time), color = "blue")
-           + geom_point(data = weather, aes(y = temp.c, x = date.time), color = "blue", shape = 4)
-           + geom_line(data = weather, aes(y = solar/10, x = date.time), color = "red")
-           + geom_point(data = weather, aes(y = solar/10, x = date.time), color = "red", shape = 2)
-           #+ geom_point(aes(y = T.sky - 273.15, x = time.s), data = weather, color = "blue") # points of sky temp
-           #+ geom_line(aes(y = T.degC, x = time.s), color = "grey50", linetype = 2, size = 0.75) # line of temp
-           + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "2 days")
-           + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y), breaks = seq(min.y,max.y,5))
-           + ggtitle(paste0("Modeled ", p1.data[, depth.m][1]*1000,"mm Pavement Temperature"))
-           + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
+           
+           # Observederved air temperature
+           + geom_line(aes(y = air.temp.c, x = date.time, color = "Observed Air Temperature", size = "Observed Air Temperature"))
+           + geom_point(aes(y = air.temp.c, x = date.time, color = "Observed Air Temperature", shape = "Observed Air Temperature"), data = p1.data[mins %in% c(0,30) & secs == 0,])
+           
+           # Observederved solar radiation
+           + geom_line(aes(y = solar/10, x = date.time, color = "Observed Solar Radiation", size = "Observed Solar Radiation"))
+           + geom_point(aes(y = solar/10, x = date.time, color = "Observed Solar Radiation", shape = "Observed Solar Radiation"), data = p1.data[mins %in% c(0,30) & secs == 0,])
+           
+           # modeled pavement surface temperature
+           + geom_line(aes(y = T.degC, x = date.time, color = "Modeled Pavement \nSurface Temperature", size = "Modeled Pavement \nSurface Temperature"))
+           + geom_point(aes(y = T.degC, x = date.time, color = "Modeled Pavement \nSurface Temperature", shape = "Modeled Pavement \nSurface Temperature"))
+           
+           # plot/axis titles & second axis for solar rad units
+           #+ ggtitle("Modeled Surface Pavement Temperature")
+           + labs(x = "Time of Day", y = "Temperature (deg C)")
+           + scale_color_manual(name = "", values = surf.col, labels = c("Modeled Pavement \nSurface Temperature", "Observed Air Temperature", "Observed Solar Radiation"))
+           + scale_shape_manual(name = "", values = surf.shp, labels = c("Modeled Pavement \nSurface Temperature", "Observed Air Temperature", "Observed Solar Radiation"))
+           + scale_size_manual(name = "", values = surf.siz, labels = c("Modeled Pavement \nSurface Temperature", "Observed Air Temperature", "Observed Solar Radiation"))
+           
+           # scales
+           + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "6 hours")
+           + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y), breaks = seq(min.y,max.y,20),
+                                sec.axis = sec_axis(~.*10, breaks = seq(min.y*10, max.y*10, 200), name = bquote('Solar Rad ('*W/m^2*')'))) # solar radiation axis
+          
+           # theme and formatting
            + theme_minimal()
            + theme(text = element_text(family = my.font, size = 12),
                    plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
+                   plot.title = element_text(hjust = 0.75),
                    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
                    axis.title.x = element_text(vjust = 0.3),
-                   plot.title = element_text(hjust = 0.75)))
+                   legend.position = c(.8,.93),
+                   legend.background = element_blank())
+           )
     
     # save plot
     dir.create(here("figures/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-", round(p1.data[, depth.m][1]*1000,0),"mm-pave-temp.png"), p1, 
+    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-surface-temp.png"), p.surf, 
+           device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 8, height = 6, dpi = 300, units = "in") # /20190121
+    
+    
+    # specify plot info
+    my.node <- c(4,8,12)
+    p1.data <- pave.time[node %in% my.node]
+    min.x <- min(p1.data$date.time, na.rm = T)
+    max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
+    min.y <- round(min(weather[, temp.c]), - 1) - 5
+    max.y <- round(signif(max(p1.data[, T.degC]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
+    
+    # create different legend charateristics for plotting
+    depth.names <- paste(unique(p1.data$depth.m) * 1000, "mm")
+    depth.col <- c("#67000D", "#D42020", "#FC7050")
+    depth.shp <- c(0:2)
+    depth.siz <- c(1,1,1)
+    names(depth.col) <- depth.names
+    names(depth.siz) <- depth.names
+    names(depth.shp) <- depth.names
+    
+    p.depth <- (ggplot(data = p1.data) 
+               
+               # custom border
+               + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
+               + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
+               
+               # thrid depth
+               + geom_line(aes(y = T.degC, x = date.time, color = depth.names[3], size = depth.names[3]), data = p1.data[node == my.node[3]])
+               + geom_point(aes(y = T.degC, x = date.time, color = depth.names[3], shape = depth.names[3]), data = p1.data[node == my.node[3] & mins %in% c(0,30) & secs == 0,])
+               
+               # second depth
+               + geom_line(aes(y = T.degC, x = date.time, color = depth.names[2], size = depth.names[2]), data = p1.data[node == my.node[2]])
+               + geom_point(aes(y = T.degC, x = date.time, color = depth.names[2], shape = depth.names[2]), data = p1.data[node == my.node[2] & mins %in% c(0,30) & secs == 0,])
+               
+               # first depth
+               + geom_line(aes(y = T.degC, x = date.time, color = depth.names[1], size = depth.names[1]), data = p1.data[node == my.node[1]])
+               + geom_point(aes(y = T.degC, x = date.time, color = depth.names[1], shape = depth.names[1]), data = p1.data[node == my.node[1] & mins %in% c(0,30) & secs == 0,])
+               
+               # plot/axis titles & second axis for solar rad units
+               #+ ggtitle("Modeled Surface Pavement Temperature")
+               + labs(x = "Time of Day", y = "Temperature (deg C)")
+               + scale_color_manual(name = "Pavement Depth", values = depth.col, labels = depth.names)
+               + scale_shape_manual(name = "Pavement Depth", values = depth.shp, labels = depth.names)
+               + scale_size_manual(name = "Pavement Depth", values = depth.siz, labels = depth.names)
+               
+               # scales
+               + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "6 hours")
+               + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y), breaks = seq(min.y,max.y,5))
+               
+               # theme and formatting
+               + theme_minimal()
+               + theme(text = element_text(family = my.font, size = 12),
+                       plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
+                       plot.title = element_text(hjust = 0.75),
+                       axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+                       axis.title.x = element_text(vjust = 0.3),
+                       legend.title = element_text(size = 10),
+                       legend.text = element_text(size = 9),
+                       legend.position = c(.75,.85),
+                       legend.background = element_blank())
+    )
+
+    
+    # save plot
+    dir.create(here("figures/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-depth-temps.png"), p.depth, 
            device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
+    
+    
     
     # Deviation (boxplot) of single scenario by nodes
     min.x <- min(p1.data$date.time, na.rm = T)
