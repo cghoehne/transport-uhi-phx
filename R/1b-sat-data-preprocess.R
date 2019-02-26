@@ -44,7 +44,7 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
 # Scale Factor: 0.1
 
 # create a list of lists that contain the .tif files by day
-st.tile.list <- list.files(here("data/aster"), recursive = T, full.names = T, pattern="tif$")
+st.tile.list <- list.files(here("data/aster/raw"), recursive = T, full.names = T, pattern="tif$")
 
 # create a raster stack from the list of lists
 st.tile.stack <- lapply(st.tile.list, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
@@ -55,7 +55,7 @@ for(r in 1:length(st.tile.stack)){
   values(st.tile.stack[[r]]) <- ifelse(values(st.tile.stack[[r]]) == 2000, NA, (values(st.tile.stack[[r]]) - (273.15 * 10)) / 10)
 }
 
-# export to process in qgis
+# export all for selective processing in qgis
 dir.create(here("data/aster/all"), showWarnings = FALSE) # creates output folder if it doesn't already exist
 for(r in 1:length(st.tile.stack)){
   writeRaster(st.tile.stack[[r]], here("data/aster/all",paste0(names(st.tile.stack[[r]]),".tif")))

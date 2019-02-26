@@ -56,8 +56,8 @@ proj4string(sites.prj) <- lon.lat.prj # project points to long-lat projection WS
 ## GET ASTER SCENE METADATA
 
 # get file paths and names for all aster metadata files
-meta.files <- list.files(here("data/aster"), recursive = F, full.names = T, pattern = "met$")
-meta.names <- gsub(".zip.met", "", list.files(here("data/aster"), recursive = F, full.names = F, pattern = "met$"))
+meta.files <- list.files(here("data/aster/raw"), recursive = F, full.names = T, pattern = "met$")
+meta.names <- gsub(".zip.met", "", list.files(here("data/aster/raw"), recursive = F, full.names = F, pattern = "met$"))
 
 # create empty data.table then bind file names (stripped of extensions) as id to match with tiff file names 
 meta.data <- data.table(date = character(), time = character())
@@ -110,9 +110,9 @@ meta.data[, quantile(cloud, probs = c(0,0.1,0.25,0.5,0.6,0.7,0.75,0.8,0.9,1))]
 
 
 ############################################################
-# DETERMINE CRITERIA TO SELECT SCENES TO MANUALLY PROCESS^ #
+# DETERMINE CRITERIA TO SELECT SCENES TO MANUALLY PROCESS* #
 ############################################################
-# ^ASTER data has bugs in stored georeferenced info but somehow QGIS can decode, no R libraries work
+# *ASTER data has bugs in stored georeferenced info but somehow QGIS can decode, no R libraries work
 
 # create list of ids that we are interested in 
 meta.data[, idx := .I] # id for row number
@@ -121,17 +121,17 @@ my.idx <- meta.data[cloud == 0 &
            lubridate::year(date.time) %in% c(2010:2017), idx] # specific years
 
 # create a list of lists that contain the .tif files by day
-st.tile.list <- list.files(here("data/aster/all"), recursive = T, full.names = T, pattern="tif$")
+#st.tile.list <- list.files(here("data/aster/all"), recursive = T, full.names = T, pattern="tif$")
 
 # create a raster stack from the list of lists
-st.tile.stack <- lapply(st.tile.list, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
+#st.tile.stack <- lapply(st.tile.list, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
 
 # export the desired scenes to process in qgis
-dir.create(here("data/aster processed/preprocessed"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-for(i in 1:length(my.idx)){
-  j <- as.integer(my.idx[i])
-  writeRaster(st.tile.stack[[j]], here(paste0("data/aster processed/preprocessed/", j,".tif")), overwrite = T)
-}
+#dir.create(here("data/aster processed/preprocessed"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+#for(i in 1:length(my.idx)){
+#  j <- as.integer(my.idx[i])
+#  writeRaster(st.tile.stack[[j]], here(paste0("data/aster processed/preprocessed/", j,".tif")), overwrite = T)
+#}
 
 
 ####################################################################
@@ -139,7 +139,7 @@ for(i in 1:length(my.idx)){
 ####################################################################
 
 # new list of processed ASTER rasters
-new.list <- list.files(here("data/aster processed/processed"), recursive = T, full.names = T, pattern="tif$")
+new.list <- list.files(here("data/aster/processed"), recursive = T, full.names = T, pattern="tif$")
 
 # new stack of processed ASTER rasters
 new.stack <- lapply(new.list, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
@@ -155,7 +155,6 @@ st.by.site[,2:(n.sites+1)] <- lapply(st.by.site[,2:(n.sites+1)], as.numeric)
 
 # update projections
 sites.prj <- spTransform(sites.prj, crs(new.stack[[1]]))
-uza.border.prj <- spTransform(uza.border, crs(new.stack[[1]])) # project uza buffer to kat lon
 
 # extract surface temps at locations
 # order is same so no need to check if each extraction id matches
@@ -171,6 +170,9 @@ for(r in 1:length(new.stack)){
 # merge surface temp data to meta.data
 new.data <- merge(new.data, st.by.site, by = "id", all = T)
 
+# identify best days for validation in new.data
+new.idx <- c(877,77,1102)
+new.data[idx %in% new.idx,]
 
 ########################################
 # CREATE ASTER PLOTS OF SELECTED SITES #
@@ -183,20 +185,23 @@ my.font <- "Century"
 # buffer uza boundary by 1 mile (1.6 km)
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # import Maricopa County UZA boundary
 uza.buffer <- gBuffer(uza.border, byid = F, width = 5280) # add a one mile buffer to ensure no L8 data is lost when clipped
+uza.border.prj <- spTransform(uza.border, crs(new.stack[[1]])) # project uza buffer to kat lon
 
 # set plot options
 tmap_options(max.raster = c(plot = 2.5e+07, view = 2.5e+07)) # expand max extent of raster for tmap
 my.palette <- rev(RColorBrewer::brewer.pal(11, "Spectral")) # color palette
 
 # loop through relevant raster scenes and create surface temperature plots
-for(s in 1:length(new.stack)){ #length(st.tile.stack)
+for(s in new.idx){ #length(st.tile.stack)
   tryCatch({  # catch and print errors, avoids stopping model run 
 
+    my.date <- new.data[idx == s, date.time] # store date.time
+    s <- new.data[idx == s, which = T] # correct index to new subsetted data
+    
     # create plot
     plot.2 <- tm_shape(new.stack[[s]]) + 
       tm_raster(palette = my.palette,
-                style = "cont",
-                title = "Surface Temperature \n(deg C)") +
+                style = "cont") +
       tm_shape(uza.border.prj) +
       tm_borders(lwd = 0.1, 
                  lty = "dashed", #"dashed", "dotted", "dotdash", "longdash", or "twodash"
@@ -208,12 +213,12 @@ for(s in 1:length(new.stack)){ #length(st.tile.stack)
                 legend.title.size = 0.9, 
                 legend.text.size = 0.8,
                 legend.position = c(0.02,0.72),
-                #title = paste0(my.date,"\n",my.sat,"\n",my.tile),
+                title = paste0("Surface Temperature (deg C)\n", my.date),
                 title.size = 0.7,
                 title.position = c(0.08,0.08))
     
     dir.create(here("figures/aster-best/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-    tmap_save(plot.2, filename = here(paste0("figures/aster-best/", names(s),".png"))) # save plot
+    tmap_save(plot.2, filename = here(paste0("figures/aster-best/", names(new.stack[[s]]),".png"))) # save plot
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 
