@@ -39,28 +39,28 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 layer.profiles <- list(
   data.table( # light weight asphalt layer 1
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 2.3), # layer thickness (m)
-    k = c(1.21, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2238, 2238, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
+    thickness = c(0.15, 2.5), # layer thickness (m)
+    k = c(0.841, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2238, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(921, 1900), # layer specific heat (J/(kg*degK)
     #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   ),
   data.table( # light weight asphalt layer 1
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 2.5), # layer thickness (m)
-    k = c(0.841, 2.590, 0.4), # layer thermal conductivity (W/(m*degK))  
-    rho = c(1686, 2000, 1500), # layer density (kg/m3)
-    c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
+    thickness = c(0.1, 2.5), # layer thickness (m)
+    k = c(1.21, 1), # layer thermal conductivity (W/(m*degK))  
+    rho = c(1686, 1500), # layer density (kg/m3)
+    c = c(921, 1900), # layer specific heat (J/(kg*degK)
     #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # normal weight asphalt layer 1,
     layer = c("surface","base","subgrade"),
-    thickness = c(0.075, 0.10, 2.125), # layer thickness (m)
-    k = c(2.1, 1.21, 0.4), # layer thermal conductivity (W/(m*degK)) 
+    thickness = c(0.08, 0.08, 2.34), # layer thickness (m)
+    k = c(2.1, 2.1,  1), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2585, 2000, 1400), # layer density (kg/m3)
     c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
     #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
@@ -113,12 +113,12 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
-               pave.length = c(70,10), # characteristic length of pavement in meters
-               albedo = c(0.1,0.35), # surface albedo
+               pave.length = c(40), # characteristic length of pavement in meters
+               albedo = c(0.25), # surface albedo
                SVF = c(1), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
-               start.day = c("2017-08-20 00:00"), # day and time to start model simualtion
-               n.days = c(3) # number of days to simulate 
+               start.day = c("2017-08-18 00:00"), # day and time to start model simualtion
+               n.days = c(5) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
