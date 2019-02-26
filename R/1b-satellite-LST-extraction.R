@@ -222,7 +222,7 @@ for(s in new.idx){ #length(st.tile.stack)
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 
-write.csv(new.data[idx %in% new.idx,], here("data/aster/best-dates.csv"), row.names = F)
+write.csv(new.data[idx %in% new.idx,], here("data/aster/best-aster-dates.csv"), row.names = F)
 
 # References
 

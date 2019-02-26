@@ -49,7 +49,7 @@ weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD
 layer.profiles <- readRDS(here("data/outputs/1D-heat-model-runs/layer_profiles.rds"))
 
 # validation dates
-valid.dates <- fread(here("data/best-dates.csv"))
+valid.dates <- fread(here("data/best-aster-dates.csv"))
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
