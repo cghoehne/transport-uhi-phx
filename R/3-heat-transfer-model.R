@@ -37,8 +37,8 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
-  data.table( # light weight asphalt layer 1
-    layer = c("surface","base","subgrade"),
+  data.table( # low volume HMA #1
+    layer = c("surface","subgrade"),
     thickness = c(0.15, 2.5), # layer thickness (m)
     k = c(0.841, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2238, 1500), # layer density (kg/m3) 2382 (base from infravation)
@@ -47,25 +47,25 @@ layer.profiles <- list(
     #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   ),
-  data.table( # light weight asphalt layer 1
+  data.table( # PCC whitetopping bonded on HMA (lower density roads)
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 2.5), # layer thickness (m)
-    k = c(1.21, 1), # layer thermal conductivity (W/(m*degK))  
-    rho = c(1686, 1500), # layer density (kg/m3)
-    c = c(921, 1900), # layer specific heat (J/(kg*degK)
-    #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
+    thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
+    k = c(2.24, 1.21, 1.0), # layer thermal conductivity (W/(m*degK))  
+    rho = c(2240, 2382, 1500), # layer density (kg/m3)
+    c = c(900, 920, 1900), # layer specific heat (J/(kg*degK)
+    #albedo = c(0.3,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  ,data.table( # normal weight asphalt layer 1,
-    layer = c("surface","base","subgrade"),
-    thickness = c(0.08, 0.08, 2.34), # layer thickness (m)
-    k = c(2.1, 2.1,  1), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2585, 2000, 1400), # layer density (kg/m3)
-    c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
+  ,data.table( # Ordinary PCC + some additives
+    layer = c("surface","subgrade"),
+    thickness = c(0.3, 2.7), # layer thickness (m)
+    k = c(1.16, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2350, 1500), # layer density (kg/m3)
+    c = c(990, 1900), # layer specific heat (J/(kg*degK)
     #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   #,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
   #  layer = c("surface","base","subgrade"),
@@ -91,18 +91,16 @@ layer.profiles <- list(
 # Base materials may not be required for full depth asphaltic concrete design. 
 # However, if base materials are required, then the minimum thickness will be: 152.4 mm (6in) for all base material types
 
-# Design structural number (SN) can be converted to thickness of various flexible pavement layers by using structural layer coefficients.
-# In the absence of specific values, the following structural coefficients are recommended: 
-# Asphaltic concrete 0.39
-# Aggregate base 0.12
-# Select material 0.11
-# Cement treated base 0.27
-# Bituminous Treated Base 0.31 
+# Concrete thickness (non-whitetopping) 150mm (6 in) and greater
 
 # Maryland DOT [8]
 # HMA/PCC recommended heat capacity: 0.23
 # HMA/PCC recommended thermal conductivity: 0.67 (2.8 in metric if units imperial)
 # superpave density: 2400 kg/m3
+
+# concrete specfic heat (c)
+# 0.75 (concrete, stone)
+# 0.96 (concrete, light)
 
 # create list of models to run with varied inputs to check sentivity/error
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
@@ -114,7 +112,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
                pave.length = c(40), # characteristic length of pavement in meters
-               albedo = c(0.25), # surface albedo
+               albedo = c(0.2,0.3), # surface albedo
                SVF = c(1), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                start.day = c("2017-08-18 00:00"), # day and time to start model simualtion
