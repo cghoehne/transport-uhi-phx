@@ -116,9 +116,9 @@ meta.data[, quantile(cloud, probs = c(0,0.1,0.25,0.5,0.6,0.7,0.75,0.8,0.9,1))]
 
 # create list of ids that we are interested in 
 meta.data[, idx := .I] # id for row number
-my.idx <- meta.data[cloud <= 30 & 
-           lubridate::month(date.time, label = T, abbr = T) %in% c("May","Jun","Jul","Aug") &
-           lubridate::year(date.time) == 2017, idx]
+my.idx <- meta.data[cloud == 0 &
+           #lubridate::month(date.time, label = T, abbr = T) %in% c("May","Jun","Jul","Aug") &   # specific months
+           lubridate::year(date.time) %in% c(2010:2017), idx] # specific years
 
 # create a list of lists that contain the .tif files by day
 st.tile.list <- list.files(here("data/aster/all"), recursive = T, full.names = T, pattern="tif$")
@@ -126,11 +126,11 @@ st.tile.list <- list.files(here("data/aster/all"), recursive = T, full.names = T
 # create a raster stack from the list of lists
 st.tile.stack <- lapply(st.tile.list, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
 
-# for qgis
-dir.create(here("data/aster processed/all new"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+# export the desired scenes to process in qgis
+dir.create(here("data/aster processed/preprocessed"), showWarnings = FALSE) # creates output folder if it doesn't already exist
 for(i in 1:length(my.idx)){
   j <- as.integer(my.idx[i])
-  writeRaster(st.tile.stack[[j]], here("data/aster processed/all new",paste0(names(st.tile.stack[[j]]),".tif")), overwrite = T)
+  writeRaster(st.tile.stack[[j]], here(paste0("data/aster processed/preprocessed/", j,".tif")), overwrite = T)
 }
 
 

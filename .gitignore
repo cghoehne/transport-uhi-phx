@@ -37,7 +37,9 @@ figures/1D-heat-model-runs/*
 figures/landsat/*
 troubleshooting/*
 
+data/mesowest/*
 data/aster/*
+data/aster processed/*
 figures/aster-test/*
 figures/aster-best/*
 figures/aster/*

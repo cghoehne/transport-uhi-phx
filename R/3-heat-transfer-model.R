@@ -38,12 +38,12 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
   data.table( # low volume HMA #1
-    layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 2.9), # layer thickness (m)
-    k = c(1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2238, 2238, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(920, 920, 1900), # layer specific heat (J/(kg*degK)
-    #albedo = c(0.15,NA,NA), # surface albedo (dimensionless)
+    layer = c("surface","subgrade"),
+    thickness = c(0.15, 2.5), # layer thickness (m)
+    k = c(0.841, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2238, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(921, 1900), # layer specific heat (J/(kg*degK)
+    #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   ),
@@ -55,7 +55,7 @@ layer.profiles <- list(
     c = c(900, 920, 1900), # layer specific heat (J/(kg*degK)
     #albedo = c(0.3,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # Ordinary PCC + some additives
     layer = c("surface","subgrade"),
@@ -115,8 +115,8 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                albedo = c(0.2,0.3), # surface albedo
                SVF = c(1), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
-               start.day = c("2017-08-20 00:00"), # day and time to start model simualtion
-               n.days = c(3) # number of days to simulate 
+               start.day = c("2017-08-18 00:00"), # day and time to start model simualtion
+               n.days = c(5) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
