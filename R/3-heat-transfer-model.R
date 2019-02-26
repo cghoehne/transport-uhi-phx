@@ -259,9 +259,6 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     # assume horizontal & flat, width b and infinite length L, hotter than the environment -> L = b/2
     # L could vary, but minimum for a pavement should be 2 lanes, or about ~10 meters
     
-    # parameters that vary by pavement layer
-    alpha <- 4.0  # thermal diffusivity (m^2/s), typically range from 2 to 12; [1]. 
-
     # calculate parameters that vary by time/weather
     weather$time.s <- as.numeric(difftime(weather$date.time, weather$date.time[1], units = "secs")) # time.s to match with iterations in weather data (assuming first obs is time zero)
     weather$winspd <- weather$winspd * 0.44704 # convert to m/s from mi/h

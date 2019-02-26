@@ -36,7 +36,7 @@ token <- as.character(fread(here("local-token.txt"), header = F)[1])
 # define time period you want to pull, max in one loop should be a 
 # single year of all stations to avoid giant files
 # times range of ASTER data I used:  "2000-04-12 11:30:40 MST"  to   "2019-01-02 11:21:40 MST"
-years <- 2000:2018
+years <- 2010
 
 # store partial weather data link strings (front half and variables list). time is local
 w.link.f <- "http://api.mesowest.net/v2/stations/timeseries?&stid="
@@ -71,11 +71,11 @@ for(year in years){
       
       # if vars exists, rename it for consistency w/ other data
       if(is.null(meso.w.data[[i]]$date_time) == F){setnames(meso.w.data[[i]], "date_time", "date.time")}
-      if(is.null(meso.w.data[[i]]$relative_humidity_set_1) == F){setnames(meso.w.data[[i]], "dew_point_temperature_set_1", "dewpt.c")}
+      if(is.null(meso.w.data[[i]]$dew_point_temperature_set_1d) == F){setnames(meso.w.data[[i]], "dew_point_temperature_set_1d", "dewpt.c")}
       if(is.null(meso.w.data[[i]]$wind_speed_set_1) == F){setnames(meso.w.data[[i]], "wind_speed_set_1", "winspd")}
       if(is.null(meso.w.data[[i]]$wind_direction_set_1) == F){setnames(meso.w.data[[i]], "wind_direction_set_1", "windir")}
       if(is.null(meso.w.data[[i]]$air_temp_set_1) == F){setnames(meso.w.data[[i]], "air_temp_set_1", "temp.c")}
-      if(is.null(meso.w.data[[i]]$air_temp_set_1) == F){setnames(meso.w.data[[i]], "solar_radiation_set_1", "solar")}
+      if(is.null(meso.w.data[[i]]$solar_radiation_set_1) == F){setnames(meso.w.data[[i]], "solar_radiation_set_1", "solar")}
       
       # create station column name and list index name based on the station id (STID) for refrencing
       names(meso.w.data)[i] <- j$STATION$STID
@@ -114,6 +114,9 @@ for(year in years){
   # for id == NA, make them the station.name
   meso.s.data[is.na(id), id := station.name]
   all.meso.w.data[is.na(id), id := station.name]
+  
+  # remove all obs with NA temps because they won't really be useable (and if temp is missing, usually other vars are too)
+  all.meso.w.data <- all.meso.w.data[!is.na(temp.c),]
   
   # save final R objects
   dir.create(here("data/mesowest"), showWarnings = FALSE) # creates output folder if it doesn't already exist
