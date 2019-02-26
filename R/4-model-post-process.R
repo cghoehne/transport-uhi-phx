@@ -45,9 +45,11 @@ weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #&
 weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero becuase this is the most likely to be missing weather variable
 weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD",] # choose station 
 
-
 # layer profile data
 layer.profiles <- readRDS(here("data/outputs/1D-heat-model-runs/layer_profiles.rds"))
+
+# validation dates
+valid.dates <- fread(here("data/aster/best-dates.csv"))
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
@@ -86,10 +88,15 @@ for(run in 1:max(model.runs$run.n)){
   
   # custom ASTER temp validation
   if(run == 1){valids <- pave.time[0]} # create empty data.frame to bind to # exists("pave.time") == F
-  valid.all <- pave.time[which(abs(difftime(pave.time[,date.time],"2017-08-22 22:35:36")) == 
-                                 min(abs(difftime(pave.time[,date.time],"2017-08-22 22:35:36"))))]
-  valids <- rbind(valids,valid.all[node == 0], fill = T) # should be between 30 C (bare ground) and 40 C (asphalt))
-  valids[run, run.n := run]
+  for(i in 1:nrow(valid.dates)){
+    my.date <- valid.dates$date.time[i]
+    valid.all <- pave.time[which(abs(difftime(pave.time[,date.time], my.date)) == 
+                                   min(abs(difftime(pave.time[,date.time], my.date))))]
+    valids <- rbind(valids,valid.all[node == 0], fill = T) # should be between 30 C (bare ground) and 40 C (asphalt))
+    valids[run, run.n := run]
+    
+  }
+
 
   if(should.plot == "yes"){
     

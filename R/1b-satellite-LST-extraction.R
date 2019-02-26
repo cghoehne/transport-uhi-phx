@@ -222,6 +222,8 @@ for(s in new.idx){ #length(st.tile.stack)
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 
+write.csv(new.data[idx %in% new.idx,], here("data/aster/best-dates.csv"), row.names = F)
+
 # References
 
 # [1] https://asterweb.jpl.nasa.gov/content/03_data/04_Documents/ASTERHigherLevelUserGuideVer2May01.pdf
