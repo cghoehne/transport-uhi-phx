@@ -19,6 +19,7 @@ if (!require("checkpoint")){
 # load all other dependant packages from the local repo
 lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
 library(mailR, lib.loc = lib.path, quietly = T)
+library(sirad, lib.loc = lib.path, quietly = T)
 library(zoo, lib.loc = lib.path, quietly = T)
 library(lubridate, lib.loc = lib.path, quietly = T)
 library(data.table, lib.loc = lib.path, quietly = T)
@@ -37,46 +38,46 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
-  data.table( # low volume HMA #1
+  data.table( # low volume single pave HMA 
     layer = c("surface","subgrade"),
-    thickness = c(0.15, 2.5), # layer thickness (m)
-    k = c(0.841, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    thickness = c(0.1, 2.9), # layer thickness (m)
+    k = c(1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2238, 1500), # layer density (kg/m3) 2382 (base from infravation)
     c = c(921, 1900), # layer specific heat (J/(kg*degK)
-    #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
+    albedo = c(0.2,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
-  ),
-  data.table( # PCC whitetopping bonded on HMA (lower density roads)
+  )
+  ,data.table( # PCC whitetopping bonded on HMA (lower density roads)
     layer = c("surface","base","subgrade"),
     thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
     k = c(2.24, 1.21, 1.0), # layer thermal conductivity (W/(m*degK))  
     rho = c(2240, 2382, 1500), # layer density (kg/m3)
     c = c(900, 920, 1900), # layer specific heat (J/(kg*degK)
-    #albedo = c(0.3,NA,NA), # surface albedo (dimensionless)
+    albedo = c(0.3,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  ,data.table( # Ordinary PCC + some additives
+  ,data.table( # Ordinary PCC + some additives (med density)
     layer = c("surface","subgrade"),
     thickness = c(0.3, 2.7), # layer thickness (m)
     k = c(1.16, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2350, 1500), # layer density (kg/m3)
     c = c(990, 1900), # layer specific heat (J/(kg*degK)
-    #albedo = c(0.05,NA,NA), # surface albedo (dimensionless)
+    albedo = c(0.3,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  #,data.table( # bitumen layer 1, aggregate layer 2 (S.C. Some` et al. 2012)
-  #  layer = c("surface","base","subgrade"),
-  #  thickness = c(0.1, 0.2, 2), # layer thickness (m)
-  #  k = c(0.2, 2.590, 0.4), # layer thermal conductivity (W/(m*degK)) 
-  #  rho = c(1094, 1111, 1400), # layer density (kg/m3)
-  #  c = c(921, 921, 1200), # layer specific heat (J/(kg*degK)
-  #  albedo = c(0.17,NA,NA), # surface albedo (dimensionless)
-  #  SVF = c(0,NA,NA), # sky view factor
-  #  R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless) 
-  #)
+  ,data.table( # major arterial HMA rebonded (OGFC 20mm on 280mm DGHMA)
+    layer = c("surface","subgrade"),
+    thickness = c(0.02, 0.28, 2.7), # layer thickness (m)
+    k = c(0.841, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2080, 2467, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(921, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.2,NA,NA), # surface albedo (dimensionless)
+    #SVF = c(0.5,NA,NA), # sky view factor
+    R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
 )
 
 # The specific heat of dense-graded asphalt and concrete are very similar [7]
@@ -102,6 +103,9 @@ layer.profiles <- list(
 # 0.75 (concrete, stone)
 # 0.96 (concrete, light)
 
+# load validation dates (selected dates from ASTER data to validate against)
+valid.dates <- fread(here("data/best-dates.csv"))
+
 # create list of models to run with varied inputs to check sentivity/error
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
 # this is assumed to be the model run we check error against to compare model preformance
@@ -112,11 +116,11 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
                pave.length = c(40), # characteristic length of pavement in meters
-               albedo = c(0.2,0.3), # surface albedo
+               #albedo = c(0.2,0.3), # surface albedo
                SVF = c(1), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
-               start.day = c("2017-08-18 00:00"), # day and time to start model simualtion
-               n.days = c(5) # number of days to simulate 
+               end.day = valid.dates[, date(date.time)], # day and time to start model simualtion
+               n.days = c(3) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
@@ -124,6 +128,10 @@ model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1) # create run num
 model.runs[,`:=`(run.time = 0, RMSE = 0, CFL_fail = 0, broke.t = NA)] # create output model run summary variables
 model.runs[, ref := min(run.n), by = layer.profile] # create refrence model for each unique layer profile (defaults to first scenario of parameters)
 model.runs[, depth := rep(sapply(1:length(layer.profiles), function (x) sum(layer.profiles[[x]]$thickness)), each = model.runs[layer.profile == 1, .N])]
+for(a in 1:length(layer.profiles)){ # assign albedos to layer profiles
+  model.runs[layer.profile == a, albedo := layer.profiles[[a]]$albedo[1]]
+}
+
 
 # estimated model runs time(s)
 coeff <- c(1.551634368,-0.039871215,0.079319245,-0.035625977,0.246614492,0.862178686)
@@ -135,15 +143,34 @@ paste0("Estimated run time for all ",model.runs[,.N], " runs: ", round(sum(est.r
 
 
 # LOAD & FILTER WEATHER DATA 
-#weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # sample 3 day period of weather data
-#weather <- readRDS(here("data/outputs/temp/2017-weather-data.rds")) # all weather data from cleaning script
 weather.raw <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")), # all weather data saved to repo
                           readRDS(here("data/outputs/2017-weather-data-2.rds")),
                           readRDS(here("data/outputs/2017-weather-data-3.rds"))))
+
 weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs with no NA of desired vars
 weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero becuase this is the most likely to be missing weather variable
-#weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD" & month == "Mar",] # choose station for desired period of time
 weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD",] # choose station for desired period of time
+
+# adjust to 2017 for now b/c higher resolution data
+year(model.runs$end.day) <- 2017
+
+
+#####  WORKING ON ADDING SOLAR DATA TO MESOWEST 
+#my.years <- unique(valid.dates[, year(date.time)])
+#weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS))
+#stations.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-station-data.rds")), readRDS))
+#weather.raw <- merge(weather.raw, unique(stations.raw[,.(station.name,lat)]), by = "station.name", all.x = T, allow.cartesian = T) # merge latitude from station data for solar rad calc
+
+# find times to extract solar radiation since it is missing from MesoWest right now
+#test.yrs <- valid.dates[, date(date.time)]
+
+# calculate solar radiation (convert from MJ/m2/h to W/m2)
+#extrat(test[1, yday(date.time)], test[1, radians(lat)])$ExtraTerrestrialSolarRadiationHourly * 277.777778
+
+#sol.rad <- weather.old[date(date.time) %in% test.yrs, ]
+#weather.raw <- merge(weather.raw,)
+#####
+
 
 # funcion to create layers by layer specifications
 create.layer <- function(thickness, name, start.depth, nodal.spacing){ # create a layer with defined *thickness* and *name*
@@ -173,8 +200,8 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     t.start <- Sys.time() # start model run timestamp
     
     # trim weather data to number of days specified
-    my.date <- as.POSIXct(model.runs$start.day[run])
-    weather <- weather.raw[date.time >= my.date & # date.time starts at start.day 
+    my.date <- as.POSIXct(model.runs$end.day[run])
+    weather <- weather.raw[date.time >= my.date & # date.time ends on day of end.day 
                            date.time <= (my.date + days(model.runs$n.days[run]))] # ends n days later
     
     if(weather[,.N] < 12 * model.runs$n.days[run]){
