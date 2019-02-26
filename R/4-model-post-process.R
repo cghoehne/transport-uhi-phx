@@ -93,6 +93,7 @@ for(run in 1:max(model.runs$run.n)){
 
   if(should.plot == "yes"){
     
+    # SURFACE TEMPS PLOT
     # specify plot info 
     p1.data <- pave.time[node == 0]
     min.x <- min(p1.data$date.time, na.rm = T)
@@ -102,7 +103,7 @@ for(run in 1:max(model.runs$run.n)){
     max.y <- round(max(p1.data[, solar/10]), - 1) + 5
     surf.col <- c("Modeled Pavement \nSurface Temperature" = "#0D1B1E", "Observed Air Temperature" = "#10316B", "Observed Solar Radiation" = "#BF1C3D")
     surf.shp <- c("Modeled Pavement \nSurface Temperature" = 32, "Observed Air Temperature" = 4, "Observed Solar Radiation" = 2)
-    surf.siz <- c("Modeled Pavement \nSurface Temperature" = 1, "Observed Air Temperature" = 0.75, "Observed Solar Radiation" = 0.75)
+    surf.siz <- c("Modeled Pavement \nSurface Temperature" = 1.25, "Observed Air Temperature" = 0.75, "Observed Solar Radiation" = 0.75)
       
     p.surf <- (ggplot(data = p1.data) 
                
@@ -150,9 +151,9 @@ for(run in 1:max(model.runs$run.n)){
     ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-surface-temp.png"), p.surf, 
            device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 8, height = 6, dpi = 300, units = "in") # /20190121
     
-    
+    # DEPTH TEMPS PLOT
     # specify plot info
-    my.node <- c(4,8,12)
+    my.node <- c(0,4,8)
     p1.data <- pave.time[node %in% my.node]
     min.x <- min(p1.data$date.time, na.rm = T)
     max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
@@ -160,21 +161,27 @@ for(run in 1:max(model.runs$run.n)){
     max.y <- round(signif(max(p1.data[, T.degC]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
     
     # create different legend charateristics for plotting
-    depth.names <- paste(unique(p1.data$depth.m) * 1000, "mm")
+    depth.names <- factor(paste(unique(signif(p1.data$depth.m, 2) * 1000), "mm"), ordered = T)
     depth.col <- c("#67000D", "#D42020", "#FC7050")
+    #depth.col <- c("#220901","#621708","#941B0C", "#BC3908", "#F6AA1C")
     depth.shp <- c(0:2)
-    depth.siz <- c(1,1,1)
-    names(depth.col) <- depth.names
-    names(depth.siz) <- depth.names
-    names(depth.shp) <- depth.names
-    
+    depth.siz <- c(0.6, 0.6, 0.6)
+
     p.depth <- (ggplot(data = p1.data) 
                
                # custom border
                + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
                + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
                
-               # thrid depth
+               # fifth depth
+               #+ geom_line(aes(y = T.degC, x = date.time, color = depth.names[5], size = depth.names[5]), data = p1.data[node == my.node[5]])
+               #+ geom_point(aes(y = T.degC, x = date.time, color = depth.names[5], shape = depth.names[5]), data = p1.data[node == my.node[5] & mins %in% c(0,30) & secs == 0,])
+               
+               # fourth depth
+               #+ geom_line(aes(y = T.degC, x = date.time, color = depth.names[4], size = depth.names[4]), data = p1.data[node == my.node[4]])
+               #+ geom_point(aes(y = T.degC, x = date.time, color = depth.names[4], shape = depth.names[4]), data = p1.data[node == my.node[4] & mins %in% c(0,30) & secs == 0,])
+               
+               # third depth
                + geom_line(aes(y = T.degC, x = date.time, color = depth.names[3], size = depth.names[3]), data = p1.data[node == my.node[3]])
                + geom_point(aes(y = T.degC, x = date.time, color = depth.names[3], shape = depth.names[3]), data = p1.data[node == my.node[3] & mins %in% c(0,30) & secs == 0,])
                
@@ -209,6 +216,8 @@ for(run in 1:max(model.runs$run.n)){
                        legend.position = c(.75,.85),
                        legend.background = element_blank())
     )
+    
+    
 
     
     # save plot
