@@ -44,8 +44,8 @@ layer.profiles <- list(
     k = c(1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2238, 1500), # layer density (kg/m3) 2382 (base from infravation)
     c = c(921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.2,NA,NA), # surface albedo (dimensionless)
-    #SVF = c(0.5,NA,NA), # sky view factor
+    albedo = c(0.2,NA), # surface albedo (dimensionless)
+    #SVF = c(0.5,NA), # sky view factor
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # PCC whitetopping bonded on HMA (lower density roads)
@@ -56,7 +56,7 @@ layer.profiles <- list(
     c = c(900, 920, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.3,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # Ordinary PCC + some additives (med density)
     layer = c("surface","subgrade"),
@@ -64,8 +64,8 @@ layer.profiles <- list(
     k = c(1.16, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2350, 1500), # layer density (kg/m3)
     c = c(990, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.3,NA,NA), # surface albedo (dimensionless)
-    #SVF = c(0.5,NA,NA), # sky view factor
+    albedo = c(0.3,NA), # surface albedo (dimensionless)
+    #SVF = c(0.5,NA), # sky view factor
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # major arterial HMA rebonded (OGFC 20mm on 280mm DGHMA)
@@ -73,10 +73,10 @@ layer.profiles <- list(
     thickness = c(0.02, 0.28, 2.7), # layer thickness (m)
     k = c(0.841, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2080, 2467, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(921, 1900), # layer specific heat (J/(kg*degK)
+    c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.2,NA,NA), # surface albedo (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
 )
 
@@ -200,9 +200,9 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     t.start <- Sys.time() # start model run timestamp
     
     # trim weather data to number of days specified
-    my.date <- as.POSIXct(model.runs$end.day[run])
-    weather <- weather.raw[date.time >= my.date & # date.time ends on day of end.day 
-                           date.time <= (my.date + days(model.runs$n.days[run]))] # ends n days later
+    my.date <- model.runs$end.day[run]
+    weather <- weather.raw[date.time >= (my.date - days(model.runs$n.days[run])) & # date.time ends on day of end.day 
+                           date(date.time) <= my.date] # ends n days later
     
     if(weather[,.N] < 12 * model.runs$n.days[run]){
       assign("my.errors", c(my.errors, paste("stopped at run",run,"because too few weather obs")), envir = .GlobalEnv) # store error msg
@@ -288,7 +288,7 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     pave.time[, h.inf := 0.664 * (k.inf * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^ -0.5) * (winspd ^ 0.5))] # convective heat transfer coefficient in W/(m2*degK) [0.5, 1000]
     
     # add k and rho.c
-    pave.time <- merge(pave.time, layer.dt[,.(layer,k,rho.c)], by = "layer", all.x = T) 
+    pave.time <- merge(pave.time, layer.dt[,.(layer,k,rho.c)], by = "layer", all.x = T, allow.cartesian = T) 
     
     # add boundary/interface thermal contact resistance (R.c)
     boundary.nodes <- pave.time[layer == "boundary" & time.s == 0, node]
@@ -305,7 +305,7 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     up.dn[, k.dn := shift(k, type = "lead")]
     up.dn[, x.up := abs(shift(depth.m, type = "lag") - depth.m)]
     up.dn[, x.dn := abs(shift(depth.m, type = "lead") - depth.m)]
-    pave.time <- merge(pave.time, up.dn[, .(node, k.up, k.dn, x.up, x.dn)], by = "node", all.x = T)
+    pave.time <- merge(pave.time, up.dn[, .(node, k.up, k.dn, x.up, x.dn)], by = "node", all.x = T, allow.cartesian = T)
     
     # also create/store a few other things
     pave.time[, date.time := weather$date.time[1] + seconds(time.s)] # add date.time column 
