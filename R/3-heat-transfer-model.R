@@ -200,7 +200,7 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     t.start <- Sys.time() # start model run timestamp
     
     # trim weather data to number of days specified
-    my.date <- model.runs$end.day[run]
+    my.date <- date(model.runs$end.day[run])
     weather <- weather.raw[date.time >= (my.date - days(model.runs$n.days[run])) & # date.time ends on day of end.day 
                            date(date.time) <= my.date] # ends n days later
     

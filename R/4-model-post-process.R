@@ -33,23 +33,19 @@ my.font <- "Century"
 # load model simulation metadata
 model.runs <- fread(here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv")) # 20190121/20190121_
 
+# validation dates
+valid.dates <- readRDS(here("data/best-aster-dates.rds"))
+
 # load weather data
-#weather <- readRDS(here("data/outputs/temp/sample-weather-data.rds")) # sample 3 day period of weather data
-#weather <- readRDS(here("data/outputs/temp/2017-weather-data.rds")) # all weather data from cleaning script
-weather.raw <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")), # all weather data saved to repo
-                          readRDS(here("data/outputs/2017-weather-data-2.rds")),
-                          readRDS(here("data/outputs/2017-weather-data-3.rds"))))
-                          
-# filter weather data
+my.years <- unique(valid.dates[, year(date.time)])
+weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS))
 weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs with no NA of desired vars
 weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero becuase this is the most likely to be missing weather variable
-weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD",] # choose station 
+weather.raw <- weather.raw[station.name == "City of Glendale",] # choose station for desired period of time
 
 # layer profile data
 layer.profiles <- readRDS(here("data/outputs/1D-heat-model-runs/layer_profiles.rds"))
 
-# validation dates
-valid.dates <- fread(here("data/best-aster-dates.csv"))
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
@@ -62,9 +58,9 @@ for(run in 1:max(model.runs$run.n)){
   pave.time <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # 20190121/
   
   # trim weather data to number of days specified
-  my.date <- as.POSIXct(model.runs$start.day[run])
-  weather <- weather.raw[date.time >= my.date & # date.time starts at start.day 
-                           date.time <= (my.date + days(model.runs$n.days[run]))] # ends n days later
+  my.date <- date(model.runs$end.day[run])
+  weather <- weather.raw[date.time >= (my.date - days(model.runs$n.days[run])) & # date.time ends on day of end.day 
+                           date(date.time) <= my.date] # ends n days later
   
   # record avg max temp and final day max temp at surface
   n.days <- model.runs$n.days[run]
@@ -90,6 +86,7 @@ for(run in 1:max(model.runs$run.n)){
   if(run == 1){valids <- pave.time[0]} # create empty data.frame to bind to # exists("pave.time") == F
   for(i in 1:nrow(valid.dates)){
     my.date <- valid.dates$date.time[i]
+    year(my.date) <- 2017 ###** TEMP FIX
     valid.all <- pave.time[which(abs(difftime(pave.time[,date.time], my.date)) == 
                                    min(abs(difftime(pave.time[,date.time], my.date))))]
     valids <- rbind(valids,valid.all[node == 0], fill = T) # should be between 30 C (bare ground) and 40 C (asphalt))
@@ -107,7 +104,7 @@ for(run in 1:max(model.runs$run.n)){
     max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
     min.y <- 0 # solar rad is always 0 at night
     max.y <- round(signif(max(p1.data[, solar / 10]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
-    max.y <- round(max(p1.data[, solar/10]), - 1) + 5
+    max.y <- round(max(p1.data[, solar/10], na.rm = T), - 1) + 5
     surf.col <- c("Modeled Pavement \nSurface Temperature" = "#0D1B1E", "Observed Air Temperature" = "#10316B", "Observed Solar Radiation" = "#BF1C3D")
     surf.shp <- c("Modeled Pavement \nSurface Temperature" = 32, "Observed Air Temperature" = 4, "Observed Solar Radiation" = 2)
     surf.siz <- c("Modeled Pavement \nSurface Temperature" = 1.25, "Observed Air Temperature" = 0.75, "Observed Solar Radiation" = 0.75)
@@ -165,7 +162,7 @@ for(run in 1:max(model.runs$run.n)){
     min.x <- min(p1.data$date.time, na.rm = T)
     max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
     min.y <- round(min(weather[, temp.c]), - 1) - 5
-    max.y <- round(signif(max(p1.data[, T.degC]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
+    max.y <- round(signif(max(p1.data[, T.degC], na.rm = T) + (0.1 * diff(range(p1.data[, T.degC], na.rm = T))),4), -1)
     
     # create different legend charateristics for plotting
     depth.names <- factor(paste(unique(signif(p1.data$depth.m, 2) * 1000), "mm"), ordered = T)
@@ -237,8 +234,8 @@ for(run in 1:max(model.runs$run.n)){
     # Deviation (boxplot) of single scenario by nodes
     min.x <- min(p1.data$date.time, na.rm = T)
     max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
-    min.y <- round(signif(min(pave.time[, T.degC]) - (0.1 * diff(range(pave.time[, T.degC]))),4), -1)
-    max.y <- round(signif(max(pave.time[, T.degC]) + (0.1 * diff(range(pave.time[, T.degC]))),4), -1)
+    min.y <- round(signif(min(pave.time[, T.degC], na.rm = T) - (0.1 * diff(range(pave.time[, T.degC], na.rm = T))),4), -1)
+    max.y <- round(signif(max(pave.time[, T.degC], na.rm = T) + (0.1 * diff(range(pave.time[, T.degC], na.rm = T))),4), -1)
     
     # only will show first three layers with the third layer partially shown if very deep
     boundary.nodes <- pave.time[layer == "boundary" & time.s == 0, node] # to mark the boundaries
@@ -276,7 +273,7 @@ for(run in 1:max(model.runs$run.n)){
 }
 
 write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata_stats.csv"), row.names = F) # output model run metadata
-
+write.csv(valids, here("data/outputs/1D-heat-model-runs/validation.csv"), row.names = F)
 
 
 # check pavement temperature quantiles at depths

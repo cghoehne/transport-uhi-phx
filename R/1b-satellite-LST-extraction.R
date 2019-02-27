@@ -121,17 +121,17 @@ my.idx <- meta.data[cloud == 0 &
            lubridate::year(date.time) %in% c(2010:2017), idx] # specific years
 
 # create a list of lists that contain the .tif files by day
-st.tile.list <- list.files(here("data/aster/all"), recursive = T, full.names = T, pattern="tif$")
+#st.tile.list <- list.files(here("data/aster/all"), recursive = T, full.names = T, pattern="tif$")
 
 # create a raster stack from the list of lists
-st.tile.stack <- lapply(st.tile.list, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
+#st.tile.stack <- lapply(st.tile.list, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
 
 # export the desired scenes to process in qgis
-dir.create(here("data/aster/preprocessed"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-for(i in 1:length(my.idx)){
-  j <- as.integer(my.idx[i])
-  writeRaster(st.tile.stack[[j]], here(paste0("data/aster/preprocessed/", j,".tif")), overwrite = T)
-}
+#dir.create(here("data/aster/preprocessed"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+#for(i in 1:length(my.idx)){
+#  j <- as.integer(my.idx[i])
+#  writeRaster(st.tile.stack[[j]], here(paste0("data/aster/preprocessed/", j,".tif")), overwrite = T)
+#}
 
 
 ####################################################################
