@@ -36,7 +36,7 @@ token <- as.character(fread(here("local-token.txt"), header = F)[1])
 # define time period you want to pull, max in one loop should be a 
 # single year of all stations to avoid giant files
 # times range of ASTER data I used:  "2000-04-12 11:30:40 MST"  to   "2019-01-02 11:21:40 MST"
-years <- 2010
+years <- 2000:2018
 
 # store partial weather data link strings (front half and variables list). time is local
 w.link.f <- "http://api.mesowest.net/v2/stations/timeseries?&stid="

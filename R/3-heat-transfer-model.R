@@ -69,7 +69,7 @@ layer.profiles <- list(
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # major arterial HMA rebonded (OGFC 20mm on 280mm DGHMA)
-    layer = c("surface","subgrade"),
+    layer = c("surface","base","subgrade"),
     thickness = c(0.02, 0.28, 2.7), # layer thickness (m)
     k = c(0.841, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2080, 2467, 1500), # layer density (kg/m3) 2382 (base from infravation)
@@ -104,7 +104,7 @@ layer.profiles <- list(
 # 0.96 (concrete, light)
 
 # load validation dates (selected dates from ASTER data to validate against)
-valid.dates <- fread(here("data/best-dates.csv"))
+valid.dates <- readRDS(here("data/best-aster-dates.rds"))
 
 # create list of models to run with varied inputs to check sentivity/error
 # first values (will be first scenario in list of model runs) is the replication from Gui et al. [1] 
@@ -143,21 +143,21 @@ paste0("Estimated run time for all ",model.runs[,.N], " runs: ", round(sum(est.r
 
 
 # LOAD & FILTER WEATHER DATA 
-weather.raw <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")), # all weather data saved to repo
-                          readRDS(here("data/outputs/2017-weather-data-2.rds")),
-                          readRDS(here("data/outputs/2017-weather-data-3.rds"))))
+#weather.raw <- rbindlist(list(readRDS(here("data/outputs/2017-weather-data-1.rds")), # all weather data saved to repo
+#                          readRDS(here("data/outputs/2017-weather-data-2.rds")),
+#                          readRDS(here("data/outputs/2017-weather-data-3.rds"))))
+my.years <- unique(valid.dates[, year(date.time)])
+weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS))
 
 weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs with no NA of desired vars
 weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero becuase this is the most likely to be missing weather variable
-weather.raw <- weather.raw[station.name == "City of Glendale" & source == "MCFCD",] # choose station for desired period of time
+weather.raw <- weather.raw[station.name == "City of Glendale",] # choose station for desired period of time
 
 # adjust to 2017 for now b/c higher resolution data
-year(model.runs$end.day) <- 2017
+#year(model.runs$end.day) <- 2017
 
 
 #####  WORKING ON ADDING SOLAR DATA TO MESOWEST 
-#my.years <- unique(valid.dates[, year(date.time)])
-#weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS))
 #stations.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-station-data.rds")), readRDS))
 #weather.raw <- merge(weather.raw, unique(stations.raw[,.(station.name,lat)]), by = "station.name", all.x = T, allow.cartesian = T) # merge latitude from station data for solar rad calc
 
