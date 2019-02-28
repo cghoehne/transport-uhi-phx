@@ -83,14 +83,14 @@ for(run in 1:max(model.runs$run.n)){
   pave.time[, air.temp.c := T.inf - 273.15]
   
   # custom ASTER temp validation
-  if(run == 1){valids <- pave.time[0]} # create empty data.frame to bind to # exists("pave.time") == F
+  if(run == 8){valids <- pave.time[0]} # create empty data.frame to bind to # exists("pave.time") == F
   for(i in 1:nrow(valid.dates)){
     my.date <- valid.dates$date.time[i]
-    year(my.date) <- 2017 ###** TEMP FIX
+    #year(my.date) <- 2017 ###** TEMP FIX
     valid.all <- pave.time[which(abs(difftime(pave.time[,date.time], my.date)) == 
                                    min(abs(difftime(pave.time[,date.time], my.date))))]
+    valid.all[, run.n := run]
     valids <- rbind(valids,valid.all[node == 0], fill = T) # should be between 30 C (bare ground) and 40 C (asphalt))
-    valids[run, run.n := run]
     
   }
 
