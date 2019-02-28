@@ -30,18 +30,26 @@ windowsFonts(Century=windowsFont("TT Century Gothic"))
 windowsFonts(Times=windowsFont("TT Times New Roman"))
 my.font <- "Century"
 
+# IMPORT DATA
+
 # load model simulation metadata
 model.runs <- fread(here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv")) # 20190121/20190121_
 
-# validation dates
-valid.dates <- readRDS(here("data/best-aster-dates.rds"))
+# load validation site data 
+valid.dates <- readRDS(here("data/best-aster-dates.rds")) # remote sensed temps at valiation sites on specified dates
+my.sites <- fread(here("data/validation_sites.csv")) # other validation sites info 
+setnames(my.sites, "X", "lon")
+setnames(my.sites, "Y", "lat")
 
 # load weather data
-my.years <- unique(valid.dates[, year(date.time)])
-weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS))
-weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs with no NA of desired vars
-weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero becuase this is the most likely to be missing weather variable
-weather.raw <- weather.raw[station.name == "City of Glendale",] # choose station for desired period of time
+my.years <- unique(valid.dates[, year(date.time)]) # store all unique years to reterive weather data for those years
+weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS)) # bind all weather data for the selected years
+weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs w/o NA of desired vars
+weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero to prevent errors
+
+# trim weather data to only the dates that we will be using weather data from (defined by model.runs$end.day and model.runs$n.days
+my.dates <- unique(do.call("c", mapply(function(x,y) seq(date(x) - days(y - 1), by = "day", length.out = y), model.runs$end.day, model.runs$n.days, SIMPLIFY = F)))
+weather.raw <- weather.raw[date(date.time) %in% my.dates,]
 
 # layer profile data
 layer.profiles <- readRDS(here("data/outputs/1D-heat-model-runs/layer_profiles.rds"))
@@ -59,8 +67,10 @@ for(run in 1:max(model.runs$run.n)){
   
   # trim weather data to number of days specified
   my.date <- date(model.runs$end.day[run])
+  my.station <- model.runs$station.name[run]
   weather <- weather.raw[date.time >= (my.date - days(model.runs$n.days[run])) & # date.time ends on day of end.day 
-                           date(date.time) <= my.date] # ends n days later
+                           date(date.time) <= my.date & # ends n days later
+                           station.name == my.station] # at station nearest specified validation site
   
   # record avg max temp and final day max temp at surface
   n.days <- model.runs$n.days[run]
@@ -82,17 +92,16 @@ for(run in 1:max(model.runs$run.n)){
   # air temp in deg c
   pave.time[, air.temp.c := T.inf - 273.15]
   
-  # custom ASTER temp validation
-  if(run == 8){valids <- pave.time[0]} # create empty data.frame to bind to # exists("pave.time") == F
-  for(i in 1:nrow(valid.dates)){
-    my.date <- valid.dates$date.time[i]
-    #year(my.date) <- 2017 ###** TEMP FIX
-    valid.all <- pave.time[which(abs(difftime(pave.time[,date.time], my.date)) == 
+  # create empty data.table of relevant variables for
+  if(run == 1){valids <- pave.time[0, .(node, solar, winspd, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)][, run.n := NA]} 
+  for(i in 1:valid.dates[,.N]){
+    my.date <- valid.dates$date.time[i] # identify date to match
+    valid.i <- pave.time[which(abs(difftime(pave.time[,date.time], my.date)) == # find closest time in modeled temps
                                    min(abs(difftime(pave.time[,date.time], my.date))))]
-    valid.all[, run.n := run]
-    valids <- rbind(valids,valid.all[node == 0], fill = T) # should be between 30 C (bare ground) and 40 C (asphalt))
-    
-  }
+    valid.i <- valid.i[, .(node, solar, winspd, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)] # filter to same relevant vars
+    valid.i[, run.n := run] # add run number
+    valids <- rbind(valids,valid.i[node == 0,], fill = T) # keep surface node only for surface temps
+    }
 
 
   if(should.plot == "yes"){

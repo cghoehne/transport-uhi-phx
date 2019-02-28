@@ -510,6 +510,7 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
 } # end run, go to next run
 
 write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv"), row.names = F) # output model run metadata
+write.csv(my.sites, here("data/outputs/1D-heat-model-runs/validation_sites.csv"), row.names = F)
 saveRDS(layer.profiles, here("data/outputs/1D-heat-model-runs/layer_profiles.rds"))
 
 # load email creds and construct msg to notify you by email the script has finished
