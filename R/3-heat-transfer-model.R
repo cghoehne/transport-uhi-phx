@@ -180,6 +180,7 @@ for(b in 1:length(my.sites$Location)){
 min.stations <- unique(melt(stations[, .SD, .SDcols = c("station.name",paste0(my.sites$Location))], id.vars = "station.name", variable.name = "Location", value.name = "dist.km"))
 min.stations <- min.stations[, .SD[which.min(dist.km)], by = Location]
 my.sites <- merge(min.stations, my.sites, by = "Location", all = T)
+my.sites <- merge(my.sites, stations[, .(station.name, elevation)], by = "station.name", all.x = T)
 
 # funcion to create layers by layer specifications
 create.layer <- function(thickness, name, start.depth, nodal.spacing){ # create a layer with defined *thickness* and *name*
@@ -270,37 +271,37 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
     epsilon <- model.runs$emissivity[run] #  emissivity (dimensionless) [1]; can be: 1 - albedo for opaque objects
     sigma <- 5.67*10^(-8) #  Stefan-Boltzmann constant (W/(m2*K4); [1]
     SVF <- model.runs$SVF[run] #layer.dt$SVF[1]	# sky view factor (dimensionless [0,1]). assume 1.0: pavement is completely visible to sky
-    Pr.inf <- 0.7085 #  Prandtl number (dimensionless) [0.708, 0.719] (50 to -50 degC range)
-    
+
     # L in (m) is the characteristic length of the pavement at the test site taken as the ratio of
     L <- model.runs$pave.length[run] # the slab length in the direction of the wind to the perimeter
     # assume horizontal & flat, width b and infinite length L, hotter than the environment -> L = b/2
     # L could vary, but minimum for a pavement should be 2 lanes, or about ~10 meters
     
-    # calculate parameters that vary by time/weather
-    weather$time.s <- as.numeric(difftime(weather$date.time, weather$date.time[1], units = "secs")) # time.s to match with iterations in weather data (assuming first obs is time zero)
-    weather$winspd <- weather$winspd * 0.44704 # convert to m/s from mi/h
-    weather$T.inf <- weather$temp.c + 273.15 #  atmospheric dry-bulb temperature (K);
-    weather$T.sky <- weather$T.inf * (((0.004 * weather$dewpt.c) + 0.8)^0.25) # sky temperature (K), caluclated using equation (2)
-    weather$v.inf <- (16.92E-6) * ((weather$temp.c / 40)^0.7) # emperical fit for kinematic viscosity of air using refrence of 40 deg C where v.inf is 16.92E-6 m2/s  [4],[5]
-    weather$k.inf <- ((1.5207E-11) * (weather$T.inf^3)) - ((4.8574E-08) * (weather$T.inf^2)) + ((1.0184E-04) * (weather$T.inf)) - 3.9333E-04 # Ref [2] # thermal conductivity of air in W/(m2*degK)
-    weather$h.inf <- 0.664 * (weather$k.inf * (Pr.inf ^ 0.3) * (weather$v.inf ^ -0.5) * (L ^ -0.5) * (weather$winspd ^ 0.5)) # convective heat transfer coefficient in W/(m2*degK)
+    # calculate parameters that vary by weather
+    weather[, time.s := as.numeric(difftime(weather$date.time, weather$date.time[1], units = "secs"))] # time.s to match with iterations in weather data (assuming first obs is time zero)
+    weather[, winspd := winspd * 0.44704] # convert to m/s from mi/h (for h.inf calc)
+    weather[, T.inf := temp.c + 273.15] #  atmospheric dry-bulb temperature (K);
+    weather[, T.sky := T.inf * (((0.004 * dewpt.c) + 0.8)^0.25)] # sky temperature (K), caluclated using equation (2)
+    weather[, v.inf := 1.47E-6 * (T.inf^(3/2)) / (T.inf + 113)] # for T.inf btwn 100 and 800 K [9]
+    weather[, k.inf := ((1.5207E-11) * (T.inf^3)) - ((4.8574E-08) * (T.inf^2)) + ((1.0184E-04) * (T.inf)) - 3.9333E-04] # thermal conductivity of air in W/(m*degK) [0.02, 0.03] (for normal air temps) [2]
+    elev <- ifelse(length(unique(my.sites[station.name == my.station, elevation])) == 0, 500, unique(my.sites[station.name == my.station, elevation])) # assume 500 m elevation if no elevation data
+    p.air.dry <- (-8.5373296284E-09 * (elev^3)) + (5.2598726265E-04 * (elev^2)) - (1.1912694417E+01 * elev) + 1.0136022009E+05 # estimate of dry air pressure (Pa) via elevation (see air-emperical-fit.xlsx for fit)
+    weather$p.wat.vap <- (100 - 5 * (weather$temp.c - weather$dewpt.c)) * (6.1078 * (10^(7.5 * weather$temp.c / (weather$temp.c + 237.3)))) # RH (approx) * saturation vapor pressure
+    weather$p.air.hum <- (p.air.dry / 287.058 / weather$T.inf) + (weather$p.wat.vap / 461.495 / weather$T.inf)  # density of humid air (kg/m3)
+    weather[, c.p.air := (2E-04 * (T.inf^2)) - (7E-02 * T.inf) + 1.008E+03] # specific heat capacity of air (J/(kg*degK)(see air-emperical-fit.xlsx for emperical fit
+    weather[, Pr.inf := 1.6380e-05 * p.air.hum * c.p.air / k.inf] # Prandtl number, should be 0.70 - 0.72 for air between 0 and 100 C at 0 to 10 bar
+    weather[, h.inf := 0.664 * (k.inf * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^ -0.5) * (winspd ^ 0.5))] # convective heat transfer coefficient in W/(m2*degK) [0.5, 1000]
     
-    # iterpolate between all observation data to create weather data at each timestep
+    # iterpolate between required observational weather data to create needed weather data at each timestep
     # first create new data.table for a single node with all obervational weather data matched by timestep (timesteps match)
     # then linearlly approximate between the weather observations for all NA timesteps using zoo::na.approx
     # finally merge to orginal data.table to have all weather observations present such that missing ones are interplotated between
-    aprx <- merge(pave.time[node == 0], weather[, .(time.s, T.sky, T.inf, solar, winspd)], by = "time.s", all.x = T)
+    aprx <- merge(pave.time[node == 0], weather[, .(time.s, T.sky, T.inf, solar, h.inf)], by = "time.s", all.x = T)
     aprx[, `:=` (T.sky = na.approx(T.sky, 1:.N, na.rm = F), # sky temperature in K
                  T.inf = na.approx(T.inf, 1:.N, na.rm = F), # atmospheric dry-bulb temperature in K
                  solar = na.approx(solar, 1:.N, na.rm = F), # solar radiation in W/m2
-                 winspd = na.approx(winspd, 1:.N, na.rm = F))]  # wind speed in m/s
-    pave.time <- merge(pave.time, aprx[, .(time.s, T.sky, T.inf, solar, winspd)], by = "time.s", all.x = T)
-    
-    # estimate non-linear parameters
-    pave.time[, v.inf := (16.92E-6) * (((T.inf - 273.15) / 40)^0.7)] #  kinematic viscosity of air [4], [5]; range: [10E-6,14E-6]
-    pave.time[, k.inf := ((1.5207E-11) * (T.inf^3)) - ((4.8574E-08) * (T.inf^2)) + ((1.0184E-04) * (T.inf)) - 3.9333E-04] # thermal conductivity of air in W/(m*degK) [0.02, 0.03] (for normal air temps) [2]
-    pave.time[, h.inf := 0.664 * (k.inf * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^ -0.5) * (winspd ^ 0.5))] # convective heat transfer coefficient in W/(m2*degK) [0.5, 1000]
+                 h.inf = na.approx(h.inf, 1:.N, na.rm = F))]  # wind speed in m/s
+    pave.time <- merge(pave.time, aprx[, .(time.s, T.sky, T.inf, solar, h.inf)], by = "time.s", all.x = T)
     
     # add k and rho.c
     pave.time <- merge(pave.time, layer.dt[,.(layer,k,rho.c)], by = "layer", all.x = T, allow.cartesian = T) 
@@ -547,6 +548,8 @@ msg
 # [7] https://www.fhwa.dot.gov/pavement/sustainability/articles/pavement_thermal.cfm
 
 # [8] https://www.roads.maryland.gov/OMT/pdguide0718.pdf
+
+# [9] https://apps.dtic.mil/dtic/tr/fulltext/u2/a072053.pdf
 
 
 
