@@ -77,6 +77,9 @@ for(year in years){
       if(is.null(meso.w.data[[i]]$air_temp_set_1) == F){setnames(meso.w.data[[i]], "air_temp_set_1", "temp.c")}
       if(is.null(meso.w.data[[i]]$solar_radiation_set_1) == F){setnames(meso.w.data[[i]], "solar_radiation_set_1", "solar")}
       
+      # remove extra dewpoint column if it appears
+      if(is.null(meso.w.data[[i]]$dew_point_temperature_set_1) == F){meso.w.data[[i]]$dew_point_temperature_set_1 <- NULL}
+      
       # create station column name and list index name based on the station id (STID) for refrencing
       names(meso.w.data)[i] <- j$STATION$STID
       meso.w.data[[i]]$id <- j$STATION$STID

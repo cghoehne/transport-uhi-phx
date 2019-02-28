@@ -38,45 +38,45 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 layer.profiles <- list(
   data.table( # low volume single pave HMA 
     layer = c("surface","subgrade"),
-    thickness = c(0.1, 2.9), # layer thickness (m)
+    thickness = c(0.1, 1.4), # layer thickness (m)
     k = c(1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2238, 1500), # layer density (kg/m3) 2382 (base from infravation)
     c = c(921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.2,NA), # surface albedo (dimensionless)
-    emissivity = c(0.8,NA), # emissivity (dimensionless)
+    albedo = c(0.10,NA), # surface albedo (dimensionless)
+    emissivity = c(0.93,NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA), # sky view factor
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # PCC whitetopping bonded on HMA (lower density roads)
     layer = c("surface","base","subgrade"),
-    thickness = c(0.1, 0.1, 2.8), # layer thickness (m)
+    thickness = c(0.1, 0.1, 1.3), # layer thickness (m)
     k = c(2.24, 1.21, 1.0), # layer thermal conductivity (W/(m*degK))  
     rho = c(2240, 2382, 1500), # layer density (kg/m3)
     c = c(900, 920, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.3,NA,NA), # surface albedo (dimensionless)
-    emissivity = c(0.8,NA,NA), # emissivity (dimensionless)
+    emissivity = c(0.95,NA,NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # Ordinary PCC + some additives (med density)
     layer = c("surface","subgrade"),
-    thickness = c(0.3, 2.7), # layer thickness (m)
+    thickness = c(0.3, 1.2), # layer thickness (m)
     k = c(1.16, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2350, 1500), # layer density (kg/m3)
     c = c(990, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.3,NA), # surface albedo (dimensionless)
-    emissivity = c(0.8,NA), # emissivity (dimensionless)
+    emissivity = c(0.95,NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA), # sky view factor
     R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # major arterial HMA rebonded (OGFC 20mm on 280mm DGHMA)
     layer = c("surface","base","subgrade"),
-    thickness = c(0.02, 0.28, 2.7), # layer thickness (m)
+    thickness = c(0.02, 0.28, 1.2), # layer thickness (m)
     k = c(0.841, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2080, 2467, 1500), # layer density (kg/m3) 2382 (base from infravation)
     c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.2,NA,NA), # surface albedo (dimensionless)
-    emissivity = c(0.8,NA,NA), # emissivity (dimensionless)
+    albedo = c(0.25,NA,NA), # surface albedo (dimensionless)
+    emissivity = c(0.89,NA,NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
@@ -96,7 +96,7 @@ setnames(my.sites, "Y", "lat")
 # first values in each vector will correspond to a refrence run for RMSE calcs where appropriate
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(2), # number of iterations to repeat each model run
+               n.iterations = c(5), # number of iterations to repeat each model run
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
@@ -120,12 +120,12 @@ for(a in 1:length(layer.profiles)){ # record other layer profile properties in m
 }
 
 # estimated model runs time(s)
-coeff <- c(1.551634368,-0.039871215,0.079319245,-0.035625977,0.246614492,0.862178686)
-est.run.time <- exp(coeff[1] + coeff[2]*model.runs$nodal.spacing + coeff[3]*model.runs$n.iterations + coeff[4]*model.runs$time.step + coeff[5]*model.runs$depth + coeff[6]*model.runs$n.days)
-est.run.time <- model.runs$n.iterations * model.runs$n.days * model.runs$depth / model.runs$time.step / model.runs$nodal.spacing
-est.run.time <- (432.39 * est.run.time) + 0.7298   #(516.43 * est.run.time) + 33.065 # linear regression on parameters predicting acutal run time
-for(a in 1:model.runs[,.N]){cat("run",model.runs$run.n[a],":",round(sum(est.run.time[a]), 0), "mins (", round(sum(est.run.time[a])/60, 2)," hrs) \n")}
-paste0("Estimated run time for all ",model.runs[,.N], " runs: ", round(sum(est.run.time), 0), " mins (", round(sum(est.run.time)/60, 2)," hrs)")
+#coeff <- c(1.551634368,-0.039871215,0.079319245,-0.035625977,0.246614492,0.862178686)
+#est.run.time <- exp(coeff[1] + coeff[2]*model.runs$nodal.spacing + coeff[3]*model.runs$n.iterations + coeff[4]*model.runs$time.step + coeff[5]*model.runs$depth + coeff[6]*model.runs$n.days)
+#est.run.time <- model.runs$n.iterations * model.runs$n.days * model.runs$depth / model.runs$time.step / model.runs$nodal.spacing
+#est.run.time <- (432.39 * est.run.time) + 0.7298   #(516.43 * est.run.time) + 33.065 # linear regression on parameters predicting acutal run time
+#for(a in 1:model.runs[,.N]){cat("run",model.runs$run.n[a],":",round(sum(est.run.time[a]), 0), "mins (", round(sum(est.run.time[a])/60, 2)," hrs) \n")}
+#paste0("Estimated run time for all ",model.runs[,.N], " runs: ", round(sum(est.run.time), 0), " mins (", round(sum(est.run.time)/60, 2)," hrs)")
 
 
 # LOAD & FILTER WEATHER DATA 
@@ -195,13 +195,14 @@ create.layer <- function(thickness, name, start.depth, nodal.spacing){ # create 
 my.errors <- NULL
 
 # BEGIN MODEL LOGIC
-for(run in 1:model.runs[,.N]){#      nrow(model.runs)  
+for(run in 1){#   :model.runs[,.N]      nrow(model.runs)  
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
     
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run","model.runs","layer.profiles","script.start","pave.time.ref","weather","weather.raw","create.layer","my.errors")))
+    rm(list=setdiff(ls(), c("run","model.runs","layer.profiles","script.start","pave.time.ref","weather","weather.raw",
+                            "create.layer","my.errors","my.sites")))
     gc()
     t.start <- Sys.time() # start model run timestamp
     
@@ -237,6 +238,10 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
       assign(paste0("layer.",layer.i), layer.n)
     }
   
+    # create closely spaced nodes near surface to improve accuracy for near surface interaction
+    # until 25 mm depth (0.025 m), start using predifed nodal spacing 
+    layer.1 <- rbind(layer.1[1], data.table(x = c(0.001,0.002,0.003,0.005,0.010,0.015,0.025), layer = layer.1$layer[2]), layer.1[x > 0.025])
+    
     # bind all layers together
     p.data <- rbindlist(mget(paste0("layer.",1:n.layers)))
 
@@ -322,7 +327,7 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
     # MODEL HEAT TRANSFER OF PAVEMENT
     
     # iterate through from time p to time p.n and model pavement heat transfer at surface, boundary/interface, and interior nodes 
-    iterations <- 1:model.runs$n.iterations[run] # 10 iteration cycles in [1] was found to produce the most accurate results
+    iterations <- 1:max(model.runs$n.iterations) # always do max iterations but save intermeidate runs if desired
     for(iteration in iterations){
       
       start.time <- Sys.time()
@@ -467,33 +472,38 @@ for(run in 1:model.runs[,.N]){#      nrow(model.runs)
       # because these are likely to be more accurate than the chosen initials
       if(iteration != max(iterations) & 
          all(is.finite(pave.time[date.time == min(date.time) + days(model.runs$n.days[run]), T.K]))){
-        pave.time[time.s == 0, T.K := pave.time[date.time == min(date.time) + days(model.runs$n.days[run]), T.K]]
-      } 
+        pave.time[time.s == 0, T.K := pave.time[date.time == max(date.time), T.K] ]
+        
+      } else { # otherwise, for model iteration where output is desired (usually max iteration), some housekeeping:
+        
+        pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
+        pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step (not calculated). p.n-1 occurs on the final weather obs
+        pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # mean change in temp by node, use for RMSE
+        dir.create(here("data/outputs/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+        saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
+        model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
+        
+        # if the run is a reference run (first run of a unique layer profile scheme), store it as the reference run for other scenarios under the same layer profile scheme
+        if(run == model.runs[run.n == run, ref]){
+          pave.time.ref <- pave.time
+        }
+        
+        # if run isn't a reference run, then store RSME compared to the appropriate ref run
+        # note that RMSE is mean centered temperature across all nodes and timesteps.
+        if(run != model.runs[run.n == run, ref]){ # if the model isn't the refrence run
+          model.runs$RMSE[run] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean] - 
+                                               pave.time.ref[pave.time, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean])^2))
+        } # end RMSE calcs
+        
+      } # end the 'end of iteration' steps
       
     } # end model iteration and continue to next 
     
-    # once model iteration are complete, some housekeeping:
-    pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
-    pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step (not calculated). p.n-1 occurs on the final weather obs
-    pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # mean change in temp by node, use for RMSE
-    dir.create(here("data/outputs/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-    saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
-    model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
-    
-    # if the run is a reference run (first run of a unique layer profile scheme), store it as the reference run for other scenarios under the same layer profile scheme
-    if(run == model.runs[run.n == run, ref]){
-      pave.time.ref <- pave.time
-    }
-    
-    # if run isn't a reference run, then store RSME compared to the appropriate ref run
-    if(run != model.runs[run.n == run, ref]){ # if the model isn't the refrence run
-      model.runs$RMSE[run] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean] - 
-                                           pave.time.ref[pave.time, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean])^2))
-    } # note that RMSE is mean centered temperature across all nodes and timesteps.
-    
-    }, error = function(e){
+    }, error = function(e){ # catch and print/store errors
+      
       cat("ERROR:",conditionMessage(e), "\n") # print error msg in console
       assign("my.errors", c(my.errors, conditionMessage(e)), envir = .GlobalEnv)}) # store error message in list 
+  
 } # end run, go to next run
 
 write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv"), row.names = F) # output model run metadata
