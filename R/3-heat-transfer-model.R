@@ -96,7 +96,7 @@ setnames(my.sites, "Y", "lat")
 # first values in each vector will correspond to a refrence run for RMSE calcs where appropriate
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(5), # number of iterations to repeat each model run
+               n.iterations = c(2), # number of iterations to repeat each model run
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
@@ -146,7 +146,13 @@ for(s in 1:nrow(stations)){ # calculate the non-NA obs per day for important wea
   stations[s, n.solar.day := weather.raw[station.name == s.name & !is.na(solar), .N] / day.n]
   stations[s, n.dewpt.day := weather.raw[station.name == s.name & !is.na(solar), .N] / day.n]
   stations[s, n.tempc.day := weather.raw[station.name == s.name & !is.na(solar), .N] / day.n]
+  stations[s, n.days.obs := day.n]
 }
+
+# filter out stations with no or poor data coverage (need at least 1 obs per day)
+stations <- stations[is.finite(n.solar.day)  & is.finite(n.tempc.day)  # need required parameters to be finite
+                     & n.solar.day > 0 & n.tempc.day > 0 # and positive non-zero
+                     & n.days.obs == (length(unique(model.runs$end.day)) * max(model.runs$n.days)),] # and at least one observation per day for all desired dates
 
 # define function to calculate distance in kilometers between two lat/lon points
 earth.dist <- function (long1, lat1, long2, lat2){
@@ -170,9 +176,6 @@ for(b in 1:length(my.sites$Location)){
   stations[, (my.sites$Location)[b] := earth.dist(my.sites[b, lon], my.sites[b, lat], stations$lon, stations$lat) ]
 }
 
-# filter out stations with no data
-stations <- stations[is.finite(n.solar.day) & n.solar.day > 0 & is.finite(n.tempc.day) & n.tempc.day > 0,]
-
 # determine which stations are the closest station to each site
 min.stations <- unique(melt(stations[, .SD, .SDcols = c("station.name",paste0(my.sites$Location))], id.vars = "station.name", variable.name = "Location", value.name = "dist.km"))
 min.stations <- min.stations[, .SD[which.min(dist.km)], by = Location]
@@ -195,7 +198,7 @@ create.layer <- function(thickness, name, start.depth, nodal.spacing){ # create 
 my.errors <- NULL
 
 # BEGIN MODEL LOGIC
-for(run in 1){#   :model.runs[,.N]      nrow(model.runs)  
+for(run in 1:model.runs[,.N]){#         nrow(model.runs)  
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
