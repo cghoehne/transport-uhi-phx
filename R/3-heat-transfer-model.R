@@ -205,8 +205,8 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
     # SETUP FOR MODEL
     
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run","model.runs","layer.profiles","script.start","pave.time.ref","weather","weather.raw",
-                            "create.layer","my.errors","my.sites")))
+    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "weather",
+                            "weather.raw", "create.layer", "my.errors", "my.sites")))
     gc()
     t.start <- Sys.time() # start model run timestamp
     
@@ -220,7 +220,7 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
                            station.name == my.station] # at station nearest specified validation site
     
     if(weather[,.N] < 12 * model.runs$n.days[run]){
-      assign("my.errors", c(my.errors, paste("stopped at run",run,"because too few weather obs")), envir = .GlobalEnv) # store error msg
+      assign("my.errors", c(my.errors, paste("stopped at run", run, "because too few weather obs")), envir = .GlobalEnv) # store error msg
       break} # break the run if there are fewer than 12 obs a day
     
     # store layer dt
@@ -229,7 +229,7 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
     
     # input pavement layer thickness data
     x <- sum(layer.dt$thickness)  # model depth (m);  GUI ET AL: 3.048m [1]
-    delta.x <- model.runs$nodal.spacing[run]/1000 # chosen nodal spacing within pavement (m). default is 12.7mm (0.5in)
+    delta.x <- model.runs$nodal.spacing[run] / 1000 # chosen nodal spacing within pavement (m). default is 12.7mm (0.5in)
     delta.t <- model.runs$time.step[run] # store time step sequence (in units of seconds)
   
     # create n layers as input defines
@@ -243,11 +243,11 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
     }
   
     # create closely spaced nodes near surface to improve accuracy for near surface interaction
-    # until 25 mm depth (0.025 m), start using predifed nodal spacing 
+    # until 25 mm depth (0.025 m), start using predifed nodal spacing (recommended again is 12.5mm)
     layer.1 <- rbind(layer.1[1], data.table(x = c(0.001,0.002,0.003,0.005,0.010,0.015,0.025), layer = layer.1$layer[2]), layer.1[x > 0.025])
     
     # bind all layers together
-    p.data <- rbindlist(mget(paste0("layer.",1:n.layers)))
+    p.data <- rbindlist(mget(paste0("layer.", 1:n.layers)))
 
     # create timestep columns (in this case, column of pavement temps by depth calculated every 2 mins for 24 hours)
     # start from time 0 to max time which is absolute time difference in weather data 
@@ -262,8 +262,8 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
                                           "node" = rep(0:(nrow(p.data)-1), p.n),
                                           "depth.m" = rep(p.data$x, p.n),
                                           "layer" = rep(p.data$layer, p.n),
-                                          "T.K" = rep(seq(from = model.runs$i.top.temp[run]+273.15, # initial surface temp in K
-                                                          to = model.runs$i.bot.temp[run]+273.15, # initial bottom boundary temp in K
+                                          "T.K" = rep(seq(from = model.runs$i.top.temp[run] + 273.15, # initial surface temp in K
+                                                          to = model.runs$i.bot.temp[run] + 273.15, # initial bottom boundary temp in K
                                                           length.out = p.n)))) # surface temp in K from the pavement to 3m)
     
     # static parameters for pavement heat transfer
@@ -277,12 +277,12 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
     # assume horizontal & flat, width b and infinite length L, hotter than the environment -> L = b/2
     # L could vary, but minimum for a pavement should be 2 lanes, or about ~10 meters
     
-    # calculate parameters that vary by weather
+    # derive key parameters of air (sky temp, dry bulb temp, and convective heat transfer of air) which may vary depending on atmospheric conditions
     weather[, time.s := as.numeric(difftime(weather$date.time, weather$date.time[1], units = "secs"))] # time.s to match with iterations in weather data (assuming first obs is time zero)
     weather[, winspd := winspd * 0.44704] # convert to m/s from mi/h (for h.inf calc)
     weather[, T.inf := temp.c + 273.15] #  atmospheric dry-bulb temperature (K);
     weather[, T.sky := T.inf * (((0.004 * dewpt.c) + 0.8)^0.25)] # sky temperature (K), caluclated using equation (2)
-    weather[, v.inf := 1.47E-6 * (T.inf^(3/2)) / (T.inf + 113)] # for T.inf btwn 100 and 800 K [9]
+    weather[, v.inf := 1.47E-6 * (T.inf^(3/2)) / (T.inf + 113)] # kinematic viscosity of air (m2/s) for T.inf btwn 100 and 800 K [9]
     weather[, k.inf := ((1.5207E-11) * (T.inf^3)) - ((4.8574E-08) * (T.inf^2)) + ((1.0184E-04) * (T.inf)) - 3.9333E-04] # thermal conductivity of air in W/(m*degK) [0.02, 0.03] (for normal air temps) [2]
     elev <- ifelse(length(unique(my.sites[station.name == my.station, elevation])) == 0, 500, unique(my.sites[station.name == my.station, elevation])) # assume 500 m elevation if no elevation data
     p.air.dry <- (-8.5373296284E-09 * (elev^3)) + (5.2598726265E-04 * (elev^2)) - (1.1912694417E+01 * elev) + 1.0136022009E+05 # estimate of dry air pressure (Pa) via elevation (see air-emperical-fit.xlsx for fit)

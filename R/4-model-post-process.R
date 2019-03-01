@@ -57,7 +57,7 @@ layer.profiles <- readRDS(here("data/outputs/1D-heat-model-runs/layer_profiles.r
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
-should.plot <- "yes" # "yes" or "no"
+should.plot <- "no" # "yes" or "no"
 
 for(run in 1:max(model.runs$run.n)){
   tryCatch({  # catch and print errors, avoids stopping model run 
@@ -92,14 +92,22 @@ for(run in 1:max(model.runs$run.n)){
   # air temp in deg c
   pave.time[, air.temp.c := T.inf - 273.15]
   
-  # create empty data.table of relevant variables for
+  # create empty data.table during 1st run to store relevant vars retrieved at nearest timestamp for comparing to validation
   if(run == 1){valids <- pave.time[0, .(node, solar, winspd, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)][, run.n := NA]} 
+  
   for(i in 1:valid.dates[,.N]){
-    my.date <- valid.dates$date.time[i] # identify date to match
-    valid.i <- pave.time[which(abs(difftime(pave.time[,date.time], my.date)) == # find closest time in modeled temps
-                                   min(abs(difftime(pave.time[,date.time], my.date))))]
-    valid.i <- valid.i[, .(node, solar, winspd, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)] # filter to same relevant vars
+    my.date.time <- valid.dates$date.time[i] # identify date to match
+    valid.i <- pave.time[which(abs(difftime(pave.time[,date.time], my.date.time)) == # find closest time in modeled temps
+                                   min(abs(difftime(pave.time[,date.time], my.date.time))))]
+    
+    # if the nearest date isn't within 24 hrs we can skip to the next step because we don't want matches that aren't from the same day
+    if(abs(difftime(unique(valid.i$date.time), my.date.time, units = "hours")) > 24){next} 
+    
+    # otherwise filter to relevant variables and bind to previous data
+    valid.i <- valid.i[, .(node, solar, winspd, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)] 
     valid.i[, run.n := run] # add run number
+    valid.i[, layer.profile := model.runs$layer.profile[run]]
+    valid.i[, valid.site := model.runs$valid.site[run]]
     valids <- rbind(valids,valid.i[node == 0,], fill = T) # keep surface node only for surface temps
     }
 
