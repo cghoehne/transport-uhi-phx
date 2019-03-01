@@ -16,6 +16,8 @@ lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1
 library(zoo, lib.loc = lib.path, quietly = T)
 library(lubridate, lib.loc = lib.path, quietly = T)
 library(ggplot2, lib.loc = lib.path, quietly = T)
+library(grid, lib.loc = lib.path, quietly = T)
+library(gridExtra, lib.loc = lib.path, quietly = T)
 library(data.table, lib.loc = lib.path, quietly = T)
 library(here, lib.loc = lib.path, quietly = T)
 
@@ -32,14 +34,16 @@ my.font <- "Century"
 
 # IMPORT DATA
 
+# first get latest updated output folder to pull model run data from most recent run (can change)
+out.folder <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), recursive = F)), keep.rownames = T)[ctime == max(ctime), rn]
+
 # load model simulation metadata
-model.runs <- fread(here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv")) # 20190121/20190121_
+model.runs <- readRDS(paste0(out.folder,"/model_runs_metadata.rds")) # 20190121/20190121_
+layer.profiles <- readRDS(paste0(out.folder,"/layer_profiles.rds"))
 
 # load validation site data 
 valid.dates <- readRDS(here("data/best-aster-dates.rds")) # remote sensed temps at valiation sites on specified dates
-my.sites <- fread(here("data/validation_sites.csv")) # other validation sites info 
-setnames(my.sites, "X", "lon")
-setnames(my.sites, "Y", "lat")
+my.sites <- readRDS(here("data/validation_sites.rds")) # other validation sites info 
 
 # load weather data
 my.years <- unique(valid.dates[, year(date.time)]) # store all unique years to reterive weather data for those years
@@ -51,19 +55,15 @@ weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero to prevent e
 my.dates <- unique(do.call("c", mapply(function(x,y) seq(date(x) - days(y - 1), by = "day", length.out = y), model.runs$end.day, model.runs$n.days, SIMPLIFY = F)))
 weather.raw <- weather.raw[date(date.time) %in% my.dates,]
 
-# layer profile data
-layer.profiles <- readRDS(here("data/outputs/1D-heat-model-runs/layer_profiles.rds"))
-
-
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
-should.plot <- "no" # "yes" or "no"
+should.plot <- "yes" # "yes" or "no"
 
 for(run in 1:max(model.runs$run.n)){
   tryCatch({  # catch and print errors, avoids stopping model run 
   
   # read simulation data
-  pave.time <- readRDS(here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # 20190121/
+  pave.time <- readRDS(paste0(out.folder,"/run_",run,"_output.rds"))
   
   # trim weather data to number of days specified
   my.date <- date(model.runs$end.day[run])
@@ -93,7 +93,7 @@ for(run in 1:max(model.runs$run.n)){
   pave.time[, air.temp.c := T.inf - 273.15]
   
   # create empty data.table during 1st run to store relevant vars retrieved at nearest timestamp for comparing to validation
-  if(run == 1){valids <- pave.time[0, .(node, solar, winspd, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)][, run.n := NA]} 
+  if(run == 1){valids <- pave.time[0, .(node, solar, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)][, run.n := NA]} 
   
   for(i in 1:valid.dates[,.N]){
     my.date.time <- valid.dates$date.time[i] # identify date to match
@@ -104,7 +104,7 @@ for(run in 1:max(model.runs$run.n)){
     if(abs(difftime(unique(valid.i$date.time), my.date.time, units = "hours")) > 24){next} 
     
     # otherwise filter to relevant variables and bind to previous data
-    valid.i <- valid.i[, .(node, solar, winspd, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)] 
+    valid.i <- valid.i[, .(node, solar, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)] 
     valid.i[, run.n := run] # add run number
     valid.i[, layer.profile := model.runs$layer.profile[run]]
     valid.i[, valid.site := model.runs$valid.site[run]]
@@ -120,12 +120,12 @@ for(run in 1:max(model.runs$run.n)){
     min.x <- min(p1.data$date.time, na.rm = T)
     max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
     min.y <- 0 # solar rad is always 0 at night
-    max.y <- round(signif(max(p1.data[, solar / 10]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
     max.y <- round(max(p1.data[, solar/10], na.rm = T), - 1) + 5
+    #max.y <- round(signif(max(p1.data[, solar / 10]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
     surf.col <- c("Modeled Pavement \nSurface Temperature" = "#0D1B1E", "Observed Air Temperature" = "#10316B", "Observed Solar Radiation" = "#BF1C3D")
     surf.shp <- c("Modeled Pavement \nSurface Temperature" = 32, "Observed Air Temperature" = 4, "Observed Solar Radiation" = 2)
     surf.siz <- c("Modeled Pavement \nSurface Temperature" = 1.25, "Observed Air Temperature" = 0.75, "Observed Solar Radiation" = 0.75)
-      
+    
     p.surf <- (ggplot(data = p1.data) 
                
            # custom border
@@ -158,19 +158,24 @@ for(run in 1:max(model.runs$run.n)){
           
            # theme and formatting
            + theme_minimal()
-           + theme(text = element_text(family = my.font, size = 12),
-                   plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
+           + theme(text = element_text(family = my.font, size = 12, colour = "black"),
+                   axis.text = element_text(colour = "black"),
+                   plot.margin = margin(t = 10, r = 20, b = 40, l = 40, unit = "pt"),
                    plot.title = element_text(hjust = 0.75),
                    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
-                   axis.title.x = element_text(vjust = 0.3),
-                   legend.position = c(.8,.93),
+                   axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
+                   axis.ticks.x = element_line(color = "black", size = 0.25),
+                   axis.title.y.left = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+                   axis.title.y.right = element_text(margin = margin(t = 0, r = 0, b = 0, l = 10)),
+                   legend.position = c(0.5, -0.575),
+                   legend.direction ="horizontal",
                    legend.background = element_blank())
            )
-    
-    # save plot
-    dir.create(here("figures/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-surface-temp.png"), p.surf, 
-           device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 8, height = 6, dpi = 300, units = "in") # /20190121
+
+    p.surf <- arrangeGrob(p.surf, bottom = textGrob(paste0("Pavement type: ", model.runs$pave.name[run]), gp = gpar(fontfamily = my.font))) # at pave name
+    dir.create(paste0(out.folder,"/figures/"), showWarnings = FALSE) # creates output figure folder if it doesn't already exist
+    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-surface-temp.png"), p.surf, # save plot
+           device = "png", path = paste0(out.folder,"/figures/"), scale = 1, width = 8, height = 5, dpi = 300, units = "in") 
     
     # DEPTH TEMPS PLOT
     # specify plot info
@@ -178,8 +183,8 @@ for(run in 1:max(model.runs$run.n)){
     p1.data <- pave.time[node %in% my.node]
     min.x <- min(p1.data$date.time, na.rm = T)
     max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
-    min.y <- round(min(weather[, temp.c]), - 1) - 5
-    max.y <- round(signif(max(p1.data[, T.degC], na.rm = T) + (0.1 * diff(range(p1.data[, T.degC], na.rm = T))),4), -1)
+    min.y <- round(min(p1.data[, T.degC] - 5), - 1) # round down to nearest multiple of 10
+    max.y <- round(max(p1.data[, T.degC] + 5), - 1) # round up to nearest multiple of 10
     
     # create different legend charateristics for plotting
     depth.names <- factor(paste(unique(signif(p1.data$depth.m, 2) * 1000), "mm"), ordered = T)
@@ -227,192 +232,96 @@ for(run in 1:max(model.runs$run.n)){
                
                # theme and formatting
                + theme_minimal()
-               + theme(text = element_text(family = my.font, size = 12),
-                       plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
+               + theme(text = element_text(family = my.font, size = 12, colour = "black"),
+                       axis.text = element_text(colour = "black"),
+                       plot.margin = margin(t = 10, r = 20, b = 25, l = 40, unit = "pt"),
                        plot.title = element_text(hjust = 0.75),
                        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
-                       axis.title.x = element_text(vjust = 0.3),
-                       legend.title = element_text(size = 10),
-                       legend.text = element_text(size = 9),
-                       legend.position = c(.75,.85),
+                       axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
+                       axis.ticks.x = element_line(color = "black", size = 0.25),
+                       axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+                       legend.position = c(0.45, -0.5), 
+                       legend.direction ="horizontal",
                        legend.background = element_blank())
     )
     
-    
-
-    
-    # save plot
-    dir.create(here("figures/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-depth-temps.png"), p.depth, 
-           device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
+    p.depth <- arrangeGrob(p.depth, bottom = textGrob(paste0("Pavement type: ", model.runs$pave.name[run]), gp = gpar(fontfamily = my.font))) # add pave name
+    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-depth-temps.png"), p.depth, # save plot
+           device = "png", path = paste0(out.folder,"/figures/"), scale = 1, width = 8, height = 5, dpi = 300, units = "in") 
     
     
+    # TEMP BY DEPTH DYNAMIC PLOT
+    # calc Q1:3 quants and mean min max
+    pave.time[,`:=`(T.degC.75 = quantile(T.degC, probs = 0.75), 
+                    T.degC.50 = quantile(T.degC, probs = 0.50),
+                    T.degC.25 = quantile(T.degC, probs = 0.25),
+                    T.degC.mean = mean(T.degC),
+                    T.degC.min = min(T.degC),
+                    T.degC.max = max(T.degC)),
+              by = depth.m]
+    
+    # aggregate through time to unique by depth
+    pave.time.agg <- unique(pave.time[, .(depth.m, T.degC.min, T.degC.25, T.degC.50, T.degC.mean, T.degC.75, T.degC.max)])
     
     # Deviation (boxplot) of single scenario by nodes
-    min.x <- min(p1.data$date.time, na.rm = T)
-    max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
-    min.y <- round(signif(min(pave.time[, T.degC], na.rm = T) - (0.1 * diff(range(pave.time[, T.degC], na.rm = T))),4), -1)
-    max.y <- round(signif(max(pave.time[, T.degC], na.rm = T) + (0.1 * diff(range(pave.time[, T.degC], na.rm = T))),4), -1)
-    
-    # only will show first three layers with the third layer partially shown if very deep
+    min.x <- 0
+    max.x <- 1 #pave.time[, max(depth.m)] # (sum(layer.profiles[[model.runs$layer.profile[run]]]$thickness[1:2])) * 3
+    min.y <- round(min(pave.time[, T.degC] - 5), - 1) # round down to nearest multiple of 10
+    max.y <- round(max(pave.time[, T.degC] + 5), - 1) # round up to nearest multiple of 10
+
     boundary.nodes <- pave.time[layer == "boundary" & time.s == 0, node] # to mark the boundaries
-    max.depth <- (sum(layer.profiles[[model.runs$layer.profile[run]]]$thickness[1:2])) * 3 #pave.time[, max(depth.m)]
-    layers <- nrow(layer.profiles[[model.runs$layer.profile[run]]])
-    p.node.box <- (ggplot(data = pave.time[depth.m < max.depth],
-                          aes(x = depth.m, y = T.degC, group = factor(depth.m)))
-                   + geom_boxplot(outlier.alpha = 0.1, outlier.size = 0.7)
-                   + geom_vline(xintercept = unique(pave.time[node %in% boundary.nodes & depth.m != 0, depth.m]), linetype = "dotted")
-                   + labs(x = "Pavement Depth (m)", y = "Temperature (deg C)")
-                   + theme_light()
-                   + theme(text = element_text(family = my.font, size = 12),
-                           plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
-                           axis.title.x = element_text(vjust = -2),
-                           axis.title.y = element_text(vjust = 5))
+
+    # legend formating for different line type/color/size
+    area.names <- factor(c("Min Temperature", "Median Temperature", "Max Temperature"), ordered = T)
+    area.col <- c("#10316B", "#0D1B1E", "#BF1C3D")
+    area.typ <- c("twodash", "solid", "dotdash")
+    area.siz <- c(1, 1.2, 1)
+    #area.shp <- c(0:3)
+    
+    p.area <- (ggplot(data = pave.time.agg[depth.m < max.x])
+               + geom_ribbon(aes(ymin = T.degC.25, ymax = T.degC.75, x = depth.m, fill = "IQR"))
+               + geom_line(aes(x = depth.m, y = T.degC.min, color = area.names[1], size = area.names[1], linetype = area.names[1])) # min
+               + geom_line(aes(x = depth.m, y = T.degC.50, color = area.names[2], size = area.names[2], linetype = area.names[2])) # median
+               #+ geom_line(aes(x = depth.m, y = T.degC.mean, color = area.names[3], size = area.names[3], linetype = area.names[3])) # mean
+               + geom_line(aes(x = depth.m, y = T.degC.max, color = area.names[3], size = area.names[3], linetype = area.names[3])) # max
+               + geom_vline(xintercept = unique(pave.time[node %in% boundary.nodes & depth.m != 0, depth.m]), linetype = "dotted")
+               + labs(x = "Pavement Depth (m)", y = "Temperature (deg C)")
+               + scale_color_manual(name = "", values = area.col, labels = area.names)
+               + scale_size_manual(name = "", values = area.siz, labels = area.names)
+               + scale_linetype_manual(name = "", values = area.typ, labels = area.names)
+               + scale_fill_manual("", values = c("IQR" = "grey70"))
+               + theme_light()
+               + coord_flip() # flip and rotate x axis to get depth as 0 down 
+               + scale_x_reverse(expand = c(0,0), limits = c(max.x, min.x), breaks = seq(min.x, max.x, 0.1)) 
+               + scale_y_continuous(expand = c(0,0), limits = c(min.y, max.y), breaks = seq(min.y, max.y, 5)) 
+               + theme(text = element_text(family = my.font, size = 12),
+                       plot.margin = margin(t = 10, r = 20, b = 15, l = 40, unit = "pt"),
+                       axis.title.x = element_text(vjust = -2),
+                       axis.title.y = element_text(vjust = 5),
+                       legend.position = c(0.2, 0.1),
+                       legend.background = element_blank(),
+                       legend.box.background = element_blank(),
+                       legend.spacing.y = unit(-4, "lines"),
+                       legend.spacing.x = unit(1, "mm"),
+                       legend.key.size = unit(8, "mm"))
     )
+    
     for(l in 1:layers){ # add text annotating each layer
       an.x <- ifelse(l == max(layers), # if last layer, different label x position
-                     max.depth - (0.5 * (max.depth - sum(layer.profiles[[model.runs$layer.profile[run]]]$thickness[1:(l-1)]))),
+                     max.x - (0.5 * (max.x - sum(layer.profiles[[model.runs$layer.profile[run]]]$thickness[1:(l-1)]))),
                      sum(layer.profiles[[model.runs$layer.profile[run]]]$thickness[1:l],-0.5*layer.profiles[[model.runs$layer.profile[run]]]$thickness[l]))
       
-      p.node.box <- p.node.box + annotate("text", label = layer.profiles[[model.runs$layer.profile[run]]]$layer[l],
-                                          x = an.x,
-                                          y = 0.9 * max.y, family = my.font)
+      p.area <- p.area + annotate("text", label = layer.profiles[[model.runs$layer.profile[run]]]$layer[l],
+                                          x = an.x, y = 0.88 * max.y, family = my.font, angle = 0)
     }
-    #+ annotate("text", label = "Layer 2: \nBase", x = model.runs$L1.depth[run] + (model.runs$L2.depth[run] * 0.5), y =  0.9 * max.y, family = my.font)
-    #+ annotate("text", label = "Layer 3: \nSubbase", x = max.depth - (max.depth - model.runs$L1.depth[run] - model.runs$L2.depth[run])/2, y = 0.9 * max.y, family = my.font)
     
-    # save plot
-    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-pave-temp-box_0-0.3m.png"), p.node.box, 
-           device = "png", path = here("figures/1D-heat-model-runs"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in") # /20190121
+    p.area <- arrangeGrob(p.area, bottom = textGrob(paste0("Pavement type: ", model.runs$pave.name[run]), gp = gpar(fontfamily = my.font))) # add pave name
+    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-pave-temp-box_0-0.3m.png"), p.area,  # save plot
+           device = "png", path = paste0(out.folder,"/figures/"), scale = 1, width = 8, height = 5, dpi = 300, units = "in") 
     
   } # end optional plotting
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 
-write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata_stats.csv"), row.names = F) # output model run metadata
-write.csv(valids, here("data/outputs/1D-heat-model-runs/validation.csv"), row.names = F)
-
-
-# check pavement temperature quantiles at depths
-depths <- c(0,0.05,0.1,0.2,0.45)
-for(depth in depths){
-  print(paste0("At ",depth, " meters, T.degC quantiles are:"))
-  print(pave.time[depth.m == depth, quantile(T.degC, probs = c(0,0.1,0.25,0.5,0.75,0.9,1))])
-  cat("\n") # Enter
-}
-
-
-# min mean max by depth & date
-pave.time[, .(min.T = min(T.degC, na.rm = T),
-                 avg.T = mean(T.degC, na.rm = T),
-                 max.T = max(T.degC, na.rm = T)), by = depth.m]
-
-pave.time[, .(min.T = min(T.degC, na.rm = T),
-              avg.T = mean(T.degC, na.rm = T),
-              max.T = max(T.degC, na.rm = T)), by = as.Date(date.time)]
-              
-
-################
-# BACKUP PLOTS #
-################
-
-# melt all temp max into data.table for easier plotting
-#model.runs.tmax <- melt(model.runs[, .SD, .SDcols = c("run.n",paste0("Tmax",1:n.days))] , id.vars = "run.n")
-#model.runs.tmin <- melt(model.runs[, .SD, .SDcols = c("run.n",paste0("Tmin",1:n.days))] , id.vars = "run.n")
-#model.runs.tmax <- merge(model.runs.tmax, model.runs[, .(run.n, avg.i.T, pave.depth)], by = "run.n")
-#model.runs.tmin <- merge(model.runs.tmin, model.runs[, .(run.n, avg.i.T, pave.depth)], by = "run.n")
-
-p.all <- (ggplot(data = model.runs.tmax, aes(x = variable, y = value, col = factor(avg.i.T), shape = factor(pave.depth)))
-          + geom_point()
-          + labs(x = "Day", y = "Max Simulated Surface Temperature", col = "Mean \nInitialized \nPavement \nTemperature \n(deg C)", shape = "Pavement \nDepth \n(m)")
-          + scale_color_manual(values=c('red','blue'))
-          + theme_minimal()
-          + theme(text = element_text(family = my.font, size = 12),
-                  plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
-                  axis.title.x = element_text(vjust = 0.3))
-)
-p.all
-
-# SURFACE TEMP PLOT
-
-# for including air temps, instead use:
-#min.y <- pmin(signif(min(p0.data[, T.degC], na.rm = T) - (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4), min(weather$temp.c), na.rm = T) 
-#max.y <- signif(max(p0.data[, T.degC], na.rm = T) + (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4) 
-
-p0.data <- pave.time[node == 0]
-min.x <- min(p0.data$date.time, na.rm = T)
-max.x <- ceiling_date(max(weather$date.time, na.rm = T), unit = "hours")
-min.y <- signif(min(p0.data[, T.degC], na.rm = T) - (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4)
-max.y <- ceiling(signif(max(p0.data[, T.degC], na.rm = T) + (0.1 * diff(range(p0.data[, T.degC], na.rm = T))),4))
-
-p0 <- (ggplot(data = p0.data) 
-       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border: (x,y) (xend,yend)
-       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border: (x,y) (xend,yend)
-       + geom_point(aes(y = T.degC, x = date.time))
-       #+ geom_point(aes(y = T.degC, x = date.time), data = p0.data[date.time %in% weather$date.time], color = "red")
-       #+ geom_point(aes(y = temp.c, x = date.time), data = weather, color = "blue") # for inlcuding air temp on plot
-       + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "6 hours")
-       + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y))
-       + ggtitle("Modeled Surface Pavement Temperature")
-       + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
-       + theme_minimal()
-       + theme(text = element_text(family = my.font, size = 12),
-               plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
-               axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
-               axis.title.x = element_text(vjust = 0.3),
-               plot.title = element_text(hjust = 0.75)))
-
-p0
-ggsave("1D-modeled-surface-pave-temp_new.png", p0, 
-       device = "png", path = here("figures"), scale = 1, width = 6.5, height = 5, dpi = 300, units = "in")
-
-
-
-# depth temps
-min.x <- 30 #signif(min(pave.time[, T.degC]) - (0.1 * diff(range(pave.time[, T.degC]))),4)
-max.x <- 90 #signif(max(pave.time[, T.degC]) + (0.1 * diff(range(pave.time[, T.degC]))),4)
-min.y <- 0 # 0 depth
-max.y <- max(pave.time[, depth.m])
-
-my.date <- date(max(pave.time$date.time) - days(1))
-
-p.depth <- (ggplot(data = pave.time) # weather
-            + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
-            + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-            + geom_line(aes(y = depth.m, x = T.degC, color = "9am"), data = pave.time[date.time == paste(my.date,"9:00:00")], size = 1.5) # 9am temperatures at depth
-            + geom_line(aes(y = depth.m, x = T.degC, color = "1pm"), data = pave.time[date.time == paste(my.date,"13:00:00")], size = 1.5) # 1pm temperatures at depth
-            + geom_line(aes(y = depth.m, x = T.degC, color = "5pm"), data = pave.time[date.time == paste(my.date, "17:00:00")], size = 1.5) # 5pm temperatures at depth
-            + geom_line(aes(y = depth.m, x = T.degC, color = "9pm"), data = pave.time[date.time == paste(my.date, "21:00:00")], size = 1.5) # 9pm temperatures at depth
-            #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date,"13:00:00")], name = "1pm", shape = 1) # 1pm temperatures at depth
-            #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date, "17:00:00")], name = "5pm", shape = 2) # 5pm temperatures at depth
-            #+ geom_point(aes(y = depth.m, x = T.degC), data = pave.time[date.time == paste(my.date, "21:00:00")], name = "9pm", shape = 3) # 9pm temperatures at depth
-            + geom_hline(yintercept = unique(pave.time[node %in% boundary.nodes & depth.m != 0, depth.m]), linetype = "dotted")
-            #+ scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x))
-            + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x), position = "top")
-            + scale_y_reverse(expand = c(0,0), limits = c(max.y,min.y))
-            + ggtitle(paste0("Modeled Pavement Temperature at Depth"))
-            + labs(x = "Temperature (deg C)", y = "Depth (m)") # "Time of Day"
-            + theme_minimal()
-            + theme(text = element_text(family = my.font, size = 12),
-                    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt"),
-                    axis.title.x = element_text(vjust = 0.3)))
-p.depth
-
-
-p1 <- (ggplot(data = weather) 
-       + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
-       + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-       + geom_line(aes(y = solar/10, x = date.time), color = "red")
-       #+ geom_point( aes(y = solar, x = date.time), color = "red", shape = 2)
-       + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "3 hours")
-       + scale_y_continuous(expand = c(0,0), limits = c(min.y,max.y), breaks = seq(min.y,max.y,10))
-       + ggtitle(paste0("Modeled ", p1.data[, depth.m][1]*1000,"mm Pavement Temperature"))
-       + labs(x = "Time of Day", y = "Temperature (deg C)") # "Time of Day"
-       + theme_minimal()
-       + theme(text = element_text(family = my.font, size = 12),
-               plot.margin = margin(t = 10, r = 20, b = 10, l = 40, unit = "pt"),
-               axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
-               axis.title.x = element_text(vjust = 0.3),
-               plot.title = element_text(hjust = 0.75)))
-
-p1
+write.csv(model.runs, paste0(out.folder,"/model_runs_metadata_stats.csv"), row.names = F) # output model run metadata
+write.csv(valids, paste0(out.folder,"/validation.csv"), row.names = F)

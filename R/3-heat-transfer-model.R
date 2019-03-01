@@ -87,7 +87,7 @@ layer.profiles <- list(
     rho = c(2550, 2500, 2450, 1500), # layer density (kg/m3) 2382 (base from infravation)
     c = c(850, 900, 950, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.225, NA, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.89, NA, NA, NA), # emissivity (dimensionless)
+    emissivity = c(0.95, NA, NA, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
     R.c.top = c(NA, 0, 0, NA) # thermal contact resistance at top boundary of layer (dimensionless)
   )
@@ -95,7 +95,12 @@ layer.profiles <- list(
 
 # define layer profile names corresponding to the validation site location IDs
 # this will pull weather data from the nearest weather site with data to the validaiton site specfied
-names(layer.profiles) <- c("A8", "C4", "C3", "A9", "A6") 
+layer.sites <- c("A8", "C4", "C3", "A9", "A6") 
+names(layer.profiles) <- c("Asphalt Lot/Road (Low Traffic)", 
+                           "PCC whitetopping bonded on HMA (Low Traffic)", 
+                           "Ordinary PCC w/ additives (Med Traffic)", 
+                           "HMA rebonded (OGFC on DGHMA; High Traffic)", 
+                           "HMA rebonded (DFG 3x; Low Traffic)") 
 
 # load validation site data 
 valid.dates <- readRDS(here("data/best-aster-dates.rds")) # remote sensed temps at valiation sites on specified dates
@@ -127,7 +132,8 @@ model.runs[, depth := rep(sapply(1:length(layer.profiles), function (x) sum(laye
 for(a in 1:length(layer.profiles)){ # record other layer profile properties in model.runs
   model.runs[layer.profile == a, albedo := layer.profiles[[a]]$albedo[1]] 
   model.runs[layer.profile == a, emissivity := layer.profiles[[a]]$emissivity[1]]
-  model.runs[layer.profile == a, valid.site := names(layer.profiles)[a]]
+  model.runs[layer.profile == a, pave.name := names(layer.profiles)[a]]
+  model.runs[layer.profile == a, valid.site := layer.sites[a]]
 }
 
 # estimated model runs time(s)
@@ -208,6 +214,13 @@ create.layer <- function(thickness, name, start.depth, nodal.spacing){ # create 
 
 # create empty object to store error messages
 my.errors <- NULL
+
+# create output folder name as script start time
+out.folder <-paste0("data/outputs/1D-heat-model-runs/",
+                    format(strptime(script.start, format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"),
+                    "_model_outputs/")
+dir.create(here(out.folder), showWarnings = FALSE)
+
 
 # BEGIN MODEL LOGIC
 for(run in 1:model.runs[,.N]){#         nrow(model.runs)  
@@ -448,10 +461,14 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
           pave.time[time.s == t.step[p] & delta.t <= CFL, CFL_fail := 0] # no fail
           pave.time[time.s == t.step[p] & delta.t > CFL, CFL_fail := 1] # yes fail
           
-          # break before 200 iterations if the first and second timestep pavement temperatures at each node have converged (within 1/100 of each other)
+          cat("z = ", z, " ", round(pave.time[time.s == t.step[1] & node == 1, T.K], 1), "  ", round(pave.time[time.s == t.step[2] & node == 1, T.K], 1), "\n")
+          
+          # break before 200 iterations if the first and second timestep pavement temperatures at each node have converged (within 1/10 deg K of each other) 
+          # after 20 iterations, relax converge constraint to 1 degree K
+          tol <- ifelse(z < 20, 1, 0)
           # as the initial (p) and p+1 conditions won't change once first converged, this loop breaks always after 1 iteration for all times after p+1
           if(all(is.finite(pave.time[time.s == t.step[2], T.K])) & # all pave temps at p==2 also need to be finite (b/c below check doesn't work for all NAs)
-             all(round(pave.time[time.s == t.step[1], T.K], 1) == round(pave.time[time.s == t.step[2], T.K], 1), na.rm = T) == T){break}
+             all(round(pave.time[time.s == t.step[1], T.K], tol) == round(pave.time[time.s == t.step[2], T.K], tol), na.rm = T) == T){break}
           
           # for the first time step only re-adjust the initial pavement temps
           # to ensure convergence before of intital state before solving past the initial timestep of model
@@ -494,8 +511,7 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
         pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
         pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step (not calculated). p.n-1 occurs on the final weather obs
         pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # mean change in temp by node, use for RMSE
-        dir.create(here("data/outputs/1D-heat-model-runs/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
-        saveRDS(pave.time, here(paste0("data/outputs/1D-heat-model-runs/run_",run,"_output.rds"))) # save model iteration R object
+        saveRDS(pave.time, paste0(out.folder,"/run_",run,"_output.rds")) # save model iteration R object
         model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
         
         # if the run is a reference run (first run of a unique layer profile scheme), store it as the reference run for other scenarios under the same layer profile scheme
@@ -521,9 +537,12 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
   
 } # end run, go to next run
 
-write.csv(model.runs, here("data/outputs/1D-heat-model-runs/model_runs_metadata.csv"), row.names = F) # output model run metadata
-write.csv(my.sites, here("data/outputs/1D-heat-model-runs/validation_sites.csv"), row.names = F)
-saveRDS(layer.profiles, here("data/outputs/1D-heat-model-runs/layer_profiles.rds"))
+# export data (also in RDS format to prevent issues with formatting)
+write.csv(model.runs, paste0(out.folder,"/model_runs_metadata.csv"), row.names = F) # output model run metadata
+write.csv(my.sites, paste0(out.folder,"/validation_sites.csv"), row.names = F)
+saveRDS(model.runs, paste0(out.folder,"/model_runs_metadata.rds"), row.names = F)
+saveRDS(my.sites, paste0(out.folder,"/validation_sites.rds"), row.names = F) # output model run metadata
+saveRDS(layer.profiles, paste0(out.folder,"/layer_profiles.rds"))
 
 # load email creds and construct msg to notify you by email the script has finished
 my.email <- as.character(fread(here("email.txt"), header = F)[1]) 
