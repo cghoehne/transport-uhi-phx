@@ -36,55 +36,66 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
-  data.table( # low volume single pave HMA 
-    layer = c("surface","subgrade"),
-    thickness = c(0.1, 1.4), # layer thickness (m)
-    k = c(1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2238, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.10,NA), # surface albedo (dimensionless)
-    emissivity = c(0.93,NA), # emissivity (dimensionless)
+  data.table( # parking lot asphalt w/ small tracks, med qualtiy subsoil
+    layer = c("surface", "base", "subgrade"),
+    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
+    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.25, NA ,NA), # surface albedo (dimensionless)
+    emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA), # sky view factor
-    R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(NA, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # PCC whitetopping bonded on HMA (lower density roads)
-    layer = c("surface","base","subgrade"),
+    layer = c("surface", "base", "subgrade"),
     thickness = c(0.1, 0.1, 1.3), # layer thickness (m)
-    k = c(2.24, 1.21, 1.0), # layer thermal conductivity (W/(m*degK))  
-    rho = c(2240, 2382, 1500), # layer density (kg/m3)
-    c = c(900, 920, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.3,NA,NA), # surface albedo (dimensionless)
-    emissivity = c(0.95,NA,NA), # emissivity (dimensionless)
+    k = c(1.4, 1.6, 1.0), # layer thermal conductivity (W/(m*degK))  
+    rho = c(2240, 2370, 1500), # layer density (kg/m3)
+    c = c(1050, 900, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.325, NA, NA), # surface albedo (dimensionless)
+    emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(NA, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # Ordinary PCC + some additives (med density)
-    layer = c("surface","subgrade"),
-    thickness = c(0.3, 1.2), # layer thickness (m)
-    k = c(1.16, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2350, 1500), # layer density (kg/m3)
-    c = c(990, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.3,NA), # surface albedo (dimensionless)
-    emissivity = c(0.95,NA), # emissivity (dimensionless)
+    layer = c("surface", "base", "subgrade"),
+    thickness = c(0.4, 0.1, 1.0), # layer thickness (m)
+    k = c(2.0, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2400, 2250, 1500), # layer density (kg/m3)
+    c = c(1050, 800, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.275, NA, NA), # surface albedo (dimensionless)
+    emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA), # sky view factor
-    R.c.top = c(NA,0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(NA, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # major arterial HMA rebonded (OGFC 20mm on 280mm DGHMA)
-    layer = c("surface","base","subgrade"),
+    layer = c("surface", "base", "subgrade"),
     thickness = c(0.02, 0.28, 1.2), # layer thickness (m)
     k = c(0.841, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2080, 2467, 1500), # layer density (kg/m3) 2382 (base from infravation)
     c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.25,NA,NA), # surface albedo (dimensionless)
-    emissivity = c(0.89,NA,NA), # emissivity (dimensionless)
+    albedo = c(0.25, NA, NA), # surface albedo (dimensionless)
+    emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA,0,0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(NA, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
+  ,data.table( # low traffic 5 layer road HMA rebonded (DFG x 3)
+    layer = c("surface", "intermediate", "base", "subgrade"),
+    thickness = c(0.04, 0.08, 0.10, 1.2), # layer thickness (m)
+    k = c(1.6, 1.8, 2.0, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2550, 2500, 2450, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(850, 900, 950, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.225, NA, NA, NA), # surface albedo (dimensionless)
+    emissivity = c(0.89, NA, NA, NA), # emissivity (dimensionless)
+    #SVF = c(0.5,NA,NA), # sky view factor
+    R.c.top = c(NA, 0, 0, NA) # thermal contact resistance at top boundary of layer (dimensionless)
   )
 )
 
 # define layer profile names corresponding to the validation site location IDs
 # this will pull weather data from the nearest weather site with data to the validaiton site specfied
-names(layer.profiles) <- c("A1","A3","C1","M1") 
+names(layer.profiles) <- c("A8", "C4", "C3", "A9", "A6") 
 
 # load validation site data 
 valid.dates <- readRDS(here("data/best-aster-dates.rds")) # remote sensed temps at valiation sites on specified dates
