@@ -187,44 +187,34 @@ for(run in 1:max(model.runs$run.n)){
     max.y <- round(max(p1.data[, T.degC] + 5), - 1) # round up to nearest multiple of 10
     
     # create different legend charateristics for plotting
-    depth.names <- factor(paste(unique(signif(p1.data$depth.m, 2) * 1000), "mm"), ordered = T)
+    depth.names <- paste(unique(signif(p1.data$depth.m, 2) * 1000), "mm")
     depth.col <- c("#67000D", "#D42020", "#FC7050")
-    #depth.col <- c("#220901","#621708","#941B0C", "#BC3908", "#F6AA1C")
     depth.shp <- c(0:2)
     depth.siz <- c(0.6, 0.6, 0.6)
-
+    names(depth.col) <- depth.names
+    names(depth.shp) <- depth.names
+    names(depth.siz) <- depth.names
+    p1.data[, names := factor(paste(signif(depth.m, 2) * 1000, "mm"), levels = depth.names)]
+    #p1.data[stack(depth.col), on = .(names = ind), depth.col := as.character(i.values)]
+    #p1.data[stack(depth.shp), on = .(names = ind), depth.shp := as.integer(i.values)]
+    #p1.data[stack(depth.siz), on = .(names = ind), depth.siz := as.integer(i.values)]
+    
     p.depth <- (ggplot(data = p1.data) 
                
                # custom border
                + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
                + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
-               
-               # fifth depth
-               #+ geom_line(aes(y = T.degC, x = date.time, color = depth.names[5], size = depth.names[5]), data = p1.data[node == my.node[5]])
-               #+ geom_point(aes(y = T.degC, x = date.time, color = depth.names[5], shape = depth.names[5]), data = p1.data[node == my.node[5] & mins %in% c(0,30) & secs == 0,])
-               
-               # fourth depth
-               #+ geom_line(aes(y = T.degC, x = date.time, color = depth.names[4], size = depth.names[4]), data = p1.data[node == my.node[4]])
-               #+ geom_point(aes(y = T.degC, x = date.time, color = depth.names[4], shape = depth.names[4]), data = p1.data[node == my.node[4] & mins %in% c(0,30) & secs == 0,])
-               
-               # third depth
-               + geom_line(aes(y = T.degC, x = date.time, color = depth.names[3], size = depth.names[3]), data = p1.data[node == my.node[3]])
-               + geom_point(aes(y = T.degC, x = date.time, color = depth.names[3], shape = depth.names[3]), data = p1.data[node == my.node[3] & mins %in% c(0,30) & secs == 0,])
-               
-               # second depth
-               + geom_line(aes(y = T.degC, x = date.time, color = depth.names[2], size = depth.names[2]), data = p1.data[node == my.node[2]])
-               + geom_point(aes(y = T.degC, x = date.time, color = depth.names[2], shape = depth.names[2]), data = p1.data[node == my.node[2] & mins %in% c(0,30) & secs == 0,])
-               
-               # first depth
-               + geom_line(aes(y = T.degC, x = date.time, color = depth.names[1], size = depth.names[1]), data = p1.data[node == my.node[1]])
-               + geom_point(aes(y = T.degC, x = date.time, color = depth.names[1], shape = depth.names[1]), data = p1.data[node == my.node[1] & mins %in% c(0,30) & secs == 0,])
-               
+
+               # line + point based on named factor of depth
+               + geom_line(aes(y = T.degC, x = date.time, color = names, size = names))
+               + geom_point(aes(y = T.degC, x = date.time, color = names, shape = names), data = p1.data[mins %in% c(0,30) & secs == 0,])
+
                # plot/axis titles & second axis for solar rad units
                #+ ggtitle("Modeled Surface Pavement Temperature")
                + labs(x = "Time of Day", y = "Temperature (deg C)")
-               + scale_color_manual(name = "Pavement Depth", values = depth.col, labels = depth.names)
-               + scale_shape_manual(name = "Pavement Depth", values = depth.shp, labels = depth.names)
-               + scale_size_manual(name = "Pavement Depth", values = depth.siz, labels = depth.names)
+               + scale_color_manual(name = "Pavement Depth", values = depth.col)
+               + scale_shape_manual(name = "Pavement Depth", values = depth.shp)
+               + scale_size_manual(name = "Pavement Depth", values = depth.siz)
                
                # scales
                + scale_x_datetime(expand = c(0,0), limits = c(min.x,max.x), date_breaks = "6 hours")
@@ -270,31 +260,44 @@ for(run in 1:max(model.runs$run.n)){
     max.y <- round(max(pave.time[, T.degC] + 5), - 1) # round up to nearest multiple of 10
 
     boundary.nodes <- pave.time[layer == "boundary" & time.s == 0, node] # to mark the boundaries
+    layers <- nrow(layer.profiles[[model.runs$layer.profile[run]]])
 
     # legend formating for different line type/color/size
-    area.names <- factor(c("Min Temperature", "Median Temperature", "Max Temperature"), ordered = T)
-    area.col <- c("#10316B", "#0D1B1E", "#BF1C3D")
-    area.typ <- c("twodash", "solid", "dotdash")
-    area.siz <- c(1, 1.2, 1)
+    #area.names <- factor(c("Min Temperature", "Median Temperature", "Max Temperature"), ordered = T)
+    #area.names <- c("Max Temperature", "Median Temperature", "Min Temperature")
+    area.col <- c("Max Temperature" = "#BF1C3D", "Median Temperature" = "#0D1B1E", "Min Temperature" = "#10316B")
+    area.typ <- c("Max Temperature" = "dotdash", "Median Temperature" = "solid", "Min Temperature" = "longdash")
+    area.siz <- c("Max Temperature" = 1, "Median Temperature" = 1, "Min Temperature" = 1)
     #area.shp <- c(0:3)
+    
+    # create different legend charateristics for plotting
+    #area.names <- c("Max Temperature", "Median Temperature", "Min Temperature")
+    #area.col <- c("#67000D", "#D42020", "#FC7050")
+    #area.shp <- c(0:2)
+    #area.siz <- c(0.6, 0.6, 0.6)
+    #names(area.col) <- area.names
+    #names(area.shp) <- area.names
+    #names(area.siz) <- area.names
+    #pave.time[, names := ???, levels = area.names)]
     
     p.area <- (ggplot(data = pave.time.agg[depth.m < max.x])
                + geom_ribbon(aes(ymin = T.degC.25, ymax = T.degC.75, x = depth.m, fill = "IQR"))
-               + geom_line(aes(x = depth.m, y = T.degC.min, color = area.names[1], size = area.names[1], linetype = area.names[1])) # min
-               + geom_line(aes(x = depth.m, y = T.degC.50, color = area.names[2], size = area.names[2], linetype = area.names[2])) # median
-               #+ geom_line(aes(x = depth.m, y = T.degC.mean, color = area.names[3], size = area.names[3], linetype = area.names[3])) # mean
-               + geom_line(aes(x = depth.m, y = T.degC.max, color = area.names[3], size = area.names[3], linetype = area.names[3])) # max
+               + geom_line(aes(x = depth.m, y = T.degC.min, color = names(area.col[3]), size = names(area.siz[3]), linetype = names(area.typ[3]))) # min
+               + geom_line(aes(x = depth.m, y = T.degC.50, color = names(area.col[2]), size = names(area.siz[2]), linetype = names(area.typ[2]))) # median
+               + geom_line(aes(x = depth.m, y = T.degC.max, color = names(area.col[1]), size = names(area.siz[1]), linetype = names(area.typ[1]))) # max
                + geom_vline(xintercept = unique(pave.time[node %in% boundary.nodes & depth.m != 0, depth.m]), linetype = "dotted")
                + labs(x = "Pavement Depth (m)", y = "Temperature (deg C)")
-               + scale_color_manual(name = "", values = area.col, labels = area.names)
-               + scale_size_manual(name = "", values = area.siz, labels = area.names)
-               + scale_linetype_manual(name = "", values = area.typ, labels = area.names)
+               + scale_color_manual(name = "", values = area.col)
+               + scale_size_manual(name = "", values = area.siz)
+               + scale_linetype_manual(name = "", values = area.typ)
+               + guides(color = guide_legend(reverse = T), size = guide_legend(reverse = T), linetype = guide_legend(reverse = T))
                + scale_fill_manual("", values = c("IQR" = "grey70"))
                + theme_light()
                + coord_flip() # flip and rotate x axis to get depth as 0 down 
                + scale_x_reverse(expand = c(0,0), limits = c(max.x, min.x), breaks = seq(min.x, max.x, 0.1)) 
                + scale_y_continuous(expand = c(0,0), limits = c(min.y, max.y), breaks = seq(min.y, max.y, 5)) 
-               + theme(text = element_text(family = my.font, size = 12),
+               + theme(text = element_text(family = my.font, size = 12, colour = "black"),
+                       axis.text = element_text(colour = "black"),
                        plot.margin = margin(t = 10, r = 20, b = 15, l = 40, unit = "pt"),
                        axis.title.x = element_text(vjust = -2),
                        axis.title.y = element_text(vjust = 5),
