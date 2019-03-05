@@ -25,6 +25,7 @@ if (!require("checkpoint")){
 # load all other dependant packages from the local repo
 lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
 library(RColorBrewer, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(suncalc, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(zoo, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(lubridate, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(sp, lib.loc = lib.path, quietly = T, warn.conflicts = F)
@@ -109,18 +110,6 @@ meta.data[hour(meta.data$date.time) < 7 | hour(meta.data$date.time) >= 18, day.t
 meta.data[, quantile(cloud, probs = c(0,0.1,0.25,0.5,0.6,0.7,0.75,0.8,0.9,1))]
 
 
-#######################################
-# DETERMINE CRITERIA TO SELECT SCENES #
-#######################################
-# *ASTER data has bugs in stored georeferenced info but somehow QGIS can decode, no R libraries work
-
-# create list of ids that we are interested in 
-meta.data[, idx := .I] # id for row number
-my.idx <- meta.data[cloud == 0 &
-           #lubridate::month(date.time, label = T, abbr = T) %in% c("May","Jun","Jul","Aug") &   # specific months
-           lubridate::year(date.time) %in% c(2010:2017), idx] # specific years
-
-
 ####################################################################
 # IMPORT DESIRED SCENES INTO QGIS AND SAVE TO FIX PROJECTION ISSUE #
 ####################################################################
@@ -131,39 +120,38 @@ new.list <- list.files(here("data/aster/processed"), recursive = T, full.names =
 # new stack of processed ASTER rasters
 new.stack <- lapply(new.list, function(x) raster(x, layer = 1)) # make sure each element is a raster layer not a brick/stack
 
-# days of reference of processed ASTER rasters
-new.data <- meta.data[idx %in% my.idx, ] # .(id,cloud,date.time,day.time)
-
 # create data.table to store surface temperature extracted from each scene 
 #st.by.site <- setnames(data.table(matrix(nrow = 0, ncol = length(my.sites$Location)+1)), c("id",my.sites$Location))
 st.by.site <- setnames(data.table(matrix(nrow = 0, ncol = length(my.sites$Location))), my.sites$Location)
-st.by.site <- rbind(list(id = new.data$id), st.by.site, fill = T)
-st.by.site[,2:(n.sites+1)] <- lapply(st.by.site[,2:(n.sites+1)], as.numeric)
+st.by.site <- rbind(list(id = meta.data$id), st.by.site, fill = T) # expand to N rows in meta.data
+st.by.site[,2:(n.sites+1)] <- lapply(st.by.site[,2:(n.sites+1)], as.numeric) # make sure all cols but "id" are numeric class
 
 # update projections
 sites.prj <- spTransform(sites.prj, crs(new.stack[[1]]))
 
 # extract surface temps at locations
-# order is same so no need to check if each extraction id matches
-for(r in 1:length(new.stack)){
+for(r in 1:meta.data[,.N]){
   
   # extract data
   st.by.site[id == gsub(".SurfaceKineticTemperature.KineticTemperature", "", names(new.stack[[r]])), 
-             names(st.by.site[,2:(my.sites[,.N]+1)]) := 
+             names(st.by.site[,2:(my.sites[,.N]+1)]) :=    # my.sites$Location :=
                as.list(raster::extract(new.stack[[r]], sites.prj, method = 'simple', small = F, cellnumbers = F,
                                        df = F, factors = F))]
 }
 
-# merge surface temp data to meta.data
-new.data <- merge(new.data, st.by.site, by = "id", all = T)
+# merge all site surface temp data to meta.data
+all.site.data <- merge(meta.data, st.by.site, by = "id", all = T)
 
-# identify best days for validation in new.data
-new.idx <- c(877,77,1102)
-new.data[idx %in% new.idx,]
 
-########################################
-# CREATE ASTER PLOTS OF SELECTED SITES #
-########################################
+######################
+# CREATE ASTER PLOTS #
+######################
+
+# create list of ids that we are interested in 
+all.site.data[, idx := .I] # id for row number
+
+# identify ideal scenes to plot
+my.idx <- c(877,77,1102) # manually chosen
 
 # load windows fonts and store as string
 windowsFonts(Century=windowsFont("TT Century Gothic"))
@@ -178,12 +166,18 @@ uza.border.prj <- spTransform(uza.border, crs(new.stack[[1]])) # project uza buf
 tmap_options(max.raster = c(plot = 2.5e+07, view = 2.5e+07)) # expand max extent of raster for tmap
 my.palette <- rev(RColorBrewer::brewer.pal(11, "Spectral")) # color palette
 
+# save all data and filter dates 
+dir.create(here("data/aster"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+saveRDS(all.site.data, here("data/aster/all-aster-data.rds"))
+saveRDS(all.site.data[idx %in% my.idx,], here("data/aster/best-aster-data.rds"))
+
+
 # loop through relevant raster scenes and create surface temperature plots
-for(s in new.idx){ #length(st.tile.stack)
+for(s in my.idx){ #length(st.tile.stack)
   tryCatch({  # catch and print errors, avoids stopping model run 
 
-    my.date <- new.data[idx == s, date.time] # store date.time
-    s <- new.data[idx == s, which = T] # correct index to new subsetted data
+    my.date <- all.site.data[idx == s, date.time] # store date.time
+    s <- all.site.data[idx == s, which = T] # correct index to new subsetted data
     
     # create plot
     plot.2 <- tm_shape(new.stack[[s]]) + 
@@ -209,7 +203,36 @@ for(s in new.idx){ #length(st.tile.stack)
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 
-saveRDS(new.data[idx %in% new.idx,], here("data/best-aster-dates.rds"))
+
+## summary plots of all data
+
+# melt data to long format (exlude "cloudy" days)
+all.site.data.long <- melt(all.site.data[, lat := (lat1+lat2+lat3+lat4)/4][, lon := mean(lon1+lon2+lon3+lon4)/4]
+                           [cloud <= 10, .SD, .SDcols = c("id", "date.time","lat","lon", my.sites$Location)], 
+                           id.vars = c("id", "date.time", "lat", "lon"), variable.name = "site", value.name = "ST")
+
+# define function to assign season
+getSeason <- function(DATES) {
+  WS <- as.Date("2012-12-15", format = "%Y-%m-%d") # Winter Solstice
+  SE <- as.Date("2012-3-15",  format = "%Y-%m-%d") # Spring Equinox
+  SS <- as.Date("2012-6-15",  format = "%Y-%m-%d") # Summer Solstice
+  FE <- as.Date("2012-9-15",  format = "%Y-%m-%d") # Fall Equinox
+  
+  # Convert dates from any year to 2012 dates (b/c leap yr)
+  d <- as.Date(strftime(DATES, format="2012-%m-%d"))
+  
+  ifelse (d >= WS | d < SE, "Winter",
+          ifelse (d >= SE & d < SS, "Spring",
+                  ifelse (d >= SS & d < FE, "Summer", "Fall")))
+}
+
+# assign factors for season of year and if it is day or night (as factors for plotting)
+all.site.data.long[, season := factor(getSeason(date.time), levels = c("Winter","Spring","Summer","Fall"))]
+#all.site.data.long[, light := getSunlightTimes(data = all.site.data.long[, .(date.time, lat, lon)][, date := as.Date(date.time)], keep = "nauticalDusk")]
+#all.site.data.long[, dark := getSunlightTimes(data = all.site.data.long[, .(date.time, lat, lon)][, date := as.Date(date.time)], keep = "dawn")]
+
+
+getSunlightTimes(data = all.site.data.long[1:5, .(date.time, lat, lon)][, date := as.Date(date.time)], keep = "nauticalDusk", tz =  "US/Arizona")
 
 # References
 

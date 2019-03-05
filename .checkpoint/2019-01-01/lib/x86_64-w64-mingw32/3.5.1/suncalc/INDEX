@@ -1,0 +1,5 @@
+getMoonIllumination     Get Moon illumination
+getMoonPosition         Get Moon position
+getMoonTimes            Get Moon times
+getSunlightPosition     Get Sunlight position
+getSunlightTimes        Get Sunlight times
