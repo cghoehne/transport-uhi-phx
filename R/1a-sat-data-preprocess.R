@@ -56,7 +56,8 @@ for(r in 1:length(st.tile.stack)){
 }
 
 # export all for selective processing in qgis
-dir.create(here("data/aster/all"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+dir.create(here("data/aster/preprocessed"), showWarnings = FALSE) # creates output folder if it doesn't already exist
 for(r in 1:length(st.tile.stack)){
-  writeRaster(st.tile.stack[[r]], here("data/aster/all",paste0(names(st.tile.stack[[r]]),".tif")))
+  writeRaster(st.tile.stack[[r]], here("data/aster/preprocessed",paste0(names(st.tile.stack[[r]]),".tif")), overwrite = T)
 }
+

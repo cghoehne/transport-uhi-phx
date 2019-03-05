@@ -83,9 +83,9 @@ layer.profiles <- list(
   ,data.table( # low traffic 5 layer road HMA rebonded (DFG x 3)
     layer = c("surface", "intermediate", "base", "subgrade"),
     thickness = c(0.04, 0.08, 0.10, 1.2), # layer thickness (m)
-    k = c(1.6, 1.8, 2.0, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    k = c(2.0, 1.8, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2550, 2500, 2450, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(850, 900, 950, 1900), # layer specific heat (J/(kg*degK)
+    c = c(900, 925, 950, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.225, NA, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.95, NA, NA, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
@@ -95,7 +95,8 @@ layer.profiles <- list(
 
 # define layer profile names corresponding to the validation site location IDs
 # this will pull weather data from the nearest weather site with data to the validaiton site specfied
-layer.sites <- c("A8", "C4", "C3", "A9", "A6") 
+#layer.sites <- c("A8", "C4", "C3", "A9", "A6") 
+layer.sites <- c("A8", "A8", "A8", "A8", "A8") 
 names(layer.profiles) <- c("Asphalt Lot/Road (Low Traffic)", 
                            "PCC whitetopping bonded on HMA (Low Traffic)", 
                            "Ordinary PCC w/ additives (Med Traffic)", 
@@ -112,7 +113,7 @@ setnames(my.sites, "Y", "lat")
 # first values in each vector will correspond to a refrence run for RMSE calcs where appropriate
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(2), # number of iterations to repeat each model run
+               n.iterations = c(1,2,5,10), # number of iterations to repeat each model run
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
@@ -120,7 +121,8 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                #albedo = c(0.2,0.3), # surface albedo
                SVF = c(1), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
-               end.day = valid.dates[, date(date.time)], # date on which to end the simulation (at midnight)
+               #end.day = valid.dates[, date(date.time)], # date on which to end the simulation (at midnight)
+               end.day = valid.dates[, date(date.time)][1], # date on which to end the simulation (at midnight)
                n.days = c(3) # number of days to simulate 
 )
 
@@ -223,14 +225,14 @@ dir.create(here(out.folder), showWarnings = FALSE)
 
 
 # BEGIN MODEL LOGIC
-for(run in 1:model.runs[,.N]){#         nrow(model.runs)  
+for(run in 1:model.runs[,.N]){  
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
     
     # first clear up space for new run
     rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "weather",
-                            "weather.raw", "create.layer", "my.errors", "my.sites")))
+                            "weather.raw", "create.layer", "my.errors", "my.sites", "out.folder")))
     gc()
     t.start <- Sys.time() # start model run timestamp
     
@@ -461,8 +463,6 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
           pave.time[time.s == t.step[p] & delta.t <= CFL, CFL_fail := 0] # no fail
           pave.time[time.s == t.step[p] & delta.t > CFL, CFL_fail := 1] # yes fail
           
-          cat("z = ", z, " ", round(pave.time[time.s == t.step[1] & node == 1, T.K], 1), "  ", round(pave.time[time.s == t.step[2] & node == 1, T.K], 1), "\n")
-          
           # break before 200 iterations if the first and second timestep pavement temperatures at each node have converged (within 1/10 deg K of each other) 
           # after 20 iterations, relax converge constraint to 1 degree K
           tol <- ifelse(z < 20, 1, 0)
@@ -540,8 +540,8 @@ for(run in 1:model.runs[,.N]){#         nrow(model.runs)
 # export data (also in RDS format to prevent issues with formatting)
 write.csv(model.runs, paste0(out.folder,"/model_runs_metadata.csv"), row.names = F) # output model run metadata
 write.csv(my.sites, paste0(out.folder,"/validation_sites.csv"), row.names = F)
-saveRDS(model.runs, paste0(out.folder,"/model_runs_metadata.rds"), row.names = F)
-saveRDS(my.sites, paste0(out.folder,"/validation_sites.rds"), row.names = F) # output model run metadata
+saveRDS(model.runs, paste0(out.folder,"/model_runs_metadata.rds"))
+saveRDS(my.sites, paste0(out.folder,"/validation_sites.rds")) # output model run metadata
 saveRDS(layer.profiles, paste0(out.folder,"/layer_profiles.rds"))
 
 # load email creds and construct msg to notify you by email the script has finished
