@@ -113,7 +113,7 @@ setnames(my.sites, "Y", "lat")
 # first values in each vector will correspond to a refrence run for RMSE calcs where appropriate
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(1,2,5,10), # number of iterations to repeat each model run
+               n.iterations = c(10,5,2,1), # number of iterations to repeat each model run
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
@@ -225,7 +225,7 @@ dir.create(here(out.folder), showWarnings = FALSE)
 
 
 # BEGIN MODEL LOGIC
-for(run in 1:model.runs[,.N]){  
+for(run in 1:model.runs[,.N]){  #
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
@@ -364,11 +364,12 @@ for(run in 1:model.runs[,.N]){
       
       for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
         
+        # print progress
         if(p%%100 == 0){cat("r =",run,":","p =",p,":", "i =", iteration,":", round(difftime(Sys.time(), start.time, units = "secs"), 2),"secs \n")}
         
         # if this is the first time step, we loop over time p == 1 and the initial conditions until we
-        # reach a stable initial condition of pavement temps at depth to ensure the model will converge 
-        # this is done because if the initial pavement temperature is not at/near an equilibrium
+        # reach a stable and converged initial condition of pavement temps at all depths 
+        # this is done because if the initial defined pavement temperature is not at/near an equilibrium
         # with the weather conditions, the initial flux graidents at the surface
         # will cause severe oscillations and the model will not be able convergence
         # if it takes more than 1000 times and they aren't converging, end loop to avoid inf looping if no feasible solution
