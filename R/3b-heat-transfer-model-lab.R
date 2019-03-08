@@ -1,5 +1,5 @@
-# 1D model based on fundamental energy balance to calculate the pavement near-surface temperatures
-# based on model outlined in Gui et al. (2007) [1]
+# 1D model based on fundamental energy balance to calculate the pavement temperatures
+# validation for specific asphalt lab testing outlined in Hassn et al. 2015 http://dx.doi.org/10.1016/j.matdes.2015.11.116
 
 # ** It is recommended to use Microsoft Open R (v3.5.1) for improved performance without compromsing compatibility **
 
@@ -33,97 +33,86 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 ## SPECIFY MODEL RUN SCENARIOS & MATERIAL PARAMETERS 
 
 # specify layer profiles as list of data.tables 
-# note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
-# if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
   data.table( # parking lot asphalt w/ small tracks, med qualtiy subsoil
-    layer = c("surface", "base", "subgrade"),
-    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
-    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.25, NA ,NA), # surface albedo (dimensionless)
-    emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
+    layer = c("aspahlt", "acrylic"),
+    thickness = c(0.05, 0.0105), # layer thickness (m)
+    k = c(1.16, 0.2), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2371.67, 1180), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(963.70, 1500), # layer specific heat (J/(kg*degK)
+    albedo = c(0.05, NA), # surface albedo (dimensionless)
+    emissivity = c(0.93, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA), # sky view factor
-    R.c.top = c(NA, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # PCC whitetopping bonded on HMA (lower density roads)
-    layer = c("surface", "base", "subgrade"),
-    thickness = c(0.1, 0.1, 1.3), # layer thickness (m)
-    k = c(1.4, 1.6, 1.0), # layer thermal conductivity (W/(m*degK))  
-    rho = c(2240, 2370, 1500), # layer density (kg/m3)
-    c = c(1050, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.325, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
+    layer = c("aspahlt", "acrylic"),
+    thickness = c(0.05, 0.01), # layer thickness (m)
+    k = c(0.96, 0.2), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2186.75, 1180), # layer density (kg/m3)
+    c = c(957.77, 1500), # layer specific heat (J/(kg*degK)
+    albedo = c(0.05, NA), # surface albedo (dimensionless)
+    emissivity = c(0.93, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # Ordinary PCC + some additives (med density)
-    layer = c("surface", "base", "subgrade"),
-    thickness = c(0.4, 0.1, 1.0), # layer thickness (m)
-    k = c(2.0, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2250, 1500), # layer density (kg/m3)
-    c = c(1050, 800, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.275, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
+    layer = c("aspahlt", "acrylic"),
+    thickness = c(0.05, 0.01), # layer thickness (m)
+    k = c(0.92, 0.2), # layer thermal conductivity (W/(m*degK)) 
+    rho = c( 2092.65, 1180), # layer density (kg/m3)
+    c = c(953.03, 1500), # layer specific heat (J/(kg*degK)
+    albedo = c(0.05, NA), # surface albedo (dimensionless)
+    emissivity = c(0.93, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA), # sky view factor
-    R.c.top = c(NA, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # major arterial HMA rebonded (OGFC 20mm on 280mm DGHMA)
-    layer = c("surface", "base", "subgrade"),
-    thickness = c(0.02, 0.28, 1.2), # layer thickness (m)
-    k = c(0.841, 1.21, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2080, 2467, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(921, 921, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.25, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
+    layer = c("aspahlt", "acrylic"),
+    thickness = c(0.05, 0.01), # layer thickness (m)
+    k = c(0.90, 0.2), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2004.70, 1180), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(947.11, 1500), # layer specific heat (J/(kg*degK)
+    albedo = c(0.05, NA), # surface albedo (dimensionless)
+    emissivity = c(0.93, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # low traffic 5 layer road HMA rebonded (DFG x 3)
-    layer = c("surface", "intermediate", "base", "subgrade"),
-    thickness = c(0.04, 0.08, 0.10, 1.2), # layer thickness (m)
-    k = c(2.0, 1.8, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2550, 2500, 2450, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(900, 925, 950, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.225, NA, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.95, NA, NA, NA), # emissivity (dimensionless)
+    layer = c("aspahlt", "acrylic"),
+    thickness = c(0.05, 0.01), # layer thickness (m)
+    k = c(0.82, 0.2), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(1906.10, 1180), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(945.92, 1500), # layer specific heat (J/(kg*degK)
+    albedo = c(0.05, NA), # surface albedo (dimensionless)
+    emissivity = c(0.93, NA), # emissivity (dimensionless)
     #SVF = c(0.5,NA,NA), # sky view factor
-    R.c.top = c(NA, 0, 0, NA) # thermal contact resistance at top boundary of layer (dimensionless)
+    R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
 )
 
-# define layer profile names corresponding to the validation site location IDs
-# this will pull weather data from the nearest weather site with data to the validaiton site specfied
-#layer.sites <- c("A8", "C4", "C3", "A9", "A6") 
-layer.sites <- c("A8", "A8", "A8", "A8", "A8") 
-names(layer.profiles) <- c("Asphalt Lot/Road (Low Traffic)", 
-                           "PCC whitetopping bonded on HMA (Low Traffic)", 
-                           "Ordinary PCC w/ additives (Med Traffic)", 
-                           "HMA rebonded (OGFC on DGHMA; High Traffic)", 
-                           "HMA rebonded (DFG 3x; Low Traffic)") 
-
-# load validation site data 
-valid.dates <- readRDS(here("data/best-aster-dates.rds")) # remote sensed temps at valiation sites on specified dates
-my.sites <- fread(here("data/validation_sites.csv")) # other validation sites info 
-setnames(my.sites, "X", "lon")
-setnames(my.sites, "Y", "lat")
+# name profiles
+names(layer.profiles) <- c("5% air voids", 
+                           "13.2% air voids", 
+                           "17.4% air voids", 
+                           "21.5% air voids", 
+                           "25.3% air voids")
 
 # create list of models to run with varied inputs to check sentivity/error
 # first values in each vector will correspond to a refrence run for RMSE calcs where appropriate
 models <- list(run.n = c(0), # dummy run number (replace below)
-               nodal.spacing = c(12.5),# nodal spacing in millimeters
-               n.iterations = c(10,5,2,1), # number of iterations to repeat each model run
-               i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
-               i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
+               nodal.spacing = c(1),# nodal spacing in millimeters
+               n.iterations = c(1), # number of iterations to repeat each model run
+               i.top.temp = c(25), # starting top boundary layer temperature in deg C
+               i.bot.temp = c(25), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
-               pave.length = c(40), # characteristic length of pavement in meters
+               pave.length = c(10), # characteristic length of pavement in meters
                #albedo = c(0.2,0.3), # surface albedo
                SVF = c(1), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                #end.day = valid.dates[, date(date.time)], # date on which to end the simulation (at midnight)
-               end.day = valid.dates[, date(date.time)][1], # date on which to end the simulation (at midnight)
-               n.days = c(3) # number of days to simulate 
+               end.day = NA, # date on which to end the simulation (at midnight)
+               n.days = c(1) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
@@ -135,91 +124,35 @@ for(a in 1:length(layer.profiles)){ # record other layer profile properties in m
   model.runs[layer.profile == a, albedo := layer.profiles[[a]]$albedo[1]] 
   model.runs[layer.profile == a, emissivity := layer.profiles[[a]]$emissivity[1]]
   model.runs[layer.profile == a, pave.name := names(layer.profiles)[a]]
-  model.runs[layer.profile == a, valid.site := layer.sites[a]]
+  #model.runs[layer.profile == a, valid.site := layer.sites[a]]
 }
 
-# estimated model runs time(s)
-#coeff <- c(1.551634368,-0.039871215,0.079319245,-0.035625977,0.246614492,0.862178686)
-#est.run.time <- exp(coeff[1] + coeff[2]*model.runs$nodal.spacing + coeff[3]*model.runs$n.iterations + coeff[4]*model.runs$time.step + coeff[5]*model.runs$depth + coeff[6]*model.runs$n.days)
-#est.run.time <- model.runs$n.iterations * model.runs$n.days * model.runs$depth / model.runs$time.step / model.runs$nodal.spacing
-#est.run.time <- (432.39 * est.run.time) + 0.7298   #(516.43 * est.run.time) + 33.065 # linear regression on parameters predicting acutal run time
-#for(a in 1:model.runs[,.N]){cat("run",model.runs$run.n[a],":",round(sum(est.run.time[a]), 0), "mins (", round(sum(est.run.time[a])/60, 2)," hrs) \n")}
-#paste0("Estimated run time for all ",model.runs[,.N], " runs: ", round(sum(est.run.time), 0), " mins (", round(sum(est.run.time)/60, 2)," hrs)")
 
+# 4x 250 W lamps centered in 70 x 70 mm grid over asphalt
+# 306 × 306 mm asphalt surface area
+# simplify lamps as 1x 1000 W at center from 730 mm
+# calc using with inverse square law
+area <- 0.306^2 # meters squared
+dist <- 0.730 # meters
+cov.area <- pi * (dist^2) # meters squared area of coverage each lamp at 730 mm disance from surface
+power <- 250 # watts 
+tot.intensity <- (power / area) / (dist^2) # watts 
+pave.intensity <- tot.intensity * area / cov.area # intensity in watts that reachs all of pave surface per lamp
 
-# LOAD & FILTER WEATHER DATA 
-my.years <- unique(valid.dates[, year(date.time)]) # store all unique years to reterive weather data for those years
-weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS)) # bind all weather data for the selected years
-weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs w/o NA of desired vars
-weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero to prevent errors
+# off center correction area covered per lamp (306mm / 2) - (70mm / 2) = 118mm lamp center from perimiter
+# therefore area centered under each lamp from perimeter: ((118mm * 2)^2) / (306mm ^ 2)
+#corr <- ((118 * 2)^2) / (306^2)
 
-# trim weather data to only the dates that we will be using weather data from (defined by model.runs$end.day and model.runs$n.days
-my.dates <- unique(do.call("c", mapply(function(x,y) seq(date(x) - days(y - 1), by = "day", length.out = y), model.runs$end.day, model.runs$n.days, SIMPLIFY = F)))
-weather.raw <- weather.raw[date(date.time) %in% my.dates,]
-
-# import station metadata and calculate average number of observations of critical weather parameters
-stations <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-station-data.rds")), readRDS)) # load corresonding years of station metadata
-for(s in 1:nrow(stations)){ # calculate the non-NA obs per day for important weather variables
-  s.name <- stations[s, station.name]
-  day.n <- length(unique(date(weather.raw[station.name == s.name, date.time]))) # number of unqiue days
-  stations[s, n.solar.day := weather.raw[station.name == s.name & !is.na(solar), .N] / day.n]
-  stations[s, n.dewpt.day := weather.raw[station.name == s.name & !is.na(solar), .N] / day.n]
-  stations[s, n.tempc.day := weather.raw[station.name == s.name & !is.na(solar), .N] / day.n]
-  stations[s, n.days.obs := day.n]
-}
-
-# filter out stations with no or poor data coverage (need at least 1 obs per day)
-stations <- stations[is.finite(n.solar.day)  & is.finite(n.tempc.day)  # need required parameters to be finite
-                     & n.solar.day > 0 & n.tempc.day > 0 # and positive non-zero
-                     & n.days.obs == (length(unique(model.runs$end.day)) * max(model.runs$n.days)),] # and at least one observation per day for all desired dates
-
-# define function to calculate distance in kilometers between two lat/lon points
-earth.dist <- function (long1, lat1, long2, lat2){
-  rad <- pi/180
-  a1 <- lat1 * rad
-  a2 <- long1 * rad
-  b1 <- lat2 * rad
-  b2 <- long2 * rad
-  dlon <- b2 - a2
-  dlat <- b1 - a1
-  a <- (sin(dlat/2))^2 + cos(a1) * cos(b1) * (sin(dlon/2))^2
-  c <- 2 * atan2(sqrt(a), sqrt(1 - a))
-  R <- 6378.145
-  d <- R * c
-  return(d)
-}
-
-# calculate earth surface distance in km between chosen validation sites and available weather stations
-stations[, (my.sites$Location) := as.numeric()] # initialize columns
-for(b in 1:length(my.sites$Location)){
-  stations[, (my.sites$Location)[b] := earth.dist(my.sites[b, lon], my.sites[b, lat], stations$lon, stations$lat) ]
-}
-
-# determine which stations are the closest station to each site
-min.stations <- unique(melt(stations[, .SD, .SDcols = c("station.name",paste0(my.sites$Location))], id.vars = "station.name", variable.name = "Location", value.name = "dist.km"))
-min.stations <- min.stations[, .SD[which.min(dist.km)], by = Location]
-my.sites <- merge(min.stations, my.sites, by = "Location", all = T)
-my.sites <- merge(my.sites, stations[, .(station.name, elevation)], by = "station.name", all.x = T)
-
-# funcion to create layers by layer specifications (does not create boundaries)
+# funcion to create layers by layer specifications
 create.layer <- function(thickness, name, start.depth, nodal.spacing){ # create a layer with defined *thickness* and *name*
   
-  # both top and bottom interface nodes of layer occurs on delta.x location:
-  if(start.depth %% nodal.spacing == 0 & (start.depth + thickness) %% nodal.spacing == 0){
-    data.table("x" = seq(start.depth + nodal.spacing, start.depth + thickness - nodal.spacing, nodal.spacing), "layer" = name)
-    #"error1"
-  # top interface node occurs on delta.x location but not bottom interface:
-  } else if (start.depth %% nodal.spacing == 0 & (start.depth + thickness) %% nodal.spacing != 0){
-    data.table("x" = seq(start.depth + nodal.spacing, start.depth + (floor(thickness/nodal.spacing) * nodal.spacing), nodal.spacing), "layer" = name)
-    #"error2"
-  # bottom interface node occurs on delta.x location but not top interface:
-  } else if (start.depth %% nodal.spacing != 0 & (start.depth + thickness) %% nodal.spacing == 0){
-    data.table("x" = seq(start.depth + (thickness %% nodal.spacing), start.depth + thickness - nodal.spacing, nodal.spacing), "layer" = name)
-    #"error3"
-  # neither top nor bottom interface nodes of layer occurs on delta.x location:
+  # interface node occurs on delta.x location:
+  if(thickness/nodal.spacing == round(thickness/nodal.spacing)){
+    data.table("x" = seq(start.depth, start.depth + thickness - nodal.spacing, nodal.spacing), "layer" = name)[1, layer := "boundary"]
+    
+    # interface node occurs off delta.x location:
   } else {
-    data.table("x" = seq(start.depth, start.depth + thickness, nodal.spacing), "layer" = name)
-    #"error4"
+    data.table("x" = seq(start.depth, start.depth + floor(thickness/nodal.spacing) * nodal.spacing, nodal.spacing), "layer" = name)[1, layer := "boundary"]
   }
 }
 
@@ -229,9 +162,8 @@ my.errors <- NULL
 # create output folder name as script start time
 out.folder <-paste0("data/outputs/1D-heat-model-runs/",
                     format(strptime(script.start, format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"),
-                    "_model_outputs/")
+                    "_model_outputs_LAB/")
 dir.create(here(out.folder), showWarnings = FALSE)
-
 
 # BEGIN MODEL LOGIC
 for(run in 1:model.runs[,.N]){  #
@@ -240,24 +172,11 @@ for(run in 1:model.runs[,.N]){  #
     # SETUP FOR MODEL
     
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "weather",
-                            "weather.raw", "create.layer", "my.errors", "my.sites", "out.folder")))
+    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref",
+                             "create.layer", "my.errors", "pave.intensity", "area", "out.folder")))
     gc()
     t.start <- Sys.time() # start model run timestamp
-    
-    # trim weather data to number of days specified
-    my.date <- date(model.runs$end.day[run])
-    #my.station <- names(which.max(table(my.sites$station.name))) # most commonly close station for all validation sites
-    my.station <- my.sites[Location == model.runs$valid.site[run], station.name]
-    model.runs$station.name[run] <- my.station
-    weather <- weather.raw[date.time >= (my.date - days(model.runs$n.days[run])) & # date.time ends on day of end.day 
-                           date(date.time) <= my.date & # ends n days later
-                           station.name == my.station] # at station nearest specified validation site
-    
-    if(weather[,.N] < 12 * model.runs$n.days[run]){
-      assign("my.errors", c(my.errors, paste("stopped at run", run, "because too few weather obs")), envir = .GlobalEnv) # store error msg
-      break} # break the run if there are fewer than 12 obs a day
-    
+
     # store layer dt
     layer.dt <- layer.profiles[[model.runs$layer.profile[run]]]
     layer.dt[, rho.c := rho * c] # volumetric heat capacity (J/(m3 degK)); [1] concrete: ~2.07E6; ashpalt ~1.42E6 [6]  9.63E5 [8]
@@ -267,65 +186,26 @@ for(run in 1:model.runs[,.N]){  #
     delta.x <- model.runs$nodal.spacing[run] / 1000 # chosen nodal spacing within pavement (m). default is 12.7mm (0.5in)
     delta.t <- model.runs$time.step[run] # store time step sequence (in units of seconds)
   
-    # create n layers and boundaries as input defines
+    # create n layers as input defines
     n.layers <- nrow(layer.dt)
-    for(layer.i in 1:n.layers){ # we multiply by 1000 to make sure mod (%%) works correctly in create.layer
-      
-      # funcion to create layers by layer specifications (does not create boundaries)
-      thickness <- layer.dt$thickness[layer.i] * 1000
-      name <- layer.dt$layer[layer.i]
-      start.depth <- (sum(layer.dt$thickness[1:layer.i]) - layer.dt$thickness[layer.i]) * 1000
-      nodal.spacing <- delta.x * 1000
-        
-        # both top and bottom interface nodes of layer occurs on delta.x location:
-        if(start.depth %% nodal.spacing == 0 & (start.depth + thickness) %% nodal.spacing == 0){
-          layer.n <- data.table("x" = seq(start.depth + nodal.spacing, start.depth + thickness - nodal.spacing, nodal.spacing), "layer" = name)
-          #"error1"
-          # top interface node occurs on delta.x location but not bottom interface:
-        } else if (start.depth %% nodal.spacing == 0 & (start.depth + thickness) %% nodal.spacing != 0){
-          layer.n <- data.table("x" = seq(start.depth + nodal.spacing, start.depth + (floor(thickness/nodal.spacing) * nodal.spacing), nodal.spacing), "layer" = name)
-          #"error2"
-          # bottom interface node occurs on delta.x location but not top interface:
-        } else if (start.depth %% nodal.spacing != 0 & (start.depth + thickness) %% nodal.spacing == 0){
-          layer.n <- data.table("x" = seq(start.depth + (start.depth %% nodal.spacing), start.depth + thickness - nodal.spacing, nodal.spacing), "layer" = name)
-          #"error3"
-          # neither top nor bottom interface nodes of layer occurs on delta.x location:
-        } else {
-          layer.n <- data.table("x" = seq(start.depth, start.depth + thickness, nodal.spacing), "layer" = name)
-          #"error4"
-        }
-
-      layer.n[, x := x / 1000] # x back to mm (divide by 1000)
-      assign(paste0("layer.",layer.i), layer.n)
-      
-      boundary.n <- data.table(x = sum(layer.dt$thickness[1:layer.i]) - layer.dt$thickness[layer.i], layer = "boundary")
-      
-      assign(paste0("boundary.",layer.i), boundary.n)
-    }
-    
-    # create closely spaced nodes near surface to improve accuracy for near surface interaction
-    # if layer 1 thickness is less than 25 mm, use different characterization
-    # until 25 mm depth (0.025 m), start using predifed nodal spacing (recommended again is 12.5mm)
-    if(layer.dt[1, thickness] >= 0.025){
-      layer.1 <- rbind(data.table(x = c(0.001,0.002,0.003,0.005,0.010,0.015,0.025), layer = layer.1$layer[2]), layer.1[x > 0.025])
-    } else {
-      layer.1 <- rbind(data.table(x = c(0.001,0.002,0.003,0.004,0.005,0.0075), layer = layer.1$layer[2]), layer.1[x > 0.0075])
-    }
-    
-    # create ordered list of boundaries and layers (no bottom boundary created)
-    my.layers <- c()
     for(layer.i in 1:n.layers){
-      my.layers <- c(my.layers, paste0("boundary.",layer.i), paste0("layer.",layer.i))
+      layer.n <- create.layer(thickness = layer.dt$thickness[layer.i], 
+                              name = layer.dt$layer[layer.i], 
+                              start.depth = sum(layer.dt$thickness[1:layer.i]) - layer.dt$thickness[layer.i],
+                              nodal.spacing = delta.x)
+      assign(paste0("layer.",layer.i), layer.n)
     }
+  
+    # create closely spaced nodes near surface to improve accuracy for near surface interaction
+    # until 25 mm depth (0.025 m), start using predifed nodal spacing (recommended again is 12.5mm)
+    layer.1 <- rbind(layer.1[1], data.table(x = c(0.001,0.002,0.003,0.005,0.010,0.015,0.025), layer = layer.1$layer[2]), layer.1[x > 0.025])
     
-    # bind all boundaries/layers together
-    p.data <- rbindlist(mget(my.layers))
-    
-    # create timestep columns (in this case, column of pavement temps by depth calculated every 2 mins for 24 hours)
-    # start from time 0 to max time which is absolute time difference in weather data 
-    # add + 1 timestep at end to calculated timestep - 1 in model which is last weather obs & delete timestep n (uncalc'd) at end
+    # bind all layers together
+    p.data <- rbindlist(mget(paste0("layer.", 1:n.layers)))
+
+    # create timestep columns
     t.step <- seq(from = 0, # from time zero
-                  to = as.numeric(difftime(max(weather$date.time), min(weather$date.time), units = "secs")) + delta.t, 
+                  to = as.numeric(seconds(days(model.runs$n.days[run]))) + delta.t, 
                   by = delta.t) 
     p.n <- length(t.step) # store final time step n
     
@@ -337,6 +217,9 @@ for(run in 1:model.runs[,.N]){  #
                                           "T.K" = rep(seq(from = model.runs$i.top.temp[run] + 273.15, # initial surface temp in K
                                                           to = model.runs$i.bot.temp[run] + 273.15, # initial bottom boundary temp in K
                                                           length.out = p.n)))) # surface temp in K from the pavement to 3m)
+    
+    pave.time[, `:=` (solar = 4 * pave.intensity / area, temp.c = 25, dewpt.c = 9, winspd = 0)]
+    pave.time[, date.time := as.POSIXct(as.Date("2019-01-01") + seconds(time.s))]
     
     # static parameters for pavement heat transfer
     albedo <- model.runs$albedo[run] #layer.dt$albedo[1] #  albedo (dimensionless) [1]; can be: 1 - epsilon for opaque objects
@@ -350,30 +233,22 @@ for(run in 1:model.runs[,.N]){  #
     # L could vary, but minimum for a pavement should be 2 lanes, or about ~10 meters
     
     # derive key parameters of air (sky temp, dry bulb temp, and convective heat transfer of air) which may vary depending on atmospheric conditions
-    weather[, time.s := as.numeric(difftime(weather$date.time, weather$date.time[1], units = "secs"))] # time.s to match with iterations in weather data (assuming first obs is time zero)
-    weather[, winspd := winspd * 0.44704] # convert to m/s from mi/h (for h.inf calc)
-    weather[, T.inf := temp.c + 273.15] #  atmospheric dry-bulb temperature (K);
-    weather[, T.sky := T.inf * (((0.004 * dewpt.c) + 0.8)^0.25)] # sky temperature (K), caluclated using equation (2)
-    weather[, v.inf := 1.47E-6 * (T.inf^(3/2)) / (T.inf + 113)] # kinematic viscosity of air (m2/s) for T.inf btwn 100 and 800 K [9]
-    weather[, k.inf := ((1.5207E-11) * (T.inf^3)) - ((4.8574E-08) * (T.inf^2)) + ((1.0184E-04) * (T.inf)) - 3.9333E-04] # thermal conductivity of air in W/(m*degK) [0.02, 0.03] (for normal air temps) [2]
-    elev <- ifelse(length(unique(my.sites[station.name == my.station, elevation])) == 0, 500, unique(my.sites[station.name == my.station, elevation])) # assume 500 m elevation if no elevation data
+    pave.time[, time.s := as.numeric(difftime(pave.time$date.time, pave.time$date.time[1], units = "secs"))] # time.s to match with iterations in pave.time data (assuming first obs is time zero)
+    pave.time[, winspd := winspd * 0.44704] # convert to m/s from mi/h (for h.inf calc)
+    pave.time[, T.inf := temp.c + 273.15] #  atmospheric dry-bulb temperature (K);
+    pave.time[, T.sky := T.inf * (((0.004 * dewpt.c) + 0.8)^0.25)] # sky temperature (K), caluclated using equation (2)
+    pave.time[, v.inf := 1.47E-6 * (T.inf^(3/2)) / (T.inf + 113)] # kinematic viscosity of air (m2/s) for T.inf btwn 100 and 800 K [9]
+    pave.time[, k.inf := ((1.5207E-11) * (T.inf^3)) - ((4.8574E-08) * (T.inf^2)) + ((1.0184E-04) * (T.inf)) - 3.9333E-04] # thermal conductivity of air in W/(m*degK) [0.02, 0.03] (for normal air temps) [2]
+    elev <- 46 # elevation of Nottingham UK (assumed location of lab)
     p.air.dry <- (-8.5373296284E-09 * (elev^3)) + (5.2598726265E-04 * (elev^2)) - (1.1912694417E+01 * elev) + 1.0136022009E+05 # estimate of dry air pressure (Pa) via elevation (see air-emperical-fit.xlsx for fit)
-    weather$p.wat.vap <- (100 - 5 * (weather$temp.c - weather$dewpt.c)) * (6.1078 * (10^(7.5 * weather$temp.c / (weather$temp.c + 237.3)))) # RH (approx) * saturation vapor pressure
-    weather$p.air.hum <- (p.air.dry / 287.058 / weather$T.inf) + (weather$p.wat.vap / 461.495 / weather$T.inf)  # density of humid air (kg/m3)
-    weather[, c.p.air := (2E-04 * (T.inf^2)) - (7E-02 * T.inf) + 1.008E+03] # specific heat capacity of air (J/(kg*degK)(see air-emperical-fit.xlsx for emperical fit
-    weather[, Pr.inf := 1.6380e-05 * p.air.hum * c.p.air / k.inf] # Prandtl number, should be 0.70 - 0.72 for air between 0 and 100 C at 0 to 10 bar
-    weather[, h.inf := 0.664 * (k.inf * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^ -0.5) * (winspd ^ 0.5))] # convective heat transfer coefficient in W/(m2*degK) [0.5, 1000]
+    pave.time$p.wat.vap <- (100 - 5 * (pave.time$temp.c - pave.time$dewpt.c)) * (6.1078 * (10^(7.5 * pave.time$temp.c / (pave.time$temp.c + 237.3)))) # RH (approx) * saturation vapor pressure
+    pave.time$p.air.hum <- (p.air.dry / 287.058 / pave.time$T.inf) + (pave.time$p.wat.vap / 461.495 / pave.time$T.inf)  # density of humid air (kg/m3)
+    pave.time[, c.p.air := (2E-04 * (T.inf^2)) - (7E-02 * T.inf) + 1.008E+03] # specific heat capacity of air (J/(kg*degK)(see air-emperical-fit.xlsx for emperical fit
+    pave.time[, Pr.inf := 1.6380e-05 * p.air.hum * c.p.air / k.inf] # Prandtl number, should be 0.70 - 0.72 for air between 0 and 100 C at 0 to 10 bar
+    pave.time[, h.inf := 0.664 * (k.inf * (Pr.inf ^ 0.3) * (v.inf ^ -0.5) * (L ^ -0.5) * (winspd ^ 0.5))] # convective heat transfer coefficient in W/(m2*degK) [0.5, 1000]
     
-    # iterpolate between required observational weather data to create needed weather data at each timestep
-    # first create new data.table for a single node with all obervational weather data matched by timestep (timesteps match)
-    # then linearlly approximate between the weather observations for all NA timesteps using zoo::na.approx
-    # finally merge to orginal data.table to have all weather observations present such that missing ones are interplotated between
-    aprx <- merge(pave.time[node == 0], weather[, .(time.s, T.sky, T.inf, solar, h.inf)], by = "time.s", all.x = T)
-    aprx[, `:=` (T.sky = na.approx(T.sky, 1:.N, na.rm = F), # sky temperature in K
-                 T.inf = na.approx(T.inf, 1:.N, na.rm = F), # atmospheric dry-bulb temperature in K
-                 solar = na.approx(solar, 1:.N, na.rm = F), # solar radiation in W/m2
-                 h.inf = na.approx(h.inf, 1:.N, na.rm = F))]  # wind speed in m/s
-    pave.time <- merge(pave.time, aprx[, .(time.s, T.sky, T.inf, solar, h.inf)], by = "time.s", all.x = T)
+    # delete unnecessary columns
+    pave.time[, c("v.inf","k.inf","p.wat.vap","p.air.hum","c.p.air","Pr.inf"):=NULL]
     
     # add k and rho.c
     pave.time <- merge(pave.time, layer.dt[,.(layer,k,rho.c)], by = "layer", all.x = T, allow.cartesian = T) 
@@ -396,10 +271,13 @@ for(run in 1:model.runs[,.N]){  #
     pave.time <- merge(pave.time, up.dn[, .(node, k.up, k.dn, x.up, x.dn)], by = "node", all.x = T, allow.cartesian = T)
     
     # also create/store a few other things
-    pave.time[, date.time := weather$date.time[1] + seconds(time.s)] # add date.time column 
     pave.time[time.s != 0, T.K := NA] # only initial temps are assumed, else NA
     pave.time[, layer := as.character(layer)] # to avoid issues w/ factors
+    #pave.time[node == max(node)-1,]
 
+    # let time = 0 have lights off (solar = 0 so that model converges to stable initial condition)
+    pave.time[time.s == 0, solar := 0]
+    
     # MODEL HEAT TRANSFER OF PAVEMENT
     
     # iterate through from time p to time p.n and model pavement heat transfer at surface, boundary/interface, and interior nodes 
@@ -418,13 +296,9 @@ for(run in 1:model.runs[,.N]){  #
         
         # if this is the first time step, we loop over time p == 1 and the initial conditions until we
         # reach a stable and converged initial condition of pavement temps at all depths 
-        # this is done because if the initial defined pavement temperature is not at/near an equilibrium
-        # with the weather conditions, the initial flux graidents at the surface
-        # will cause severe oscillations and the model will not be able convergence
-        # if it takes more than 1000 times and they aren't converging, end loop to avoid inf looping if no feasible solution
-        # it will otherwise break after one run if the nodes at p and p+1 have converged
-        # therefore allowing all p+2 and beyond calculations to always loop only once (intital and p+1 shouldn't change)
         for(z in 1:1000){
+          
+          if(z%%2 == 0){cat("z =", z, "|", "Surface Temp:", signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3),"C \n")}
           
           # for timestep p, calc the surface heat transfer parameters (surface radiative coefficient, infrared radiation & convection)
           pave.time[time.s == t.step[p] & node == 0, h.rad := SVF * epsilon * sigma * ((T.K^2) + (T.sky^2)) * (T.K + T.sky)]  # radiative heat transfer coefficient in W/(m2*degK) 
@@ -589,9 +463,7 @@ for(run in 1:model.runs[,.N]){  #
 
 # export data (also in RDS format to prevent issues with formatting)
 write.csv(model.runs, paste0(out.folder,"/model_runs_metadata.csv"), row.names = F) # output model run metadata
-write.csv(my.sites, paste0(out.folder,"/validation_sites.csv"), row.names = F)
 saveRDS(model.runs, paste0(out.folder,"/model_runs_metadata.rds"))
-saveRDS(my.sites, paste0(out.folder,"/validation_sites.rds")) # output model run metadata
 saveRDS(layer.profiles, paste0(out.folder,"/layer_profiles.rds"))
 
 # load email creds and construct msg to notify you by email the script has finished
