@@ -57,7 +57,7 @@ weather.raw <- weather.raw[date(date.time) %in% my.dates,]
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
-should.plot <- "yes" # "yes" or "no"
+should.plot <- "no" # "yes" or "no"
 
 for(run in 1:max(model.runs$run.n)){
   tryCatch({  # catch and print errors, avoids stopping model run 
@@ -108,9 +108,9 @@ for(run in 1:max(model.runs$run.n)){
     valid.i[, run.n := run] # add run number
     valid.i[, layer.profile := model.runs$layer.profile[run]]
     valid.i[, valid.site := model.runs$valid.site[run]]
+    valid.i[, T.degC.sat := valid.dates[date.time == my.date.time, .SD, .SDcols = unique(valid.i[, valid.site])]]
     valids <- rbind(valids,valid.i[node == 0,], fill = T) # keep surface node only for surface temps
     }
-
 
   if(should.plot == "yes"){
     

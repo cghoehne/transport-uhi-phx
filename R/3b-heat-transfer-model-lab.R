@@ -101,11 +101,11 @@ names(layer.profiles) <- c("5% air voids",
 # create list of models to run with varied inputs to check sentivity/error
 # first values in each vector will correspond to a refrence run for RMSE calcs where appropriate
 models <- list(run.n = c(0), # dummy run number (replace below)
-               nodal.spacing = c(1),# nodal spacing in millimeters
+               nodal.spacing = c(4),# nodal spacing in millimeters
                n.iterations = c(1), # number of iterations to repeat each model run
                i.top.temp = c(25), # starting top boundary layer temperature in deg C
                i.bot.temp = c(25), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
-               time.step = c(30), # time step in seconds
+               time.step = c(15), # time step in seconds
                pave.length = c(10), # characteristic length of pavement in meters
                #albedo = c(0.2,0.3), # surface albedo
                SVF = c(1), # sky view factor
@@ -139,23 +139,6 @@ power <- 250 # watts
 tot.intensity <- (power / area) / (dist^2) # watts 
 pave.intensity <- tot.intensity * area / cov.area # intensity in watts that reachs all of pave surface per lamp
 
-# off center correction area covered per lamp (306mm / 2) - (70mm / 2) = 118mm lamp center from perimiter
-# therefore area centered under each lamp from perimeter: ((118mm * 2)^2) / (306mm ^ 2)
-#corr <- ((118 * 2)^2) / (306^2)
-
-# funcion to create layers by layer specifications
-create.layer <- function(thickness, name, start.depth, nodal.spacing){ # create a layer with defined *thickness* and *name*
-  
-  # interface node occurs on delta.x location:
-  if(thickness/nodal.spacing == round(thickness/nodal.spacing)){
-    data.table("x" = seq(start.depth, start.depth + thickness - nodal.spacing, nodal.spacing), "layer" = name)[1, layer := "boundary"]
-    
-    # interface node occurs off delta.x location:
-  } else {
-    data.table("x" = seq(start.depth, start.depth + floor(thickness/nodal.spacing) * nodal.spacing, nodal.spacing), "layer" = name)[1, layer := "boundary"]
-  }
-}
-
 # create empty object to store error messages
 my.errors <- NULL
 
@@ -186,22 +169,54 @@ for(run in 1:model.runs[,.N]){  #
     delta.x <- model.runs$nodal.spacing[run] / 1000 # chosen nodal spacing within pavement (m). default is 12.7mm (0.5in)
     delta.t <- model.runs$time.step[run] # store time step sequence (in units of seconds)
   
-    # create n layers as input defines
+    # create n layers and boundaries as input defines
     n.layers <- nrow(layer.dt)
-    for(layer.i in 1:n.layers){
-      layer.n <- create.layer(thickness = layer.dt$thickness[layer.i], 
-                              name = layer.dt$layer[layer.i], 
-                              start.depth = sum(layer.dt$thickness[1:layer.i]) - layer.dt$thickness[layer.i],
-                              nodal.spacing = delta.x)
+    for(layer.i in 1:n.layers){ # we multiply by 1000 to make sure mod (%%) works correctly in create.layer
+      
+      # layer specifications
+      thickness <- round(layer.dt$thickness[layer.i] * 1000, 0)
+      name <- layer.dt$layer[layer.i]
+      start.depth <- round((sum(layer.dt[1:layer.i, thickness]) - layer.dt$thickness[layer.i]) * 1000, 0)
+      nodal.spacing <- delta.x * 1000
+      
+      # if last layer, add 2 extra nodes, the last node will be deleted right before simulation begins 
+      # to ensure seemless end to material (no bottom boundary)
+      thickness <- thickness + (nodal.spacing * 2)
+      
+      # both top and bottom interface nodes of layer occurs on delta.x location:
+      if(start.depth %% nodal.spacing == 0 & (start.depth + thickness) %% nodal.spacing == 0){
+        layer.n <- data.table("x" = seq(start.depth + nodal.spacing, start.depth + thickness - nodal.spacing, nodal.spacing), "layer" = name)
+        
+        # top interface node occurs on delta.x location but not bottom interface:
+      } else if (start.depth %% nodal.spacing == 0 & (start.depth + thickness) %% nodal.spacing != 0){
+        layer.n <- data.table("x" = seq(start.depth + nodal.spacing, start.depth + (floor(thickness/nodal.spacing) * nodal.spacing), nodal.spacing), "layer" = name)
+        
+        # bottom interface node occurs on delta.x location but not top interface:
+      } else if (start.depth %% nodal.spacing != 0 & (start.depth + thickness) %% nodal.spacing == 0){
+        layer.n <- data.table("x" = seq(start.depth + (start.depth %% nodal.spacing), start.depth + thickness - nodal.spacing, nodal.spacing), "layer" = name)
+        
+        # neither top nor bottom interface nodes of layer occurs on delta.x location:
+      } else {
+        layer.n <- data.table("x" = seq(start.depth, start.depth + thickness, nodal.spacing), "layer" = name)
+      }
+      
+      layer.n[, x := x / 1000] # x back to mm (divide by 1000)
       assign(paste0("layer.",layer.i), layer.n)
+      
+      # creat boundary
+      boundary.n <- data.table(x = sum(layer.dt$thickness[1:layer.i]) - layer.dt$thickness[layer.i], layer = "boundary")
+      
+      assign(paste0("boundary.",layer.i), boundary.n)
     }
-  
-    # create closely spaced nodes near surface to improve accuracy for near surface interaction
-    # until 25 mm depth (0.025 m), start using predifed nodal spacing (recommended again is 12.5mm)
-    layer.1 <- rbind(layer.1[1], data.table(x = c(0.001,0.002,0.003,0.005,0.010,0.015,0.025), layer = layer.1$layer[2]), layer.1[x > 0.025])
     
-    # bind all layers together
-    p.data <- rbindlist(mget(paste0("layer.", 1:n.layers)))
+    # create ordered list of boundaries and layers (no bottom boundary created)
+    my.layers <- c()
+    for(layer.i in 1:n.layers){
+      my.layers <- c(my.layers, paste0("boundary.",layer.i), paste0("layer.",layer.i))
+    }
+    
+    # bind all boundaries/layers together
+    p.data <- rbindlist(mget(my.layers))
 
     # create timestep columns
     t.step <- seq(from = 0, # from time zero
@@ -253,8 +268,8 @@ for(run in 1:model.runs[,.N]){  #
     # add k and rho.c
     pave.time <- merge(pave.time, layer.dt[,.(layer,k,rho.c)], by = "layer", all.x = T, allow.cartesian = T) 
     
-    # add boundary/interface thermal contact resistance (R.c)
-    boundary.nodes <- pave.time[layer == "boundary" & time.s == 0, node]
+    # add interior boundary/interface thermal contact resistance (R.c)
+    boundary.nodes <- pave.time[layer == "boundary" & time.s == 0 & node != 0, node]
     for(b in 1:length(boundary.nodes)){
       pave.time[node == boundary.nodes[b], R.c := layer.dt$R.c.top[b]]
     }
@@ -278,6 +293,9 @@ for(run in 1:model.runs[,.N]){  #
     # let time = 0 have lights off (solar = 0 so that model converges to stable initial condition)
     pave.time[time.s == 0, solar := 0]
     
+    # get rid of extra node at bottom
+    pave.time <- pave.time[node != max(node)]
+    
     # MODEL HEAT TRANSFER OF PAVEMENT
     
     # iterate through from time p to time p.n and model pavement heat transfer at surface, boundary/interface, and interior nodes 
@@ -296,7 +314,7 @@ for(run in 1:model.runs[,.N]){  #
         
         # if this is the first time step, we loop over time p == 1 and the initial conditions until we
         # reach a stable and converged initial condition of pavement temps at all depths 
-        for(z in 1:1000){
+        for(z in 1:1){
           
           if(z%%2 == 0){cat("z =", z, "|", "Surface Temp:", signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3),"C \n")}
           
@@ -330,8 +348,8 @@ for(run in 1:model.runs[,.N]){  #
                     + tmp[, shift(T.K, type = "lead")] # T at node m+1 (below) and p
                     - 2 * tmp[, T.K])) + tmp[, T.K]] # T at node m and p
           
-          pave.time[time.s == t.step[p+1] & node != 0 & node != max(node), T.K := 
-                      tmp[node != 0 & node != max(node), T.C.i]]
+          pave.time[time.s == t.step[p+1] & node != 0, T.K := 
+                      tmp[node != 0, T.C.i]]
           
           pave.time[time.s == t.step[p+1] & node == max(node), T.K := pave.time[time.s == t.step[p+1] & node == max(node)-1, T.K]] # make last node m-1 T
           
