@@ -334,7 +334,7 @@ for(run in 1:model.runs[,.N]){  #
           
           # for timestep p+1, calc the surface pavement temperature based on parameters at timestep p
           # i.e. surface node s (node = 0), eqn 10 in [1]
-          pave.time[time.s == t.step[p+1] & node == 0, T.K := tmp[node == 0, T.K] +  # T.K at node 0 is pavement surface temp (at time p+1)
+          pave.time[time.s == t.step[p+1] & node == 0, T.K := tmp[node == 0, T.K] -  # T.K at node 0 is pavement surface temp (at time p+1)
                       ((((1 - albedo) * tmp[node == 0, solar]) # incoming solar radiation (after albedo reflection)
                         - tmp[node == 0, q.cnv]  # minus convective heat transfer at surface
                         - tmp[node == 0, q.rad] # minus outgoing longwave/infrared radiation at surface
