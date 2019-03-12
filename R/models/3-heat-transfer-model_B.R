@@ -37,17 +37,17 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
   data.table( # Bare Dry Soil #1
-    layer = c("surface", "base", "subgrade"),
+    layer = c("surface"),
     thickness = c(1.5), # layer thickness (m)
     k = c(1.0), # layer thermal conductivity (W/(m*degK))  
     rho = c(1500), # layer density (kg/m3)
     c = c(1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.40), # surface albedo (dimensionless)
-    emissivity = c(0.92, NA, NA), # emissivity (dimensionless)
+    emissivity = c(0.92), # emissivity (dimensionless)
     R.c.top = c(0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # Bare Dry Soil #2
-    layer = c("surface", "base", "subgrade"),
+    layer = c("surface","subgrade"),
     thickness = c(0.5, 1.0), # layer thickness (m)
     k = c(1.0, 1.1), # layer thermal conductivity (W/(m*degK))  
     rho = c(1500, 1600), # layer density (kg/m3)
@@ -102,7 +102,7 @@ for(a in 1:length(layer.profiles)){ # record other layer profile properties in m
 
 # LOAD & FILTER WEATHER DATA 
 my.years <- unique(valid.dates[, year(date.time)]) # store all unique years to reterive weather data for those years
-weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS)) # bind all weather data for the selected years
+weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS), fill = T) # bind all weather data for the selected years
 weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs w/o NA of desired vars
 weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero to prevent errors
 
@@ -608,6 +608,7 @@ my.email <- as.character(fread(here("email.txt"), header = F)[1])
 my.pass <- as.character(fread(here("email.txt"), header = F)[2])
 msg <- paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(), ". Model run length: ", round(difftime(Sys.time(),script.start, units = "mins"),0)," mins.")
 cat(msg, file = run.log, append = T)
+close(run.log)
 send.mail(from = my.email,
           to = my.email,
           subject = msg,

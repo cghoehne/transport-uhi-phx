@@ -204,17 +204,17 @@ names(layer.profiles) <- c("Low Volume thin whitetopping bonded on HMA",
 
 layer.profiles <- list(
   data.table( # Bare Dry Soil #1
-    layer = c("surface", "base", "subgrade"),
+    layer = c("surface"),
     thickness = c(1.5), # layer thickness (m)
     k = c(1.0), # layer thermal conductivity (W/(m*degK))  
     rho = c(1500), # layer density (kg/m3)
     c = c(1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.40), # surface albedo (dimensionless)
-    emissivity = c(0.92, NA, NA), # emissivity (dimensionless)
+    emissivity = c(0.92), # emissivity (dimensionless)
     R.c.top = c(0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # Bare Dry Soil #2
-    layer = c("surface", "base", "subgrade"),
+    layer = c("surface", "subgrade"),
     thickness = c(0.5, 1.0), # layer thickness (m)
     k = c(1.0, 1.1), # layer thermal conductivity (W/(m*degK))  
     rho = c(1500, 1600), # layer density (kg/m3)

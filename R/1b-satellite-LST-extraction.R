@@ -46,7 +46,7 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
 ## IMPORT VALIDATION SITE DATA 
 
 # load csv with site lat longs (change to your points of intreset)
-my.sites <- fread(here("data/validation_sites.csv"))
+my.sites <- fread(here("data/aster/validation_sites.csv"))
 n.sites <- my.sites[,.N]
 sites.prj <- my.sites # convert data frame of lat-long points to coordinates (SpatialPointDataFrame)
 coordinates(sites.prj) <- c("X", "Y") # assign X & Y
