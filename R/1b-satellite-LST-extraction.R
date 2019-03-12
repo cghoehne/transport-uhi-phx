@@ -129,14 +129,16 @@ st.by.site[,2:(n.sites+1)] <- lapply(st.by.site[,2:(n.sites+1)], as.numeric) # m
 # update projections
 sites.prj <- spTransform(sites.prj, crs(new.stack[[1]]))
 
+# site names
+site.names <- my.sites$Location
+
 # extract surface temps at locations
-for(r in 1:meta.data[,.N]){
+for(r in 1:length(new.stack)){
   
   # extract data
-  st.by.site[id == gsub(".SurfaceKineticTemperature.KineticTemperature", "", names(new.stack[[r]])), 
-             names(st.by.site[,2:(my.sites[,.N]+1)]) :=    # my.sites$Location :=
-               as.list(raster::extract(new.stack[[r]], sites.prj, method = 'simple', small = F, cellnumbers = F,
-                                       df = F, factors = F))]
+  st.by.site[id == gsub(".SurfaceKineticTemperature.KineticTemperature", "", names(new.stack[[r]])),
+             (site.names) := as.list(raster::extract(new.stack[[r]], sites.prj, method = 'simple', 
+                                                     small = F, cellnumbers = F, df = F, factors = F))]
 }
 
 # merge all site surface temp data to meta.data
@@ -151,7 +153,16 @@ all.site.data <- merge(meta.data, st.by.site, by = "id", all = T)
 all.site.data[, idx := .I] # id for row number
 
 # identify ideal scenes to plot
-my.idx <- c(877,77,1102) # manually chosen
+#my.idx <- c(877,77,1102) # manually chosen
+my.idx <- c(864, 877, 780, 736, 776, 548, 1102, 979, 179, 1163, 1084, 1040, 1093, 1177, 147)
+# summer night 864, 877, 780
+# summer day 736, 776, 548
+# winter night 1102, 979, 179, 1163, 1084
+# winter day 1040, 1093, 1177, 147
+
+my.site.data <- melt(all.site.data[idx %in% my.idx, .SD, .SDcols = c("id", "date.time", site.names)], 
+                 id.vars = c("id", "date.time"), variable.name = "site", value.name = "LST")
+my.site.data[LST <= 0, LST := NA] # force negative and zero values to NA
 
 # load windows fonts and store as string
 windowsFonts(Century=windowsFont("TT Century Gothic"))
@@ -169,7 +180,7 @@ my.palette <- rev(RColorBrewer::brewer.pal(11, "Spectral")) # color palette
 # save all data and filter dates 
 dir.create(here("data/aster"), showWarnings = FALSE) # creates output folder if it doesn't already exist
 saveRDS(all.site.data, here("data/aster/all-aster-data.rds"))
-saveRDS(all.site.data[idx %in% my.idx,], here("data/aster/best-aster-data.rds"))
+saveRDS(my.site.data, here("data/aster/my-aster-data.rds"))
 
 
 # loop through relevant raster scenes and create surface temperature plots

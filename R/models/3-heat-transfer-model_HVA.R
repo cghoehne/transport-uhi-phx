@@ -36,54 +36,54 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
-  data.table( # Low Volume HMA #1 (50mm DFG + 100mm DFG)
+  data.table( # High Volume HMA #1 (OGFC 25mm rebonded on 275mm DGHMA)
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
-    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.20, NA ,NA), # surface albedo (dimensionless)
+    thickness = c(0.025, 0.275, 1.2), # layer thickness (m)
+    k = c(0.96, 0.92, 1.10), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2187, 2093, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(964, 953, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.175, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  ,data.table( # Low Volume HMA #2 (100mm DFG rebonded 100mm DFG)
-    layer = c("surface", "intermediate", "base", "subgrade"),
-    thickness = c(0.1, 0.1, 1.3), # layer thickness (m)
-    k = c(1.8, 1.8, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2550, 2500, 2450, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(900, 925, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.20, NA, NA), # surface albedo (dimensionless)
+  ,data.table( # High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA)
+    layer = c("surface", "base", "subgrade"),
+    thickness = c(0.025, 0.275, 1.2), # layer thickness (m)
+    k = c(1.16, 1.08, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2400, 2350, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(964, 960, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.175, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  ,data.table( # Low Volume Porous Asphalt #1 (high air voids, crushed agg base/subgrade)
-    layer = c("surface", "intermediate", "base", "subgrade"),
-    thickness = c(0.075, 0.03, 1.395), # layer thickness (m)
-    k = c(0.82, 1.5, 1.46), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(1906, 1430, 1600), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(946, 840, 880), # layer specific heat (J/(kg*degK)
-    albedo = c(0.2, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.9, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  ),
-  data.table( # Low Volume HMA #1 (50mm DFG + 100mm DFG, Low Albedo)
+  ,data.table( # High Volume HMA #3 (OGFC 25mm rebonded on 275mm DGHMA)
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
-    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    thickness = c(0.025, 0.275, 1.2), # layer thickness (m)
+    k = c(2.0, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2550, 2350, 1500), # layer density (kg/m3) 2382 (base from infravation)
     c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.25, NA ,NA), # surface albedo (dimensionless)
-    emissivity = c(0.85, NA, NA), # emissivity (dimensionless)
+    albedo = c(0.175, NA, NA), # surface albedo (dimensionless)
+    emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  ),
-  data.table( # Low Volume HMA #1 (50mm DFG + 100mm DFG, High Albedo)
+  )
+  ,data.table( # High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA, Low Albedo)
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
-    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.10, NA ,NA), # surface albedo (dimensionless)
+    thickness = c(0.025, 0.275, 1.2), # layer thickness (m)
+    k = c(1.16, 1.08, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2400, 2350, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(964, 960, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.10, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.93, NA, NA), # emissivity (dimensionless)
+    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
+  ,data.table( # High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA, HIgh Albedo)
+    layer = c("surface", "base", "subgrade"),
+    thickness = c(0.025, 0.275, 1.2), # layer thickness (m)
+    k = c(1.16, 1.08, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2400, 2350, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(964, 960, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.25, NA, NA), # surface albedo (dimensionless)
+    emissivity = c(0.85, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
 )
@@ -91,11 +91,12 @@ layer.profiles <- list(
 # define layer profile names corresponding to the validation site location IDs
 # so we can pull weather data from the nearest weather station to match the desired validaiton site
 layer.sites <- c("A8", "C4", "C1", "A9", "A6") 
-names(layer.profiles) <- c("Low Volume HMA #1 (50mm DFG + 100mm DFG)", 
-                           "Low Volume HMA #2 (100mm DFG rebonded 100mm DFG)", 
-                           "Low Volume Porous Asphalt #1 (high air voids, crushed agg base/subgrade)", 
-                           "Low Volume HMA #1 (50mm DFG + 100mm DFG, Low Albedo)", 
-                           "Low Volume HMA #1 (50mm DFG + 100mm DFG, High Albedo)") 
+names(layer.profiles) <- c("High Volume HMA #1 (OGFC 25mm rebonded on 275mm DGHMA)", 
+                           "High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA)", 
+                           "High Volume HMA #3 (OGFC 25mm rebonded on 275mm DGHMA)", 
+                           "High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA, Low Albedo)", 
+                           "High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA, HIgh Albedo)") 
+
 
 # load validation site data 
 valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates

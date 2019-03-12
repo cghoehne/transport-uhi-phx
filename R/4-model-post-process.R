@@ -42,22 +42,16 @@ model.runs <- readRDS(paste0(out.folder,"/model_runs_metadata.rds")) # 20190121/
 layer.profiles <- readRDS(paste0(out.folder,"/layer_profiles.rds"))
 
 # load validation site data 
-valid.dates <- readRDS(here("data/best-aster-dates.rds")) # remote sensed temps at valiation sites on specified dates
-my.sites <- readRDS(here("data/validation_sites.rds")) # other validation sites info 
+valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
+my.sites <- readRDS(paste0(out.folder,"/validation_sites.rds")) # other validation sites info 
 
-# load weather data
-my.years <- unique(valid.dates[, year(date.time)]) # store all unique years to reterive weather data for those years
-weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS)) # bind all weather data for the selected years
-weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs w/o NA of desired vars
-weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero to prevent errors
+# load previoulsy filtered weather data
+weather.raw <- readRDS(paste0(out.folder,"/weather_data.rds"))
 
-# trim weather data to only the dates that we will be using weather data from (defined by model.runs$end.day and model.runs$n.days
-my.dates <- unique(do.call("c", mapply(function(x,y) seq(date(x) - days(y - 1), by = "day", length.out = y), model.runs$end.day, model.runs$n.days, SIMPLIFY = F)))
-weather.raw <- weather.raw[date(date.time) %in% my.dates,]
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
-should.plot <- "no" # "yes" or "no"
+should.plot <- "yes" # "yes" or "no"
 
 for(run in 1:max(model.runs$run.n)){
   tryCatch({  # catch and print errors, avoids stopping model run 
@@ -66,11 +60,9 @@ for(run in 1:max(model.runs$run.n)){
   pave.time <- readRDS(paste0(out.folder,"/run_",run,"_output.rds"))
   
   # trim weather data to number of days specified
-  my.date <- date(model.runs$end.day[run])
-  my.station <- model.runs$station.name[run]
-  weather <- weather.raw[date.time >= (my.date - days(model.runs$n.days[run])) & # date.time ends on day of end.day 
-                           date(date.time) <= my.date & # ends n days later
-                           station.name == my.station] # at station nearest specified validation site
+  my.dates <- seq.Date(date(model.runs$end.day[run]) - days(model.runs$n.days[run]) + 1, date(model.runs$end.day[run]), "day")
+  my.station <- unique(my.sites[Location == model.runs$valid.site[run], station.name])
+  weather <- weather.raw[date(date.time) %in% my.dates & station.name == my.station,]
   
   # record avg max temp and final day max temp at surface
   n.days <- model.runs$n.days[run]
@@ -95,7 +87,7 @@ for(run in 1:max(model.runs$run.n)){
   # create empty data.table during 1st run to store relevant vars retrieved at nearest timestamp for comparing to validation
   if(run == 1){valids <- pave.time[0, .(node, solar, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)][, run.n := NA]} 
   
-  for(i in 1:valid.dates[,.N]){
+  for(i in 1:length(unique(valid.dates[, date(date.time)]))){ # length of unique validation dates
     my.date.time <- valid.dates$date.time[i] # identify date to match
     valid.i <- pave.time[which(abs(difftime(pave.time[,date.time], my.date.time)) == # find closest time in modeled temps
                                    min(abs(difftime(pave.time[,date.time], my.date.time))))]
@@ -108,7 +100,8 @@ for(run in 1:max(model.runs$run.n)){
     valid.i[, run.n := run] # add run number
     valid.i[, layer.profile := model.runs$layer.profile[run]]
     valid.i[, valid.site := model.runs$valid.site[run]]
-    valid.i[, T.degC.sat := valid.dates[date.time == my.date.time, .SD, .SDcols = unique(valid.i[, valid.site])]]
+    #valid.i[, T.degC.sat := valid.dates[date.time == my.date.time, .SD, .SDcols = unique(valid.i[, valid.site])]]
+    valid.i[, T.degC.sat := valid.dates[date.time == my.date.time & site == model.runs$valid.site[run], LST]]
     valids <- rbind(valids,valid.i[node == 0,], fill = T) # keep surface node only for surface temps
     }
 

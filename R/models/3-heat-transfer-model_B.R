@@ -36,66 +36,36 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
-  data.table( # Low Volume HMA #1 (50mm DFG + 100mm DFG)
+  data.table( # Bare Dry Soil #1
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
-    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.20, NA ,NA), # surface albedo (dimensionless)
-    emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+    thickness = c(1.5), # layer thickness (m)
+    k = c(1.0), # layer thermal conductivity (W/(m*degK))  
+    rho = c(1500), # layer density (kg/m3)
+    c = c(1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.40), # surface albedo (dimensionless)
+    emissivity = c(0.92, NA, NA), # emissivity (dimensionless)
+    R.c.top = c(0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  ,data.table( # Low Volume HMA #2 (100mm DFG rebonded 100mm DFG)
-    layer = c("surface", "intermediate", "base", "subgrade"),
-    thickness = c(0.1, 0.1, 1.3), # layer thickness (m)
-    k = c(1.8, 1.8, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2550, 2500, 2450, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(900, 925, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.20, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  )
-  ,data.table( # Low Volume Porous Asphalt #1 (high air voids, crushed agg base/subgrade)
-    layer = c("surface", "intermediate", "base", "subgrade"),
-    thickness = c(0.075, 0.03, 1.395), # layer thickness (m)
-    k = c(0.82, 1.5, 1.46), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(1906, 1430, 1600), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(946, 840, 880), # layer specific heat (J/(kg*degK)
-    albedo = c(0.2, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.9, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  ),
-  data.table( # Low Volume HMA #1 (50mm DFG + 100mm DFG, Low Albedo)
+  ,data.table( # Bare Dry Soil #2
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
-    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.25, NA ,NA), # surface albedo (dimensionless)
-    emissivity = c(0.85, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  ),
-  data.table( # Low Volume HMA #1 (50mm DFG + 100mm DFG, High Albedo)
-    layer = c("surface", "base", "subgrade"),
-    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
-    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.10, NA ,NA), # surface albedo (dimensionless)
-    emissivity = c(0.93, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+    thickness = c(0.5, 1.0), # layer thickness (m)
+    k = c(1.0, 1.1), # layer thermal conductivity (W/(m*degK))  
+    rho = c(1500, 1600), # layer density (kg/m3)
+    c = c(1500, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.45, NA), # surface albedo (dimensionless)
+    emissivity = c(0.95, NA), # emissivity (dimensionless)
+    R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
+  
 )
 
 # define layer profile names corresponding to the validation site location IDs
-# so we can pull weather data from the nearest weather station to match the desired validaiton site
-layer.sites <- c("A8", "C4", "C1", "A9", "A6") 
-names(layer.profiles) <- c("Low Volume HMA #1 (50mm DFG + 100mm DFG)", 
-                           "Low Volume HMA #2 (100mm DFG rebonded 100mm DFG)", 
-                           "Low Volume Porous Asphalt #1 (high air voids, crushed agg base/subgrade)", 
-                           "Low Volume HMA #1 (50mm DFG + 100mm DFG, Low Albedo)", 
-                           "Low Volume HMA #1 (50mm DFG + 100mm DFG, High Albedo)") 
+# this will pull weather data from the nearest weather site with data to the validaiton site specfied
+layer.sites <- c("B1", "B2") 
+names(layer.profiles) <- c("Bare Dry Soil #1", 
+                           "Bare Dry Soil #2") 
+
+
 
 # load validation site data 
 valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
