@@ -153,15 +153,15 @@ all.site.data <- merge(meta.data, st.by.site, by = "id", all = T)
 all.site.data[, idx := .I] # id for row number
 
 # identify ideal scenes to plot
-#my.idx <- c(877,77,1102) # manually chosen
-my.idx <- c(864, 877, 780, 736, 776, 548, 1102, 979, 179, 1163, 1084, 1040, 1093, 1177, 147)
-# summer night 864, 877, 780
-# summer day 736, 776, 548
+my.idx <- c(214, 472, 679, 448, 672, 877, 780, 776, 736, 1102, 979, 179, 1163, 1084, 1040, 1093, 1177, 147)
+# c(214, 472, 679, 448, 672, 736, 864, 877, 780, 776, 548, 1102, 979, 179, 1163, 1084, 1040, 1093, 1177, 147) # ALL
+# summer night 672, 877, 780, 448   DROPPED: 864
+# summer day 736, 776, 679, 472     DROPPED: 548, 
 # winter night 1102, 979, 179, 1163, 1084
-# winter day 1040, 1093, 1177, 147
+# winter day 1040, 1093, 1177, 147, 214 
 
-my.site.data <- melt(all.site.data[idx %in% my.idx, .SD, .SDcols = c("id", "date.time", site.names)], 
-                 id.vars = c("id", "date.time"), variable.name = "site", value.name = "LST")
+my.site.data <- melt(all.site.data[idx %in% my.idx, .SD, .SDcols = c("id", "idx", "date.time", site.names)], 
+                 id.vars = c("id", "idx", "date.time"), variable.name = "site", value.name = "LST")
 my.site.data[LST <= 0, LST := NA] # force negative and zero values to NA
 
 # load windows fonts and store as string
@@ -182,6 +182,8 @@ dir.create(here("data/aster"), showWarnings = FALSE) # creates output folder if 
 saveRDS(all.site.data, here("data/aster/all-aster-data.rds"))
 saveRDS(my.site.data, here("data/aster/my-aster-data.rds"))
 
+#all.site.data <- readRDS(here("data/aster/all-aster-data.rds"))
+#my.site.data <- readRDS(here("data/aster/my-aster-data.rds"))
 
 # loop through relevant raster scenes and create surface temperature plots
 for(s in my.idx){ #length(st.tile.stack)
