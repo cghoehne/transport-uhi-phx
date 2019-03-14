@@ -32,29 +32,39 @@ windowsFonts(Century=windowsFont("TT Century Gothic"))
 windowsFonts(Times=windowsFont("TT Times New Roman"))
 my.font <- "Century"
 
-# IMPORT DATA
+# create RMSE function
+RMSE = function(m, o){
+  sqrt(mean((m - o)^2))
+}
+
+# IMPORT MODEL DATA
 
 # first get latest updated output folder to pull model run data from most recent run (can change)
-out.folder <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), recursive = F)), keep.rownames = T)[ctime == max(ctime), rn] # last changed
-out.folder <- paste0(here("data/outputs/1D-heat-model-runs"), "/20190310_232713_model_outputs")
+#out.folder <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), recursive = F)), keep.rownames = T)[ctime == max(ctime), rn] # last changed
+out.folder <- paste0(here("data/outputs/1D-heat-model-runs"), "/20190311_171304_model_outputs") 
+
+#20190311_171312_model_outputs
 
 # load model simulation metadata
-model.runs <- readRDS(paste0(out.folder,"/model_runs_metadata.rds")) # 20190121/20190121_
+model.runs <- readRDS(paste0(out.folder,"/model_runs_metadata.rds"))
 layer.profiles <- readRDS(paste0(out.folder,"/layer_profiles.rds"))
 
 # load validation site data 
 valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
 my.sites <- readRDS(paste0(out.folder,"/validation_sites.rds")) # other validation sites info 
 
-# load previoulsy filtered weather data
-weather.raw <- readRDS(paste0(out.folder,"/weather_data.rds"))
+# add station.name to model summary
+model.runs <- merge(model.runs, unique(my.sites[,.(station.name,Location)]), by.x = "valid.site", by.y = "Location", all.x = T)
 
+# create plots?
+should.plot <- "yes" # "yes" or "no"
+
+# create output directory for plots
+dir.create(paste0(out.folder,"/figures"), showWarnings = FALSE) # creates output figure folder if it doesn't already exist
 
 # loop through loading simulated pavement temperature data for run 
 # and summaring/ploting as necessary
-should.plot <- "no" # "yes" or "no"
-
-for(run in 1:max(model.runs$run.n)){
+for(run in 1:max(model.runs[, .N])){
   tryCatch({  # catch and print errors, avoids stopping model run 
   
   # skip if run didn't complete, otherwise continue
@@ -63,52 +73,34 @@ for(run in 1:max(model.runs$run.n)){
   # read simulation data
   pave.time <- readRDS(paste0(out.folder,"/run_",run,"_output.rds"))
   
-  # trim weather data to number of days specified
-  my.dates <- seq.Date(date(model.runs$end.day[run]) - days(model.runs$n.days[run]) + 1, date(model.runs$end.day[run]), "day")
-  my.station <- unique(my.sites[Location == model.runs$valid.site[run], station.name])
-  weather <- weather.raw[date(date.time) %in% my.dates & station.name == my.station,]
-  
   # record avg max temp and final day max temp at surface
-  n.days <- model.runs$n.days[run]
+  n.days <- model.runs[run.n == run, n.days]
 
-  model.runs[run.n == run, T.degC_Avg_Day_Max_0m := pave.time[node == 0, max(T.degC, na.rm = T), by = as.Date(date.time)][, mean(V1, na.rm = T)]]
-  model.runs[run.n == run, T.degC_Fnl_Day_Max_0m := pave.time[node == 0, max(T.degC, na.rm = T), by = as.Date(date.time)][.N - 1, V1]]
-  
-  # record Range and IQR for key depths
-  model.runs[run.n == run, T.degC_Range_L1 := max(pave.time[layer == "surface", T.degC], na.rm = T) - min(pave.time[, T.degC], na.rm = T)]
-  model.runs[run.n == run, T.degC_IQR_L1 := IQR(pave.time[layer == "surface", T.degC], na.rm = T)]
-  #model.runs[run.n == run, T.degC_Range_L2 := max(pave.time[layer == "base", T.degC], na.rm = T) - min(pave.time[, T.degC], na.rm = T)]
-  #model.runs[run.n == run, T.degC_IQR_L2 := IQR(pave.time[layer == "base", T.degC], na.rm = T)]
-  #model.runs[run.n == run, T.degC_Range_L3 := max(pave.time[layer == "subgrade", T.degC], na.rm = T) - min(pave.time[, T.degC], na.rm = T)]
-  #model.runs[run.n == run, T.degC_IQR_L3 := IQR(pave.time[layer == "subgrade", T.degC], na.rm = T)]
-  
   # minute and second variable to filter for weather obs
   pave.time[, mins := minute(date.time)][, secs := second(date.time)] 
   
-  # air temp in deg c
+  # add air temp in deg c to modeled data
   pave.time[, air.temp.c := T.inf - 273.15]
   
-  # create empty data.table to store relevant vars retrieved at nearest timestamp for comparing to validation
-  if(exists("valids", .GlobalEnv) == F){valids <- pave.time[0, .(node, solar, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)][, run.n := NA]} 
+  # obtain date.time from validation to match pavement time to
+  obs.valid <- valid.dates[site == model.runs[run.n == run, valid.site] & date(date.time) == model.runs[run.n == run, end.day], ]
   
-  for(i in 1:length(unique(valid.dates[, date(date.time)]))){ # length of unique validation dates
-    my.date.time <- valid.dates$date.time[i] # identify date to match
-    valid.i <- pave.time[which(abs(difftime(pave.time[,date.time], my.date.time)) == # find closest time in modeled temps
-                                   min(abs(difftime(pave.time[,date.time], my.date.time))))]
-    
-    # if the nearest date isn't within 24 hrs we can skip to the next step because we don't want matches that aren't from the same day
-    if(abs(difftime(unique(valid.i$date.time), my.date.time, units = "hours")) > 24){next} 
-    
-    # otherwise filter to relevant variables and bind to previous data
-    valid.i <- valid.i[, .(node, solar, date.time, h.flux.up, h.flux.dn, T.degC, air.temp.c)] 
-    valid.i[, run.n := run] # add run number
-    valid.i[, layer.profile := model.runs$layer.profile[run]]
-    valid.i[, valid.site := model.runs$valid.site[run]]
-    #valid.i[, T.degC.sat := valid.dates[date.time == my.date.time, .SD, .SDcols = unique(valid.i[, valid.site])]]
-    valid.i[, T.degC.sat := valid.dates[date.time == my.date.time & site == model.runs$valid.site[run], LST]]
-    valids <- rbind(valids,valid.i[node == 0,], fill = T) # keep surface node only for surface temps
-    }
+  
+  # retrieve modeled pavement data for relevant variables at nearest time
+  model.valid <- pave.time[which(abs(difftime(pave.time[,date.time], obs.valid[, date.time])) == 
+                               min(abs(difftime(pave.time[,date.time], obs.valid[, date.time])))), ]
+  
+  # store info in model run metadata
+  model.runs[run.n == run, date.time.obs := obs.valid[, date.time]]
+  model.runs[run.n == run, date.time.mod := model.valid[node == 0, date.time]]
+  model.runs[run.n == run, dif.sec := abs(difftime(date.time.obs, date.time.mod, units = "sec"))]
+  model.runs[run.n == run, Modeled := model.valid[node == 0, T.degC]]
+  model.runs[run.n == run, Observed := obs.valid[, LST]]
+  model.runs[run.n == run, error := abs(Modeled - Observed)]
+  model.runs[run.n == run, p.err := error / Observed]
+  model.runs[run.n == run, air.temp.c := model.valid[node == 0, air.temp.c]]
 
+  # begin plotting if desired
   if(should.plot == "yes"){
     
     # SURFACE TEMPS PLOT
@@ -118,9 +110,8 @@ for(run in 1:max(model.runs$run.n)){
     max.x <- ceiling_date(max(p1.data[!is.na(T.degC), date.time]), unit = "hours")
     min.y <- 0 # solar rad is always 0 at night
     max.y <- round(max(p1.data[, solar/10], na.rm = T), - 1) + 5
-    #max.y <- round(signif(max(p1.data[, solar / 10]) + (0.1 * diff(range(p1.data[, T.degC]))),4), -1)
     surf.col <- c("Modeled Pavement \nSurface Temperature" = "#0D1B1E", "Observed Air Temperature" = "#10316B", "Observed Solar Radiation" = "#BF1C3D")
-    surf.shp <- c("Modeled Pavement \nSurface Temperature" = 32, "Observed Air Temperature" = 4, "Observed Solar Radiation" = 2)
+    surf.shp <- c("Modeled Pavement \nSurface Temperature" = 0, "Observed Air Temperature" = 4, "Observed Solar Radiation" = 2)
     surf.siz <- c("Modeled Pavement \nSurface Temperature" = 1.25, "Observed Air Temperature" = 0.75, "Observed Solar Radiation" = 0.75)
     
     p.surf <- (ggplot(data = p1.data) 
@@ -169,9 +160,9 @@ for(run in 1:max(model.runs$run.n)){
                    legend.background = element_blank())
            )
 
-    p.surf <- arrangeGrob(p.surf, bottom = textGrob(paste0("Pavement type: ", model.runs$pave.name[run]), gp = gpar(fontfamily = my.font))) # at pave name
-    dir.create(paste0(out.folder,"/figures/"), showWarnings = FALSE) # creates output figure folder if it doesn't already exist
-    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-surface-temp.png"), p.surf, # save plot
+    p.surf <- arrangeGrob(p.surf, bottom = textGrob(paste0("Pavement Type: ", model.runs[run.n == run, pave.name]), gp = gpar(fontfamily = my.font, fontsize = 11))) # add pave name
+    p.surf <- arrangeGrob(p.surf, bottom = textGrob(paste0("Weather Station: ", model.runs[run.n == run, station.name]), gp = gpar(fontfamily = my.font, fontsize = 11))) # add station name
+    ggsave(paste0("run_", run, "_1D-modeled-surface-temp.png"), p.surf, # save plot
            device = "png", path = paste0(out.folder,"/figures/"), scale = 1, width = 8, height = 5, dpi = 300, units = "in") 
     
     # DEPTH TEMPS PLOT
@@ -192,9 +183,6 @@ for(run in 1:max(model.runs$run.n)){
     names(depth.shp) <- depth.names
     names(depth.siz) <- depth.names
     p1.data[, names := factor(paste(signif(depth.m, 2) * 1000, "mm"), levels = depth.names)]
-    #p1.data[stack(depth.col), on = .(names = ind), depth.col := as.character(i.values)]
-    #p1.data[stack(depth.shp), on = .(names = ind), depth.shp := as.integer(i.values)]
-    #p1.data[stack(depth.siz), on = .(names = ind), depth.siz := as.integer(i.values)]
     
     p.depth <- (ggplot(data = p1.data) 
                
@@ -207,7 +195,6 @@ for(run in 1:max(model.runs$run.n)){
                + geom_point(aes(y = T.degC, x = date.time, color = names, shape = names), data = p1.data[mins %in% c(0,30) & secs == 0,])
 
                # plot/axis titles & second axis for solar rad units
-               #+ ggtitle("Modeled Surface Pavement Temperature")
                + labs(x = "Time of Day", y = "Temperature (deg C)")
                + scale_color_manual(name = "Pavement Depth", values = depth.col)
                + scale_shape_manual(name = "Pavement Depth", values = depth.shp)
@@ -227,13 +214,14 @@ for(run in 1:max(model.runs$run.n)){
                        axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
                        axis.ticks.x = element_line(color = "black", size = 0.25),
                        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
-                       legend.position = c(0.45, -0.5), 
+                       legend.position = c(0.45, -0.55), 
                        legend.direction ="horizontal",
                        legend.background = element_blank())
-    )
+      )
     
-    p.depth <- arrangeGrob(p.depth, bottom = textGrob(paste0("Pavement type: ", model.runs$pave.name[run]), gp = gpar(fontfamily = my.font))) # add pave name
-    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-depth-temps.png"), p.depth, # save plot
+    p.depth <- arrangeGrob(p.depth, bottom = textGrob(paste0("Pavement Type: ", model.runs[run.n == run, pave.name]), gp = gpar(fontfamily = my.font, fontsize = 11))) # add pave name
+    p.depth <- arrangeGrob(p.depth, bottom = textGrob(paste0("Weather Station: ", model.runs[run.n == run, station.name]), gp = gpar(fontfamily = my.font, fontsize = 11))) # add station name
+    ggsave(paste0("run_", run,"_1D-modeled-depth-temps.png"), p.depth, # save plot
            device = "png", path = paste0(out.folder,"/figures/"), scale = 1, width = 8, height = 5, dpi = 300, units = "in") 
     
     
@@ -260,22 +248,9 @@ for(run in 1:max(model.runs$run.n)){
     layers <- nrow(layer.profiles[[model.runs$layer.profile[run]]])
 
     # legend formating for different line type/color/size
-    #area.names <- factor(c("Min Temperature", "Median Temperature", "Max Temperature"), ordered = T)
-    #area.names <- c("Max Temperature", "Median Temperature", "Min Temperature")
     area.col <- c("Max Temperature" = "#BF1C3D", "Median Temperature" = "#0D1B1E", "Min Temperature" = "#10316B")
     area.typ <- c("Max Temperature" = "dotdash", "Median Temperature" = "solid", "Min Temperature" = "longdash")
     area.siz <- c("Max Temperature" = 1, "Median Temperature" = 1, "Min Temperature" = 1)
-    #area.shp <- c(0:3)
-    
-    # create different legend charateristics for plotting
-    #area.names <- c("Max Temperature", "Median Temperature", "Min Temperature")
-    #area.col <- c("#67000D", "#D42020", "#FC7050")
-    #area.shp <- c(0:2)
-    #area.siz <- c(0.6, 0.6, 0.6)
-    #names(area.col) <- area.names
-    #names(area.shp) <- area.names
-    #names(area.siz) <- area.names
-    #pave.time[, names := ???, levels = area.names)]
     
     p.area <- (ggplot(data = pave.time.agg[depth.m < max.x])
                + geom_ribbon(aes(ymin = T.degC.25, ymax = T.degC.75, x = depth.m, fill = "IQR"))
@@ -315,8 +290,9 @@ for(run in 1:max(model.runs$run.n)){
                                           x = an.x, y = 0.88 * max.y, family = my.font, angle = 0)
     }
     
-    p.area <- arrangeGrob(p.area, bottom = textGrob(paste0("Pavement type: ", model.runs$pave.name[run]), gp = gpar(fontfamily = my.font))) # add pave name
-    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-pave-temp-box_0-0.3m.png"), p.area,  # save plot
+    p.area <- arrangeGrob(p.area, bottom = textGrob(paste0("Pavement Type: ", model.runs[run.n == run, pave.name]), gp = gpar(fontfamily = my.font, fontsize = 11))) # add pave name
+    p.area <- arrangeGrob(p.area, bottom = textGrob(paste0("Weather Station: ", model.runs[run.n == run, station.name]), gp = gpar(fontfamily = my.font, fontsize = 11))) # add station name
+    ggsave(paste0("run_", run, "_1D-modeled-pave-temp-box_0-0.3m.png"), p.area,  # save plot
            device = "png", path = paste0(out.folder,"/figures/"), scale = 1, width = 8, height = 5, dpi = 300, units = "in") 
     
     
@@ -341,9 +317,6 @@ for(run in 1:max(model.runs$run.n)){
     names(flux.col) <- flux.names
     names(flux.shp) <- flux.names
     p1.data[, names := factor(variable, labels = flux.names, levels = c("inc.sol", "ref.sol", "q.cnv", "q.rad"))]
-    #p1.data[stack(depth.col), on = .(names = ind), depth.col := as.character(i.values)]
-    #p1.data[stack(depth.shp), on = .(names = ind), depth.shp := as.integer(i.values)]
-    #p1.data[stack(depth.siz), on = .(names = ind), depth.siz := as.integer(i.values)]
     
     p.flux <- (ggplot(data = p1.data) 
                 
@@ -380,8 +353,9 @@ for(run in 1:max(model.runs$run.n)){
                         legend.background = element_blank())
     )
     
-    p.flux <- arrangeGrob(p.flux, bottom = textGrob(paste0("Pavement type: ", model.runs$pave.name[run]), gp = gpar(fontfamily = my.font))) # add pave name
-    ggsave(paste0("run_",model.runs$run.n[run],"_1D-modeled-flux-temps.png"), p.flux, # save plot
+    p.flux <- arrangeGrob(p.flux, bottom = textGrob(paste0("Pavement Type: ", model.runs[run.n == run, pave.name]), gp = gpar(fontfamily = my.font, fontsize = 11))) # add pave name
+    p.flux <- arrangeGrob(p.flux, bottom = textGrob(paste0("Weather Station: ", model.runs[run.n == run, station.name]), gp = gpar(fontfamily = my.font, fontsize = 11))) # add station name
+    ggsave(paste0("run_", run,"_1D-modeled-flux-temps.png"), p.flux, # save plot
            device = "png", path = paste0(out.folder,"/figures/"), scale = 1, width = 8, height = 8, dpi = 300, units = "in") 
     
     
@@ -389,46 +363,67 @@ for(run in 1:max(model.runs$run.n)){
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
 
+# add winter/summer night/day ids to model.meta data
+# define function to assign season
+getSeason <- function(DATES) {
+  WS <- as.Date("2012-12-15", format = "%Y-%m-%d") # Winter Solstice
+  SE <- as.Date("2012-3-15",  format = "%Y-%m-%d") # Spring Equinox
+  SS <- as.Date("2012-6-15",  format = "%Y-%m-%d") # Summer Solstice
+  FE <- as.Date("2012-9-15",  format = "%Y-%m-%d") # Fall Equinox
+  
+  # Convert dates from any year to 2012 dates (b/c leap yr)
+  d <- as.Date(strftime(DATES, format="2012-%m-%d"))
+  
+  ifelse (d >= WS | d < SE, "Winter",
+          ifelse (d >= SE & d < SS, "Spring",
+                  ifelse (d >= SS & d < FE, "Summer", "Fall")))
+}
+
+model.runs[, season := factor(getSeason(date.time.mod), levels = c("Winter","Spring","Summer","Fall"))]
+model.runs[, daytime := factor(ifelse(hour(date.time.mod) %in% c(7:18), "Day", "Night"), levels = c("Day","Night"))]
+model.runs[, day.sea := factor(paste(season, daytime), levels = c("Winter Day","Spring Day","Summer Day","Fall Day",
+                                                                   "Winter Night","Spring Night","Summer Night","Fall Night"))]
+
+# write out data
 write.csv(model.runs, paste0(out.folder,"/model_runs_metadata_stats.csv"), row.names = F) # output model run metadata
-write.csv(valids, paste0(out.folder,"/validation.csv"), row.names = F)
 
 ###################
 # create predicted vs modeled plots
-setnames(valids, "T.degC", "Modeled")
-setnames(valids, "T.degC.sat", "Observed")
-#valids.long <- melt(valids[,.(date.time, Modeled, Observed)], id.vars = c("date.time"), value.name = "temp")
 
 min.x <- 0  # round(min(valids[,.(T.degC, T.degC.sat)] - 5), - 1)  
-max.x <- round(max(valids[,.(Modeled,Observed)] + 5), - 1)  #valids.long[, temp]
+max.x <- round(max(model.runs[,.(Modeled,Observed)], na.rm = T) + 5, - 1)  #valids.long[, temp]
 min.y <- min.x
 max.y <- max.x
 
 # create different legend charateristics for plotting
-shapes <- c(0:1)
-names(shapes) <- c("Modeled", "Observed")
-#valids.long[, variable := factor(variable, levels = names(shapes))]
+m.o.names <- levels(model.runs[, day.sea])
+m.o.shp <- c(rep(16, 4),rep(18, 4))
+m.o.col <- c("#0062DB", "#1E964E", "#CC0E2A", "#602E00", "#0062DB", "#1E964E", "#CC0E2A", "#602E00")
+names(m.o.shp) <- m.o.names
+names(m.o.col) <- m.o.names
 
-# RMSE function
-RMSE = function(m, o){
-  sqrt(mean((m - o)^2))
-}
+#p.name <- "Low Volume Asphalt Pavements" 
+p.name <- "High Volume Asphalt Pavements" 
+#p.name <- "Concrete and Composite Concrete-Asphalt Pavements" 
+#p.name <- "Bare Ground / Soil" 
 
-p.name <- "Various Pavements" #model.runs$pave.name[2]
-p.mod_obs <- (ggplot(data = valids) 
+p.mod_obs <- (ggplot(data = model.runs[!is.na(p.err)]) 
             
             # custom border
             + geom_segment(aes(x = min.x, y = min.y, xend = max.x, yend = min.y))   # x border (x,y) (xend,yend)
             + geom_segment(aes(x = min.x, y = min.y, xend = min.x, yend = max.y))  # y border (x,y) (xend,yend)
             
             # points for modeled vs observed + ref line
-            + geom_point(aes(y = Modeled, x = Observed))#, shape = shapes))
+            + geom_point(aes(y = Modeled, x = Observed, color = day.sea, shape = day.sea), size = 2)
             + geom_abline(intercept = 0, slope = 1)
             
             # plot/axis titles & second axis for solar rad units
             + labs(x = "Observed Surface Temperature (deg C)", y = "Modeled Surface Temperature (deg C)")
-            + annotate("text", label = paste("RMSE =", signif(RMSE(valids[,Modeled], valids[,Observed]), 3)), x = max.x * 0.85, y = 5, family = my.font)
-            #+ scale_color_manual(name = "Pavement Depth", values = depth.col)
-            #+ scale_shape_manual(name = "", values = shapes)
+            + annotate("text", label = paste("RMSE =", signif(RMSE(model.runs[!is.na(Observed), Modeled], 
+                                                                   model.runs[!is.na(Observed), Observed])
+                                                              , 3)), x = max.x * 0.85, y = 5, family = my.font)
+            + scale_color_manual(name = "Season & Time of Day", values = m.o.col)
+            + scale_shape_manual(name = "Season & Time of Day", values = m.o.shp)
             
             # scales
             + scale_x_continuous(expand = c(0,0), limits = c(min.x,max.x), breaks = seq(min.x,max.x,5))
@@ -440,18 +435,22 @@ p.mod_obs <- (ggplot(data = valids)
                     axis.text = element_text(colour = "black"),
                     plot.margin = margin(t = 10, r = 10, b = 15, l = 10, unit = "pt"),
                     plot.title = element_text(hjust = 0.75),
-                    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+                    axis.text.x = element_text(vjust = 1, hjust = 1),
                     axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
                     axis.ticks.x = element_line(color = "black", size = 0.25),
                     axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
-                    legend.position = c(0.45, -0.5), 
-                    legend.direction ="horizontal",
+                    legend.position = c(0.85, 0.35), 
+                    #legend.direction ="horizontal",
                     legend.background = element_blank())
 )
 p.mod_obs
 
 p.mod_obs <- arrangeGrob(p.mod_obs, bottom = textGrob(paste0("Material Type: ", p.name), gp = gpar(fontfamily = my.font))) # add pave name
 ggsave("estiamte.png", p.mod_obs, # save plot
-       device = "png", path = paste0(out.folder,"/figures/"), scale = 1, width = 6, height = 5, dpi = 300, units = "in") 
+       device = "png", path = paste0(out.folder,"/figures"), scale = 1, width = 6, height = 5, dpi = 300, units = "in") 
 
-
+# check rankings of RMSE to see under what circumstances temps were most accurate
+model.runs[!is.na(p.err), RMSE(Modeled, Observed), by = c("end.day")][order(V1)]
+model.runs[!is.na(p.err), RMSE(Modeled, Observed), by = c("valid.site")][order(V1)]
+model.runs[!is.na(p.err), RMSE(Modeled, Observed), by = c("layer.profile")][order(V1)]
+model.runs[!is.na(p.err), RMSE(Modeled, Observed), by = c("station.name")][order(V1)]
