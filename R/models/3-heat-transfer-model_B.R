@@ -194,7 +194,7 @@ my.errors <- NULL
 run.log <- file(paste0(out.folder,"run_log.txt"), open = "a")
 
 # BEGIN MODEL LOGIC
-for(run in 35:model.runs[,.N]){  #
+for(run in 1:model.runs[,.N]){  #
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
@@ -211,7 +211,7 @@ for(run in 35:model.runs[,.N]){  #
     t.start <- Sys.time() # start model run timestamp
     
     # trim weather data to number of days specified
-    my.dates <- seq.Date(date(model.runs$end.day[run]) - days(model.runs$n.days[run]) + 1, date(model.runs$end.day[run]), "day")
+    my.dates <- seq.Date(date(model.runs$end.day[run]) - days(model.runs$n.days[run]), date(model.runs$end.day[run]), "day")
     my.station <- unique(my.sites[Location == model.runs$valid.site[run], station.name])
     weather <- weather.raw[date(date.time) %in% my.dates & station.name == my.station,]
     
@@ -372,6 +372,9 @@ for(run in 35:model.runs[,.N]){  #
     
     # get rid of extra node at bottom
     pave.time <- pave.time[node != max(node)]
+    
+    # trim to exactly date length
+    pave.time <- pave.time[date.time >= min(my.dates) & date.time <= max(my.dates),]
     
     # MODEL HEAT TRANSFER OF PAVEMENT
     
