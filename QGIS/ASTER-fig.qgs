@@ -1,0 +1,1999 @@
+<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<qgis version="3.0.0-Girona" projectname="">
+  <title></title>
+  <autotransaction active="0"/>
+  <evaluateDefaultValues active="0"/>
+  <trust active="0"/>
+  <projectCrs>
+    <spatialrefsys>
+      <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+      <srsid>3096</srsid>
+      <srid>32612</srid>
+      <authid>EPSG:32612</authid>
+      <description>WGS 84 / UTM zone 12N</description>
+      <projectionacronym>utm</projectionacronym>
+      <ellipsoidacronym>WGS84</ellipsoidacronym>
+      <geographicflag>false</geographicflag>
+    </spatialrefsys>
+  </projectCrs>
+  <layer-tree-group>
+    <customproperties/>
+    <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Checked" id="AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009" source="../data/aster/best/AST_08_00302202014053514_20190206145248_987.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00302202014053514_20190206145248_987.SurfaceKineticTemperature.KineticTemperature">
+      <customproperties>
+        <property key="expandedLegendNodes"/>
+      </customproperties>
+    </layer-tree-layer>
+    <layer-tree-group expanded="0" checked="Qt::Checked" name="group1">
+      <customproperties/>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00302092012181501_20190206151456_365_SurfaceKineticTemperature_KineticTemperature_44bf9be5_de6f_4b78_82d6_8866ca41223c" source="../data/aster/best/AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00302272007181537_20190206152607_55367_SurfaceKineticTemperature_KineticTemperature_3dc46cc5_51a3_4b88_9c1f_f1fa86e90e90" source="../data/aster/best/AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00304242008053511_20190206152006_14803_SurfaceKineticTemperature_KineticTemperature_ba6e8f8e_641c_4a48_8f1d_cb5595ab9815" source="../data/aster/best/AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00305022007181522_20190206152927_62663_SurfaceKineticTemperature_KineticTemperature_0735a3b9_710a_46a8_add4_42248901c4ef" source="../data/aster/best/AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00306232018053637_20190206145854_16886_SurfaceKineticTemperature_KineticTemperature_56b6347d_c9f2_4c14_9ef2_732419a351a6" source="../data/aster/best/AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00306262007182124_20190206151732_23638_SurfaceKineticTemperature_KineticTemperature_c94c0773_53a7_4e42_b56a_50987bbabdc2" source="../data/aster/best/AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00307132016181615_20190206151142_4991_SurfaceKineticTemperature_KineticTemperature_9c0385a5_0f9f_4599_9855_2e31c5f2ba02" source="../data/aster/best/AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00307272015181632_20190206150531_14752_SurfaceKineticTemperature_KineticTemperature_b8e84498_4fdf_421b_aab6_4b159ca53f6a" source="../data/aster/best/AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00307302014053514_20190206144413_29035_SurfaceKineticTemperature_KineticTemperature_3347995a_53db_4c43_9564_82b293e1043a" source="../data/aster/best/AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00308312014053536_20190206150245_25957_SurfaceKineticTemperature_KineticTemperature_139f8bc5_25c3_459b_9620_11a3d394c561" source="../data/aster/best/AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00310022014053533_20190206150105_22212_SurfaceKineticTemperature_KineticTemperature_1072a47d_1dcf_4ab8_91d2_61f054618e19" source="../data/aster/best/AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00310222012181451_20190206150845_15275_SurfaceKineticTemperature_KineticTemperature_5b760108_121d_434e_b77c_1c258b6bbfbb" source="../data/aster/best/AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00310312013053454_20190206151043_15841_SurfaceKineticTemperature_KineticTemperature_dda5d815_7625_4f12_acce_1c1631c80f2f" source="../data/aster/best/AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00311022010181454_20190206150228_29517_SurfaceKineticTemperature_KineticTemperature_790f1425_8be4_4cfc_810d_95fcfe9228f2" source="../data/aster/best/AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00311032014053519_20190206145845_13098_SurfaceKineticTemperature_KineticTemperature_bf436003_dabf_4ef2_b589_76c0b28cac81" source="../data/aster/best/AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00311162013053459_20190206150129_27725_SurfaceKineticTemperature_KineticTemperature_b77b86b0_b800_4890_a796_c8f7ca304305" source="../data/aster/best/AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer providerKey="gdal" expanded="0" checked="Qt::Unchecked" id="AST_08_00311192008182137_20190206150452_3848_SurfaceKineticTemperature_KineticTemperature_8fd170d4_2e18_4e26_a946_34b0b2cb7fa5" source="../data/aster/best/AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature">
+        <customproperties>
+          <property key="expandedLegendNodes"/>
+        </customproperties>
+      </layer-tree-layer>
+    </layer-tree-group>
+    <custom-order enabled="0">
+      <item>AST_08_00311192008182137_20190206150452_3848_SurfaceKineticTemperature_KineticTemperature_8fd170d4_2e18_4e26_a946_34b0b2cb7fa5</item>
+      <item>AST_08_00311162013053459_20190206150129_27725_SurfaceKineticTemperature_KineticTemperature_b77b86b0_b800_4890_a796_c8f7ca304305</item>
+      <item>AST_08_00311032014053519_20190206145845_13098_SurfaceKineticTemperature_KineticTemperature_bf436003_dabf_4ef2_b589_76c0b28cac81</item>
+      <item>AST_08_00311022010181454_20190206150228_29517_SurfaceKineticTemperature_KineticTemperature_790f1425_8be4_4cfc_810d_95fcfe9228f2</item>
+      <item>AST_08_00310312013053454_20190206151043_15841_SurfaceKineticTemperature_KineticTemperature_dda5d815_7625_4f12_acce_1c1631c80f2f</item>
+      <item>AST_08_00310222012181451_20190206150845_15275_SurfaceKineticTemperature_KineticTemperature_5b760108_121d_434e_b77c_1c258b6bbfbb</item>
+      <item>AST_08_00310022014053533_20190206150105_22212_SurfaceKineticTemperature_KineticTemperature_1072a47d_1dcf_4ab8_91d2_61f054618e19</item>
+      <item>AST_08_00308312014053536_20190206150245_25957_SurfaceKineticTemperature_KineticTemperature_139f8bc5_25c3_459b_9620_11a3d394c561</item>
+      <item>AST_08_00307302014053514_20190206144413_29035_SurfaceKineticTemperature_KineticTemperature_3347995a_53db_4c43_9564_82b293e1043a</item>
+      <item>AST_08_00307272015181632_20190206150531_14752_SurfaceKineticTemperature_KineticTemperature_b8e84498_4fdf_421b_aab6_4b159ca53f6a</item>
+      <item>AST_08_00307132016181615_20190206151142_4991_SurfaceKineticTemperature_KineticTemperature_9c0385a5_0f9f_4599_9855_2e31c5f2ba02</item>
+      <item>AST_08_00306262007182124_20190206151732_23638_SurfaceKineticTemperature_KineticTemperature_c94c0773_53a7_4e42_b56a_50987bbabdc2</item>
+      <item>AST_08_00306232018053637_20190206145854_16886_SurfaceKineticTemperature_KineticTemperature_56b6347d_c9f2_4c14_9ef2_732419a351a6</item>
+      <item>AST_08_00305022007181522_20190206152927_62663_SurfaceKineticTemperature_KineticTemperature_0735a3b9_710a_46a8_add4_42248901c4ef</item>
+      <item>AST_08_00304242008053511_20190206152006_14803_SurfaceKineticTemperature_KineticTemperature_ba6e8f8e_641c_4a48_8f1d_cb5595ab9815</item>
+      <item>AST_08_00302272007181537_20190206152607_55367_SurfaceKineticTemperature_KineticTemperature_3dc46cc5_51a3_4b88_9c1f_f1fa86e90e90</item>
+      <item>AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009</item>
+      <item>AST_08_00302092012181501_20190206151456_365_SurfaceKineticTemperature_KineticTemperature_44bf9be5_de6f_4b78_82d6_8866ca41223c</item>
+    </custom-order>
+  </layer-tree-group>
+  <snapping-settings intersection-snapping="0" enabled="0" tolerance="12" mode="2" unit="1" type="1">
+    <individual-layer-settings/>
+  </snapping-settings>
+  <relations/>
+  <mapcanvas annotationsVisible="1" name="theMapCanvas">
+    <units>meters</units>
+    <extent>
+      <xmin>318936.65898100426420569</xmin>
+      <ymin>3648877.1880614934489131</ymin>
+      <xmax>501979.47810931329149753</xmax>
+      <ymax>3778301.40360676217824221</ymax>
+    </extent>
+    <rotation>0</rotation>
+    <destinationsrs>
+      <spatialrefsys>
+        <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+        <srsid>3096</srsid>
+        <srid>32612</srid>
+        <authid>EPSG:32612</authid>
+        <description>WGS 84 / UTM zone 12N</description>
+        <projectionacronym>utm</projectionacronym>
+        <ellipsoidacronym>WGS84</ellipsoidacronym>
+        <geographicflag>false</geographicflag>
+      </spatialrefsys>
+    </destinationsrs>
+    <rendermaptile>0</rendermaptile>
+  </mapcanvas>
+  <legend updateDrawingOrder="true">
+    <legendlayer open="false" checked="Qt::Checked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00302202014053514_20190206145248_987.SurfaceKineticTemperature.KineticTemperature">
+      <filegroup open="false" hidden="false">
+        <legendlayerfile isInOverview="0" layerid="AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009" visible="1"/>
+      </filegroup>
+    </legendlayer>
+    <legendgroup open="false" checked="Qt::Checked" name="group1">
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00302092012181501_20190206151456_365_SurfaceKineticTemperature_KineticTemperature_44bf9be5_de6f_4b78_82d6_8866ca41223c" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00302272007181537_20190206152607_55367_SurfaceKineticTemperature_KineticTemperature_3dc46cc5_51a3_4b88_9c1f_f1fa86e90e90" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00304242008053511_20190206152006_14803_SurfaceKineticTemperature_KineticTemperature_ba6e8f8e_641c_4a48_8f1d_cb5595ab9815" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00305022007181522_20190206152927_62663_SurfaceKineticTemperature_KineticTemperature_0735a3b9_710a_46a8_add4_42248901c4ef" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00306232018053637_20190206145854_16886_SurfaceKineticTemperature_KineticTemperature_56b6347d_c9f2_4c14_9ef2_732419a351a6" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00306262007182124_20190206151732_23638_SurfaceKineticTemperature_KineticTemperature_c94c0773_53a7_4e42_b56a_50987bbabdc2" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00307132016181615_20190206151142_4991_SurfaceKineticTemperature_KineticTemperature_9c0385a5_0f9f_4599_9855_2e31c5f2ba02" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00307272015181632_20190206150531_14752_SurfaceKineticTemperature_KineticTemperature_b8e84498_4fdf_421b_aab6_4b159ca53f6a" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00307302014053514_20190206144413_29035_SurfaceKineticTemperature_KineticTemperature_3347995a_53db_4c43_9564_82b293e1043a" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00308312014053536_20190206150245_25957_SurfaceKineticTemperature_KineticTemperature_139f8bc5_25c3_459b_9620_11a3d394c561" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00310022014053533_20190206150105_22212_SurfaceKineticTemperature_KineticTemperature_1072a47d_1dcf_4ab8_91d2_61f054618e19" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00310222012181451_20190206150845_15275_SurfaceKineticTemperature_KineticTemperature_5b760108_121d_434e_b77c_1c258b6bbfbb" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00310312013053454_20190206151043_15841_SurfaceKineticTemperature_KineticTemperature_dda5d815_7625_4f12_acce_1c1631c80f2f" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00311022010181454_20190206150228_29517_SurfaceKineticTemperature_KineticTemperature_790f1425_8be4_4cfc_810d_95fcfe9228f2" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00311032014053519_20190206145845_13098_SurfaceKineticTemperature_KineticTemperature_bf436003_dabf_4ef2_b589_76c0b28cac81" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00311162013053459_20190206150129_27725_SurfaceKineticTemperature_KineticTemperature_b77b86b0_b800_4890_a796_c8f7ca304305" visible="0"/>
+        </filegroup>
+      </legendlayer>
+      <legendlayer open="false" checked="Qt::Unchecked" drawingOrder="-1" showFeatureCount="0" name="AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature">
+        <filegroup open="false" hidden="false">
+          <legendlayerfile isInOverview="0" layerid="AST_08_00311192008182137_20190206150452_3848_SurfaceKineticTemperature_KineticTemperature_8fd170d4_2e18_4e26_a946_34b0b2cb7fa5" visible="0"/>
+        </filegroup>
+      </legendlayer>
+    </legendgroup>
+  </legend>
+  <mapViewDocks/>
+  <mapViewDocks3D/>
+  <projectlayers>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>365745.90562443598173559</xmin>
+        <ymin>3655488.02427532803267241</ymin>
+        <xmax>450075.90562443598173559</xmax>
+        <ymax>3730278.02427532803267241</ymax>
+      </extent>
+      <id>AST_08_00302092012181501_20190206151456_365_SurfaceKineticTemperature_KineticTemperature_44bf9be5_de6f_4b78_82d6_8866ca41223c</id>
+      <datasource>../data/aster/best/AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>-5.3499999046326</minValue>
+            <maxValue>49.75</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>346899.32529714802512899</xmin>
+        <ymin>3678659.45114281680434942</ymin>
+        <xmax>430869.32529714802512899</xmax>
+        <ymax>3752999.45114281680434942</ymax>
+      </extent>
+      <id>AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009</id>
+      <datasource>../data/aster/best/AST_08_00302202014053514_20190206145248_987.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00302202014053514_20190206145248_987.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent>
+          <spatial crs="" maxy="0" maxx="0" maxz="0" dimensions="2" minx="0" miny="0" minz="0"/>
+          <temporal>
+            <period>
+              <start></start>
+              <end></end>
+            </period>
+          </temporal>
+        </extent>
+        <contact>
+          <name></name>
+          <organization></organization>
+          <position></position>
+          <voice></voice>
+          <fax></fax>
+          <email></email>
+          <role></role>
+        </contact>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="false" key="WMSBackgroundLayer"/>
+        <property value="false" key="WMSPublishDataSourceUrl"/>
+        <property value="0" key="embeddedWidgets/count"/>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer classificationMin="0" band="1" classificationMax="19.0308" alphaBand="-1" opacity="1" type="singlebandpseudocolor">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>None</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <rastershader>
+            <colorrampshader clip="0" classificationMode="1" colorRampType="INTERPOLATED">
+              <colorramp type="gradient" name="[source]">
+                <prop k="color1" v="43,131,186,255"/>
+                <prop k="color2" v="215,25,28,255"/>
+                <prop k="discrete" v="0"/>
+                <prop k="rampType" v="gradient"/>
+                <prop k="stops" v="0.25;171,221,164,255:0.5;255,255,191,255:0.75;253,174,97,255"/>
+              </colorramp>
+              <item label="0" value="0" color="#ff00ff" alpha="0"/>
+              <item label="0.003" value="0.00300013" color="#2b83ba" alpha="255"/>
+              <item label="4.76" value="4.7599500975" color="#abdda4" alpha="255"/>
+              <item label="9.52" value="9.516900065" color="#ffffbf" alpha="255"/>
+              <item label="14.3" value="14.2738500325" color="#fdae61" alpha="255"/>
+              <item label="19" value="19.0308" color="#d7191c" alpha="255"/>
+            </colorrampshader>
+          </rastershader>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>358849.94475119997514412</xmin>
+        <ymin>3656676.08959032688289881</ymin>
+        <xmax>443179.94475119997514412</xmax>
+        <ymax>3731466.08959032688289881</ymax>
+      </extent>
+      <id>AST_08_00302272007181537_20190206152607_55367_SurfaceKineticTemperature_KineticTemperature_3dc46cc5_51a3_4b88_9c1f_f1fa86e90e90</id>
+      <datasource>../data/aster/best/AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>-11.85000038147</minValue>
+            <maxValue>52.150001525879</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>353930.55406523001147434</xmin>
+        <ymin>3679801.01457381807267666</ymin>
+        <xmax>437900.55406523001147434</xmax>
+        <ymax>3754141.01457381807267666</ymax>
+      </extent>
+      <id>AST_08_00304242008053511_20190206152006_14803_SurfaceKineticTemperature_KineticTemperature_ba6e8f8e_641c_4a48_8f1d_cb5595ab9815</id>
+      <datasource>../data/aster/best/AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>-19.14999961853</minValue>
+            <maxValue>31.35000038147</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>365045.8770944899879396</xmin>
+        <ymin>3655601.78473809221759439</ymin>
+        <xmax>449375.8770944899879396</xmax>
+        <ymax>3730391.78473809221759439</ymax>
+      </extent>
+      <id>AST_08_00305022007181522_20190206152927_62663_SurfaceKineticTemperature_KineticTemperature_0735a3b9_710a_46a8_add4_42248901c4ef</id>
+      <datasource>../data/aster/best/AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>0</minValue>
+            <maxValue>67.949996948242</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>335065.14482312701875344</xmin>
+        <ymin>3676718.25617683213204145</ymin>
+        <xmax>419035.14482312701875344</xmax>
+        <ymax>3751058.25617683213204145</ymax>
+      </extent>
+      <id>AST_08_00306232018053637_20190206145854_16886_SurfaceKineticTemperature_KineticTemperature_56b6347d_c9f2_4c14_9ef2_732419a351a6</id>
+      <datasource>../data/aster/best/AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>-0.75</minValue>
+            <maxValue>44.25</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>374037.74793099198723212</xmin>
+        <ymin>3691568.08275929791852832</ymin>
+        <xmax>459087.74793099198723212</xmax>
+        <ymax>3767258.08275929791852832</ymax>
+      </extent>
+      <id>AST_08_00306262007182124_20190206151732_23638_SurfaceKineticTemperature_KineticTemperature_c94c0773_53a7_4e42_b56a_50987bbabdc2</id>
+      <datasource>../data/aster/best/AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>0</minValue>
+            <maxValue>82.75</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>357252.8466052120202221</xmin>
+        <ymin>3656948.72380626806989312</ymin>
+        <xmax>441582.8466052120202221</xmax>
+        <ymax>3731738.72380626806989312</ymax>
+      </extent>
+      <id>AST_08_00307132016181615_20190206151142_4991_SurfaceKineticTemperature_KineticTemperature_9c0385a5_0f9f_4599_9855_2e31c5f2ba02</id>
+      <datasource>../data/aster/best/AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>0</minValue>
+            <maxValue>76.349998474121</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>351946.53220654197502881</xmin>
+        <ymin>3657875.18344637099653482</ymin>
+        <xmax>436276.53220654197502881</xmax>
+        <ymax>3732665.18344637099653482</ymax>
+      </extent>
+      <id>AST_08_00307272015181632_20190206150531_14752_SurfaceKineticTemperature_KineticTemperature_b8e84498_4fdf_421b_aab6_4b159ca53f6a</id>
+      <datasource>../data/aster/best/AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>0</minValue>
+            <maxValue>75.150001525879</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>358641.52731243800371885</xmin>
+        <ymin>3680581.38273749500513077</ymin>
+        <xmax>442611.52731243800371885</xmax>
+        <ymax>3754921.38273749500513077</ymax>
+      </extent>
+      <id>AST_08_00307302014053514_20190206144413_29035_SurfaceKineticTemperature_KineticTemperature_3347995a_53db_4c43_9564_82b293e1043a</id>
+      <datasource>../data/aster/best/AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>0</minValue>
+            <maxValue>57.25</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>350553.14873957599047571</xmin>
+        <ymin>3679267.41866242792457342</ymin>
+        <xmax>434523.14873957599047571</xmax>
+        <ymax>3753607.41866242792457342</ymax>
+      </extent>
+      <id>AST_08_00308312014053536_20190206150245_25957_SurfaceKineticTemperature_KineticTemperature_139f8bc5_25c3_459b_9620_11a3d394c561</id>
+      <datasource>../data/aster/best/AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>-4.4499998092651</minValue>
+            <maxValue>56.150001525879</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>350927.62314937001792714</xmin>
+        <ymin>3679313.80672349687665701</ymin>
+        <xmax>434897.62314937001792714</xmax>
+        <ymax>3753653.80672349687665701</ymax>
+      </extent>
+      <id>AST_08_00310022014053533_20190206150105_22212_SurfaceKineticTemperature_KineticTemperature_1072a47d_1dcf_4ab8_91d2_61f054618e19</id>
+      <datasource>../data/aster/best/AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>-11.64999961853</minValue>
+            <maxValue>37.049999237061</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>368999.05038006399990991</xmin>
+        <ymin>3654924.61591992899775505</ymin>
+        <xmax>453329.05038006399990991</xmax>
+        <ymax>3729714.61591992899775505</ymax>
+      </extent>
+      <id>AST_08_00310222012181451_20190206150845_15275_SurfaceKineticTemperature_KineticTemperature_5b760108_121d_434e_b77c_1c258b6bbfbb</id>
+      <datasource>../data/aster/best/AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>0</minValue>
+            <maxValue>58.650001525879</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>355750.04166305699618533</xmin>
+        <ymin>3680102.28961943322792649</ymin>
+        <xmax>439720.04166305699618533</xmax>
+        <ymax>3754442.28961943322792649</ymax>
+      </extent>
+      <id>AST_08_00310312013053454_20190206151043_15841_SurfaceKineticTemperature_KineticTemperature_dda5d815_7625_4f12_acce_1c1631c80f2f</id>
+      <datasource>../data/aster/best/AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent>
+          <spatial crs="" maxy="0" maxx="0" maxz="0" dimensions="2" minx="0" miny="0" minz="0"/>
+          <temporal>
+            <period>
+              <start></start>
+              <end></end>
+            </period>
+          </temporal>
+        </extent>
+        <contact>
+          <name></name>
+          <organization></organization>
+          <position></position>
+          <voice></voice>
+          <fax></fax>
+          <email></email>
+          <role></role>
+        </contact>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="false" key="WMSBackgroundLayer"/>
+        <property value="false" key="WMSPublishDataSourceUrl"/>
+        <property value="0" key="embeddedWidgets/count"/>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer classificationMin="0" band="1" classificationMax="16.1368" alphaBand="-1" opacity="1" type="singlebandpseudocolor">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>None</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <rastershader>
+            <colorrampshader clip="0" classificationMode="1" colorRampType="INTERPOLATED">
+              <colorramp type="gradient" name="[source]">
+                <prop k="color1" v="43,131,186,255"/>
+                <prop k="color2" v="215,25,28,255"/>
+                <prop k="discrete" v="0"/>
+                <prop k="rampType" v="gradient"/>
+                <prop k="stops" v="0.25;171,221,164,255:0.5;255,255,191,255:0.75;253,174,97,255"/>
+              </colorramp>
+              <item label="0" value="0" color="#ff00ff" alpha="0"/>
+              <item label="0.001" value="0.001" color="#2b83ba" alpha="255"/>
+              <item label="4.03" value="4.03495" color="#abdda4" alpha="255"/>
+              <item label="8.07" value="8.0689" color="#ffffbf" alpha="255"/>
+              <item label="12.1" value="12.10285" color="#fdae61" alpha="255"/>
+              <item label="16.1" value="16.1368" color="#d7191c" alpha="255"/>
+            </colorrampshader>
+          </rastershader>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>363956.02714181202463806</xmin>
+        <ymin>3655789.0827051498927176</ymin>
+        <xmax>448286.02714181202463806</xmax>
+        <ymax>3730579.0827051498927176</ymax>
+      </extent>
+      <id>AST_08_00311022010181454_20190206150228_29517_SurfaceKineticTemperature_KineticTemperature_790f1425_8be4_4cfc_810d_95fcfe9228f2</id>
+      <datasource>../data/aster/best/AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>-16.85000038147</minValue>
+            <maxValue>53.75</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>353951.61845025699585676</xmin>
+        <ymin>3679766.40997614106163383</ymin>
+        <xmax>437921.61845025699585676</xmax>
+        <ymax>3754106.40997614106163383</ymax>
+      </extent>
+      <id>AST_08_00311032014053519_20190206145845_13098_SurfaceKineticTemperature_KineticTemperature_bf436003_dabf_4ef2_b589_76c0b28cac81</id>
+      <datasource>../data/aster/best/AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>-19.64999961853</minValue>
+            <maxValue>26.35000038147</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>354547.55279083497589454</xmin>
+        <ymin>3679921.65578017104417086</ymin>
+        <xmax>438517.55279083497589454</xmax>
+        <ymax>3754261.65578017104417086</ymax>
+      </extent>
+      <id>AST_08_00311162013053459_20190206150129_27725_SurfaceKineticTemperature_KineticTemperature_b77b86b0_b800_4890_a796_c8f7ca304305</id>
+      <datasource>../data/aster/best/AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>-13.75</minValue>
+            <maxValue>32.25</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+    <maplayer refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" minScale="1e+8" refreshOnNotifyMessage="" maxScale="0" hasScaleBasedVisibilityFlag="0" type="raster">
+      <extent>
+        <xmin>377692.00885246199322864</xmin>
+        <ymin>3690885.28398292418569326</ymin>
+        <xmax>462742.00885246199322864</xmax>
+        <ymax>3766575.28398292418569326</ymax>
+      </extent>
+      <id>AST_08_00311192008182137_20190206150452_3848_SurfaceKineticTemperature_KineticTemperature_8fd170d4_2e18_4e26_a946_34b0b2cb7fa5</id>
+      <datasource>../data/aster/best/AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs</proj4>
+          <srsid>3096</srsid>
+          <srid>32612</srid>
+          <authid>EPSG:32612</authid>
+          <description>WGS 84 / UTM zone 12N</description>
+          <projectionacronym>utm</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <customproperties>
+        <property value="Value" key="identify/format"/>
+      </customproperties>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList bandNo="1" useSrcNoData="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <pipe>
+        <rasterrenderer alphaBand="-1" opacity="1" gradient="BlackToWhite" grayBand="1" type="singlebandgray">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>MinMax</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <contrastEnhancement>
+            <minValue>-5.6500000953674</minValue>
+            <maxValue>49.75</maxValue>
+            <algorithm>StretchToMinimumMaximum</algorithm>
+          </contrastEnhancement>
+        </rasterrenderer>
+        <brightnesscontrast contrast="0" brightness="0"/>
+        <huesaturation saturation="0" grayscaleMode="0" colorizeBlue="128" colorizeGreen="128" colorizeOn="0" colorizeStrength="100" colorizeRed="255"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+  </projectlayers>
+  <layerorder>
+    <layer id="AST_08_00311192008182137_20190206150452_3848_SurfaceKineticTemperature_KineticTemperature_8fd170d4_2e18_4e26_a946_34b0b2cb7fa5"/>
+    <layer id="AST_08_00311162013053459_20190206150129_27725_SurfaceKineticTemperature_KineticTemperature_b77b86b0_b800_4890_a796_c8f7ca304305"/>
+    <layer id="AST_08_00311032014053519_20190206145845_13098_SurfaceKineticTemperature_KineticTemperature_bf436003_dabf_4ef2_b589_76c0b28cac81"/>
+    <layer id="AST_08_00311022010181454_20190206150228_29517_SurfaceKineticTemperature_KineticTemperature_790f1425_8be4_4cfc_810d_95fcfe9228f2"/>
+    <layer id="AST_08_00310312013053454_20190206151043_15841_SurfaceKineticTemperature_KineticTemperature_dda5d815_7625_4f12_acce_1c1631c80f2f"/>
+    <layer id="AST_08_00310222012181451_20190206150845_15275_SurfaceKineticTemperature_KineticTemperature_5b760108_121d_434e_b77c_1c258b6bbfbb"/>
+    <layer id="AST_08_00310022014053533_20190206150105_22212_SurfaceKineticTemperature_KineticTemperature_1072a47d_1dcf_4ab8_91d2_61f054618e19"/>
+    <layer id="AST_08_00308312014053536_20190206150245_25957_SurfaceKineticTemperature_KineticTemperature_139f8bc5_25c3_459b_9620_11a3d394c561"/>
+    <layer id="AST_08_00307302014053514_20190206144413_29035_SurfaceKineticTemperature_KineticTemperature_3347995a_53db_4c43_9564_82b293e1043a"/>
+    <layer id="AST_08_00307272015181632_20190206150531_14752_SurfaceKineticTemperature_KineticTemperature_b8e84498_4fdf_421b_aab6_4b159ca53f6a"/>
+    <layer id="AST_08_00307132016181615_20190206151142_4991_SurfaceKineticTemperature_KineticTemperature_9c0385a5_0f9f_4599_9855_2e31c5f2ba02"/>
+    <layer id="AST_08_00306262007182124_20190206151732_23638_SurfaceKineticTemperature_KineticTemperature_c94c0773_53a7_4e42_b56a_50987bbabdc2"/>
+    <layer id="AST_08_00306232018053637_20190206145854_16886_SurfaceKineticTemperature_KineticTemperature_56b6347d_c9f2_4c14_9ef2_732419a351a6"/>
+    <layer id="AST_08_00305022007181522_20190206152927_62663_SurfaceKineticTemperature_KineticTemperature_0735a3b9_710a_46a8_add4_42248901c4ef"/>
+    <layer id="AST_08_00304242008053511_20190206152006_14803_SurfaceKineticTemperature_KineticTemperature_ba6e8f8e_641c_4a48_8f1d_cb5595ab9815"/>
+    <layer id="AST_08_00302272007181537_20190206152607_55367_SurfaceKineticTemperature_KineticTemperature_3dc46cc5_51a3_4b88_9c1f_f1fa86e90e90"/>
+    <layer id="AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009"/>
+    <layer id="AST_08_00302092012181501_20190206151456_365_SurfaceKineticTemperature_KineticTemperature_44bf9be5_de6f_4b78_82d6_8866ca41223c"/>
+  </layerorder>
+  <properties>
+    <SpatialRefSys>
+      <ProjectionsEnabled type="int">1</ProjectionsEnabled>
+    </SpatialRefSys>
+    <Paths>
+      <Absolute type="bool">false</Absolute>
+    </Paths>
+    <Measure>
+      <Ellipsoid type="QString">WGS84</Ellipsoid>
+    </Measure>
+    <PAL>
+      <ShowingPartialsLabels type="bool">true</ShowingPartialsLabels>
+      <DrawOutlineLabels type="bool">true</DrawOutlineLabels>
+      <SearchMethod type="int">0</SearchMethod>
+      <ShowingCandidates type="bool">false</ShowingCandidates>
+      <CandidatesLine type="int">50</CandidatesLine>
+      <DrawRectOnly type="bool">false</DrawRectOnly>
+      <CandidatesPolygon type="int">30</CandidatesPolygon>
+      <ShowingAllLabels type="bool">false</ShowingAllLabels>
+      <CandidatesPoint type="int">16</CandidatesPoint>
+    </PAL>
+    <Gui>
+      <CanvasColorRedPart type="int">255</CanvasColorRedPart>
+      <SelectionColorAlphaPart type="int">255</SelectionColorAlphaPart>
+      <SelectionColorGreenPart type="int">255</SelectionColorGreenPart>
+      <CanvasColorBluePart type="int">255</CanvasColorBluePart>
+      <SelectionColorRedPart type="int">255</SelectionColorRedPart>
+      <SelectionColorBluePart type="int">0</SelectionColorBluePart>
+      <CanvasColorGreenPart type="int">255</CanvasColorGreenPart>
+    </Gui>
+    <Measurement>
+      <DistanceUnits type="QString"></DistanceUnits>
+      <AreaUnits type="QString"></AreaUnits>
+    </Measurement>
+    <Legend>
+      <filterByMap type="bool">false</filterByMap>
+    </Legend>
+    <PositionPrecision>
+      <DecimalPlaces type="int">2</DecimalPlaces>
+      <Automatic type="bool">true</Automatic>
+    </PositionPrecision>
+  </properties>
+  <visibility-presets/>
+  <transformContext/>
+  <Annotations/>
+  <Layouts>
+    <Layout worldFileMap="{1bbe170c-1d3f-4d7f-97c3-0a0123014ab8}" units="mm" printResolution="300" name="ASTER fig">
+      <Snapper snapToGuides="1" tolerance="5" snapToGrid="0" snapToItems="1"/>
+      <Grid offsetY="0" resolution="10" resUnits="mm" offsetX="0" offsetUnits="mm"/>
+      <PageCollection>
+        <symbol alpha="1" type="fill" name="" clip_to_extent="1">
+          <layer enabled="1" locked="0" class="SimpleFill" pass="0">
+            <prop k="border_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+            <prop k="color" v="255,255,255,255"/>
+            <prop k="joinstyle" v="miter"/>
+            <prop k="offset" v="0,0"/>
+            <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+            <prop k="offset_unit" v="MM"/>
+            <prop k="outline_color" v="35,35,35,255"/>
+            <prop k="outline_style" v="no"/>
+            <prop k="outline_width" v="0.26"/>
+            <prop k="outline_width_unit" v="MM"/>
+            <prop k="style" v="solid"/>
+            <data_defined_properties>
+              <Option type="Map">
+                <Option value="" type="QString" name="name"/>
+                <Option name="properties"/>
+                <Option value="collection" type="QString" name="type"/>
+              </Option>
+            </data_defined_properties>
+          </layer>
+        </symbol>
+        <LayoutItem visibility="1" excludeFromExports="0" positionLock="false" id="" frame="false" outlineWidthM="0.3,mm" zValue="0" positionOnPage="0,0,mm" blendMode="0" size="297,210,mm" groupUuid="" templateUuid="{ef27613d-414f-4f64-81f9-c62c1aacd87a}" type="65638" frameJoinStyle="miter" background="true" referencePoint="0" itemRotation="0" uuid="{ef27613d-414f-4f64-81f9-c62c1aacd87a}" position="0,0,mm" opacity="1">
+          <FrameColor green="0" blue="0" alpha="255" red="0"/>
+          <BackgroundColor green="255" blue="255" alpha="255" red="255"/>
+          <LayoutObject>
+            <dataDefinedProperties>
+              <Option type="Map">
+                <Option value="" type="QString" name="name"/>
+                <Option name="properties"/>
+                <Option value="collection" type="QString" name="type"/>
+              </Option>
+            </dataDefinedProperties>
+            <customproperties/>
+          </LayoutObject>
+        </LayoutItem>
+        <GuideCollection visible="1"/>
+      </PageCollection>
+      <LayoutItem templateUuid="{1b100cd1-b23c-43e8-862d-fed3c876f93a}" numSegmentsLeft="0" background="false" maxBarWidth="150" uuid="{1b100cd1-b23c-43e8-862d-fed3c876f93a}" id="" segmentSizeMode="0" lineJoinStyle="miter" numUnitsPerSegment="5" visibility="1" numMapUnitsPerScaleBarUnit="1" referencePoint="0" mapUuid="{1bbe170c-1d3f-4d7f-97c3-0a0123014ab8}" itemRotation="0" minBarWidth="50" segmentMillimeters="12.4664" style="Single Box" opacity="1" positionLock="false" blendMode="0" size="62.8154,12.2,mm" alignment="0" outlineWidth="0.3" outlineWidthM="0.3,mm" zValue="3" frameJoinStyle="miter" type="65646" groupUuid="" lineCapStyle="square" frame="false" numSegments="4" excludeFromExports="0" unitLabel="km" boxContentSpace="1" height="3" unitType="km" positionOnPage="179.505,168.96,mm" position="179.505,168.96,mm" labelBarSpace="3">
+        <FrameColor green="0" blue="0" alpha="255" red="0"/>
+        <BackgroundColor green="255" blue="255" alpha="255" red="255"/>
+        <LayoutObject>
+          <dataDefinedProperties>
+            <Option type="Map">
+              <Option value="" type="QString" name="name"/>
+              <Option name="properties"/>
+              <Option value="collection" type="QString" name="type"/>
+            </Option>
+          </dataDefinedProperties>
+          <customproperties/>
+        </LayoutObject>
+        <scaleBarFont style="" description="MS Shell Dlg 2,12,-1,5,50,0,0,0,0,0"/>
+        <fillColor green="0" blue="0" alpha="255" red="0"/>
+        <fillColor2 green="255" blue="255" alpha="255" red="255"/>
+        <strokeColor green="0" blue="0" alpha="255" red="0"/>
+        <textColor green="0" blue="0" alpha="255" red="0"/>
+      </LayoutItem>
+      <LayoutItem fontColor="#000000" templateUuid="{272d579e-2228-4996-986f-9c598b2386d8}" background="true" columnSpace="2" resizeToContents="1" titleAlignment="1" uuid="{272d579e-2228-4996-986f-9c598b2386d8}" id="" wrapChar="" visibility="1" splitLayer="0" referencePoint="0" itemRotation="0" equalColumnWidth="0" columnCount="1" rasterBorderWidth="0" opacity="1" positionLock="false" blendMode="0" size="26,51,mm" symbolHeight="4" rasterBorder="1" lineSpacing="1" outlineWidthM="0.3,mm" zValue="2" frameJoinStyle="miter" wmsLegendHeight="25" type="65642" rasterBorderColor="0,0,0,255" groupUuid="" wmsLegendWidth="50" frame="false" boxSpace="2" legendFilterByAtlas="0" excludeFromExports="0" symbolWidth="7" title="" map_uuid="{1bbe170c-1d3f-4d7f-97c3-0a0123014ab8}" positionOnPage="52.6368,117.96,mm" position="52.6368,117.96,mm">
+        <FrameColor green="0" blue="0" alpha="255" red="0"/>
+        <BackgroundColor green="255" blue="255" alpha="255" red="255"/>
+        <LayoutObject>
+          <dataDefinedProperties>
+            <Option type="Map">
+              <Option value="" type="QString" name="name"/>
+              <Option name="properties"/>
+              <Option value="collection" type="QString" name="type"/>
+            </Option>
+          </dataDefinedProperties>
+          <customproperties/>
+        </LayoutObject>
+        <styles>
+          <style name="title" marginBottom="3.5">
+            <styleFont style="" description="MS Shell Dlg 2,16,-1,5,50,0,0,0,0,0"/>
+          </style>
+          <style name="group" marginTop="3">
+            <styleFont style="" description="MS Shell Dlg 2,14,-1,5,50,0,0,0,0,0"/>
+          </style>
+          <style name="subgroup" marginTop="3">
+            <styleFont style="" description="MS Shell Dlg 2,12,-1,5,50,0,0,0,0,0"/>
+          </style>
+          <style name="symbol" marginTop="2.5">
+            <styleFont style="" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0"/>
+          </style>
+          <style marginLeft="2" name="symbolLabel" marginTop="2">
+            <styleFont style="" description="MS Shell Dlg 2,12,-1,5,50,0,0,0,0,0"/>
+          </style>
+        </styles>
+        <layer-tree-group>
+          <customproperties/>
+          <layer-tree-layer providerKey="gdal" expanded="1" checked="Qt::Checked" id="AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009" source="../data/aster/best/AST_08_00302202014053514_20190206145248_987.SurfaceKineticTemperature.KineticTemperature.tif" name="AST_08_00302202014053514_20190206145248_987.SurfaceKineticTemperature.KineticTemperature">
+            <customproperties>
+              <property key="expandedLegendNodes"/>
+              <property value="0" key="legend/label-1"/>
+              <property value="5" key="legend/label-2"/>
+              <property value="10" key="legend/label-3"/>
+              <property value="15" key="legend/label-4"/>
+              <property value="20" key="legend/label-5"/>
+              <property value="1,2,3,4,5" key="legend/node-order"/>
+              <property value="LST (deg C)" key="legend/title-label"/>
+            </customproperties>
+          </layer-tree-layer>
+          <custom-order enabled="0">
+            <item>AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009</item>
+          </custom-order>
+        </layer-tree-group>
+      </LayoutItem>
+      <LayoutItem followPresetName="" drawCanvasItems="true" followPreset="false" visibility="1" excludeFromExports="0" positionLock="false" id="" frame="false" mapRotation="0" outlineWidthM="0.3,mm" zValue="1" positionOnPage="0,0,mm" blendMode="0" size="297,210,mm" groupUuid="" templateUuid="{1bbe170c-1d3f-4d7f-97c3-0a0123014ab8}" type="65639" keepLayerSet="false" frameJoinStyle="miter" background="true" referencePoint="0" itemRotation="0" uuid="{1bbe170c-1d3f-4d7f-97c3-0a0123014ab8}" position="0,0,mm" opacity="1">
+        <FrameColor green="0" blue="0" alpha="255" red="0"/>
+        <BackgroundColor green="255" blue="255" alpha="255" red="255"/>
+        <LayoutObject>
+          <dataDefinedProperties>
+            <Option type="Map">
+              <Option value="" type="QString" name="name"/>
+              <Option name="properties"/>
+              <Option value="collection" type="QString" name="type"/>
+            </Option>
+          </dataDefinedProperties>
+          <customproperties/>
+        </LayoutObject>
+        <Extent ymin="3668245.83510409528389573" xmin="327472.93611028842860833" xmax="446566.37223176372935995" ymax="3752453.3151899860240519"/>
+        <LayerSet/>
+        <AtlasMap margin="0.10000000000000001" atlasDriven="0" scalingMode="2"/>
+      </LayoutItem>
+      <customproperties>
+        <property value="png" key="atlasRasterFormat"/>
+      </customproperties>
+      <Atlas filenamePattern="'output_'||@atlas_featurenumber" enabled="0" sortFeatures="0" filterFeatures="0" coverageLayer="" pageNameExpression="" hideCoverage="0"/>
+    </Layout>
+  </Layouts>
+</qgis>

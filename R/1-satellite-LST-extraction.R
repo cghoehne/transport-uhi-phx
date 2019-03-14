@@ -178,12 +178,19 @@ tmap_options(max.raster = c(plot = 2.5e+07, view = 2.5e+07)) # expand max extent
 my.palette <- rev(RColorBrewer::brewer.pal(11, "Spectral")) # color palette
 
 # save all data and filter dates 
-dir.create(here("data/aster"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+dir.create(here("data/aster"), showWarnings = F) # creates output folder if it doesn't already exist
 saveRDS(all.site.data, here("data/aster/all-aster-data.rds"))
 saveRDS(my.site.data, here("data/aster/my-aster-data.rds"))
 
 #all.site.data <- readRDS(here("data/aster/all-aster-data.rds"))
 #my.site.data <- readRDS(here("data/aster/my-aster-data.rds"))
+
+dir.create(here("data/aster/best"), showWarnings = F) # creates output folder if it doesn't already exist
+for(s in my.idx){
+  writeRaster(new.stack[[s]], here("data/aster/best",paste0(names(new.stack[[s]]),".tif")), overwrite = T)
+  
+}
+
 
 # loop through relevant raster scenes and create surface temperature plots
 for(s in my.idx){ #length(st.tile.stack)
@@ -211,7 +218,7 @@ for(s in my.idx){ #length(st.tile.stack)
                 title.size = 0.7,
                 title.position = c(0.08,0.08))
     
-    dir.create(here("figures/aster-best/"), showWarnings = FALSE) # creates output folder if it doesn't already exist
+    dir.create(here("figures/aster-best/"), showWarnings = F) # creates output folder if it doesn't already exist
     tmap_save(plot.2, filename = here(paste0("figures/aster-best/", names(new.stack[[s]]),".png"))) # save plot
   }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
 }
