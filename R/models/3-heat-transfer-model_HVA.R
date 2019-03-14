@@ -38,11 +38,11 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 layer.profiles <- list(
   data.table( # High Volume HMA #1 (OGFC 25mm rebonded on 275mm DGHMA)
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.025, 0.275, 1.2), # layer thickness (m)
+    thickness = c(0.035, 0.265, 1.2), # layer thickness (m)
     k = c(0.96, 0.92, 1.10), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2187, 2093, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(964, 953, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.175, NA, NA), # surface albedo (dimensionless)
+    rho = c(2350, 2300, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    c = c(945, 900, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.15, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
@@ -51,14 +51,14 @@ layer.profiles <- list(
     thickness = c(0.025, 0.275, 1.2), # layer thickness (m)
     k = c(1.16, 1.08, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2400, 2350, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(964, 960, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.175, NA, NA), # surface albedo (dimensionless)
+    c = c(975, 960, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.20, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # High Volume HMA #3 (OGFC 25mm rebonded on 275mm DGHMA)
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.025, 0.275, 1.2), # layer thickness (m)
+    thickness = c(0.04, 0.26, 1.2), # layer thickness (m)
     k = c(2.0, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2550, 2350, 1500), # layer density (kg/m3) 2382 (base from infravation)
     c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
@@ -70,7 +70,7 @@ layer.profiles <- list(
     layer = c("surface", "base", "subgrade"),
     thickness = c(0.025, 0.275, 1.2), # layer thickness (m)
     k = c(1.16, 1.08, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2350, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    rho = c(2450, 2350, 1500), # layer density (kg/m3) 2382 (base from infravation)
     c = c(964, 960, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.10, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.93, NA, NA), # emissivity (dimensionless)
@@ -78,9 +78,9 @@ layer.profiles <- list(
   )
   ,data.table( # High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA, HIgh Albedo)
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.025, 0.275, 1.2), # layer thickness (m)
-    k = c(1.16, 1.08, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2350, 1500), # layer density (kg/m3) 2382 (base from infravation)
+    thickness = c(0.05, 0.25, 1.2), # layer thickness (m)
+    k = c(1.2, 1.08, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2500, 2400, 1500), # layer density (kg/m3) 2382 (base from infravation)
     c = c(964, 960, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.25, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.85, NA, NA), # emissivity (dimensionless)
@@ -90,12 +90,12 @@ layer.profiles <- list(
 
 # define layer profile names corresponding to the validation site location IDs
 # so we can pull weather data from the nearest weather station to match the desired validaiton site
-layer.sites <- c("A8", "C4", "C1", "A9", "A6") 
-names(layer.profiles) <- c("High Volume HMA #1 (OGFC 25mm rebonded on 275mm DGHMA)", 
-                           "High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA)", 
-                           "High Volume HMA #3 (OGFC 25mm rebonded on 275mm DGHMA)", 
-                           "High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA, Low Albedo)", 
-                           "High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA, HIgh Albedo)") 
+layer.sites <- c("A6", "A2", "A5", "A4", "A9") 
+names(layer.profiles) <- c("Med Volume HMA #1 (OGFC 35mm rebonded on 265mm DGHMA)", 
+                           "Med Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA)", 
+                           "High Volume HMA #1 (OGFC 40mm rebonded on 260mm DGHMA, Low Albedo)", 
+                           "High Volume HMA #2 (OGFC 25mm rebonded on 275mm DGHMA, Med Albedo)", 
+                           "High Volume HMA #3 (OGFC 50mm rebonded on 250mm DGHMA, High Albedo)") 
 
 
 # load validation site data 
