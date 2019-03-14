@@ -1,4 +1,4 @@
-### Workflow
+# Workflow
 
 ## Data preperation
 - It is recommended to use Microsoft's Open R disriubtion
@@ -14,12 +14,12 @@
 
 ## R scripts
 
-# 1a-sat-data-preprocess.R
+### 1a-sat-data-preprocess.R
 - Should only need to be run once
 - This script simply imports all ASTER .tif data, converts all values to to deg C
 - Then batch dumps in a single folder "data/aster/all"
 
-# 1b-satellite-LST-extraction.R
+### 1b-satellite-LST-extraction.R
 - This script reterives metadata for all ASTER scenes and cleans it
 - Then according to user inputs, selects a small subset of desired scenes for use in validation
 - Default is no cloud cover, then *THREE* custom scenes are selected that have good coverage of sites
@@ -28,19 +28,19 @@
 - This must be done manually before the second half of script currently **
 - Will also plot selected scenes using a predefined shapefile of the metro region (Maricopa County UZA in our case)
 
-# 2-weather-data-retrieval.R
+### 2-weather-data-retrieval.R
 - This script requires the API key from Synoptic (free, need an account)
 - This script will pull all weather data from all stations in a predefined area and all corresponding weather data
 - Default is to reterive all station data availabe in Phoenix metro for 2000 to 2018
 
-# 3-heat-transfer-model.R
+### 3-heat-transfer-model.R
 - This is the heat transfer model
 - Primary weather inputs: temperature, solar rad, humidity/dew, wind
 - If using MesoWest data from 2__.R, it should be properly cleaned already
 - Inputs of desired parameters of materials (such as asphalt concrete pavement specifications)
 - Inputs of model run parameters (iterations, day simulation lenght, etc)
 
-# 4-model-post-process
+### 4-model-post-process
 - computes summary statistics
 - plots simulated pavement temperature profiles
 - compares remotely sensed validation LST data to simulated data
