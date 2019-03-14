@@ -40,8 +40,8 @@ RMSE = function(m, o){
 # IMPORT MODEL DATA
 
 # first get latest updated output folder to pull model run data from most recent run (can change)
-#out.folder <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), recursive = F)), keep.rownames = T)[ctime == max(ctime), rn] # last changed
-out.folder <- paste0(here("data/outputs/1D-heat-model-runs"), "/20190311_171304_model_outputs") 
+out.folder <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), recursive = F)), keep.rownames = T)[ctime == max(ctime), rn] # last changed
+#out.folder <- paste0(here("data/outputs/1D-heat-model-runs"), "/20190311_171304_model_outputs") 
 
 #20190311_171312_model_outputs
 
@@ -403,9 +403,9 @@ names(m.o.shp) <- m.o.names
 names(m.o.col) <- m.o.names
 
 #p.name <- "Low Volume Asphalt Pavements" 
-p.name <- "High Volume Asphalt Pavements" 
+#p.name <- "High Volume Asphalt Pavements" 
 #p.name <- "Concrete and Composite Concrete-Asphalt Pavements" 
-#p.name <- "Bare Ground / Soil" 
+p.name <- "Bare Ground / Desert Soil" 
 
 p.mod_obs <- (ggplot(data = model.runs[!is.na(p.err)]) 
             
@@ -445,9 +445,11 @@ p.mod_obs <- (ggplot(data = model.runs[!is.na(p.err)])
 )
 p.mod_obs
 
-p.mod_obs <- arrangeGrob(p.mod_obs, bottom = textGrob(paste0("Material Type: ", p.name), gp = gpar(fontfamily = my.font))) # add pave name
-ggsave("estiamte.png", p.mod_obs, # save plot
-       device = "png", path = paste0(out.folder,"/figures"), scale = 1, width = 6, height = 5, dpi = 300, units = "in") 
+p.mod_obs <- arrangeGrob(p.mod_obs, bottom = textGrob(paste0("Material Type: ", p.name), 
+                                                      gp = gpar(fontfamily = my.font))) # add pave name
+ggsave(paste0(gsub(" ", "-", gsub(" / ", "-", tolower(p.name))), ".png"), p.mod_obs, # save plot
+       device = "png", path = paste0(out.folder,"/figures"), 
+       scale = 1, width = 6, height = 5, dpi = 300, units = "in") 
 
 # check rankings of RMSE to see under what circumstances temps were most accurate
 model.runs[!is.na(p.err), RMSE(Modeled, Observed), by = c("end.day")][order(V1)]
