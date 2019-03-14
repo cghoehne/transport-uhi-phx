@@ -38,12 +38,12 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 layer.profiles <- list(
   data.table( # Bare Dry Soil #1
     layer = c("surface", "subgrade"),
-    thickness = c(1.0, 0.5), # layer thickness (m)
-    k = c(1.0, 1.0), # layer thermal conductivity (W/(m*degK))  
+    thickness = c(0.75, 0.75), # layer thickness (m)
+    k = c(0.9, 1.0), # layer thermal conductivity (W/(m*degK))  
     rho = c(1500, 1500), # layer density (kg/m3)
     c = c(1900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.40, NA), # surface albedo (dimensionless)
-    emissivity = c(0.92, NA), # emissivity (dimensionless)
+    albedo = c(0.45, NA), # surface albedo (dimensionless)
+    emissivity = c(0.95, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # Bare Dry Soil #2
@@ -52,35 +52,35 @@ layer.profiles <- list(
     k = c(1.0, 1.1), # layer thermal conductivity (W/(m*degK))  
     rho = c(1500, 1600), # layer density (kg/m3)
     c = c(1500, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.45, NA), # surface albedo (dimensionless)
+    albedo = c(0.50, NA), # surface albedo (dimensionless)
     emissivity = c(0.95, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,  data.table( # Bare Dry Soil #3
     layer = c("surface", "subgrade"),
     thickness = c(1.0, 0.5), # layer thickness (m)
-    k = c(0.95, 1.0), # layer thermal conductivity (W/(m*degK))  
+    k = c(0.9, 1.1), # layer thermal conductivity (W/(m*degK))  
     rho = c(1500, 1600), # layer density (kg/m3)
     c = c(1900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.35, NA), # surface albedo (dimensionless)
-    emissivity = c(0.89, NA), # emissivity (dimensionless)
+    albedo = c(0.55, NA), # surface albedo (dimensionless)
+    emissivity = c(0.92, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # Bare Dry Soil #4
     layer = c("surface","subgrade"),
-    thickness = c(0.5, 1.0), # layer thickness (m)
-    k = c(1.0, 1.1), # layer thermal conductivity (W/(m*degK))  
+    thickness = c(1.25, 0.25), # layer thickness (m)
+    k = c(1.0, 1.05), # layer thermal conductivity (W/(m*degK))  
     rho = c(1400, 1600), # layer density (kg/m3)
     c = c(1600, 1800), # layer specific heat (J/(kg*degK)
-    albedo = c(0.55, NA), # surface albedo (dimensionless)
-    emissivity = c(0.93, NA), # emissivity (dimensionless)
+    albedo = c(0.60, NA), # surface albedo (dimensionless)
+    emissivity = c(0.95, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
 )
 
 # define layer profile names corresponding to the validation site location IDs
 # this will pull weather data from the nearest weather site with data to the validaiton site specfied
-layer.sites <- c("B1", "B2", "B1", "B2") 
+layer.sites <- c("B1", "B2", "B3", "B2") 
 names(layer.profiles) <- c("Bare Dry Soil #1", 
                            "Bare Dry Soil #2",
                            "Bare Dry Soil #3",
