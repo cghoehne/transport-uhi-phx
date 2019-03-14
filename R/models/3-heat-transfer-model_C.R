@@ -36,23 +36,33 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
-  data.table( # Low Volume thin whitetopping bonded on HMA
+  data.table( # Low Volume PCC w/ additives #1
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.1, 0.1, 1.3), # layer thickness (m)
-    k = c(1.4, 1.6, 1.0), # layer thermal conductivity (W/(m*degK))  
-    rho = c(2240, 2370, 1500), # layer density (kg/m3)
-    c = c(1050, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.325, NA, NA), # surface albedo (dimensionless)
+    thickness = c(0.4, 0.1, 1.0), # layer thickness (m)
+    k = c(2.0, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2440, 2250, 1500), # layer density (kg/m3)
+    c = c(1050, 800, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.275, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  ,data.table( # Low Volume ultra-thin whitetopping bonded on HMA
+  ,data.table( # Low Volume PCC w/ additives #2
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.06, 0.1, 1.34), # layer thickness (m)
-    k = c(1.4, 1.6, 1.0), # layer thermal conductivity (W/(m*degK))  
-    rho = c(2240, 2370, 1500), # layer density (kg/m3)
-    c = c(1050, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.30, NA, NA), # surface albedo (dimensionless)
+    thickness = c(0.4, 0.1, 1.0), # layer thickness (m)
+    k = c(1.4, 1.8, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2400, 2300, 1500), # layer density (kg/m3)
+    c = c(1050, 800, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.275, NA, NA), # surface albedo (dimensionless)
+    emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
+    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
+  ,data.table( # High Volume PCC w/ additives 
+    layer = c("surface", "base", "subgrade"),
+    thickness = c(0.6, 0.15, 0.75), # layer thickness (m)
+    k = c(1.6, 3.0, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2420, 2350, 1500), # layer density (kg/m3)
+    c = c(1050, 800, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.25, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
@@ -62,27 +72,17 @@ layer.profiles <- list(
     k = c(1.4, 1.6, 1.0), # layer thermal conductivity (W/(m*degK))  
     rho = c(2240, 2350, 1500), # layer density (kg/m3)
     c = c(1050, 960, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.325, NA, NA), # surface albedo (dimensionless)
+    albedo = c(0.375, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # High Volume ultra-thin whitetopping bonded on HMA
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.06, 0.3, 1.14), # layer thickness (m)
-    k = c(1.4, 1.6, 1.0), # layer thermal conductivity (W/(m*degK))  
-    rho = c(2240, 2350, 1500), # layer density (kg/m3)
+    thickness = c(0.075, 0.3, 1.125), # layer thickness (m)
+    k = c(1.5, 1.6, 1.0), # layer thermal conductivity (W/(m*degK))  
+    rho = c(2250, 2400, 1500), # layer density (kg/m3)
     c = c(1050, 960, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.30, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  )
-  ,data.table( # Low Volume PCC w/ additives
-    layer = c("surface", "base", "subgrade"),
-    thickness = c(0.4, 0.1, 1.0), # layer thickness (m)
-    k = c(2.0, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2250, 1500), # layer density (kg/m3)
-    c = c(1050, 800, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.275, NA, NA), # surface albedo (dimensionless)
+    albedo = c(0.35, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
@@ -90,14 +90,12 @@ layer.profiles <- list(
 
 # define layer profile names corresponding to the validation site location IDs
 # this will pull weather data from the nearest weather site with data to the validaiton site specfied
-layer.sites <- c("A8", "C4", "C1", "A9", "A6") 
-names(layer.profiles) <- c("Low Volume thin whitetopping bonded on HMA", 
-                           "Low Volume ultra-thin whitetopping bonded on HMA", 
+layer.sites <- c("A3", "C4", "C3", "C1", "A6") 
+names(layer.profiles) <- c("Low Volume PCC w/ additives #1", 
+                           "Low Volume PCC w/ additives #2", 
+                           "High Volume PCC w/ additives",
                            "High Volume thin whitetopping bonded on HMA", 
-                           "High Volume ultra-thin whitetopping bonded on HMA", 
-                           "Low Volume PCC w/ additives") 
-
-
+                           "High Volume ultra-thin whitetopping bonded on HMA") 
 
 # load validation site data 
 valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
