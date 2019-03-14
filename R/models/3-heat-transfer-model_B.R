@@ -37,14 +37,14 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # if there thermal conductivies are equivalent (k)
 layer.profiles <- list(
   data.table( # Bare Dry Soil #1
-    layer = c("surface"),
-    thickness = c(1.5), # layer thickness (m)
-    k = c(1.0), # layer thermal conductivity (W/(m*degK))  
-    rho = c(1500), # layer density (kg/m3)
-    c = c(1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.40), # surface albedo (dimensionless)
-    emissivity = c(0.92), # emissivity (dimensionless)
-    R.c.top = c(0) # thermal contact resistance at top boundary of layer (dimensionless)
+    layer = c("surface", "subgrade"),
+    thickness = c(1.0, 0.5), # layer thickness (m)
+    k = c(1.0, 1.0), # layer thermal conductivity (W/(m*degK))  
+    rho = c(1500, 1500), # layer density (kg/m3)
+    c = c(1900, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.40, NA), # surface albedo (dimensionless)
+    emissivity = c(0.92, NA), # emissivity (dimensionless)
+    R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
   ,data.table( # Bare Dry Soil #2
     layer = c("surface","subgrade"),
@@ -56,14 +56,35 @@ layer.profiles <- list(
     emissivity = c(0.95, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  
+  ,  data.table( # Bare Dry Soil #3
+    layer = c("surface", "subgrade"),
+    thickness = c(1.0, 0.5), # layer thickness (m)
+    k = c(0.95, 1.0), # layer thermal conductivity (W/(m*degK))  
+    rho = c(1500, 1600), # layer density (kg/m3)
+    c = c(1900, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.35, NA), # surface albedo (dimensionless)
+    emissivity = c(0.89, NA), # emissivity (dimensionless)
+    R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
+  ,data.table( # Bare Dry Soil #4
+    layer = c("surface","subgrade"),
+    thickness = c(0.5, 1.0), # layer thickness (m)
+    k = c(1.0, 1.1), # layer thermal conductivity (W/(m*degK))  
+    rho = c(1400, 1600), # layer density (kg/m3)
+    c = c(1600, 1800), # layer specific heat (J/(kg*degK)
+    albedo = c(0.55, NA), # surface albedo (dimensionless)
+    emissivity = c(0.93, NA), # emissivity (dimensionless)
+    R.c.top = c(0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
 )
 
 # define layer profile names corresponding to the validation site location IDs
 # this will pull weather data from the nearest weather site with data to the validaiton site specfied
-layer.sites <- c("B1", "B2") 
+layer.sites <- c("B1", "B2", "B1", "B2") 
 names(layer.profiles) <- c("Bare Dry Soil #1", 
-                           "Bare Dry Soil #2") 
+                           "Bare Dry Soil #2",
+                           "Bare Dry Soil #3",
+                           "Bare Dry Soil #4") 
 
 
 
@@ -81,7 +102,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
-               pave.length = c(40), # characteristic length of pavement in meters
+               pave.length = c(100), # characteristic length of pavement in meters
                SVF = c(1), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
@@ -173,7 +194,7 @@ my.errors <- NULL
 run.log <- file(paste0(out.folder,"run_log.txt"), open = "a")
 
 # BEGIN MODEL LOGIC
-for(run in 1:model.runs[,.N]){  #
+for(run in 35:model.runs[,.N]){  #
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
@@ -385,7 +406,7 @@ for(run in 1:model.runs[,.N]){  #
         # if it takes more than 1000 times and they aren't converging, end loop to avoid inf looping if no feasible solution
         # it will otherwise break after one run if the nodes at p and p+1 have converged
         # therefore allowing all p+2 and beyond calculations to always loop only once (intital and p+1 shouldn't change)
-
+        
         for(z in 1:200){
           
           # for timestep p, calc the surface heat transfer parameters (surface radiative coefficient, infrared radiation & convection)
@@ -401,7 +422,7 @@ for(run in 1:model.runs[,.N]){  #
           
           # for p == 1, update about surface temp and progress
           if(p == 1 & (z == 1 | z %% 10)){
-          
+            
             cat("run =", run, "|", "z =", z, "|",  # print update in console
                 "node 0:", signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3), "|",
                 "node 5:", signif(pave.time[time.s == t.step[p] & node == 5, T.K - 273.15], 3), "|",
@@ -458,7 +479,7 @@ for(run in 1:model.runs[,.N]){  #
           # store heat fluxes into pave.time at time p (with special for surface node)
           pave.time[time.s == t.step[p], h.flux.up := tmp[, up.flux]]
           pave.time[time.s == t.step[p], h.flux.dn := tmp[, dn.flux]]
-
+          
           # at surface, calc net flux, 
           pave.time[time.s == t.step[p] & node == 0, h.flux.up := -((1 - albedo) * tmp[node == 0, solar]) + tmp[node == 0, q.rad] + tmp[node == 0, q.cnv] ] # heat flux between air and surface
           pave.time[time.s == t.step[p] & node == 0, q.sol.rfl := albedo * tmp[node == 0, solar]]
@@ -546,8 +567,8 @@ for(run in 1:model.runs[,.N]){  #
           model.runs$broke.t[run] <- t.step[p] # store time model stopped
           assign("my.errors", c(my.errors, paste("stopped model run",run,"at",model.runs$broke.t[run],"secs due to CFL stability condition not satisfied")), envir = .GlobalEnv) # store error msg
           cat(paste("stopped model run",run,"at",model.runs$broke.t[run],
-          "secs due to CFL stability condition not satisfied"),
-          file = run.log, append = T)
+                    "secs due to CFL stability condition not satisfied"),
+              file = run.log, append = T)
           break
         } 
         
