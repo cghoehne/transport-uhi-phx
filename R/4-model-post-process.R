@@ -43,8 +43,6 @@ RMSE = function(m, o){
 out.folder <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), recursive = F)), keep.rownames = T)[ctime == max(ctime), rn] # last changed
 #out.folder <- paste0(here("data/outputs/1D-heat-model-runs"), "/20190311_171304_model_outputs") 
 
-#20190311_171312_model_outputs
-
 # load model simulation metadata
 model.runs <- readRDS(paste0(out.folder,"/model_runs_metadata.rds"))
 layer.profiles <- readRDS(paste0(out.folder,"/layer_profiles.rds"))
@@ -57,7 +55,7 @@ my.sites <- readRDS(paste0(out.folder,"/validation_sites.rds")) # other validati
 model.runs <- merge(model.runs, unique(my.sites[,.(station.name,Location)]), by.x = "valid.site", by.y = "Location", all.x = T)
 
 # create plots?
-should.plot <- "yes" # "yes" or "no"
+should.plot <- "no" # "yes" or "no"
 
 # create output directory for plots
 dir.create(paste0(out.folder,"/figures"), showWarnings = FALSE) # creates output figure folder if it doesn't already exist

@@ -32,70 +32,19 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 
 ## SPECIFY MODEL RUN SCENARIOS & MATERIAL PARAMETERS 
 
-# specify layer profiles as list of data.tables 
+# load layer profiles as list of data.tables 
 # note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
 # if there thermal conductivies are equivalent (k)
-layer.profiles <- list(
-  data.table( # Low Volume HMA #1 (50mm DFG + 100mm DFG)
-    layer = c("surface", "base", "subgrade"),
-    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
-    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.20, NA ,NA), # surface albedo (dimensionless)
-    emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  )
-  ,data.table( # Low Volume HMA #2 (100mm DFG rebonded 100mm DFG)
-    layer = c("surface", "intermediate", "base", "subgrade"),
-    thickness = c(0.1, 0.1, 1.3), # layer thickness (m)
-    k = c(1.8, 1.8, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2550, 2500, 2450, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(900, 925, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.20, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.89, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  )
-  ,data.table( # Low Volume Porous Asphalt #1 (high air voids, crushed agg base/subgrade)
-    layer = c("surface", "intermediate", "base", "subgrade"),
-    thickness = c(0.075, 0.03, 1.395), # layer thickness (m)
-    k = c(0.82, 1.5, 1.46), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(1906, 1430, 1600), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(946, 840, 880), # layer specific heat (J/(kg*degK)
-    albedo = c(0.2, NA, NA), # surface albedo (dimensionless)
-    emissivity = c(0.9, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  ),
-  data.table( # Low Volume HMA #1 (50mm DFG + 100mm DFG, Low Albedo)
-    layer = c("surface", "base", "subgrade"),
-    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
-    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.25, NA ,NA), # surface albedo (dimensionless)
-    emissivity = c(0.85, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  ),
-  data.table( # Low Volume HMA #1 (50mm DFG + 100mm DFG, High Albedo)
-    layer = c("surface", "base", "subgrade"),
-    thickness = c(0.05, 0.1, 1.35), # layer thickness (m)
-    k = c(1.2, 1.6, 1.0), # layer thermal conductivity (W/(m*degK)) 
-    rho = c(2400, 2370, 1500), # layer density (kg/m3) 2382 (base from infravation)
-    c = c(850, 900, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.10, NA ,NA), # surface albedo (dimensionless)
-    emissivity = c(0.93, NA, NA), # emissivity (dimensionless)
-    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
-  )
-)
+layer.profiles <- readRDS(here("data/outputs/layer-profiles-BG.rds")) # BARE GROUND
+#layer.profiles <- readRDS(here("data/outputs/layer-profiles-C.rds")) # CONCRETE / COMPOSITE
+#layer.profiles <- readRDS(here("data/outputs/layer-profiles-LVA.rds")) # ASPHALT - LOW
+#layer.profiles <- readRDS(here("data/outputs/layer-profiles-HVA.rds")) # ASPHALT - HIGH
 
-# define layer profile names corresponding to the validation site location IDs
-# so we can pull weather data from the nearest weather station to match the desired validaiton site
-layer.sites <- c("A8", "C4", "C1", "A9", "A6") 
-names(layer.profiles) <- c("Low Volume HMA #1 (50mm DFG + 100mm DFG)", 
-                           "Low Volume HMA #2 (100mm DFG rebonded 100mm DFG)", 
-                           "Low Volume Porous Asphalt #1 (high air voids, crushed agg base/subgrade)", 
-                           "Low Volume HMA #1 (50mm DFG + 100mm DFG, Low Albedo)", 
-                           "Low Volume HMA #1 (50mm DFG + 100mm DFG, High Albedo)") 
+# define validation site location IDs to pull weather data from the nearest weather site to corresponding layer profile
+layer.sites <- c("A1", "A2", "A7", "A9", "A3") # ASPHALT - LOW
+#layer.sites <- c("A6", "A2", "A5", "A4", "A9") # ASPHALT - HIGH
+#layer.sites <- c("B1", "B2", "B3", "B2") # BARE GROUND
+#layer.sites <- c("A3", "C4", "C3", "C1", "A6") # CONCRETE / COMPOSITE
 
 # load validation site data 
 valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
@@ -111,7 +60,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
-               pave.length = c(40), # characteristic length of pavement in meters
+               pave.length = c(100), # characteristic length of pavement in meters
                SVF = c(1), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
@@ -132,29 +81,17 @@ for(a in 1:length(layer.profiles)){ # record other layer profile properties in m
 
 # LOAD & FILTER WEATHER DATA 
 my.years <- unique(valid.dates[, year(date.time)]) # store all unique years to reterive weather data for those years
-weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS)) # bind all weather data for the selected years
+weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS), fill = T) # bind all weather data for the selected years
 weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs w/o NA of desired vars
 weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero to prevent errors
 
-# trim weather data to only the dates that we will be using weather data from (defined by model.runs$end.day and model.runs$n.days
-all.dates <- unique(do.call("c", mapply(function(x,y) seq(date(x) - days(y - 1), by = "day", length.out = y), model.runs$end.day, model.runs$n.days, SIMPLIFY = F)))
+# pre-trim weather data to only the dates that we will be using weather data from (defined by model.runs$end.day and model.runs$n.days
+all.dates <- unique(do.call("c", mapply(function(x,y) seq(date(x) - days(y - 1), by = "day", length.out = y + 1), model.runs$end.day, model.runs$n.days, SIMPLIFY = F)))
 weather.raw <- weather.raw[date(date.time) %in% all.dates,]
 
 # import station metadata and calculate average number of observations of critical weather parameters
 stations <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-station-data.rds")), readRDS)) # load corresonding years of station metadata
-for(s in 1:nrow(stations)){ # calculate the non-NA obs per day for important weather variables
-  s.name <- stations[s, station.name]
-  day.n <- length(unique(date(weather.raw[station.name == s.name, date.time]))) # number of unqiue days
-  stations[s, n.solar.day := weather.raw[station.name == s.name & !is.na(solar), .N] / day.n]
-  stations[s, n.dewpt.day := weather.raw[station.name == s.name & !is.na(solar), .N] / day.n]
-  stations[s, n.tempc.day := weather.raw[station.name == s.name & !is.na(solar), .N] / day.n]
-  stations[s, n.days.obs := day.n]
-}
-
-# filter out stations with no or poor data coverage (need at least 1 obs per day)
-stations <- stations[is.finite(n.solar.day)  & is.finite(n.tempc.day)  # need required parameters to be finite
-                     & n.solar.day > 0 & n.tempc.day > 0 # and positive non-zero
-                     & n.days.obs == (length(unique(model.runs$end.day)) * max(model.runs$n.days)),] # and at least one observation per day for all desired dates
+stations <- unique(stations)
 
 # define function to calculate distance in kilometers between two lat/lon points
 earth.dist <- function (long1, lat1, long2, lat2){
@@ -172,26 +109,6 @@ earth.dist <- function (long1, lat1, long2, lat2){
   return(d)
 }
 
-# calculate earth surface distance in km between chosen validation sites and available weather stations
-stations[, (my.sites$Location) := as.numeric()] # initialize columns
-for(b in 1:length(my.sites$Location)){
-  stations[, (my.sites$Location)[b] := earth.dist(my.sites[b, lon], my.sites[b, lat], stations$lon, stations$lat) ]
-}
-
-# determine which stations are the closest station to each site
-min.stations <- unique(melt(stations[, .SD, .SDcols = c("station.name",paste0(my.sites$Location))], id.vars = "station.name", variable.name = "Location", value.name = "dist.km"))
-min.stations <- min.stations[, .SD[which.min(dist.km)], by = Location]
-my.sites <- merge(min.stations, my.sites, by = "Location", all = T)
-my.sites <- merge(my.sites, stations[, .(station.name, elevation)], by = "station.name", all.x = T, allow.cartesian = T)
-
-# plot and check each site's weather data to ensure it is good quality
-#for(run in 1:(model.runs[,.N])){
-#  my.dates <- seq.Date(date(model.runs$end.day[run]) - days(model.runs$n.days[run]) + 1, date(model.runs$end.day[run]), "day")
-#  my.station <- unique(my.sites[Location == model.runs$valid.site[run], station.name])
-#  if(weather.raw[date(date.time) %in% my.dates & station.name == my.station, .N] == 0){next}
-#  plot(weather.raw[date(date.time) %in% my.dates & station.name == my.station, .(date.time, temp.f)], type="l", col="red", main = paste(my.station, my.dates[1]))
-#}
-
 # create output folder name as script start time
 out.folder <-paste0("data/outputs/1D-heat-model-runs/",
                     format(strptime(script.start, format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"),
@@ -203,7 +120,7 @@ my.errors <- NULL
 run.log <- file(paste0(out.folder,"run_log.txt"), open = "a")
 
 # BEGIN MODEL LOGIC
-for(run in 1:model.runs[,.N]){  #
+for(run in 1){  #:model.runs[,.N]
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
@@ -214,15 +131,40 @@ for(run in 1:model.runs[,.N]){  #
     cat(paste0("started run ", run, " at ", start.time, " (", round(difftime(start.time, script.start, units = "min"), ifelse(run == 1, 2, 0))," mins since start script) \n"), file = run.log, append = T)
     
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "weather",
+    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "earth.dist", "stations",
                             "weather.raw", "create.layer", "start.time", "my.errors", "my.sites", "out.folder", "run.log")))
     gc()
     t.start <- Sys.time() # start model run timestamp
     
-    # trim weather data to number of days specified
-    my.dates <- seq.Date(date(model.runs$end.day[run]) - days(model.runs$n.days[run]), date(model.runs$end.day[run]), "day")
-    my.station <- unique(my.sites[Location == model.runs$valid.site[run], station.name])
-    weather <- weather.raw[date(date.time) %in% my.dates & station.name == my.station,]
+    # store desired dates and validation site data for this run
+    my.dates <- seq.Date(date(model.runs$end.day[run]) - days(model.runs$n.days[run]) + 1, date(model.runs$end.day[run]) + 1, "day")
+    my.site <- my.sites[Location == model.runs$valid.site[run],]
+    
+    # calculate earth surface distance in km between chosen validation site and available weather stations
+    stations[, my.site.dist := earth.dist(my.site[, lon], my.site[, lat], stations$lon, stations$lat)]
+    
+    # trim weather data to just past end date.time
+    weather <- weather.raw[date.time >= min(my.dates) & date.time <= force_tz(max(my.dates) + hours(1), tz =  tz(weather.raw$date.time[1])) ,]
+    
+    # store number of days for simultion
+    day.n <- model.runs$n.days[run]
+    
+    # calculate the obs per day for desired time period
+    for(s in 1:nrow(stations)){ 
+      s.name <- stations[s, station.name]
+      stations[s, n.solar.day := weather[station.name == s.name & !is.na(solar), .N] / day.n]
+      stations[s, n.dewpt.day := weather[station.name == s.name & !is.na(solar), .N] / day.n]
+      stations[s, n.tempc.day := weather[station.name == s.name & !is.na(solar), .N] / day.n]
+    }
+    
+    # filter to only stations with at least one observation per hour
+    my.stations <- stations[n.solar.day >= 24 & n.dewpt.day >= 24 & n.tempc.day >= 24,]
+    
+    # determine which of eligible stations are the closest to the validation site
+    my.station <- my.stations[my.site.dist == min(my.site.dist, na.rm = T), station.name]
+
+    # finally, trim to station that is chosen
+    weather <- weather[station.name == my.station,]
     
     # if there are less than an avg of 12 weather obs per day, skip run and store error msgs
     if(weather[,.N] < 12 * model.runs$n.days[run]){
@@ -335,7 +277,7 @@ for(run in 1:model.runs[,.N]){  #
     weather[, T.sky := T.inf * (((0.004 * dewpt.c) + 0.8)^0.25)] # sky temperature (K), caluclated using equation (2)
     weather[, v.inf := 1.47E-6 * (T.inf^(3/2)) / (T.inf + 113)] # kinematic viscosity of air (m2/s) for T.inf btwn 100 and 800 K [9]
     weather[, k.inf := ((1.5207E-11) * (T.inf^3)) - ((4.8574E-08) * (T.inf^2)) + ((1.0184E-04) * (T.inf)) - 3.9333E-04] # thermal conductivity of air in W/(m*degK) [0.02, 0.03] (for normal air temps) [2]
-    elev <- ifelse(length(unique(my.sites[station.name == my.station, elevation])) == 0, 500, unique(my.sites[station.name == my.station, elevation])) # assume 500 m elevation if no elevation data
+    elev <- ifelse(length(my.stations[station.name == my.station, elevation]) == 0, 500, my.stations[station.name == my.station, elevation]) # assume 500 m elevation if no elevation data
     p.air.dry <- (-8.5373296284E-09 * (elev^3)) + (5.2598726265E-04 * (elev^2)) - (1.1912694417E+01 * elev) + 1.0136022009E+05 # estimate of dry air pressure (Pa) via elevation (see air-emperical-fit.xlsx for fit)
     weather$p.wat.vap <- (100 - 5 * (weather$temp.c - weather$dewpt.c)) * (6.1078 * (10^(7.5 * weather$temp.c / (weather$temp.c + 237.3)))) # RH (approx) * saturation vapor pressure
     weather$p.air.hum <- (p.air.dry / 287.058 / weather$T.inf) + (weather$p.wat.vap / 461.495 / weather$T.inf)  # density of humid air (kg/m3)
@@ -418,7 +360,7 @@ for(run in 1:model.runs[,.N]){  #
         # if it takes more than 1000 times and they aren't converging, end loop to avoid inf looping if no feasible solution
         # it will otherwise break after one run if the nodes at p and p+1 have converged
         # therefore allowing all p+2 and beyond calculations to always loop only once (intital and p+1 shouldn't change)
-
+        
         for(z in 1:200){
           
           # for timestep p, calc the surface heat transfer parameters (surface radiative coefficient, infrared radiation & convection)
@@ -434,7 +376,7 @@ for(run in 1:model.runs[,.N]){  #
           
           # for p == 1, update about surface temp and progress
           if(p == 1 & (z == 1 | z %% 10)){
-          
+            
             cat("run =", run, "|", "z =", z, "|",  # print update in console
                 "node 0:", signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3), "|",
                 "node 5:", signif(pave.time[time.s == t.step[p] & node == 5, T.K - 273.15], 3), "|",
@@ -491,7 +433,7 @@ for(run in 1:model.runs[,.N]){  #
           # store heat fluxes into pave.time at time p (with special for surface node)
           pave.time[time.s == t.step[p], h.flux.up := tmp[, up.flux]]
           pave.time[time.s == t.step[p], h.flux.dn := tmp[, dn.flux]]
-
+          
           # at surface, calc net flux, 
           pave.time[time.s == t.step[p] & node == 0, h.flux.up := -((1 - albedo) * tmp[node == 0, solar]) + tmp[node == 0, q.rad] + tmp[node == 0, q.cnv] ] # heat flux between air and surface
           pave.time[time.s == t.step[p] & node == 0, q.sol.rfl := albedo * tmp[node == 0, solar]]
@@ -579,8 +521,8 @@ for(run in 1:model.runs[,.N]){  #
           model.runs$broke.t[run] <- t.step[p] # store time model stopped
           assign("my.errors", c(my.errors, paste("stopped model run",run,"at",model.runs$broke.t[run],"secs due to CFL stability condition not satisfied")), envir = .GlobalEnv) # store error msg
           cat(paste("stopped model run",run,"at",model.runs$broke.t[run],
-          "secs due to CFL stability condition not satisfied"),
-          file = run.log, append = T)
+                    "secs due to CFL stability condition not satisfied"),
+              file = run.log, append = T)
           break
         } 
         
@@ -641,6 +583,7 @@ my.email <- as.character(fread(here("email.txt"), header = F)[1])
 my.pass <- as.character(fread(here("email.txt"), header = F)[2])
 msg <- paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(), ". Model run length: ", round(difftime(Sys.time(),script.start, units = "mins"),0)," mins.")
 cat(msg, file = run.log, append = T)
+close(run.log)
 send.mail(from = my.email,
           to = my.email,
           subject = msg,
