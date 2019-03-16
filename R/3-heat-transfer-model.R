@@ -120,7 +120,7 @@ my.errors <- NULL
 run.log <- file(paste0(out.folder,"run_log.txt"), open = "a")
 
 # BEGIN MODEL LOGIC
-for(run in 1){  #:model.runs[,.N]
+for(run in 1:model.runs[,.N]){  #
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
