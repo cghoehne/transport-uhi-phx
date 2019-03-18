@@ -30,21 +30,31 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
            checkpointLocation = here(), # calls here package
            verbose = F) 
 
-## SPECIFY MODEL RUN SCENARIOS & MATERIAL PARAMETERS 
 
-# load layer profiles as list of data.tables 
-# note that for 2 touching layers to be unique, they must have no thermal contact resistance (R.c == 0) 
-# if there thermal conductivies are equivalent (k)
-layer.profiles <- readRDS(here("data/outputs/layer-profiles-BG.rds")) # BARE GROUND
-#layer.profiles <- readRDS(here("data/outputs/layer-profiles-C.rds")) # CONCRETE / COMPOSITE
-#layer.profiles <- readRDS(here("data/outputs/layer-profiles-LVA.rds")) # ASPHALT - LOW
-#layer.profiles <- readRDS(here("data/outputs/layer-profiles-HVA.rds")) # ASPHALT - HIGH
+################################
+# DEFINE BATCH RUN ID and NAME #
+################################
+batches <- data.table(id = c("LVA", "HVA", "C", "BG"),
+                         name = c("Low Volume Asphalt Pavements" , 
+                                  "High Volume Asphalt Pavements" , 
+                                  "Concrete and Composite Concrete-Asphalt Pavements" ,
+                                  "Bare Ground / Desert Soil"))
+batch.n <- 2 # choose index for batch run type
+
+# create output folder name with run info
+out.folder <- paste0("data/outputs/1D-heat-model-runs/", 
+                     format(strptime(script.start, format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"), 
+                     "_model_outputs_", batches[batch.n, id], "/")
+dir.create(here(out.folder), showWarnings = FALSE)
+
+# load layer profiles as list of data.tables (previously defined)
+layer.profiles <- readRDS(here(paste0("data/outputs/layer-profiles-", batches[batch.n, id],".rds"))) 
 
 # define validation site location IDs to pull weather data from the nearest weather site to corresponding layer profile
-layer.sites <- c("A1", "A2", "A7", "A9", "A3") # ASPHALT - LOW
-#layer.sites <- c("A6", "A2", "A5", "A4", "A9") # ASPHALT - HIGH
-#layer.sites <- c("B1", "B2", "B3", "B2") # BARE GROUND
-#layer.sites <- c("A3", "C4", "C3", "C1", "A6") # CONCRETE / COMPOSITE
+if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B2", "B3", "B2") # BARE GROUND
+} else if(batches[batch.n, id] == "C") {layer.sites <- c("A3", "C4", "C3", "C1", "A6") # CONCRETE / COMPOSITE
+} else if(batches[batch.n, id] == "LVA") {layer.sites <- c("A1", "A2", "A7", "A9", "A3") # ASPHALT - LOW
+} else if(batches[batch.n, id] == "HVA") {layer.sites <- c("A6", "A2", "A5", "A4", "A9")} # ASPHALT - HIGH
 
 # load validation site data 
 valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
@@ -72,6 +82,7 @@ model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1) # create run num
 model.runs[,`:=`(run.time = 0, RMSE = 0, CFL_fail = 0, broke.t = NA)] # create output model run summary variables
 model.runs[, ref := min(run.n), by = layer.profile] # create refrence model for each unique layer profile (defaults to first scenario of parameters)
 model.runs[, depth := rep(sapply(1:length(layer.profiles), function (x) sum(layer.profiles[[x]]$thickness)), each = model.runs[layer.profile == 1, .N])]
+model.runs[, batch.name := batches[batch.n, name]] 
 for(a in 1:length(layer.profiles)){ # record other layer profile properties in model.runs
   model.runs[layer.profile == a, albedo := layer.profiles[[a]]$albedo[1]] 
   model.runs[layer.profile == a, emissivity := layer.profiles[[a]]$emissivity[1]]
@@ -109,18 +120,12 @@ earth.dist <- function (long1, lat1, long2, lat2){
   return(d)
 }
 
-# create output folder name as script start time
-out.folder <-paste0("data/outputs/1D-heat-model-runs/",
-                    format(strptime(script.start, format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"),
-                    "_model_outputs/")
-dir.create(here(out.folder), showWarnings = FALSE)
-
 # create empty object and file to store error messages
 my.errors <- NULL
 run.log <- file(paste0(out.folder,"run_log.txt"), open = "a")
 
 # BEGIN MODEL LOGIC
-for(run in 1:model.runs[,.N]){  #
+for(run in 52:model.runs[,.N]){  #
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
@@ -165,6 +170,10 @@ for(run in 1:model.runs[,.N]){  #
 
     # finally, trim to station that is chosen
     weather <- weather[station.name == my.station,]
+    
+    # store station.name in model.run metadata and my.sites validation data
+    model.runs[, station.name := my.station]
+    my.sites[, station.name := my.station]
     
     # if there are less than an avg of 12 weather obs per day, skip run and store error msgs
     if(weather[,.N] < 12 * model.runs$n.days[run]){
@@ -614,7 +623,6 @@ msg
 # [8] https://www.roads.maryland.gov/OMT/pdguide0718.pdf
 
 # [9] https://apps.dtic.mil/dtic/tr/fulltext/u2/a072053.pdf
-
 
 
 #plot(pave.time[node == 0, .(date.time, T.degC)],type="l",col="red")
