@@ -39,7 +39,7 @@ batches <- data.table(id = c("LVA", "HVA", "C", "BG"),
                                   "High Volume Asphalt Pavements" , 
                                   "Concrete and Composite Concrete-Asphalt Pavements" ,
                                   "Bare Ground / Desert Soil"))
-batch.n <- 2 # choose index for batch run type
+batch.n <- 1 # choose index for batch run type
 
 # create output folder name with run info
 out.folder <- paste0("data/outputs/1D-heat-model-runs/", 
@@ -82,7 +82,8 @@ model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1) # create run num
 model.runs[,`:=`(run.time = 0, RMSE = 0, CFL_fail = 0, broke.t = NA)] # create output model run summary variables
 model.runs[, ref := min(run.n), by = layer.profile] # create refrence model for each unique layer profile (defaults to first scenario of parameters)
 model.runs[, depth := rep(sapply(1:length(layer.profiles), function (x) sum(layer.profiles[[x]]$thickness)), each = model.runs[layer.profile == 1, .N])]
-model.runs[, batch.name := batches[batch.n, name]] 
+model.runs[, batch.name := batches[batch.n, name]]
+model.runs[, batch.id := batches[batch.n, id]] 
 for(a in 1:length(layer.profiles)){ # record other layer profile properties in model.runs
   model.runs[layer.profile == a, albedo := layer.profiles[[a]]$albedo[1]] 
   model.runs[layer.profile == a, emissivity := layer.profiles[[a]]$emissivity[1]]
@@ -125,7 +126,7 @@ my.errors <- NULL
 run.log <- file(paste0(out.folder,"run_log.txt"), open = "a")
 
 # BEGIN MODEL LOGIC
-for(run in 52:model.runs[,.N]){  #
+for(run in 1:model.runs[,.N]){  #
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
@@ -148,22 +149,37 @@ for(run in 52:model.runs[,.N]){  #
     # calculate earth surface distance in km between chosen validation site and available weather stations
     stations[, my.site.dist := earth.dist(my.site[, lon], my.site[, lat], stations$lon, stations$lat)]
     
-    # trim weather data to just past end date.time
+    # trim weather data to relevant dates for this run (just past end date.time)
     weather <- weather.raw[date.time >= min(my.dates) & date.time <= force_tz(max(my.dates) + hours(1), tz =  tz(weather.raw$date.time[1])) ,]
     
     # store number of days for simultion
     day.n <- model.runs$n.days[run]
     
-    # calculate the obs per day for desired time period
+    # calculate mean and sd on rounded hour for quality control checks
+    weather[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
+    weather[, avg.hr.t := mean(temp.c, na.rm = T), by = "date.time.round"]
+    weather[, sd.hr.t := sd(temp.c, na.rm = T), by = "date.time.round"]
+    weather[, avg.hr.s := mean(solar, na.rm = T), by = "date.time.round"]
+    weather[, sd.hr.s := sd(solar, na.rm = T), by = "date.time.round"]
+    
+    # we create another qcflag b/c qcflag in MESOWEST is only for whole station date range
+    weather[, qcflag2 := 1]
+    weather[between(temp.c, avg.hr.t - sd.hr.t*2, avg.hr.t + sd.hr.t*2), qcflag2 := 0]
+    weather[between(solar, avg.hr.s - sd.hr.s*2, avg.hr.t + sd.hr.t*2), qcflag2 := 0]
+
+    # calculate the remaining obs per day for desired time period
     for(s in 1:nrow(stations)){ 
       s.name <- stations[s, station.name]
       stations[s, n.solar.day := weather[station.name == s.name & !is.na(solar), .N] / day.n]
-      stations[s, n.dewpt.day := weather[station.name == s.name & !is.na(solar), .N] / day.n]
-      stations[s, n.tempc.day := weather[station.name == s.name & !is.na(solar), .N] / day.n]
+      stations[s, n.dewpt.day := weather[station.name == s.name & !is.na(dewpt.c), .N] / day.n]
+      stations[s, n.tempc.day := weather[station.name == s.name & !is.na(temp.c), .N] / day.n]
+      stations[s, p.flag := weather[station.name == s.name & qcflag2 == 1, .N] 
+               / (weather[station.name == s.name & !is.na(solar) & !is.na(temp.c), .N] + 1)]
     }
     
-    # filter to only stations with at least one observation per hour
-    my.stations <- stations[n.solar.day >= 24 & n.dewpt.day >= 24 & n.tempc.day >= 24,]
+    # filter to only stations with at least one observation per hour during desired dates
+    # with good quality data (low percent of data falling outside expected range)
+    my.stations <- stations[n.solar.day >= 24 & n.dewpt.day >= 24 & n.tempc.day >= 24 & p.flag <= 0.05,]
     
     # determine which of eligible stations are the closest to the validation site
     my.station <- my.stations[my.site.dist == min(my.site.dist, na.rm = T), station.name]
@@ -171,9 +187,11 @@ for(run in 52:model.runs[,.N]){  #
     # finally, trim to station that is chosen
     weather <- weather[station.name == my.station,]
     
-    # store station.name in model.run metadata and my.sites validation data
+    # store station.name and distance in model.run metadata and my.sites validation data
     model.runs[, station.name := my.station]
+    model.runs[, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
     my.sites[, station.name := my.station]
+    my.sites[, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
     
     # if there are less than an avg of 12 weather obs per day, skip run and store error msgs
     if(weather[,.N] < 12 * model.runs$n.days[run]){
