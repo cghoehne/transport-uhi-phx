@@ -51,10 +51,10 @@ dir.create(here(out.folder), showWarnings = FALSE)
 layer.profiles <- readRDS(here(paste0("data/outputs/layer-profiles-", batches[batch.n, id],".rds"))) 
 
 # define validation site location IDs to pull weather data from the nearest weather site to corresponding layer profile
-if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B2", "B3", "B2") # BARE GROUND
-} else if(batches[batch.n, id] == "C") {layer.sites <- c("A3", "C4", "C3", "C1", "A6") # CONCRETE / COMPOSITE
-} else if(batches[batch.n, id] == "LVA") {layer.sites <- c("A1", "A2", "A7", "A9", "A3") # ASPHALT - LOW
-} else if(batches[batch.n, id] == "HVA") {layer.sites <- c("A6", "A2", "A5", "A4", "A9")} # ASPHALT - HIGH
+if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B2", "B1") # BARE GROUND
+} else if(batches[batch.n, id] == "C") {layer.sites <- c("C4", "C1", "A6") # CONCRETE / COMPOSITE
+} else if(batches[batch.n, id] == "LVA") {layer.sites <- c("A3", "A6", "A9") # ASPHALT - LOW
+} else if(batches[batch.n, id] == "HVA") {layer.sites <- c("A3", "A5", "A9")} # ASPHALT - HIGH
 
 # load validation site data 
 valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
