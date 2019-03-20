@@ -165,8 +165,8 @@ max.y.flux <- ifelse(max.y.flux %% 20 == 0, max.y.flux, max.y.flux + 10)
 
 # create different legend charateristics for plotting
 p.names <- unique(surface.data.a[,batch.name]) # "Incoming Solar Radiation", 
-p.col <- c("#0C120C","#E2CEA2")
-#p.col <- c("#0C120C", "#0C120C", "#49473E","#E2CEA2") # asphalt, asphalt, conc, ground
+p.col <- c("#0C120C","#C1912A")
+#p.col <- c("#0C120C", "#0C120C", "#49473E","#C1912A") # asphalt, asphalt, conc, ground
 p.shp <- c(1, 2, 32, 32)
 names(p.col) <- p.names
 names(p.shp) <- p.names
@@ -199,18 +199,21 @@ p.flux.a <- (ggplot(data = surface.data.a)
              + theme_minimal()
              + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
                      axis.text = element_text(colour = "black"),
-                     plot.margin = margin(t = 10, r = 20, b = 40, l = 40, unit = "pt"),
+                     plot.margin = margin(t = 10, r = 10, b = 45, l = 20, unit = "pt"),
                      plot.title = element_text(hjust = 0.75),
-                     #axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+                     panel.spacing.x = unit(7, "mm"),
+                     panel.spacing.y = unit(3, "mm"),
+                     axis.text.x = element_text(vjust = -1),
                      axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
-                     axis.ticks.x = element_line(color = "black", size = 0.25),
+                     axis.ticks = element_line(color = "grey50", size = 0.25),
                      axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
-                     legend.position = c(0.45, -0.24),
+                     strip.text = element_text(size = 12),
+                     legend.position = c(0.45, -0.16),
                      #panel.grid.minor = element_line(color = "gray20"), # poster
                      #panel.grid.major = element_line(color = "gray17"), # poster
                      legend.text = element_text(size = 12),
                      legend.title = element_text(size = 11),
-                     legend.direction ="vertical",
+                     legend.direction ="horizontal",
                      legend.background = element_blank())
 )
 
