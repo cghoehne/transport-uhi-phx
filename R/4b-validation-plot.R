@@ -131,3 +131,93 @@ ggsave("modeled-observed.png", meta.plot, # save plot
        device = "png", path = "figures", 
        scale = 1.5, width = 6, height = 5, dpi = 300, units = "in")
 
+
+###############################
+# HEAT FLUX PLOT
+
+# import dataa
+all.surface.data <- readRDS(here("data/outputs/all_pave_surface_data_20190319_172032.rds"))
+
+# calc flux vars
+all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
+all.surface.data[, ref.sol := albedo * SVF * solar]
+all.surface.data[, net.flux := -inc.sol + q.rad + q.cnv]
+
+# summarize data
+surface.data.a <- all.surface.data[, .(dt = time.s,
+                                       out.flux = mean(q.rad + q.cnv),
+                                       inc.sol = mean(inc.sol),
+                                       net.flux = mean(net.flux),
+                                       ref.sol = mean(ref.sol)),
+                                   by = c("time.s", "batch.name", "season")]  #
+
+surface.data.a[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(time.s)] # force date, will ignore 
+
+# plot min/maxes
+min.x.flux <- min(surface.data.a$date.time, na.rm = T)
+max.x.flux <- ceiling_date(max(surface.data.a[, date.time]), unit = "hours")
+min.y.flux <- round(min(surface.data.a[, out.flux] - 5), - 1) # round down to nearest multiple of 10
+max.y.flux <- round(max(surface.data.a[, out.flux] + 5), - 1) # round up to nearest multiple of 10
+
+# adjust y to by multiple of mult
+min.y.flux <- ifelse(min.y.flux %% 20 == 0, min.y.flux, min.y.flux - 10)
+max.y.flux <- ifelse(max.y.flux %% 20 == 0, max.y.flux, max.y.flux + 10)
+
+# create different legend charateristics for plotting
+p.names <- unique(surface.data.a[,batch.name]) # "Incoming Solar Radiation", 
+p.col <- c("#0C120C","#E2CEA2")
+#p.col <- c("#0C120C", "#0C120C", "#49473E","#E2CEA2") # asphalt, asphalt, conc, ground
+p.shp <- c(1, 2, 32, 32)
+names(p.col) <- p.names
+names(p.shp) <- p.names
+surface.data.a[, batch.name := as.factor(batch.name)]
+#surface.data.a[, time := ]
+
+p.flux.a <- (ggplot(data = surface.data.a) 
+             
+             # custom border
+             + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = max.x.flux, yend = min.y.flux))   # x border (x,y) (xend,yend)
+             + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = min.x.flux, yend = max.y.flux))  # y border (x,y) (xend,yend)
+             
+             # line + point based on named factor of flux
+             + geom_line(aes(y = out.flux, x = date.time, color = batch.name), size = 2.5)
+             #+ geom_point(aes(y = out.flux, x = date.time, color = batch.name, shape = batch.name), size = 3.5, data = surface.data.a[mins %in% c(0) & secs == 0,])
+             #+ geom_ribbon(aes(ymax = max(out.flux), ymin = min(out.flux), x = date.time), fill = "grey50", alpha = 0.4)
+             
+             # plot/axis titles & second axis for solar rad units
+             #+ ggtitle("Modeled Surface Pavement Temperature")
+             + labs(x = "Time of Day", y = bquote('Outgoing Heat Flux ('*W/m^2*')'))
+             + scale_color_manual(name = "", values = p.col)
+             #+ scale_shape_manual(name = "", values = p.shp)
+             + facet_wrap(~season)
+             
+             # scales
+             + scale_x_datetime(expand = c(0,0), limits = c(min.x.flux, max.x.flux), date_breaks = "6 hours", date_labels = "%H") #
+             + scale_y_continuous(expand = c(0,0), limits = c(min.y.flux, max.y.flux), breaks = seq(min.y.flux, max.y.flux, 40))
+             
+             # theme and formatting
+             + theme_minimal()
+             + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
+                     axis.text = element_text(colour = "black"),
+                     plot.margin = margin(t = 10, r = 20, b = 40, l = 40, unit = "pt"),
+                     plot.title = element_text(hjust = 0.75),
+                     #axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+                     axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
+                     axis.ticks.x = element_line(color = "black", size = 0.25),
+                     axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+                     legend.position = c(0.45, -0.24),
+                     #panel.grid.minor = element_line(color = "gray20"), # poster
+                     #panel.grid.major = element_line(color = "gray17"), # poster
+                     legend.text = element_text(size = 12),
+                     legend.title = element_text(size = 11),
+                     legend.direction ="vertical",
+                     legend.background = element_blank())
+)
+
+p.flux.a
+
+ggsave(here("figures/heat-flux-diff.png"), p.flux.a, # save plot
+       device = "png", scale = 1, width = 8, height = 6, dpi = 300, units = "in") 
+
+
+

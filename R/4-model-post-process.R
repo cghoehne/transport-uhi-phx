@@ -32,13 +32,28 @@ windowsFonts(Century=windowsFont("TT Century Gothic"))
 windowsFonts(Times=windowsFont("TT Times New Roman"))
 my.font <- "Century"
 
+# define function to assign season
+getSeason <- function(DATES) {
+  WS <- as.Date("2012-12-15", format = "%Y-%m-%d") # Winter Solstice
+  SE <- as.Date("2012-3-15",  format = "%Y-%m-%d") # Spring Equinox
+  SS <- as.Date("2012-6-15",  format = "%Y-%m-%d") # Summer Solstice
+  FE <- as.Date("2012-9-15",  format = "%Y-%m-%d") # Fall Equinox
+  
+  # Convert dates from any year to 2012 dates (b/c leap yr)
+  d <- as.Date(strftime(DATES, format="2012-%m-%d"))
+  
+  ifelse (d >= WS | d < SE, "Winter",
+          ifelse (d >= SE & d < SS, "Spring",
+                  ifelse (d >= SS & d < FE, "Summer", "Fall")))
+}
+
 # IMPORT MODEL DATA
 
 # first get latest updated output folders to pull model run data from most recent run (can change)
 out.folders <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), 
-                                                recursive = F)), keep.rownames = T)[(.N-0):(.N), rn]
+                                                recursive = F)), keep.rownames = T)[(.N-1):(.N), rn]
 # create plots?
-should.plot <- "yes" # "yes" or "no"
+should.plot <- "no" # "yes" or "no"
 
 # loop through each folder of simulation runs
 # and then loop through each run loading simulated pavement temperature data
@@ -55,13 +70,12 @@ for(f in 1:length(out.folders)){
   valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
   my.sites <- readRDS(paste0(out.folder,"/validation_sites.rds")) # other validation sites info 
   
-  # add station.name to model summary
-  my.sites[, station.name := NA] # TEMP FIX
-  model.runs <- merge(model.runs, unique(my.sites[,.(station.name,Location)]), by.x = "valid.site", by.y = "Location", all.x = T)
-  
   # create output directory for plots
   dir.create(paste0(out.folder,"/figures"), showWarnings = FALSE) # creates output figure folder if it doesn't already exist
-  
+
+  # add season
+  model.runs[, season := factor(getSeason(end.day), levels = c("Winter","Spring","Summer","Fall"))]
+
   for(run in 1:max(model.runs[, .N])){ # 
     tryCatch({  # catch and print errors, avoids stopping model run 
       
@@ -75,7 +89,7 @@ for(f in 1:length(out.folders)){
       n.days <- model.runs[run.n == run, n.days]
       
       # minute and second variable to filter for weather obs
-      pave.time[, mins := minute(date.time)][, secs := second(date.time)] 
+      pave.time[, hrs := hour(date.time)][, mins := minute(date.time)][, secs := second(date.time)] 
       
       # add air temp in deg c to modeled data
       pave.time[, air.temp.c := T.inf - 273.15]
@@ -97,6 +111,18 @@ for(f in 1:length(out.folders)){
       model.runs[run.n == run, error := abs(Modeled - Observed)]
       model.runs[run.n == run, p.err := error / Observed]
       model.runs[run.n == run, air.temp.c := model.valid[node == 0, air.temp.c]]
+      
+      # create only surface data summary file if doesn't exist
+      if(exists("all.surface.data", where = .GlobalEnv) == F){all.surface.data <- cbind(pave.time[node == 0], 
+                                                                                        model.runs[run.n == run, .(run.n,SVF,albedo,pave.name,layer.profile,end.day,time.step,
+                                                                                                                   batch.id,batch.name,station.name,valid.site,season)])
+      } else { # add to already created pave surface summary data
+        all.surface.data <- rbind(all.surface.data, cbind(pave.time[node == 0], 
+                                                          model.runs[run.n == run, .(run.n,SVF,albedo,pave.name,layer.profile,end.day,time.step,
+                                                                                     batch.id,batch.name,station.name,valid.site,season)]))
+      }
+      
+
       
       # begin plotting if desired
       if(should.plot == "yes"){
@@ -381,28 +407,12 @@ for(f in 1:length(out.folders)){
       } # end optional plotting
     }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
   }
-  
-  # add winter/summer night/day ids to model.meta data
-  # define function to assign season
-  getSeason <- function(DATES) {
-    WS <- as.Date("2012-12-15", format = "%Y-%m-%d") # Winter Solstice
-    SE <- as.Date("2012-3-15",  format = "%Y-%m-%d") # Spring Equinox
-    SS <- as.Date("2012-6-15",  format = "%Y-%m-%d") # Summer Solstice
-    FE <- as.Date("2012-9-15",  format = "%Y-%m-%d") # Fall Equinox
-    
-    # Convert dates from any year to 2012 dates (b/c leap yr)
-    d <- as.Date(strftime(DATES, format="2012-%m-%d"))
-    
-    ifelse (d >= WS | d < SE, "Winter",
-            ifelse (d >= SE & d < SS, "Spring",
-                    ifelse (d >= SS & d < FE, "Summer", "Fall")))
-  }
-  
-  # add season, time of day (night/day) and combined season + day as factors for plotting later
-  model.runs[, season := factor(getSeason(date.time.mod), levels = c("Winter","Spring","Summer","Fall"))]
-  model.runs[, daytime := factor(ifelse(hour(date.time.mod) %in% c(7:18), "Day", "Night"), levels = c("Day","Night"))]
+
+  # in addition to season (added earlier) add time of day (night/day) and combined season + day as factors for plotting later
+  model.runs[, daytime := factor(ifelse(hour(date.time.obs) %in% c(7:18), "Day", "Night"), levels = c("Day","Night"))]
   model.runs[, day.sea := factor(paste(season, daytime), levels = c("Winter Day","Spring Day","Summer Day","Fall Day",
                                                                     "Winter Night","Spring Night","Summer Night","Fall Night"))]
+  
   # write out summary data
   write.csv(model.runs, paste0(out.folder,"/model_runs_metadata_stats.csv"), row.names = F)
   saveRDS(model.runs, paste0(out.folder,"/model_runs_metadata_stats.rds"))
@@ -411,13 +421,17 @@ for(f in 1:length(out.folders)){
   if(exists("all.model.runs", where = .GlobalEnv) == F){all.model.runs <- model.runs[0]}
   all.model.runs <- rbind(all.model.runs, model.runs)
   
-  # save if final iteration
-  if(f == length(out.folders)){
-    saveRDS(all.model.runs, here(paste0(
-      "data/outputs/all_model_run_metadata_stats_",
-      format(strptime(Sys.time(),format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"),".rds")))
-  }
 } 
+
+# save all run metadata
+saveRDS(all.model.runs, here(paste0(
+  "data/outputs/all_model_run_metadata_stats_",
+  format(strptime(Sys.time(),format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"),".rds")))
+
+# save all surface temp data
+saveRDS(all.surface.data, here(paste0(
+  "data/outputs/all_pave_surface_data_",
+  format(strptime(Sys.time(),format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"),".rds")))
 
 # combine all runs if desired
 #all.model.runs[, run.date.time := Sys.time()] # add run.date.time id for group of batched runs

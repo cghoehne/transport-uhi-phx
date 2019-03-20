@@ -34,12 +34,13 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 ################################
 # DEFINE BATCH RUN ID and NAME #
 ################################
+batch.n <- 4 # choose index for batch run type
+
 batches <- data.table(id = c("LVA", "HVA", "C", "BG"),
                          name = c("Low Volume Asphalt Pavements" , 
                                   "High Volume Asphalt Pavements" , 
                                   "Concrete and Composite Concrete-Asphalt Pavements" ,
                                   "Bare Ground / Desert Soil"))
-batch.n <- 1 # choose index for batch run type
 
 # create output folder name with run info
 out.folder <- paste0("data/outputs/1D-heat-model-runs/", 
