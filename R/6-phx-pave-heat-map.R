@@ -69,40 +69,43 @@ osm$ref <- NULL # irrelevant variable
 osm$layer <- NULL # irrelevant variable
 osm$maxspeed <- NULL # most are 0 or missing so unuseable in this case
 
-
-
 # clean up space
 rm(list=setdiff(ls(), c("stations.buffered","osm.clip.station","t.start","radii.buffers")))
 gc()
 memory.limit(size = 56000)
 
-# buffer clipped osm data
+#  "min.2w.width.m"
+#  "max.2w.width.m"
+
+# clip osm buffers by blockgroup boundaries
+#osm.block <- intersect(osm, blkgrp) # better than gIntersection b/c it keeps attributes
+
+# buffer clipped osm data twice, for range of likely roadway area (min and max roadway widths)
 # foreach loop in parallel to buffer links
 # (stores as list of SpatialPointDataFrames)
 my.cores <- parallel::detectCores()  # store computers cores
 registerDoParallel(cores = my.cores) # register parallel backend
-w <- unique(osm.block$buf.ft) # list of unique buffer widths
-b <- list() # create empty list for foreach
-osm.buf <- foreach(i = 1:length(w), .packages = c("sp","rgeos")) %dopar% {
-  b[[i]] <- gBuffer(osm.clip.station[osm.clip.station$buf.ft == w[i], ], byid = F, width = w[i], capStyle = "FLAT") # buf.ft is already adjusted to correct buffer distances
+w.min <- unique(osm$min.2w.width.m) / 2 # list of unique buffer road widths to buffer radius
+b.min <- list() # create empty list for foreach
+osm.buf <- foreach(i = 1:length(w.min), .packages = c("sp","rgeos")) %dopar% {
+  b[[i]] <- gBuffer(osm.clip.station[(osm$min.2w.width.m / 2) == w.min[i], ], byid = F, width = w.min[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
 } # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
 
 # bind the buffered osm data output
 osm.buf.mrg <- do.call(raster::bind, osm.buf) # bind list of spatial objects into single spatial obj
 
 # fix invalid geometery issues
-osm.cleaned <- clgeo_Clean(osm.buffered.m)        # start w/ simple clean function
+osm.cleaned <- clgeo_Clean(osm.buf.mrg)        # start w/ simple clean function
 osm.cleaned <- gSimplify(osm.cleaned, tol = 0.1)  # simplify polygons with Douglas-Peucker algorithm and a tolerance of 0.1 ft
 osm.cleaned <- gBuffer(osm.cleaned, width = 0)  # width = 0 as hack to clean polygon errors such as self intersetions
 
 # dissolve the roadway buffer to a single polygon to calculate area w/o overlaps
 osm.dissolved <- gUnaryUnion(osm.cleaned)
 
-# clip osm links by blockgroup boundaries
+# clip osm buffers by blockgroup boundaries
 osm.block <- intersect(osm.uza.car, blkgrp) # better than gIntersection b/c it keeps attributes
 
-
-# calc some new variables in the list of spatial objects using sapply
+# calc roadway area by blockgroup
 for(y in 1:length(stations.buffered)){
   # calculate intersecting osm roadway area aroun each station buffer for each buffer distance
   stations.buffered[[y]]$road.area <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y 

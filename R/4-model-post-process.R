@@ -51,7 +51,7 @@ getSeason <- function(DATES) {
 
 # first get latest updated output folders to pull model run data from most recent run (can change)
 out.folders <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), 
-                                                recursive = F)), keep.rownames = T)[(.N-1):(.N), rn]
+                                                recursive = F)), keep.rownames = T)[(.N-3):(.N), rn]
 # create plots?
 should.plot <- "no" # "yes" or "no"
 
@@ -74,7 +74,7 @@ for(f in 1:length(out.folders)){
   dir.create(paste0(out.folder,"/figures"), showWarnings = FALSE) # creates output figure folder if it doesn't already exist
 
   # add season
-  model.runs[, season := factor(getSeason(end.day), levels = c("Winter","Spring","Summer","Fall"))]
+  model.runs[, season := factor(getSeason(end.day), levels = c("Spring", "Summer", "Fall", "Winter"))]
 
   for(run in 1:max(model.runs[, .N])){ # 
     tryCatch({  # catch and print errors, avoids stopping model run 
@@ -410,8 +410,10 @@ for(f in 1:length(out.folders)){
 
   # in addition to season (added earlier) add time of day (night/day) and combined season + day as factors for plotting later
   model.runs[, daytime := factor(ifelse(hour(date.time.obs) %in% c(7:18), "Day", "Night"), levels = c("Day","Night"))]
-  model.runs[, day.sea := factor(paste(season, daytime), levels = c("Winter Day","Spring Day","Summer Day","Fall Day",
-                                                                    "Winter Night","Spring Night","Summer Night","Fall Night"))]
+  model.runs[, day.sea := factor(paste(season, daytime), levels = c("Spring Day","Spring Night","Summer Day","Summer Night",
+                                                                    "Fall Day","Fall Night","Winter Day","Winter Night"))]
+  
+  
   
   # write out summary data
   write.csv(model.runs, paste0(out.folder,"/model_runs_metadata_stats.csv"), row.names = F)
@@ -423,17 +425,31 @@ for(f in 1:length(out.folders)){
   
 } 
 
+# filter surface pave data to only the 3rd (last day), as that is all we will need
+all.surface.data <- all.surface.data[time.s >= (60*60*24*2),]
+
+# create summaries of error bu variables to identify best/worst 
+RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))} # RMSE function
+day.err <- model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = "end.day"][order(RMSE)]
+site.err <- model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = "valid.site"][order(RMSE)]
+layer.err <- model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = c("layer.profile", "batch.name")][order(RMSE)]
+station.err <- model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = "station.name"][order(RMSE)]
+
+# create metadata out folder
+meta.folder <- here(paste0("data/outputs/run_metadata_", 
+                           format(strptime(Sys.time(),format = "%Y-%m-%d %H:%M:%S"), 
+                                  format = "%Y%m%d_%H%M%S")))
+dir.create(meta.folder, showWarnings = FALSE) # creates output figure folder if it doesn't already exist
+
 # save all run metadata
-saveRDS(all.model.runs, here(paste0(
-  "data/outputs/all_model_run_metadata_stats_",
-  format(strptime(Sys.time(),format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"),".rds")))
+saveRDS(all.model.runs, paste0(meta.folder, "/stats_all_model_runs.rds"))
+saveRDS(all.surface.data, paste0(meta.folder, "/all_pave_surface_data.rds"))
+write.csv(day.err, paste0(meta.folder, "/error-day.csv"))
+write.csv(site.err, paste0(meta.folder, "/error-site.csv"))
+write.csv(layer.err, paste0(meta.folder, "/error-layer.csv"))
+write.csv(station.err, paste0(meta.folder, "/error-station.csv"))
 
-# save all surface temp data
-saveRDS(all.surface.data, here(paste0(
-  "data/outputs/all_pave_surface_data_",
-  format(strptime(Sys.time(),format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"),".rds")))
-
-# combine all runs if desired
+# combine with all previous runs if desired
 #all.model.runs[, run.date.time := Sys.time()] # add run.date.time id for group of batched runs
 #all.model.runs.a <- readRDS(here("data/outputs/stats_all_model_runs.rds")) # import all previous summary data
 #all.model.runs.a <- rbind(all.model.runs.a, all.model.runs) # merge together
