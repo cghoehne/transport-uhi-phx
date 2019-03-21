@@ -1,0 +1,15 @@
+cleangeo                Clean Geometries from Spatial Objects
+clgeo_Clean             clgeo_Clean
+clgeo_CleanByPolygonation.Polygon
+                        clgeo_CleanByPolygonation.Polygon
+clgeo_CleanByPolygonation.Polygons
+                        clgeo_CleanByPolygonation.Polygons
+clgeo_CleanByPolygonation.SpatialPolygons
+                        clgeo_CleanByPolygonation.SpatialPolygons
+clgeo_CollectionReport
+                        clgeo_CollectionReport
+clgeo_GeometryReport    clgeo_GeometryReport
+clgeo_IsValid           clgeo_IsValid
+clgeo_SummaryReport     clgeo_SummaryReport
+clgeo_SuspiciousFeatures
+                        clgeo_SuspiciousFeatures

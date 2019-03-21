@@ -153,6 +153,9 @@ ggsave("modeled-observed.png", my.plot.f,
 # import dataa
 all.surface.data <- readRDS(paste0(folder, "all_pave_surface_data.rds"))
 
+# flux comparisons by type
+all.surface.data[, mean(q.rad + q.cnv), by = c("pave.name", "batch.name", "albedo")][order(V1)]
+
 # new names
 all.surface.data[, new.name := batch.name]
 all.surface.data[batch.name == "High Volume Asphalt Pavements", new.name := "High Stress Asphalt"]
@@ -244,3 +247,94 @@ p.flux.a <- (ggplot(data = surface.data.a)
 # save plot
 ggsave(here("figures/heat-flux-diff.png"), p.flux.a, 
        device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
+
+##############################
+# SAMPLE VEH WASTE HEAT PLOT #
+##############################
+
+veh.heat <- fread(here("data/veh-waste-heat-sample.csv"))
+
+all.veh.heat <- rbind(cbind(veh.heat, "(a) Highway"), 
+                      cbind(veh.heat, "(b) Arterial"),
+                      cbind(veh.heat, "(c) Collector"),
+                      cbind(veh.heat, "(d) Local"))
+setnames(all.veh.heat, "V2", "id")
+
+# convert day fraction into date.time (will ignore date)
+all.veh.heat[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(day.frac * 24 * 60 * 60)]
+
+# plot min/maxes
+min.x.veh <- min(all.veh.heat$date.time, na.rm = T) 
+max.x.veh <- ceiling_date(max(all.veh.heat[, date.time]), unit = "hours")
+min.y.veh <- round(min(all.veh.heat[, min.flux] - 5), - 1) # round down to nearest multiple of 10
+max.y.veh <- 240 #round(max(all.veh.heat[, max.flux] + 5), - 1) # round up to nearest multiple of 10
+
+# adjust y to by multiple of mult
+min.y.veh <- ifelse(min.y.veh %% 20 == 0, min.y.veh, min.y.veh - 10)
+max.y.veh <- ifelse(max.y.veh %% 20 == 0, max.y.veh, max.y.veh + 10)
+
+# create different legend charateristics for plotting
+v.names <- c("(a) Highway", "(b) Arterial", "(c) Collector", "(d) Local")
+all.veh.heat[, id := factor(id, levels = v.names)]
+v.col <- c("#220901", "#621708", "#941B0C", "#BC3908")  
+v.lty <- c("solid", "twodash","solid", "twodash")
+names(v.col) <- v.names
+names(v.lty) <- v.names
+
+# temp scale down magnitudes
+all.veh.heat[id == v.names[2], `:=`(min.flux = min.flux * 0.75, 
+                                    mean.flux = mean.flux * 0.75, 
+                                    max.flux = max.flux * 0.75)]
+all.veh.heat[id == v.names[3], `:=`(min.flux = min.flux * 0.5, 
+                                    mean.flux = mean.flux * 0.5, 
+                                    max.flux = max.flux * 0.5)]
+all.veh.heat[id == v.names[4], `:=`(min.flux = min.flux * 0.25, 
+                                    mean.flux = mean.flux * 0.25, 
+                                    max.flux = max.flux * 0.25)]
+
+# create plot
+p.flux.v <- (ggplot(data = all.veh.heat) 
+             
+             # custom border
+             + geom_segment(aes(x = min.x.veh, y = min.y.veh, xend = max.x.veh, yend = min.y.veh))   # x border (x,y) (xend,yend)
+             + geom_segment(aes(x = min.x.veh, y = min.y.veh, xend = min.x.veh, yend = max.y.veh))  # y border (x,y) (xend,yend)
+             
+             # line + point based on named factor of flux
+             + geom_ribbon(aes(ymin = min.flux, ymax = max.flux, x = date.time),fill = "grey50")
+             + geom_line(aes(y = mean.flux, x = date.time, color = id, linetype = id), size = 1)
+             
+             # plot/axis titles & second axis for solar rad units
+             + labs(x = "Time of Day", y = bquote('Vehicle Waste Heat Flux ('*W/m^2*')'))
+             + scale_color_manual(name = "", values = v.col) # , guide = guide_legend(reverse = T)
+             + scale_linetype_manual(name = "", values = v.lty) # , guide = guide_legend(reverse = T)
+             + facet_wrap(~id)
+             
+             # scales
+             + scale_x_datetime(expand = c(0,0), limits = c(min.x.veh, max.x.veh), date_breaks = "3 hours", date_labels = "%H") #
+             + scale_y_continuous(expand = c(0,0), limits = c(min.y.veh, max.y.veh), breaks = seq(min.y.veh, max.y.veh, 40))
+             #+ guides(col = guide_legend(ncol = 2)) # two rows in legend
+             
+             # theme and formatting
+             + theme_minimal()
+             + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
+                     axis.text = element_text(colour = "black"),
+                     plot.margin = margin(t = 5, r = 10, b = 15, l = 10, unit = "pt"), #b = 85
+                     panel.spacing.x = unit(7, "mm"),
+                     panel.spacing.y = unit(4, "mm"),
+                     axis.text.x = element_text(vjust = -1),
+                     axis.title.x = element_text(margin = margin(t = 12, r = 0, b = 0, l = 0)),
+                     axis.ticks = element_line(color = "grey50", size = 0.28),
+                     axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+                     strip.text.x = element_text(size = 12, hjust = 0, vjust = 1, face = "bold"),
+                     legend.position = "none", #c(0.525, -0.255),
+                     legend.key.width = unit(30, "mm"),
+                     legend.text = element_text(size = 10),
+                     legend.spacing.y = unit(1, "mm"),
+                     legend.direction ="vertical")
+)
+
+# save plot
+ggsave(here("figures/veh-heat-flux-diff.png"), p.flux.v, 
+       device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
+
+

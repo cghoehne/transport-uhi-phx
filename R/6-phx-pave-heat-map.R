@@ -3,31 +3,46 @@
 ## OSM DATA IMPORT and FORMART to USE with WEATHER STATION DATA ##
 #################################################################
 
-# start by maxing out the memory allocation (we use high number to force max allocation)
+# ** It is recommended to use Microsoft Open R (v3.5.1) for improved performance without compromsing compatibility **
+
+## SCRIPT PREPERATION
+
+# clear space and allocate memory
 gc()
 memory.limit(size = 56000) 
-t.start <- Sys.time() # start script timestamp
+script.start <- Sys.time() # start script timestamp
 
-# list of all dependant packages
-list.of.packages <- c(
-  "data.table",
-                      "XML",
-                      "rgdal",
-                      "rgeos",
-                      "maptools",
-                      "sp",
-                      "cleangeo",
-                      "doParallel",
-                      "foreach",
-                      "raster",
-                      "here")
+# first make sure checkpoint is installed locally
+# this is the only package that is ok to not use a 'checkpointed' (i.e. archived version of a package)
+# checkpoint does not archive itself and it should not create dependency issues
+if (!require("checkpoint")){
+  install.packages("checkpoint")
+  library(checkpoint, quietly = T)
+}
 
-# install missing packages
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
+# load all other dependant packages from the local repo
+lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
+library(doParallel, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(foreach, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(XML, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(zoo, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(lubridate, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(sp, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(raster, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(rgdal, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(rgeos, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(maptools, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(cleangeo, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(gdalUtils, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(tmap, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(data.table, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(here, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 
-# load packages
-invisible(lapply(list.of.packages, library, character.only = T)) # invisible() just hides printing stuff in console
+# archive/update snapshot of packages at checkpoint date
+checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday
+           R.version = "3.5.1", # will only work if using the same version of R
+           checkpointLocation = here(), # calls here package
+           verbose = F) 
 
 # IMPORT DATA
 #osm <- readOGR(here("data/shapefiles/osm/maricopa_county_osm_roads.shp"))
@@ -35,10 +50,9 @@ osm <- shapefile(here("data/shapefiles/osm/maricopa_county_osm_roads.shp")) # im
 fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by roadway functional class (fclass)
 blkgrp <- shapefile(here("data/shapefiles/boundaries/phx-blkgrp-geom.shp")) # census blockgroup shapfile (clipped to Phoenix UZA)
 
-traffic.net <- xmlParse(here("data/icarus network/optimizedNetwork.xml")) # traffic network from xml
-traffic <- fread(here("data/icarus_osm_traffic.csv")) # import traffic data aggregated by osm link id and hour
-
-traffic.net.dt <- xmlToList(traffic.net)
+#traffic.net <- xmlParse(here("data/icarus network/optimizedNetwork.xml")) # traffic network from xml
+#traffic <- fread(here("data/icarus_osm_traffic.csv")) # import traffic data aggregated by osm link id and hour
+#traffic.net.dt <- xmlToList(traffic.net)
 # setnames(traffic, "link_id", "osm_id") 
 # merge traffic data to osm data by link id
 #osm.dt <- merge(osm.dt, traffic, by = "id")
@@ -70,7 +84,7 @@ osm$layer <- NULL # irrelevant variable
 osm$maxspeed <- NULL # most are 0 or missing so unuseable in this case
 
 # clean up space
-rm(list=setdiff(ls(), c("stations.buffered","osm.clip.station","t.start","radii.buffers")))
+rm(list=setdiff(ls(), c("osm","blkgrp","script.start")))
 gc()
 memory.limit(size = 56000)
 
@@ -88,7 +102,7 @@ registerDoParallel(cores = my.cores) # register parallel backend
 w.min <- unique(osm$min.2w.width.m) / 2 # list of unique buffer road widths to buffer radius
 b.min <- list() # create empty list for foreach
 osm.buf <- foreach(i = 1:length(w.min), .packages = c("sp","rgeos")) %dopar% {
-  b[[i]] <- gBuffer(osm.clip.station[(osm$min.2w.width.m / 2) == w.min[i], ], byid = F, width = w.min[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
+  b.min[[i]] <- gBuffer(osm[(osm$min.2w.width.m / 2) == w.min[i], ], byid = F, width = w.min[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
 } # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
 
 # bind the buffered osm data output
@@ -106,20 +120,16 @@ osm.dissolved <- gUnaryUnion(osm.cleaned)
 osm.block <- intersect(osm.uza.car, blkgrp) # better than gIntersection b/c it keeps attributes
 
 # calc roadway area by blockgroup
-for(y in 1:length(stations.buffered)){
+x <- 1
+blkgrp$min.road.area <- ifelse(is.null(gIntersection(blkgrp[[y]][x,], osm.block)), 0, # check if no intersection and return 0 as area if null
+                               gArea(gIntersection(blkgrp[[y]][x,], osm.block))) # otherwise calc the area of intersection with the road area
+
+for(y in 1:length(blkgrp)){
   # calculate intersecting osm roadway area aroun each station buffer for each buffer distance
-  stations.buffered[[y]]$road.area <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y 
+  blkgrp[[y]]$min.road.area <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y 
                                              function(x) ifelse(is.null(gIntersection(stations.buffered[[y]][x,], osm.dissolved)), 0, # check if no intersection and return 0 as area if null
                                                                 gArea(gIntersection(stations.buffered[[y]][x,], osm.dissolved)))) # otherwise calc the area of intersection with the road area
-  
-  # calculate the area of station buffer (for % area calc). Note it is the same for all features, same buffer
-  stations.buffered[[y]]$buffer.area <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                               function(x) gArea(stations.buffered[[y]][x,])) # calc the station area buffer
-  
-  # calculate the % area of roadway w/in buffer
-  stations.buffered[[y]]$road.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                             function(x) stations.buffered[[y]][x,]$road.area / stations.buffered[[y]][x,]$buffer.area) # calc the % roadway area in buffer
-}
+  }
 
 ## PARKING
 # ignore on-street spaces for area calcs because part of roadway
@@ -135,7 +145,7 @@ for(y in 1:length(station.parcels)){
   station.parcels[[y]] <- sp::merge(station.parcels[[y]], parcels.trimmed, by = "APN", duplicateGeoms = T, all.x = T)}
 
 
-# calc parking % area in station buffers and adjust total spaces if total parking area + roadway area > station buffer
+# calc parking area in station buffers and adjust total spaces if total parking area + roadway area > station buffer
 # (which means there is multistory parking and we just assume there is a 100% road + parking coverage)
 for(y in 1:length(stations.buffered)){
   stations.buffered[[y]]$park.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y

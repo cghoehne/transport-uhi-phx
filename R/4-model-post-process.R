@@ -112,14 +112,19 @@ for(f in 1:length(out.folders)){
       model.runs[run.n == run, p.err := error / Observed]
       model.runs[run.n == run, air.temp.c := model.valid[node == 0, air.temp.c]]
       
+      # in addition to season (added earlier) add time of day (night/day) and combined season + day as factors for plotting later
+      model.runs[run.n == run, daytime := factor(ifelse(hour(date.time.obs) %in% c(7:18), "Day", "Night"), levels = c("Day","Night"))]
+      model.runs[run.n == run, day.sea := factor(paste(season, daytime), levels = c("Spring Day","Spring Night","Summer Day","Summer Night",
+                                                                        "Fall Day","Fall Night","Winter Day","Winter Night"))]
+      
       # create only surface data summary file if doesn't exist
       if(exists("all.surface.data", where = .GlobalEnv) == F){all.surface.data <- cbind(pave.time[node == 0], 
                                                                                         model.runs[run.n == run, .(run.n,SVF,albedo,pave.name,layer.profile,end.day,time.step,
-                                                                                                                   batch.id,batch.name,station.name,valid.site,season)])
+                                                                                                                   batch.id,batch.name,station.name,valid.site,season,daytime,day.sea)])
       } else { # add to already created pave surface summary data
         all.surface.data <- rbind(all.surface.data, cbind(pave.time[node == 0], 
                                                           model.runs[run.n == run, .(run.n,SVF,albedo,pave.name,layer.profile,end.day,time.step,
-                                                                                     batch.id,batch.name,station.name,valid.site,season)]))
+                                                                                     batch.id,batch.name,station.name,valid.site,season,daytime,day.sea)]))
       }
       
 
@@ -408,13 +413,6 @@ for(f in 1:length(out.folders)){
     }, error = function(e){cat("ERROR:",conditionMessage(e), "\n")}) # print error message if model run had error
   }
 
-  # in addition to season (added earlier) add time of day (night/day) and combined season + day as factors for plotting later
-  model.runs[, daytime := factor(ifelse(hour(date.time.obs) %in% c(7:18), "Day", "Night"), levels = c("Day","Night"))]
-  model.runs[, day.sea := factor(paste(season, daytime), levels = c("Spring Day","Spring Night","Summer Day","Summer Night",
-                                                                    "Fall Day","Fall Night","Winter Day","Winter Night"))]
-  
-  
-  
   # write out summary data
   write.csv(model.runs, paste0(out.folder,"/model_runs_metadata_stats.csv"), row.names = F)
   saveRDS(model.runs, paste0(out.folder,"/model_runs_metadata_stats.rds"))
