@@ -35,11 +35,14 @@ my.font <- "Century"
 # create RMSE function
 RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))}
 
-# define folder for data reterival
-folder <- paste0(here("data/outputs"),"/run_metadata_20190320_192039/")
+# define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
+folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
+                        keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
+#folder[max(grep("run_metadata", rn)), rn] # alt
+#folder[grep("run_metadata", rn),][.N] # alt
 
 # IMPORT MODEL DATA
-all.model.runs <- readRDS(paste0(folder, "stats_all_model_runs.rds"))
+all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
 
 # filter if necessary / as desired
@@ -141,9 +144,9 @@ my.plot.f <- (ggplot(data = model.runs)
             )
 
 # save plot
-ggsave("modeled-observed.png", my.plot.f, 
-       device = "png", path = "figures", 
-       scale = 1.5, width = 6, height = 5, dpi = 300, units = "in")
+dir.create(paste0(folder, "/figures/"), showWarnings = F)
+ggsave(paste0(folder, "/figures/modeled-observed.png"), my.plot.f, 
+       device = "png", scale = 1.5, width = 6, height = 5, dpi = 300, units = "in")
 
 
 ##################
@@ -151,7 +154,7 @@ ggsave("modeled-observed.png", my.plot.f,
 ##################
 
 # import dataa
-all.surface.data <- readRDS(paste0(folder, "all_pave_surface_data.rds"))
+all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
 
 # flux comparisons by type
 all.surface.data[, mean(q.rad + q.cnv), by = c("pave.name", "batch.name", "albedo")][order(V1)]
@@ -190,10 +193,10 @@ min.y.flux <- ifelse(min.y.flux %% 20 == 0, min.y.flux, min.y.flux - 10)
 max.y.flux <- ifelse(max.y.flux %% 20 == 0, max.y.flux, max.y.flux + 10)
 
 # create different legend charateristics for plotting
-surface.data.a[, new.name.f := factor(new.name, levels = c(p.names[2], p.names[4], p.names[3], p.names[1]))]
-p.col <- c("#0C120C", "#C1912A", "#0C120C", "#918D77")  # order is HVA, BG, LVA, C
+surface.data.a[, new.name.f := factor(new.name, levels = c(p.names[4], p.names[3], p.names[1], p.names[2]))]
+p.col <- c("#0C120C", "#0C120C", "#918D77", "#C1912A")  # order is HVA, LVA, C, BG
 p.shp <- c(1, 32, 2, 32)  # order is HVA, BG, LVA, C
-p.lty <- c("longdash", "solid", "solid", "twodash") # order is HVA, BG, LVA, C
+p.lty <- c("longdash", "solid", "solid", "twodash") # order is HVA, LVA, C, BG
 names(p.col) <- p.names
 names(p.shp) <- p.names
 names(p.lty) <- p.names
@@ -245,7 +248,7 @@ p.flux.a <- (ggplot(data = surface.data.a)
 )
 
 # save plot
-ggsave(here("figures/heat-flux-diff.png"), p.flux.a, 
+ggsave(paste0(folder, "/figures/heat-flux-diff.png"), p.flux.a, 
        device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
 
 ##############################
@@ -334,7 +337,7 @@ p.flux.v <- (ggplot(data = all.veh.heat)
 )
 
 # save plot
-ggsave(here("figures/veh-heat-flux-diff.png"), p.flux.v, 
+ggsave(paste0(folder, "/figures/veh-heat-flux-diff.png"), p.flux.v, 
        device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
 
 

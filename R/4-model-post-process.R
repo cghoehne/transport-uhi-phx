@@ -53,7 +53,7 @@ getSeason <- function(DATES) {
 out.folders <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), 
                                                 recursive = F)), keep.rownames = T)[(.N-3):(.N), rn]
 # create plots?
-should.plot <- "no" # "yes" or "no"
+should.plot <- "yes" # "yes" or "no"
 
 # loop through each folder of simulation runs
 # and then loop through each run loading simulated pavement temperature data
