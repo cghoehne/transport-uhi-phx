@@ -163,7 +163,8 @@ all.surface.data[, mean(q.rad + q.cnv), by = c("pave.name", "batch.name", "albed
 all.surface.data[, new.name := batch.name]
 all.surface.data[batch.name == "High Volume Asphalt Pavements", new.name := "High Stress Asphalt"]
 all.surface.data[batch.name == "Low Volume Asphalt Pavements", new.name := "Low Stress Asphalt"]
-all.surface.data[batch.name == "Concrete and Composite Concrete-Asphalt Pavements", new.name := "Concrete & Whitetopped Asphalt"]
+all.surface.data[batch.name == "Concrete and Composite Concrete-Asphalt Pavements", 
+                 new.name := "Concrete & Whitetopped Asphalt"]
 
 # calc flux vars
 all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
@@ -185,7 +186,7 @@ surface.data.a[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(ti
 # plot min/maxes
 min.x.flux <- min(surface.data.a$date.time, na.rm = T) 
 max.x.flux <- ceiling_date(max(surface.data.a[, date.time]), unit = "hours")
-min.y.flux <- round(min(surface.data.a[, out.flux] - 5), - 1) # round down to nearest multiple of 10
+min.y.flux <- 0 #round(min(surface.data.a[, out.flux] - 5), - 1) # round down to nearest multiple of 10
 max.y.flux <- round(max(surface.data.a[, out.flux] + 5), - 1) # round up to nearest multiple of 10
 
 # adjust y to by multiple of mult
@@ -203,10 +204,11 @@ names(p.lty) <- p.names
 
 
 # create better labels for season factor
-setattr(surface.data.a$season,"levels", c("(a) Spring", "(b) Summer", "(c) Fall", "(d) Winter"))
+#setattr(surface.data.a$season,"levels", c("(a) Spring", "(b) Summer", "(c) Fall", "(d) Winter"))
+setattr(surface.data.a$season,"levels", c("(a) Spring", "(a) Summer", "(c) Fall", "(b) Winter"))
 
 # create plot
-p.flux.a <- (ggplot(data = surface.data.a) 
+p.flux.a <- (ggplot(data = surface.data.a[season %in% c("(a) Summer", "(b) Winter")]) 
              
              # custom border
              + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = max.x.flux, yend = min.y.flux))   # x border (x,y) (xend,yend)
@@ -240,7 +242,7 @@ p.flux.a <- (ggplot(data = surface.data.a)
                      axis.ticks = element_line(color = "grey80", size = 0.28),
                      axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
                      strip.text.x = element_text(size = 12, hjust = 0, vjust = 1, face = "bold"),
-                     legend.position = c(0.525, -0.255),
+                     legend.position = c(0.525, -0.4),
                      legend.key.width = unit(30, "mm"),
                      legend.text = element_text(size = 10),
                      legend.spacing.y = unit(1, "mm"),
@@ -249,7 +251,7 @@ p.flux.a <- (ggplot(data = surface.data.a)
 
 # save plot
 ggsave(paste0(folder, "/figures/heat-flux-diff.png"), p.flux.a, 
-       device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
+       device = "png", scale = 1, width = 7, height = 4.5, dpi = 300, units = "in") 
 
 ##############################
 # SAMPLE VEH WASTE HEAT PLOT #

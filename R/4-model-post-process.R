@@ -53,7 +53,7 @@ getSeason <- function(DATES) {
 out.folders <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), 
                                                 recursive = F)), keep.rownames = T)[(.N-3):(.N), rn]
 # create plots?
-should.plot <- "yes" # "yes" or "no"
+should.plot <- "no" # "yes" or "no"
 
 # loop through each folder of simulation runs
 # and then loop through each run loading simulated pavement temperature data
@@ -85,7 +85,7 @@ for(f in 1:length(out.folders)){
       # read simulation data
       pave.time <- readRDS(paste0(out.folder,"/run_",run,"_output.rds"))
       
-      # record avg max temp and final day max temp at surface
+      # record number of days
       n.days <- model.runs[run.n == run, n.days]
       
       # minute and second variable to filter for weather obs
@@ -93,10 +93,36 @@ for(f in 1:length(out.folders)){
       
       # add air temp in deg c to modeled data
       pave.time[, air.temp.c := T.inf - 273.15]
+
+      # calc Q1:3 quants and mean min max by depth
+      pave.time[,`:=`(T.degC.75 = quantile(T.degC, probs = 0.75), 
+                      T.degC.50 = quantile(T.degC, probs = 0.50),
+                      T.degC.25 = quantile(T.degC, probs = 0.25),
+                      T.degC.mean = mean(T.degC),
+                      T.degC.min = min(T.degC),
+                      T.degC.max = max(T.degC)),
+                by = depth.m]
+      
+      # find nearest depths to 0.5m and 1.0m and record min, max and quantile temps
+      my.depths <- unique(pave.time[, depth.m])
+      my.depths <- my.depths[c(which.min(abs(my.depths - 1)), which.min(abs(my.depths - 0.5)))]
+      
+      model.runs[run.n == run, min.T_0.5m := unique(pave.time[depth.m %in% my.depths[1], T.degC.min]) ]
+      #model.runs[run.n == run, p25.T_0.5m := unique(pave.time[depth.m %in% my.depths[1], T.degC.25]) ]
+      #model.runs[run.n == run, p50.T_0.5m := unique(pave.time[depth.m %in% my.depths[1], T.degC.50]) ]
+      model.runs[run.n == run, avg.T_0.5m := unique(pave.time[depth.m %in% my.depths[1], T.degC.mean]) ]
+      #model.runs[run.n == run, p75.T_0.5m := unique(pave.time[depth.m %in% my.depths[1], T.degC.75]) ]
+      model.runs[run.n == run, max.T_0.5m := unique(pave.time[depth.m %in% my.depths[1], T.degC.max]) ]
+      
+      model.runs[run.n == run, min.T_1.0m := unique(pave.time[depth.m %in% my.depths[2], T.degC.min]) ]
+      #model.runs[run.n == run, p25.T_1.0m := unique(pave.time[depth.m %in% my.depths[2], T.degC.25]) ]
+      #model.runs[run.n == run, p50.T_1.0m := unique(pave.time[depth.m %in% my.depths[2], T.degC.50]) ]
+      model.runs[run.n == run, avg.T_1.0m := unique(pave.time[depth.m %in% my.depths[2], T.degC.mean]) ]
+      #model.runs[run.n == run, p75.T_1.0m := unique(pave.time[depth.m %in% my.depths[2], T.degC.75]) ]
+      model.runs[run.n == run, max.T_1.0m := unique(pave.time[depth.m %in% my.depths[2], T.degC.max]) ]
       
       # obtain date.time from validation to match pavement time to
       obs.valid <- valid.dates[site == model.runs[run.n == run, valid.site] & date(date.time) == model.runs[run.n == run, end.day], ]
-      
       
       # retrieve modeled pavement data for relevant variables at nearest time
       model.valid <- pave.time[which(abs(difftime(pave.time[,date.time], obs.valid[, date.time])) == 
@@ -263,14 +289,6 @@ for(f in 1:length(out.folders)){
         
         
         # TEMP BY DEPTH DYNAMIC PLOT
-        # calc Q1:3 quants and mean min max
-        pave.time[,`:=`(T.degC.75 = quantile(T.degC, probs = 0.75), 
-                        T.degC.50 = quantile(T.degC, probs = 0.50),
-                        T.degC.25 = quantile(T.degC, probs = 0.25),
-                        T.degC.mean = mean(T.degC),
-                        T.degC.min = min(T.degC),
-                        T.degC.max = max(T.degC)),
-                  by = depth.m]
         
         # aggregate through time to unique by depth
         pave.time.agg <- unique(pave.time[, .(depth.m, T.degC.min, T.degC.25, T.degC.50, T.degC.mean, T.degC.75, T.degC.max)])
