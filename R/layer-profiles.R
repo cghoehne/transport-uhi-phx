@@ -90,12 +90,17 @@ names(layer.profiles.bg) <- c("Bare Dry Soil #1",
                               "Bare Dry Soil #5",
                               "Bare Dry Soil #6") 
 
+# ADDS: none
+# just vary all parameters between high and low in Table 1 such that only one parameter
+# per profile is varied. for every thickness design, there will be
+# one of each: high albedo only, low albedo only, high/low density, high/low k, etc..
+
 # CONCRETE / COMPOSITE
 
 layer.profiles.c <- list(
    data.table( # Low Volume PCC w/ additives #1 (0.25 albedo)
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.4, 0.1, 1.0), # layer thickness (m)
+    thickness = c(0.25, 0.1, 1.0), # layer thickness (m)
     k = c(1.4, 1.8, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2400, 2300, 1500), # layer density (kg/m3)
     c = c(1050, 800, 1900), # layer specific heat (J/(kg*degK)
@@ -103,19 +108,29 @@ layer.profiles.c <- list(
     emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  ,data.table( # Low Volume PCC w/ additives #1 (0.30 albedo)
+  ,data.table( # Low Volume PCC w/ additives #1 (0.35 albedo)
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.4, 0.1, 1.0), # layer thickness (m)
+    thickness = c(0.25, 0.1, 1.0), # layer thickness (m)
     k = c(1.4, 1.8, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2400, 2300, 1500), # layer density (kg/m3)
     c = c(1050, 800, 1900), # layer specific heat (J/(kg*degK)
-    albedo = c(0.3, NA, NA), # surface albedo (dimensionless)
+    albedo = c(0.35, NA, NA), # surface albedo (dimensionless)
     emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
     R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
   )
-  ,data.table( # Low Volume PCC w/ additives #1 (0.35 albedo)
+  ,data.table( # High Volume PCC w/ additives #1 (0.25 albedo)
     layer = c("surface", "base", "subgrade"),
-    thickness = c(0.4, 0.1, 1.0), # layer thickness (m)
+    thickness = c(0.6, 0.1, 1.0), # layer thickness (m)
+    k = c(1.4, 1.8, 1.0), # layer thermal conductivity (W/(m*degK)) 
+    rho = c(2400, 2300, 1500), # layer density (kg/m3)
+    c = c(1050, 800, 1900), # layer specific heat (J/(kg*degK)
+    albedo = c(0.35, NA, NA), # surface albedo (dimensionless)
+    emissivity = c(0.95, NA, NA), # emissivity (dimensionless)
+    R.c.top = c(0, 0, 0) # thermal contact resistance at top boundary of layer (dimensionless)
+  )
+  ,data.table( # High Volume PCC w/ additives #1 (0.35 albedo)
+    layer = c("surface", "base", "subgrade"),
+    thickness = c(0.6, 0.1, 1.0), # layer thickness (m)
     k = c(1.4, 1.8, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2400, 2300, 1500), # layer density (kg/m3)
     c = c(1050, 800, 1900), # layer specific heat (J/(kg*degK)
@@ -186,15 +201,21 @@ layer.profiles.c <- list(
 )
 
 # define layer profile names 
-names(layer.profiles.c) <- c("Low Stress PCC #1 (0.25 albedo)",
-                             "Low Stress PCC #1 (0.30 albedo)",
-                             "Low Stress PCC #1 (0.35 albedo)",
+names(layer.profiles.c) <- c("Low Stress PCC (0.25 albedo)",
+                             "Low Stress PCC (0.35 albedo)",
+                             "High Stress PCC (0.25 albedo)",
+                             "High Stress PCC (0.35 albedo)",
                              "Thin whitetopping on Low Stress HMA #1 (100mm DFG rebonded 100mm DFG)",
                              "Thin whitetopping on Low Stress HMA #2 (75mm DFG + 100mm DFG)",
                              "Thin whitetopping on Low Stress HMA #3 (50mm DFG + 100mm DFG)",
                              "Ultra-thin whitetopping on Low Stress HMA #1 (100mm DFG rebonded 100mm DFG)",
                              "Ultra-thin whitetopping on Low Stress HMA #2 (75mm DFG + 100mm DFG)",
                              "Ultra-thin whitetopping on Low Stress HMA #3 (50mm DFG + 100mm DFG)") 
+
+# ADDS:
+# vary all parameters between high and low in Table 1 such that only one parameter
+# per profile is varied. for every thickness design, there will be
+# one of each: high albedo only, low albedo only, high/low density, high/low k, etc..
 
 # LOW VOLUME ASPHALT
 
@@ -269,6 +290,12 @@ names(layer.profiles.lva) <- c("Low Volume HMA (100mm DFG + 100mm DFG, 0.15 albe
                                "Low Volume HMA (75mm DFG + 100mm DFG, 0.25 albedo)", 
                                "Low Volume HMA (50mm DFG + 100mm DFG, 0.25 albedo)")
 
+# ADDS:
+# profile(s) with a thin (non-whitetop) overlay
+# vary all parameters between high and low in Table 1 such that only one parameter
+# per profile is varied. for every thickness design, there will be
+# one of each: high albedo only, low albedo only, high/low density, high/low k, etc..
+
 # HIGH VOLUME ASPHALT
 layer.profiles.hva <- list(
   data.table( # High Volume HMA #1 (OGFC 25mm rebonded on 275mm DGHMA)
@@ -340,6 +367,13 @@ names(layer.profiles.hva) <- c("High Volume HMA (OGFC 35mm + 265mm DGHMA, 0.15 a
                                "High Volume HMA (OGFC 35mm + 265mm DGHMA, 0.25 albedo)", 
                                "High Volume HMA (OGFC 25mm + 275mm DGHMA, 0.25 albedo)", 
                                "High Volume HMA (OGFC 50mm + 250mm DGHMA, 0.25 albedo)") 
+
+# ADDS:
+# simple thick DG HMAs
+# vary all parameters between high and low in Table 1 such that only one parameter
+# per profile is varied. for every thickness design, there will be
+# one of each: high albedo only, low albedo only, high/low density, high/low k, etc..
+
 
 # SAVE
 saveRDS(layer.profiles.bg, here("data/outputs/layer-profiles-BG.rds"))

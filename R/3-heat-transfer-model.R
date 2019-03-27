@@ -67,12 +67,12 @@ setnames(my.sites, "Y", "lat")
 # first values in each vector will correspond to a refrence run for RMSE calcs where appropriate
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(10),# nodal spacing in millimeters
-               n.iterations = c(1), # number of iterations to repeat each model run
+               n.iterations = c(1), # number of iterations to repeat each model run (not useful b/c converagnce is forced, can keep 1)
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
-               pave.length = c(100), # characteristic length of pavement in meters
-               SVF = c(1), # sky view factor
+               pave.length = c(10,100), # characteristic length of pavement in meters
+               SVF = c(1, 0.5), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
                n.days = c(3) # number of days to simulate 
