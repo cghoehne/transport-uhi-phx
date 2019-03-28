@@ -3,11 +3,11 @@ bridleway,1,dirt,3,0,0,Paths for horse riding
 cycleway,1,concrete,3,1,4,Paths for cycling
 footway,1,concrete,3,1,4,Footpaths
 living_street,1,asphalt,20,2,10,Streets where pedestrians have priority
-motorway,4,asphalt,70,30,45,"Motorway/freeway. 10x 12ft lanes, 4x 10ft shoulder"
-motorway_link,2,asphalt,30,20,35,Roads that connect from one motorway/freeway to another
+motorway,4,asphalt,70,30,60,"Motorway/freeway. 10x 12ft lanes, 4x 10ft shoulder"
+motorway_link,2,asphalt,30,20,40,Roads that connect from one motorway/freeway to another
 path,1,dirt,3,0,0,Unspecified paths
 pedestrian,1,asphalt,20,2,10,Pedestrian only streets
-primary,3,asphalt,42,20,35,"Primary roads, typically national (major arterial). 6x 12ft thru, 2x 6ft bike/park/shoulder"
+primary,3,asphalt,42,20,40,"Primary roads, typically national (major arterial). 6x 12ft thru, 2x 6ft bike/park/shoulder"
 primary_link,1,asphalt,24,15,25,"Roads that connect from one primary roads to another, typically national. Assume no shoulder/turn lanes"
 residential,1,asphalt,15,6,15,"Roads in residential areas (minor/residential collector). 2x 14ft thru lane, 2x 6ft bike/park lane"
 secondary,2,asphalt,37,15,25,"Secondary roads, typically regional (minor arterial/major collector). 4x 12ft thru lane, 1x 10ft left turn lane, 2x 8ft bike/park/shoulder"
@@ -22,7 +22,7 @@ track_grade2,1,asphalt,14,0,0,track with asphalt or moderately compacted
 track_grade3,1,dirt,14,0,0,track lightly compacted 
 track_grade4,1,dirt,14,0,0,"track uncompated, visible"
 track_grade5,1,dirt,14,0,0,"track uncompated, hardly visible"
-trunk,3,asphalt,42,20,35,"Important roads, typically divided. 6x 12ft lane, 2x 6ft shoulder"
+trunk,3,asphalt,42,20,40,"Important roads, typically divided. 6x 12ft lane, 2x 6ft shoulder"
 trunk_link,1,asphalt,24,15,25,"Roads that connect from one important road to another, typically divided"
 unclassified,1,asphalt,20,6,15,"Smaller local roads (local/collectors in non-residential areas, typically industrial). 2x 14ft thru lane, 2x 6ft bike/park lane"
 unknown,NA,NA,NA,NA,NA,"Unknown, ignore"

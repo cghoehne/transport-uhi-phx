@@ -46,6 +46,7 @@ batches <- data.table(id = c("LVA", "HVA", "C", "BG"),
 out.folder <- here(paste0("data/outputs/1D-heat-model-runs/", 
                      format(strptime(script.start, format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"), 
                      "_model_outputs_", batches[batch.n, id], "/"))
+dir.create(here("data/outputs/1D-heat-model-runs"), showWarnings = FALSE)
 dir.create(out.folder, showWarnings = FALSE)
 
 # load layer profiles as list of data.tables (previously defined)
