@@ -43,10 +43,10 @@ batches <- data.table(id = c("LVA", "HVA", "C", "BG"),
                                   "Bare Ground / Desert Soil"))
 
 # create output folder name with run info
-out.folder <- paste0("data/outputs/1D-heat-model-runs/", 
+out.folder <- here(paste0("data/outputs/1D-heat-model-runs/", 
                      format(strptime(script.start, format = "%Y-%m-%d %H:%M:%S"), format = "%Y%m%d_%H%M%S"), 
-                     "_model_outputs_", batches[batch.n, id], "/")
-dir.create(here(out.folder), showWarnings = FALSE)
+                     "_model_outputs_", batches[batch.n, id], "/"))
+dir.create(out.folder, showWarnings = FALSE)
 
 # load layer profiles as list of data.tables (previously defined)
 layer.profiles <- readRDS(here(paste0("data/outputs/layer-profiles-", batches[batch.n, id],".rds"))) 
@@ -124,7 +124,7 @@ earth.dist <- function (long1, lat1, long2, lat2){
 
 # create empty object and file to store error messages
 my.errors <- NULL
-run.log <- file(paste0(out.folder,"run_log.txt"), open = "a")
+run.log <- file(paste0(out.folder,"/run_log.txt"), open = "a")
 
 # BEGIN MODEL LOGIC
 for(run in 1:model.runs[,.N]){  #
@@ -571,7 +571,7 @@ for(run in 1:model.runs[,.N]){  #
         pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
         pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step
         pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # mean change in temp by node, use for RMSE
-        saveRDS(pave.time, paste0(out.folder,"run_",run,"_output.rds")) # save model iteration R object
+        saveRDS(pave.time, paste0(out.folder,"/run_",run,"_output.rds")) # save model iteration R object
         model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
         
         # if the run is a reference run (first run of a unique layer profile scheme), store it as the reference run for other scenarios under the same layer profile scheme
@@ -599,12 +599,12 @@ for(run in 1:model.runs[,.N]){  #
 } # end run, go to next run
 
 # export data (also in RDS format to prevent issues with formatting)
-write.csv(model.runs, paste0(out.folder,"model_runs_metadata.csv"), row.names = F) # output model run metadata
-write.csv(my.sites, paste0(out.folder,"validation_sites.csv"), row.names = F)
-saveRDS(model.runs, paste0(out.folder,"model_runs_metadata.rds"))
-saveRDS(my.sites, paste0(out.folder,"validation_sites.rds")) # output model run metadata
-saveRDS(layer.profiles, paste0(out.folder,"layer_profiles.rds"))
-saveRDS(weather.raw, paste0(out.folder,"weather_data.rds"))
+write.csv(model.runs, paste0(out.folder,"/model_runs_metadata.csv"), row.names = F) # output model run metadata
+write.csv(my.sites, paste0(out.folder,"/validation_sites.csv"), row.names = F)
+saveRDS(model.runs, paste0(out.folder,"/model_runs_metadata.rds"))
+saveRDS(my.sites, paste0(out.folder,"/validation_sites.rds")) # output model run metadata
+saveRDS(layer.profiles, paste0(out.folder,"/layer_profiles.rds"))
+saveRDS(weather.raw, paste0(out.folder,"/weather_data.rds"))
 
 # load email creds and construct msg to notify you by email the script has finished
 my.email <- as.character(fread(here("email.txt"), header = F)[1]) 
@@ -615,7 +615,7 @@ close(run.log)
 send.mail(from = my.email,
           to = my.email,
           subject = msg,
-          body = paste0(out.folder, "run_log.txt"),
+          body = paste0(out.folder, "/run_log.txt"),
           smtp = list(host.name = "smtp.gmail.com", port = 465, user.name = my.email, passwd = my.pass, ssl = T),
           authenticate = T,
           send = T)
