@@ -7,10 +7,6 @@
 # ignore .bat file until fixed
 *.bat
 
-# ignore osm shapefiles, temp files
-**/osm_formatted_unbuffered*
-data/outputs/temp/*
-
 # ignore temp files (starting w/ "~")
 ~* 
 
@@ -18,28 +14,14 @@ data/outputs/temp/*
 local-token.txt
 email.txt
 
-# keep the some empty folders but not data, download through script
-data/daymet/*
-!data/daymet/.gitkeep 
-
-data/landsat/*
-!data/landsat/.gitkeep 
-
 data/outputs/temp/*
-!data/outputs/temp/.gitkeep 
-
-data/daymet/*
-!data/daymet/.gitkeep 
-
 data/outputs/1D-heat-model-runs/*
+
+data/aster/raw/*
+data/aster/processed/*
+data/aster/preprocessed/*
+data/aster/best
+
 figures/1D-heat-model-runs/*
-
-figures/landsat/*
-troubleshooting/*
-
-data/mesowest/*
-data/aster/*
-data/aster processed/*
-figures/aster-test/*
 figures/aster/*
 figures/old/*

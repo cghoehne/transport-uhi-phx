@@ -98,7 +98,7 @@ osm <- intersect(osm, uza.buffer) # better than gIntersection b/c it keeps attri
 #osm <- intersect(osm, blkgrp)
 
 # save out as backup for QGIS 
-shapefile(osm, here("data/shapefiles/processed/osm-uza-processed"), overwrite = T) # station points shapefile
+#shapefile(osm, here("data/shapefiles/processed/osm-uza-processed"), overwrite = T) # station points shapefile
 
 # clean up space
 rm(list=setdiff(ls(), c("osm","blkgrp","script.start")))
@@ -110,6 +110,7 @@ memory.limit(size = 56000)
 # (stores as list of SpatialPointDataFrames)
 my.cores <- parallel::detectCores()  # store computers cores
 registerDoParallel(cores = my.cores) # register parallel backend
+
 w.min <- unique(osm$min.r.buf)  # list of unique min buffer widths based on oneway and estiamted roadway width
 b.min <- list() # create empty list for foreach
 osm.buf.min <- foreach(i = 1:length(w.min), .packages = c("sp","rgeos")) %dopar% {
@@ -117,23 +118,35 @@ osm.buf.min <- foreach(i = 1:length(w.min), .packages = c("sp","rgeos")) %dopar%
   b.min[[i]] <- gBuffer(osm[osm$min.r.buf == w.min[i], ], byid = F, width = w.min[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
 } # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
 
+w.max <- unique(osm$max.r.buf)  # list of unique min buffer widths based on oneway and estiamted roadway width
+b.max <- list() # create empty list for foreach
+osm.buf.max <- foreach(i = 1:length(w.max), .packages = c("sp","rgeos")) %dopar% {
+  #b.max[[i]] <- buffer(osm[osm$max.r.buf == w.max[i], ], width = w.max[i])
+  b.max[[i]] <- gBuffer(osm[osm$max.r.buf == w.max[i], ], byid = F, width = w.max[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
+} # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
+
 # bind the buffered osm data output
 osm.buf.mrg.min <- do.call(raster::bind, osm.buf.min) # bind list of spatial objects into single spatial obj
+osm.buf.mrg.max <- do.call(raster::bind, osm.buf.max) # bind list of spatial objects into single spatial obj
 
 # fix invalid geometery issues
-osm.cleaned.min <- clgeo_Clean(osm.buf.mrg.min)        # start w/ simple clean function
-osm.cleaned.min <- gSimplify(osm.cleaned.min, tol = 0.1)  # simplify polygons with Douglas-Peucker algorithm and a tolerance of 0.1 ft
-osm.cleaned.min <- gBuffer(osm.cleaned.min, width = 0)  # width = 0 as hack to clean polygon errors such as self intersetions
+#osm.cleaned.min <- clgeo_Clean(osm.buf.mrg.min)        # start w/ simple clean function
+#osm.cleaned.min <- gSimplify(osm.cleaned.min, tol = 0.1)  # simplify polygons with Douglas-Peucker algorithm and a tolerance of 0.1 ft
+#osm.cleaned.min <- gBuffer(osm.cleaned.min, width = 0)  # width = 0 as hack to clean polygon errors such as self intersetions
 
 # dissolve the roadway buffer to a single polygon to calculate area w/o overlaps
-osm.dissolved.min <- gUnaryUnion(osm.cleaned.min)
+osm.dissolved.min <- gUnaryUnion(osm.buf.mrg.min) #osm.cleaned.min
+osm.dissolved.max <- gUnaryUnion(osm.buf.mrg.max) #osm.cleaned.max
 
 # clip osm buffers by blockgroup boundaries
 osm.block.min <- intersect(osm.dissolved.min, blkgrp) # better than gIntersection b/c it keeps attributes
+osm.block.max <- intersect(osm.dissolved.max, blkgrp) # better than gIntersection b/c it keeps attributes
 
 
 save.image(here("data/outputs/temp/phx-pave-heat-map.RData")) # save workspace
 saveRDS(osm.block.min, here("data/outputs/temp/osm-blockgroup-dissolved-min.rds"))
+saveRDS(osm.block.max, here("data/outputs/temp/osm-blockgroup-dissolved-min.rds"))
+
 
 
 # calc roadway area by blockgroup

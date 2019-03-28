@@ -1,9 +1,0 @@
-If you do end up using the data in any publication/presentations you'll just need to acknowledge the UWIN grant.
-
-phxbuttons.csv is a wide-form time-series matrix with all of the observations for a single ibutton in one column
-
-phxbuttonsrh.csv is the same as above except it is relative humidity values (only 20ish ibuttons collected RH)
-
-phxdatsite_all.csv has info on lat/long by ibutton as well as a bunch of other stuff I've appended (which you probably won't use, but feel free if you think it will help)
-
-phxdatsiteall_col_description.csv has explanations for what all the columns are in phxdatsite_all
