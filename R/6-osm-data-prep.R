@@ -20,18 +20,20 @@ if (!require("checkpoint")){
 }
 
 # load all other dependant packages from the local repo
-lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
-library(doParallel, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(foreach, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(sp, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(raster, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(rgdal, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(rgeos, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(maptools, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(cleangeo, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(gdalUtils, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(data.table, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(here, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+.libPaths(paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1"))
+library(doParallel, quietly = T, warn.conflicts = F)
+library(foreach, quietly = T, warn.conflicts = F)
+library(doParallel, quietly = T, warn.conflicts = F)
+library(foreach, quietly = T, warn.conflicts = F)
+library(sp, quietly = T, warn.conflicts = F)
+library(raster, quietly = T, warn.conflicts = F)
+library(rgdal, quietly = T, warn.conflicts = F)
+library(rgeos, quietly = T, warn.conflicts = F)
+library(maptools, quietly = T, warn.conflicts = F)
+library(cleangeo, quietly = T, warn.conflicts = F)
+library(gdalUtils, quietly = T, warn.conflicts = F)
+library(data.table, quietly = T, warn.conflicts = F)
+library(here, quietly = T, warn.conflicts = F)
 
 # archive/update snapshot of packages at checkpoint date
 checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday
@@ -103,7 +105,9 @@ memory.limit(size = 56000)
 # foreach loop in parallel to buffer links
 # (stores as list of SpatialPointDataFrames)
 my.cores <- parallel::detectCores()  # store computers cores
-registerDoParallel(cores = my.cores) # register parallel backend
+cl <- makeCluster(my.cores)
+registerDoParallel(cl) # register parallel backend
+clusterCall(cl, function(x) .libPaths(x), .libPaths())
 
 w.min <- unique(osm$min.r.buf)  # list of unique min buffer widths based on oneway and estiamted roadway width
 b.min <- list() # create empty list for foreach
@@ -123,7 +127,7 @@ osm.buf.max <- foreach(i = 1:length(w.max), .packages = c("sp","rgeos")) %dopar%
 osm.buf.mrg.min <- do.call(raster::bind, osm.buf.min) # bind list of spatial objects into single spatial obj
 osm.buf.mrg.max <- do.call(raster::bind, osm.buf.max) # bind list of spatial objects into single spatial obj
 
-# fix invalid geometery issues
+# options for fixing invalid geometery issues if needed
 #osm.cleaned.min <- clgeo_Clean(osm.buf.mrg.min)        # start w/ simple clean function
 #osm.cleaned.min <- gSimplify(osm.cleaned.min, tol = 0.1)  # simplify polygons with Douglas-Peucker algorithm and a tolerance of 0.1 ft
 #osm.cleaned.min <- gBuffer(osm.cleaned.min, width = 0)  # width = 0 as hack to clean polygon errors such as self intersetions
@@ -142,6 +146,6 @@ saveRDS(osm.block.min, here("data/outputs/osm-blockgroup-dissolved-min.rds"))
 saveRDS(osm.block.max, here("data/outputs/osm-blockgroup-dissolved-max.rds"))
 
 # for QGIS
-#shapefile(osm.block.min, here("data/outputs/temp/osm-blkgrp-min"), overwrite = T)
-#shapefile(osm.block.max, here("data/outputs/temp/osm-blkgrp-max"), overwrite = T)
+shapefile(osm.block.min, here("data/outputs/temp/osm-blkgrp-min"), overwrite = T)
+shapefile(osm.block.max, here("data/outputs/temp/osm-blkgrp-max"), overwrite = T)
 
