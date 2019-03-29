@@ -34,12 +34,13 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 ################################
 # DEFINE BATCH RUN ID and NAME #
 ################################
-batch.n <- 3 # choose index for batch run type
+batch.n <- 1 # choose index for batch run type
 
-batches <- data.table(id = c("LVA", "HVA", "C", "BG"),
-                         name = c("Low Volume Asphalt Pavements" , 
-                                  "High Volume Asphalt Pavements" , 
-                                  "Concrete and Composite Concrete-Asphalt Pavements" ,
+batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
+                         name = c("Asphalt Pavements", 
+                                  "Concrete Pavements", 
+                                  "Whitetopped Asphalt Pavements",
+                                  "Asphalt Overlays on PCC Pavements",
                                   "Bare Ground / Desert Soil"))
 
 # create output folder name with run info
@@ -53,13 +54,15 @@ dir.create(out.folder, showWarnings = FALSE)
 layer.profiles <- readRDS(here(paste0("data/outputs/layer-profiles-", batches[batch.n, id],".rds"))) 
 
 # define validation site location IDs to pull weather data from the nearest weather site to corresponding layer profile
-if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B2", "B1", "B2", "B1", "B2") # BARE GROUND
-} else if(batches[batch.n, id] == "C") {layer.sites <- c("C4", "C1", "A6", "C4", "C1", "A6", "C4", "C1", "A6") # CONCRETE / COMPOSITE
-} else if(batches[batch.n, id] == "LVA") {layer.sites <- c("A3", "A6", "A9", "A3", "A5", "A9") # ASPHALT - LOW
-} else if(batches[batch.n, id] == "HVA") {layer.sites <- c("A3", "A5", "A9", "A3", "A6", "A9")} # ASPHALT - HIGH
+if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B1", "B1", "B1", "B1") # BARE GROUND also B2 good
+} else if(batches[batch.n, id] == "C") {layer.sites <- c("C4", "C4", "C4", "C4", "C4") # CONCRETE also C1 good
+} else if(batches[batch.n, id] == "WA") {layer.sites <- c("C1", "C1", "C1", "C1", "C1") # WHITETOPPED ASPHALT also C4 good
+} else if(batches[batch.n, id] == "OA") {layer.sites <- c("A3", "A3", "A3", "A3", "A3") # ASPHALT OVERLAY CONCRETE also A6 good
+} else if(batches[batch.n, id] == "A") {layer.sites <- c("A6", "A6", "A6", "A6", "A6")} # ASPHALT also A3 good
 
 # load validation site data 
 valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
+valid.dates <- valid.dates[!(date(date.time) %in% date(c("2007-06-26","2013-10-30")))] # drop bad dates **temporary**
 my.sites <- fread(here("data/aster/validation_sites.csv")) # other validation sites info 
 setnames(my.sites, "X", "lon")
 setnames(my.sites, "Y", "lat")
@@ -73,7 +76,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
                pave.length = c(10,100), # characteristic length of pavement in meters
-               SVF = c(1, 0.5), # sky view factor
+               SVF = c(1), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
                n.days = c(3) # number of days to simulate 

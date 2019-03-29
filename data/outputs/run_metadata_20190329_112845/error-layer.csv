@@ -1,0 +1,13 @@
+"layer.profile","batch.name","RMSE","MAPE"
+3,"Concrete and Composite Concrete-Asphalt Pavements",3.80120640544811,0.131190797109043
+2,"Concrete and Composite Concrete-Asphalt Pavements",4.88696094812075,0.154938978565222
+1,"Bare Ground / Desert Soil",6.37769692718262,0.274994484999234
+1,"Concrete and Composite Concrete-Asphalt Pavements",6.61873159012733,0.238310042267245
+1,"Low Volume Asphalt Pavements",6.9604531430627,0.253446708608001
+3,"Bare Ground / Desert Soil",7.20805317376494,0.305999269628622
+2,"Bare Ground / Desert Soil",7.62564380039377,0.287649532404676
+3,"Low Volume Asphalt Pavements",9.36998776213986,0.249831608364904
+3,"High Volume Asphalt Pavements",10.5683271897531,0.29631674433995
+1,"High Volume Asphalt Pavements",12.4036478819727,0.368745788570306
+2,"High Volume Asphalt Pavements",12.7875168657432,0.338336600440844
+2,"Low Volume Asphalt Pavements",NA,NA

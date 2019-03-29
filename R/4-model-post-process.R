@@ -52,7 +52,7 @@ getSeason <- function(DATES) {
 # first get latest updated output folders to pull model run data from most recent run (can change)
 out.folders <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), 
                                                 recursive = F)), keep.rownames = T)[(.N-3):(.N), rn]
-# create plots?
+# create summary plots for each run?
 should.plot <- "no" # "yes" or "no"
 
 # loop through each folder of simulation runs
@@ -73,9 +73,31 @@ for(f in 1:length(out.folders)){
   # create output directory for plots
   dir.create(paste0(out.folder,"/figures"), showWarnings = FALSE) # creates output figure folder if it doesn't already exist
 
-  # add season
+  # add seasons to all model run data of batch
   model.runs[, season := factor(getSeason(end.day), levels = c("Spring", "Summer", "Fall", "Winter"))]
 
+  # add layer profile summaries to run data of batch
+  for(pave.i in unique(model.runs[, pave.name])){ # for each unique pavement type (pave.name)
+
+    # store differing layer specs in each model run meta data
+    for(layer.i in 1:length(layer.profiles)){ 
+      vars <- paste0("L", layer.i, ".", colnames(layer.profiles[[pave.i]]))
+      model.runs[pave.name == pave.i, (vars) := layer.profiles[[pave.i]][layer.i,] ]
+      
+      # calc total pavement thickness (exlude subgrade layer which is soil/dirt/ground)
+      # and mean pave parameters of k, rho, and c for the non subgrade layers
+      model.runs[pave.name == pave.i, pave.thick := 
+                       sum(layer.profiles[[pave.i]][layer != "subgrade", thickness], na.rm = T)]
+      model.runs[pave.name == pave.i, mean.k := 
+                       sum(layer.profiles[[pave.i]][layer != "subgrade", k], na.rm = T)]
+      model.runs[pave.name == pave.i, mean.c := 
+                       sum(layer.profiles[[pave.i]][layer != "subgrade", rho], na.rm = T)]
+      model.runs[pave.name == pave.i, mean.rho := 
+                       sum(layer.profiles[[pave.i]][layer != "subgrade", c], na.rm = T)]
+    }
+  }
+  
+  # iterate through each run in runs of batch and calc summary stats and create optional plots
   for(run in 1:max(model.runs[, .N])){ # 
     tryCatch({  # catch and print errors, avoids stopping model run 
       
@@ -152,8 +174,6 @@ for(f in 1:length(out.folders)){
                                                           model.runs[run.n == run, .(run.n,SVF,albedo,pave.name,layer.profile,end.day,time.step,
                                                                                      batch.id,batch.name,station.name,valid.site,season,daytime,day.sea)]))
       }
-      
-
       
       # begin plotting if desired
       if(should.plot == "yes"){
@@ -446,10 +466,10 @@ all.surface.data <- all.surface.data[time.s >= (60*60*24*2),]
 
 # create summaries of error bu variables to identify best/worst 
 RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))} # RMSE function
-day.err <- model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = "end.day"][order(RMSE)]
-site.err <- model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = "valid.site"][order(RMSE)]
-layer.err <- model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = c("layer.profile", "batch.name")][order(RMSE)]
-station.err <- model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = "station.name"][order(RMSE)]
+day.err <- all.model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = c("end.day", "day.sea")][order(RMSE)]
+site.err <- all.model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = c("valid.site", "batch.name")][order(RMSE)]
+layer.err <- all.model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = c("layer.profile", "batch.name")][order(RMSE)]
+station.err <- all.model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = "station.name"][order(RMSE)]
 
 # create metadata out folder
 meta.folder <- here(paste0("data/outputs/run_metadata_", 
@@ -460,10 +480,12 @@ dir.create(meta.folder, showWarnings = FALSE) # creates output figure folder if 
 # save all run metadata
 saveRDS(all.model.runs, paste0(meta.folder, "/stats_all_model_runs.rds"))
 saveRDS(all.surface.data, paste0(meta.folder, "/all_pave_surface_data.rds"))
-write.csv(day.err, paste0(meta.folder, "/error-day.csv"))
-write.csv(site.err, paste0(meta.folder, "/error-site.csv"))
-write.csv(layer.err, paste0(meta.folder, "/error-layer.csv"))
-write.csv(station.err, paste0(meta.folder, "/error-station.csv"))
+
+write.csv(all.model.runs, paste0(meta.folder, "/stats_all_model_runs.csv"), row.names = F)
+write.csv(day.err, paste0(meta.folder, "/error-day.csv"), row.names = F)
+write.csv(site.err, paste0(meta.folder, "/error-site.csv"), row.names = F)
+write.csv(layer.err, paste0(meta.folder, "/error-layer.csv"), row.names = F)
+write.csv(station.err, paste0(meta.folder, "/error-station.csv"), row.names = F)
 
 # combine with all previous runs if desired
 #all.model.runs[, run.date.time := Sys.time()] # add run.date.time id for group of batched runs

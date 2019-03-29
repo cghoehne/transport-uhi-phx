@@ -31,36 +31,6 @@ folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F
 # MODEL METADATA
 all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
-# load layer profile data and add info to model run metadata
-for(id in all.model.runs[, batch.id]){
-  p.i <- readRDS(here(paste0("data/outputs/layer-profiles-", id,".rds"))) 
-  assign(paste0("layer.profiles.", id), p.i)
-}
-
-# add layer profile data to model run metadata
-for(pave.i in unique(all.model.runs[, pave.name])){
-  id <- unique(all.model.runs[pave.name == pave.i, batch.id])
-  pave.id <- which(names(get(paste0("layer.profiles.", id))) == pave.i)
-  my.profile <- get(paste0("layer.profiles.", id))[[pave.id]]
-  
-  # store differing layer specs in model run meta data
-  for(my.layer in 1:my.profile[, .N]){
-    vars <- paste0("L", my.layer, ".", colnames(my.profile))
-    all.model.runs[pave.name == pave.i, (vars) := my.profile[my.layer,]]
-    
-    # also calc total pavement thickness (exlude last subgrade layer)
-    # and mean pave parameters of k, rho, and c for the non subgrade layers
-    all.model.runs[pave.name == pave.i, pave.thick := 
-                     sum(my.profile[layer != "subgrade", thickness], na.rm = T)]
-    all.model.runs[pave.name == pave.i, mean.k := 
-                     sum(my.profile[layer != "subgrade", k], na.rm = T)]
-    all.model.runs[pave.name == pave.i, mean.c := 
-                     sum(my.profile[layer != "subgrade", rho], na.rm = T)]
-    all.model.runs[pave.name == pave.i, mean.rho := 
-                     sum(my.profile[layer != "subgrade", c], na.rm = T)]
-  }
-}
-
 # min, avg, max of temps at nearest node to 1.0 meter depth for all runs
 all.model.runs[, .(min.T_1.0m = min(min.T_1.0m, na.rm = T),
                    avg.T_1.0m = mean(avg.T_1.0m, na.rm = T),
@@ -123,6 +93,8 @@ for(i.var in i.vars){
   lm.results[var == i.var, max.R.sq := signif(summary(lm.max)$r.squared, 2)]
   lm.results[var == i.var, max.p.coef := signif(summary(lm.max)$coefficients[2,4], 2)]
 }
+
+lm.results[,.(var, min.T.coef, min.p.coef, max.T.coef, max.p.coef)]
 
 # flux comparisons by type
 all.surface.data[, .(mean.out.flux = mean(q.rad + q.cnv)), by = c("pave.name", "batch.name", "albedo")][order(mean.out.flux)]
