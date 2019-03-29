@@ -19,59 +19,64 @@ if (!require("checkpoint")){
   library(checkpoint, quietly = T)
 }
 
-# calc roadway area by blockgroup
-x <- 1
-blkgrp$min.road.area <- ifelse(is.null(gIntersection(blkgrp[[y]][x,], osm.block)), 0, # check if no intersection and return 0 as area if null
-                               gArea(gIntersection(blkgrp[[y]][x,], osm.block))) # otherwise calc the area of intersection with the road area
+# load all other dependant packages from the local repo
+lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
+library(XML, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(sp, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(raster, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(rgdal, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(rgeos, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(maptools, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(gdalUtils, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(data.table, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(here, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 
-for(y in 1:length(blkgrp)){
-  # calculate intersecting osm roadway area aroun each station buffer for each buffer distance
-  blkgrp[[y]]$min.road.area <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y 
-                                      function(x) ifelse(is.null(gIntersection(stations.buffered[[y]][x,], osm.dissolved)), 0, # check if no intersection and return 0 as area if null
-                                                         gArea(gIntersection(stations.buffered[[y]][x,], osm.dissolved)))) # otherwise calc the area of intersection with the road area
-}
+# archive/update snapshot of packages at checkpoint date
+checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday
+           R.version = "3.5.1", # will only work if using the same version of R
+           checkpointLocation = here(), # calls here package
+           verbose = F) 
 
-## PARKING
-# ignore on-street spaces for area calcs because part of roadway
+# import data
+blkgrp <- shapefile(here("data/shapefiles/boundaries/phx-blkgrp-geom.shp")) # census blockgroup shapfile (clipped to Maricopa UZA)
+osm.block.min <- readRDS(here("data/outputs/osm-blockgroup-dissolved-min.rds"))
+osm.block.max <- readRDS(here("data/outputs/osm-blockgroup-dissolved-max.rds"))
+parking <- fread(here("data/phx-parking-blkgrp.csv")) # import parking data
 
-# import parking data and parcel data to merge together
-parking <- fread(here("data/phx-parking-blkgrp.csv"))
+# import most recent pavement model runs
+# define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
+folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
+                        keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
+all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
-# calculate the area parking by blockgroup
-#parcels.trimmed$parcel.full.area <- sapply(1:length(parcels.trimmed), function(x) gArea(parcels.trimmed[x,]))  
+# ROADS
+# min road area by blockgroup
+blkgrp$min.road.area.sqf <- gArea(osm.block.min, byid = T)
+blkgrp$tot.area.sqf <- gArea(blkgrp, byid = T)
+blkgrp$min.road.pct <- blkgrp$min.road.area.sqf / blkgrp$tot.area.sqf 
 
-# merge parcel.full.area to station parcels sp list and keep duplicates b/c some parcels in multiple buffers that overlap
-for(y in 1:length(station.parcels)){ 
-  station.parcels[[y]] <- sp::merge(station.parcels[[y]], parcels.trimmed, by = "APN", duplicateGeoms = T, all.x = T)}
+mean(blkgrp$min.road.pct)
+max(blkgrp$min.road.pct)
+
+# max road area by blockgroup
+blkgrp$max.road.area.sqf <- gArea(osm.block.max, byid = T)
+blkgrp$max.road.pct <- blkgrp$max.road.area.sqf / blkgrp$tot.area.sqf 
+
+# min/mean/max total percent of area covered by roads
+sum(blkgrp$min.road.area.sqf) / sum(blkgrp$tot.area.sqf)
+(sum(blkgrp$min.road.area.sqf) + sum(blkgrp$max.road.area.sqf)) / 2 / sum(blkgrp$tot.area.sqf)
+sum(blkgrp$max.road.area.sqf) / sum(blkgrp$tot.area.sqf)
 
 
-# calc parking area in station buffers and adjust total spaces if total parking area + roadway area > station buffer
-# (which means there is multistory parking and we just assume there is a 100% road + parking coverage)
-for(y in 1:length(stations.buffered)){
-  stations.buffered[[y]]$park.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                             function(x) stations.buffered[[y]][x,]$tot.park.area / stations.buffered[[y]][x,]$buffer.area) # calc the % parking area in buffer
-  
-  # create coverage area flag to mark which features have the issue of too much parking coverage
-  stations.buffered[[y]]$park.cov.flag <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                                 # if the % of parking + road area is over 100%
-                                                 function(x) ifelse(stations.buffered[[y]][x,]$park.prct + stations.buffered[[y]][x,]$road.prct > 1,
-                                                                    1, 0)) # mark 1 for flag, 0 for not.
-  
-  # re-adjust total parking spaces if parking coverage is too high
-  stations.buffered[[y]]$tot.park.spaces <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                                   # if the parking coverage is flagged (% of parking + road area is over 100%)
-                                                   function(x) ifelse(stations.buffered[[y]][x,]$park.cov.flag == 1, 
-                                                                      # then reduce spaces based by excess parking area
-                                                                      stations.buffered[[y]][x,]$tot.park.spaces - floor((stations.buffered[[y]][x,]$tot.park.area + stations.buffered[[y]][x,]$road.area - stations.buffered[[y]][x,]$buffer.area)/(9*18)),
-                                                                      # otherwise total spaces stays the same
-                                                                      stations.buffered[[y]][x,]$tot.park.spaces))
-  
-  # recalculate parking percent of area (will be max 100% if road is 0%, road + park <= 100%)
-  stations.buffered[[y]]$park.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                             function(x) stations.buffered[[y]][x,]$tot.park.area / stations.buffered[[y]][x,]$buffer.area) # calc the % parking area in buffer
-  
-  # calculate pavement percent of area 
-  stations.buffered[[y]]$pave.prct <- sapply(1:length(stations.buffered[[y]]), # for all stations (sp features) in station buffer of index y
-                                             function(x) stations.buffered[[y]][x,]$park.prct + stations.buffered[[y]][x,]$road.prct) # calc the % parking area in buffer
-}
+# PARKING
+# merge parking data to blkgrp shapefile
+blkgrp <- merge(blkgrp, parking[, .(fid, res.off, com.off)], by = "fid", duplicateGeoms = T)  # ignore on-street spaces for area calcs because part of roadway
 
+# assumed upper and lower area allocated per space
+blkgrp$min.park.area.sqf <- (blkgrp$com.off * 250) + (blkgrp$res.off * 200)
+blkgrp$max.park.area.sqf <- (blkgrp$com.off * 331) + (blkgrp$res.off * 500)
+
+# min/mean/max total percent of area covered by roads
+sum(blkgrp$min.park.area.sqf, na.rm = T) / sum(blkgrp$tot.area.sqf, na.rm = T)
+(sum(blkgrp$min.park.area.sqf, na.rm = T) + sum(blkgrp$max.park.area.sqf, na.rm = T)) / 2 / sum(blkgrp$tot.area.sqf, na.rm = T)
+sum(blkgrp$max.park.area.sqf, na.rm = T) / sum(blkgrp$tot.area.sqf, na.rm = T)

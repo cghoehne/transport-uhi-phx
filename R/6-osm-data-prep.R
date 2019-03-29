@@ -90,7 +90,6 @@ osm$maxspeed <- NULL # most are 0 or missing so unuseable in this case
 
 # clip osm data to buffer uza for quicker computing
 osm <- intersect(osm, uza.buffer) # better than gIntersection b/c it keeps attributes
-#osm <- intersect(osm, blkgrp)
 
 # save out as backup for QGIS 
 #shapefile(osm, here("data/shapefiles/processed/osm-uza-processed"), overwrite = T) # station points shapefile
@@ -137,9 +136,12 @@ osm.dissolved.max <- gUnaryUnion(osm.buf.mrg.max) #osm.cleaned.max
 osm.block.min <- intersect(osm.dissolved.min, blkgrp) # better than gIntersection b/c it keeps attributes
 osm.block.max <- intersect(osm.dissolved.max, blkgrp) # better than gIntersection b/c it keeps attributes
 
-
+# save
 save.image(here("data/outputs/temp/phx-pave-heat-map.RData")) # save workspace
-saveRDS(osm.block.min, here("data/outputs/temp/osm-blockgroup-dissolved-min.rds"))
-saveRDS(osm.block.max, here("data/outputs/temp/osm-blockgroup-dissolved-min.rds"))
+saveRDS(osm.block.min, here("data/outputs/osm-blockgroup-dissolved-min.rds"))
+saveRDS(osm.block.max, here("data/outputs/osm-blockgroup-dissolved-max.rds"))
 
+# for QGIS
+#shapefile(osm.block.min, here("data/outputs/temp/osm-blkgrp-min"), overwrite = T)
+#shapefile(osm.block.max, here("data/outputs/temp/osm-blkgrp-max"), overwrite = T)
 
