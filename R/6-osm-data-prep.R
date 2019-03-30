@@ -146,6 +146,6 @@ saveRDS(osm.block.min, here("data/outputs/osm-blockgroup-dissolved-min.rds"))
 saveRDS(osm.block.max, here("data/outputs/osm-blockgroup-dissolved-max.rds"))
 
 # for QGIS
-shapefile(osm.block.min, here("data/outputs/temp/osm-blkgrp-min"), overwrite = T)
-shapefile(osm.block.max, here("data/outputs/temp/osm-blkgrp-max"), overwrite = T)
+shapefile(osm.block.min, here("data/outputs/temp/osm-blkgrp-dissolved-min"), overwrite = T)
+shapefile(osm.block.max, here("data/outputs/temp/osm-blkgrp-dissolved-max"), overwrite = T)
 
