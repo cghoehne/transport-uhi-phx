@@ -178,7 +178,7 @@ surface.data.a <- all.surface.data[, .(hrs, mins, secs,
                                        inc.sol = mean(inc.sol),
                                        net.flux = mean(net.flux),
                                        ref.sol = mean(ref.sol)),
-                                   by = c("time.s", "new.name", "season")]  #
+                                   by = c("time.s", "new.name", "season")]  
 
 # force date for date.time for easier manipulation in ggplot, will ignore date
 surface.data.a[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(time.s)] 
@@ -204,11 +204,11 @@ names(p.lty) <- p.names
 
 
 # create better labels for season factor
-#setattr(surface.data.a$season,"levels", c("(a) Spring", "(b) Summer", "(c) Fall", "(d) Winter"))
-setattr(surface.data.a$season,"levels", c("(a) Spring", "(a) Summer", "(c) Fall", "(b) Winter"))
+setattr(surface.data.a$season,"levels", c("(a) Spring", "(b) Summer", "(c) Fall", "(d) Winter"))
+#setattr(surface.data.a$season,"levels", c("(a) Spring", "(a) Summer", "(c) Fall", "(b) Winter"))
 
 # create plot
-p.flux.a <- (ggplot(data = surface.data.a[season %in% c("(a) Summer", "(b) Winter")]) 
+p.flux.a <- (ggplot(data = surface.data.a)   #[season %in% c("(a) Summer", "(b) Winter")]
              
              # custom border
              + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = max.x.flux, yend = min.y.flux))   # x border (x,y) (xend,yend)
