@@ -1,3 +1,8 @@
+# this script is used with QGIS to ensure ASTER extents and orientations are correct
+# by batch importing then saving all desired ASTER files
+# (R + spatial libraries had issues w/ correctly interpreting the ASTER data)
+
+# change to your corresponding directory
 myDir = 'X:/GitHub Projects/transport-uhi-phx/data/aster/processed/'
 
 pipe = QgsRasterPipe()
