@@ -18,6 +18,7 @@ if (!require("checkpoint")){
 
 # load all other dependant packages from the local repo
 lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
+#.libPaths(paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1"))
 library(mailR, lib.loc = lib.path, quietly = T)
 library(zoo, lib.loc = lib.path, quietly = T)
 library(lubridate, lib.loc = lib.path, quietly = T)
@@ -147,8 +148,11 @@ for(run in 1:model.runs[,.N]){  #
     gc()
     t.start <- Sys.time() # start model run timestamp
     
+    # store number of days for simultion
+    day.n <- model.runs[run.n == run, n.days]
+    
     # store desired dates and validation site data for this run
-    my.dates <- seq.Date(date(model.runs$end.day[run]) - days(model.runs$n.days[run]) + 1, date(model.runs$end.day[run]) + 1, "day")
+    my.dates <- seq.Date(date(model.runs[run.n == run, end.day]) - days(day.n) + 1, date(model.runs[run.n == run, end.day]) + 1, "day")
     my.site <- my.sites[Location == model.runs$valid.site[run],]
     
     # calculate earth surface distance in km between chosen validation site and available weather stations
@@ -156,10 +160,7 @@ for(run in 1:model.runs[,.N]){  #
     
     # trim weather data to relevant dates for this run (just past end date.time)
     weather <- weather.raw[date.time >= min(my.dates) & date.time <= force_tz(max(my.dates) + hours(1), tz =  tz(weather.raw$date.time[1])) ,]
-    
-    # store number of days for simultion
-    day.n <- model.runs$n.days[run]
-    
+  
     # calculate mean and sd on rounded hour for quality control checks
     weather[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
     weather[, avg.hr.t := mean(temp.c, na.rm = T), by = "date.time.round"]
@@ -193,13 +194,13 @@ for(run in 1:model.runs[,.N]){  #
     weather <- weather[station.name == my.station,]
     
     # store station.name and distance in model.run metadata and my.sites validation data
-    model.runs[, station.name := my.station]
-    model.runs[, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
+    model.runs[run.n == run, station.name := my.station]
+    model.runs[run.n == run, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
     my.sites[, station.name := my.station]
     my.sites[, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
     
     # if there are less than an avg of 12 weather obs per day, skip run and store error msgs
-    if(weather[,.N] < 12 * model.runs$n.days[run]){
+    if(weather[,.N] < 12 * day.n){
       assign("my.errors", c(my.errors, 
                             paste("stopped at run", run, "because too few weather obs")), 
              envir = .GlobalEnv) # store error msg
@@ -213,8 +214,8 @@ for(run in 1:model.runs[,.N]){  #
     
     # input pavement layer thickness data
     x <- sum(layer.dt$thickness)  # model depth (m);  GUI ET AL: 3.048m [1]
-    delta.x <- model.runs$nodal.spacing[run] / 1000 # chosen nodal spacing within pavement (m). default is 12.7mm (0.5in)
-    delta.t <- model.runs$time.step[run] # store time step sequence (in units of seconds)
+    delta.x <- model.runs[run.n == run, nodal.spacing] / 1000 # chosen nodal spacing within pavement (m). default is 12.7mm (0.5in)
+    delta.t <- model.runs[run.n == run, time.step] # store time step sequence (in units of seconds)
     
     # create n layers and boundaries as input defines
     n.layers <- nrow(layer.dt)
@@ -287,18 +288,18 @@ for(run in 1:model.runs[,.N]){  #
                                           "node" = rep(0:(nrow(p.data)-1), p.n),
                                           "depth.m" = rep(p.data$x, p.n),
                                           "layer" = rep(p.data$layer, p.n),
-                                          "T.K" = rep(seq(from = model.runs$i.top.temp[run] + 273.15, # initial surface temp in K
-                                                          to = model.runs$i.bot.temp[run] + 273.15, # initial bottom boundary temp in K
+                                          "T.K" = rep(seq(from = model.runs[run.n == run, i.top.temp] + 273.15, # initial surface temp in K
+                                                          to = model.runs[run.n == run, i.bot.temp] + 273.15, # initial bottom boundary temp in K
                                                           length.out = p.n)))) # surface temp in K from the pavement to 3m)
     
     # static parameters for pavement heat transfer
-    albedo <- model.runs$albedo[run] #layer.dt$albedo[1] #  albedo (dimensionless) [1]; can be: 1 - epsilon for opaque objects
-    epsilon <- model.runs$emissivity[run] #  emissivity (dimensionless) [1]; can be: 1 - albedo for opaque objects
+    albedo <- model.runs[run.n == run, albedo] #layer.dt$albedo[1] #  albedo (dimensionless) [1]; can be: 1 - epsilon for opaque objects
+    epsilon <- model.runs[run.n == run, emissivity] #  emissivity (dimensionless) [1]; can be: 1 - albedo for opaque objects
     sigma <- 5.67*10^(-8) #  Stefan-Boltzmann constant (W/(m2*K4); [1]
-    SVF <- model.runs$SVF[run] #layer.dt$SVF[1]	# sky view factor (dimensionless [0,1]). assume 1.0: pavement is completely visible to sky
+    SVF <- model.runs[run.n == run, SVF] #layer.dt$SVF[1]	# sky view factor (dimensionless [0,1]). assume 1.0: pavement is completely visible to sky
     
     # L in (m) is the characteristic length of the pavement at the test site taken as the ratio of
-    L <- model.runs$pave.length[run] # the slab length in the direction of the wind to the perimeter
+    L <- model.runs[run.n == run, pave.length] # the slab length in the direction of the wind to the perimeter
     # assume horizontal & flat, width b and infinite length L, hotter than the environment -> L = b/2
     # L could vary, but minimum for a pavement should be 2 lanes, or about ~10 meters
     
@@ -538,11 +539,11 @@ for(run in 1:model.runs[,.N]){  #
         # if within this timestep, T.K at p+1 ended up non-finite due to an error or convergance issue, 
         # break the loop (to prevent wasted time) and store error msgs
         if(any(!is.finite(pave.time[time.s == t.step[p+1], T.K]))){
-          model.runs$broke.t[run] <- t.step[p] # store time model stopped
-          assign("my.errors", c(my.errors, paste("stopped model run",run,"at",model.runs$broke.t[run],"secs due to non-finite temperatures detected")), envir = .GlobalEnv) # store error msg
-          cat(paste("stopped model run",run,"at",model.runs$broke.t[run],
+          model.runs[run.n == run, broke.t] <- t.step[p] # store time model stopped
+          assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to non-finite temperatures detected")), envir = .GlobalEnv) # store error msg
+          cat(paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],
                     "secs due to non-finite temperatures detected \n"))
-          cat(paste("stopped model run",run,"at",model.runs$broke.t[run],
+          cat(paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],
                     "secs due to non-finite temperatures detected \n"), 
               file = run.log, append = T)
           break
@@ -550,9 +551,9 @@ for(run in 1:model.runs[,.N]){  #
         
         # if within this timestep, the CFL condition fails anywhere, break the loop (to prevent wasted time)
         if(sum(pave.time[time.s == t.step[p], CFL_fail], na.rm = T) > 0){
-          model.runs$broke.t[run] <- t.step[p] # store time model stopped
-          assign("my.errors", c(my.errors, paste("stopped model run",run,"at",model.runs$broke.t[run],"secs due to CFL stability condition not satisfied")), envir = .GlobalEnv) # store error msg
-          cat(paste("stopped model run",run,"at",model.runs$broke.t[run],
+          model.runs[run.n == run, broke.t := t.step[p]] # store time model stopped
+          assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to CFL stability condition not satisfied")), envir = .GlobalEnv) # store error msg
+          cat(paste("stopped model run", run,"at", model.runs[run.n == run, broke.t],
                     "secs due to CFL stability condition not satisfied"),
               file = run.log, append = T)
           break
@@ -561,13 +562,13 @@ for(run in 1:model.runs[,.N]){  #
       } # end time step p, go to time p+1
       
       # also break the iterations loop too (another iteration is unlikely to fix unstability b/c parameters for this run need changing)
-      if(!is.na(model.runs$broke.t[run])){break}
+      if(!is.na(model.runs[run.n == run, broke.t])){break}
       
       # if the iteration is not the last iteration and all pavement temp values in the timestep N days in the future are finite, then
       # store these pavement temp values from the future time step as the initial pavement temps for the new iteration 
       # because these are likely to be more accurate than the chosen initials
       if(iteration != max(iterations) & 
-         all(is.finite(pave.time[date.time == min(date.time) + days(model.runs$n.days[run]), T.K]))){
+         all(is.finite(pave.time[date.time == min(date.time) + days(model.runs[run.n == run, n.days]), T.K]))){
         pave.time[time.s == 0, T.K := pave.time[date.time == max(date.time), T.K] ]
         
       } else { # otherwise, for model iteration where output is desired (usually max iteration), some housekeeping:
@@ -576,7 +577,7 @@ for(run in 1:model.runs[,.N]){  #
         pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step
         pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # mean change in temp by node, use for RMSE
         saveRDS(pave.time, paste0(out.folder,"/run_",run,"_output.rds")) # save model iteration R object
-        model.runs$run.time[run] <- as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2)) # store runtime of model iteration in minutes
+        model.runs[run.n == run, run.time := as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2))] # store runtime of model iteration in minutes
         
         # if the run is a reference run (first run of a unique layer profile scheme), store it as the reference run for other scenarios under the same layer profile scheme
         if(run == model.runs[run.n == run, ref]){
@@ -586,7 +587,7 @@ for(run in 1:model.runs[,.N]){  #
         # if run isn't a reference run, then store RSME compared to the appropriate ref run
         # note that RMSE is mean centered temperature across all nodes and timesteps.
         if(run != model.runs[run.n == run, ref]){ # if the model isn't the refrence run
-          model.runs$RMSE[run] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean] - 
+          model.runs[run.n == run, RMSE] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean] - 
                                                pave.time.ref[pave.time, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean])^2))
         } # end RMSE calcs
         
