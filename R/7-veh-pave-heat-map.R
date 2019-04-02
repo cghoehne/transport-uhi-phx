@@ -141,5 +141,15 @@ blkgrp$avg_day_heat_GJha <- blkgrp$avg_day_heat_total / blkgrp$hectares
 # output data
 shapefile(blkgrp, here("data/outputs/osm-blkgrp-heat-working"), overwrite = T)
 
+#############################################
+# OSM cleaned XML network from ICARUS model #
+#############################################
 
+traffic.net <- xmlParse(here("data/icarus/optimizedNetwork.xml")) # traffic network from xml
+traffic <- fread(here("data/icarus/icarus_osm_traffic.csv")) # import traffic data aggregated by osm link id and hour
+#setnames(traffic, "link_id", "osm_id") 
+
+traffic.net.dt <- xmlToList(traffic.net)
+ 
+#fclass <- as.list(traffic.net.dt[["links"]][["link"]][["attributes"]][["attribute"]][["text"]])
 

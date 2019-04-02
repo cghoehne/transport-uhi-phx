@@ -112,3 +112,78 @@ all.surface.data[, min(q.rad, na.rm = T), by = c("daytime")][order(V1)]
 
 # which max out.flux
 all.surface.data[,max(q.rad), by = c("pave.name", "batch.name", "albedo")][order(V1)]
+
+###################
+# NHTS 2017 stats #
+###################
+
+# ALL DATA IS PRE-FILTERED TO PHOENIX METRO (HH_CBSA == "38060",
+# Phoenix-Mesa-Scottsdale, AZ Metropolitan Statistical Area)
+# for full data set see: https://nhts.ornl.gov/
+per.phx <- readRDS(here("data/nhts/per-phx.rds")) # person file
+veh.phx <- readRDS(here("data/nhts/veh-phx.rds")) # vehicle file
+trip.phx <- readRDS(here("data/nhts/trip-phx.rds")) # trip file
+hh.phx <- readRDS(here("data/nhts/hh-phx.rds")) # household file
+
+# auto modes in TRPTRANS
+modes <- c(3,4,5,6) # car, SUV, van, & pickup truck
+
+#trip$WTTRDFIN  # trip weights
+#per$WTPERFIN # person weights 
+
+# filter to PHX MSA 
+trip.phx.auto <- trip.phx[TRPTRANS %in% modes,] # auto only trips
+
+# percent of annual hours autos are utilized in phoenix metro
+x <- sum(trip.phx.auto$TRVLCMIN) / (nrow(trip.phx.auto) * 24 * 60) # unweighted
+w <- sum(trip.phx.auto$TRVLCMIN * trip.phx.auto$WTTRDFIN) / sum(trip.phx.auto$WTTRDFIN * 24 * 60) # weighted
+
+paste("Cars are used ", prettyNum((x * 100), scientific = FALSE, digits = 3),"% of the day in the Phoenix metro (unweighted, 2017 NHTS)")
+paste("Cars are used ", prettyNum((w * 100), scientific = FALSE, digits = 3),"% of the day in the Phoenix metro (weighted, 2017 NHTS)")
+
+# avg travel time
+sum(trip.phx.auto$TRVLCMIN) / nrow(trip.phx.auto) # unweighted travel time
+sum(trip.phx.auto$TRVLCMIN * trip.phx.auto$WTTRDFIN) / sum(trip.phx.auto$WTTRDFIN) # weighted travel time
+
+# avg travel dist
+sum(trip.phx.auto$TRPMILES) / nrow(trip.phx.auto) # unweighted travel dist
+sum(trip.phx.auto$TRPMILES * trip.phx.auto$WTTRDFIN) / sum(trip.phx.auto$WTTRDFIN) # weighted travel dist
+
+# avg yearly travel dist all vehs by person
+sum(per.phx$YEARMILE) / nrow(per.phx) # unweighted travel dist
+sum(per.phx$YEARMILE * per.phx$WTPERFIN) / sum(per.phx$WTPERFIN) # weighted travel dist
+
+
+# CURRENTLY DOESN'T PULL UNTIL AFTER 10AM ??
+# create dataframe to count every trip occurring at every minute of day
+time.counts <- as.data.frame(cbind(format(seq.POSIXt(as.POSIXct(Sys.Date()), as.POSIXct(Sys.Date()+1), by = "1 min"),"%H%M", tz="GMT"), vector(mode="numeric", length=1441)))
+time.counts <- time.counts[-c(1441),]
+time.counts$V1 <- as.character(time.counts$V1)
+time.counts$V2 <- as.numeric(time.counts$V2)
+colnames(time.counts)[1] <- "time"
+colnames(time.counts)[2] <- "counts"
+time.counts$counts <- 0
+time.counts$weighted_counts <- 0
+
+# iterate through list of trips and determine if the trip is occuring during a specific minute of day, if so count it and weighted value
+for(a in 1:nrow(time.counts)){
+  for(b in 1:nrow(trip.phx.auto)){
+    if( (trip.phx.auto$STRTTIME[b] <= time.counts$time[a]) & (time.counts$time[a] <= trip.phx.auto$ENDTIME[b]) ){
+      time.counts$counts[a] <- time.counts$counts[a] + 1  
+      time.counts$weighted_counts[a] <- time.counts$weighted_counts[a] + trip.phx.auto$WTTRDFIN[b]
+    }
+  }
+}
+
+time.counts$time <- format(strptime(time.counts$time, format="%H%M"), format="%H:%M")
+time.counts$weighted_counts_n <- time.counts$weighted_counts / sum(time.counts$weighted_counts) * sum(time.counts$counts)
+
+
+# VEHICLE ANALYSIS
+
+# weighted vehicles per household in Phoenix metro 
+sum(veh.phx$HHVEHCNT * veh.phx$WTHHFIN) / sum(veh.phx$WTHHFIN)
+
+# weighted number of vehicles in Phoenix metro
+sum(veh.phx$HHVEHCNT * veh.phx$WTHHFIN)
+
