@@ -62,9 +62,9 @@ if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B1", "B1", "B1", "B1") 
 } else if(batches[batch.n, id] == "A") {layer.sites <- c("A6", "A6", "A6", "A6", "A6")} # ASPHALT also A3 good
 
 # load validation site data 
-valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
+valid.dates <- readRDS(here("data/outputs/aster-data-my.rds")) # remote sensed temps at valiation sites on specified dates
 valid.dates <- valid.dates[!(date(date.time) %in% date(c("2007-06-26","2013-10-30")))] # drop bad dates **temporary**
-my.sites <- fread(here("data/aster/validation_sites.csv")) # other validation sites info 
+my.sites <- fread(here("data/validation_sites.csv")) # other validation sites info 
 setnames(my.sites, "X", "lon")
 setnames(my.sites, "Y", "lat")
 

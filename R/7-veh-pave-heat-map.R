@@ -37,11 +37,63 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
            checkpointLocation = here(), # calls here package
            verbose = F) 
 
+# R function to write both a .csv and a .csvt file from single data.frame/data.table to be imported into QGIS
+write.qgis.csv <- function(df, filename){
+  csvt <- vector(mode = "list", length = ncol(df))
+  csvt[] <- sapply(df, class)
+  csvt[] <- ifelse(csvt == "numeric","Real", csvt)
+  csvt[] <- ifelse(csvt == "integer","Integer", csvt)
+  csvt[] <- ifelse(csvt != "Real" & csvt != "Integer","String", csvt)
+  filename <- ifelse(substr(filename, nchar(filename) - 3, nchar(filename)) == ".csv", filename, paste0(filename,".csv"))
+  write.csv(df, file = filename, row.names = F)
+  write.table(csvt, file = paste0(filename,"t"), sep = ",", row.names = F, col.names = F)
+}
+
 # import data
 blkgrp <- shapefile(here("data/shapefiles/boundaries/phx-blkgrp-geom.shp")) # census blockgroup shapfile (clipped to Maricopa UZA)
 osm.block.min <- readRDS(here("data/outputs/osm-blockgroup-dissolved-min.rds"))
 osm.block.max <- readRDS(here("data/outputs/osm-blockgroup-dissolved-max.rds"))
-parking <- fread(here("data/phx-parking-blkgrp.csv")) # import parking data
+parking <- fread(here("data/parking/phx-parking-blkgrp.csv")) # phoenix total parking data (aggregated to blockgroup id)
+parking.par <- readRDS(here("data/parking/phoenix-parking-parcel.rds")) # phoenix off-street parking data (raw by parcel)
+parking.pts <- shapefile(here("data/parking/phx-parcel-points.shp")) # points of center of APN of parcels
+uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA buffered ~1mi
+
+# simplify prop type var
+parking.par <- parking.par[PROPTYPE == "Non-residential Off-street Spaces", type := "com"][PROPTYPE == "Residential Off-street Spaces", type := "res"]
+
+# agg spaces to APN and keep type (first of uniques)
+parking.par.m <- parking.par[, .(spaces = sum(spaces, na.rm = T), type = first(type)), by = "APN"]
+
+# make parking points unique
+parking.pts.u <- parking.pts[which(!duplicated(parking.pts$APN)), ]
+
+# merge parking spaces totals to points by  APN
+parking.merged <- merge(parking.pts.u, parking.par.m, by = "APN")
+saveRDS(parking.merged, here("data/parking/phoenix-parking-parcel-points.rds"))
+
+# export parking parcel data to merge in qgis
+#write.qgis.csv(parking.par.m, here("data/parking/parcel-off"))
+
+# rasterize polygon roadway min/max data and point parking data
+# note: "For polygons, values are transferred if the polygon covers the center of a raster cell."
+
+# create empty raster at desired extent (use uza buffer to ensure everything captured)
+r <- raster(ext = extent(uza.buffer), crs = crs(uza.buffer), res = 32.8084) # create raster = ~10x10 m
+
+# rasterize parking and min/max road area 
+#r.park <- rasterize(parking.merged[parking.merged$spaces,], r, field = "spaces") 42 Gb
+r.road.min <- rasterize(osm.block.min.r, r, getCover = T, background = 0)
+r.road.max <- rasterize(osm.block.max.r, r, getCover = T, background = 0)
+
+
+plot(r.road.min) # plot to see it worked
+
+# export to check how accurate in QGIS 
+writeRaster(r.road.min, here("data/outputs/osm-max-area-raster.tif"), format = "GTiff")
+writeRaster(r.road.max, here("data/outputs/osm-max-area-raster.tif"), format = "GTiff")
+
+# combine rasters
+
 
 # import most recent pavement model run data
 # define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
@@ -55,6 +107,9 @@ all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds")) # surf
 blkgrp$min.road.area.sqf <- gArea(osm.block.min, byid = T)
 blkgrp$tot.area.sqf <- gArea(blkgrp, byid = T)
 blkgrp$min.road.pct <- blkgrp$min.road.area.sqf / blkgrp$tot.area.sqf 
+
+# road area by raster cell (diff way)
+
 
 mean(blkgrp$min.road.pct)
 max(blkgrp$min.road.pct)
@@ -152,4 +207,5 @@ traffic <- fread(here("data/icarus/icarus_osm_traffic.csv")) # import traffic da
 traffic.net.dt <- xmlToList(traffic.net)
  
 #fclass <- as.list(traffic.net.dt[["links"]][["link"]][["attributes"]][["attribute"]][["text"]])
+
 

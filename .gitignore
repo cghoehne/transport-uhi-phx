@@ -14,13 +14,7 @@
 local-token.txt
 email.txt
 
-data/outputs/temp/*
-data/outputs/1D-heat-model-runs/*
 
-data/aster/raw/*
-data/aster/processed/*
-data/aster/preprocessed/*
-data/aster/best
 
 figures/1D-heat-model-runs/*
 figures/aster/*

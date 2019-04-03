@@ -179,18 +179,14 @@ my.palette <- rev(RColorBrewer::brewer.pal(11, "Spectral")) # color palette
 
 # save all data and filter dates 
 dir.create(here("data/aster"), showWarnings = F) # creates output folder if it doesn't already exist
-saveRDS(all.site.data, here("data/aster/all-aster-data.rds"))
-saveRDS(my.site.data, here("data/aster/my-aster-data.rds"))
-
-#all.site.data <- readRDS(here("data/aster/all-aster-data.rds"))
-#my.site.data <- readRDS(here("data/aster/my-aster-data.rds"))
+saveRDS(all.site.data, here("data/aster/aster-data-all.rds"))
+saveRDS(my.site.data, here("data/aster/aster-data-my.rds"))
 
 dir.create(here("data/aster/best"), showWarnings = F) # creates output folder if it doesn't already exist
 for(s in my.idx){
   writeRaster(new.stack[[s]], here("data/aster/best",paste0(names(new.stack[[s]]),".tif")), overwrite = T)
   
 }
-
 
 # loop through relevant raster scenes and create surface temperature plots
 for(s in my.idx){ #length(st.tile.stack)
@@ -247,12 +243,11 @@ getSeason <- function(DATES) {
 }
 
 # assign factors for season of year and if it is day or night (as factors for plotting)
-all.site.data.long[, season := factor(getSeason(date.time), levels = c("Winter","Spring","Summer","Fall"))]
+#all.site.data.long[, season := factor(getSeason(date.time), levels = c("Winter","Spring","Summer","Fall"))]
 #all.site.data.long[, light := getSunlightTimes(data = all.site.data.long[, .(date.time, lat, lon)][, date := as.Date(date.time)], keep = "nauticalDusk")]
 #all.site.data.long[, dark := getSunlightTimes(data = all.site.data.long[, .(date.time, lat, lon)][, date := as.Date(date.time)], keep = "dawn")]
 
-
-getSunlightTimes(data = all.site.data.long[1:5, .(date.time, lat, lon)][, date := as.Date(date.time)], keep = "nauticalDusk", tz =  "US/Arizona")
+#getSunlightTimes(data = all.site.data.long[1:5, .(date.time, lat, lon)][, date := as.Date(date.time)], keep = "nauticalDusk", tz =  "US/Arizona")
 
 # References
 
