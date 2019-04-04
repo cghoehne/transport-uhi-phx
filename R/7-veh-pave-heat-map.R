@@ -23,6 +23,7 @@ if (!require("checkpoint")){
 lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
 library(XML, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(sp, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(sf, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(raster, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(rgdal, lib.loc = lib.path, quietly = T, warn.conflicts = F)
 library(rgeos, lib.loc = lib.path, quietly = T, warn.conflicts = F)
@@ -200,12 +201,81 @@ shapefile(blkgrp, here("data/outputs/osm-blkgrp-heat-working"), overwrite = T)
 # OSM cleaned XML network from ICARUS model #
 #############################################
 
-traffic.net <- xmlParse(here("data/icarus/optimizedNetwork.xml")) # traffic network from xml
-traffic <- fread(here("data/icarus/icarus_osm_traffic.csv")) # import traffic data aggregated by osm link id and hour
+u <- fread(here("data/icarus/icarus_osm_traffic.csv")) # import traffic data aggregated by osm link id and hour
 #setnames(traffic, "link_id", "osm_id") 
 
-traffic.net.dt <- xmlToList(traffic.net)
+network <- xmlToList(xmlParse(here("data/icarus/optimizedNetwork.xml")))  # traffic network from xml file
  
-#fclass <- as.list(traffic.net.dt[["links"]][["link"]][["attributes"]][["attribute"]][["text"]])
+# get data by getting each set of attributes as list of one row data.frames and bind together
+nodes <- rbindlist(lapply(1:length(network[["nodes"]]), 
+                          function (x) as.data.frame.list(network[["nodes"]][[x]][[".attrs"]])))
+
+# for some reason, there is an "invisible link" or phantom child somewhere in the link tree,
+# so a manual hack to reduce the length by 1 is needed or else the reterival fails...
+links <- rbindlist(lapply(1:(length(network[["links"]])-1), 
+                          function (x) as.data.frame.list(network[["links"]][[x]][[".attrs"]])))
+
+# correct classes and names of x/y in nodes
+nodes <- nodes[, .(id = as.character(id),
+                   lon = as.numeric(as.character(x)),
+                   lat = as.numeric(as.character(y)))]
+
+links[, c(1:3,9)] <- as.data.table(sapply(links[, c(1:3,9)], as.character))
+links[, c(4:8)] <- as.data.table(sapply(links[, c(4:8)], function (x) as.numeric(as.character(x))))
+
+# create spatial lines network from nodes and links
+points <- SpatialPointsDataFrame(coords = nodes[, .(lon,lat)], data = nodes,
+                                 proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+points <- spTransform(points, crs(blkgrp))
+
+# coords of first
+nodes[id == links[1, to], .(lon,lat)]
+nodes[id == links[1, from], .(x,y)]
+
+# OPTIONS FOR POINTS TO LINES
+# NEED TO ONLY PLOT FOR LINKS THAT ARE TO FROM
+
+# the given data
+#https://stackoverflow.com/questions/20531066/convert-begin-and-end-coordinates-into-spatial-lines-in-r
+
+# create list of simple feature geometries (linestrings)
+lines <- vector("list", links[,.N])
+for (i in seq_along(lines)){
+  lines[[i]] <- st_linestring(as.matrix(rbind(nodes[id == links[i, to], .(lon,lat)],  # begin node coords
+                                              nodes[id == links[1, from], .(lon,lat)]))) # end coords
+}
+# create simple feature geometry list column
+#lines.c <- st_sfc(lines, crs = "+proj=longlat +datum=WGS84")
+lines.c <- st_sfc(lines, crs = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+# convert to `sp` object if needed
+lines.sp <- as(lines.c, "Spatial")
+plot(lines.sp)
+plot(points, add = TRUE, col = "blue", pch = 20)
+
+
+
+# raw list to store lines objects
+l <- vector("list", links[,.N])
+library(sp)
+for (i in seq_along(l)) {
+  l[[i]] <- Lines(list(Line(rbind(nodes[id == links[i, to], .(lon,lat)],  # begin node coords
+                                  nodes[id == links[1, from], .(lon,lat)]))), as.character(i))
+}
+
+# convert to spatial lines
+l.sl <- SpatialLines(l, proj4string = crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+plot(l.sl)
+plot(points)
+
+
+################################################
+# get var names of node and link attributes (just use first obs)
+#node.vars <- names(network[["nodes"]][[1]][[".attrs"]])
+#link.vars <- names(network[["links"]][[1]][[".attrs"]])
+
+# intialize data.tables of node and link metadata
+#nodes <- data.table(1)[, `:=` (c(node.vars), NA)][,V1:=NULL][1:length(network[["nodes"]]),]
+#links <- data.table(1)[, `:=` (c(link.vars), NA)][,V1:=NULL][1:length(network[["links"]]),]
 
 
