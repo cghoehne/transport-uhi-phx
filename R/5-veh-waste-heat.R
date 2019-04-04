@@ -1,4 +1,49 @@
+# clear space and allocate memory
+gc()
+memory.limit(size = 56000) 
+t.start <- Sys.time() # start script timestamp
 
+# first make sure checkpoint is installed locally
+# this is the only package that is ok to not use a 'checkpointed' (i.e. archived version of a package)
+# checkpoint does not archive itself and it should not create dependency issues
+if (!require("checkpoint")){
+  install.packages("checkpoint")
+  library(checkpoint, quietly = T)
+}
+
+# load all other dependant packages from the local repo
+lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
+library(zoo, lib.loc = lib.path, quietly = T)
+library(lubridate, lib.loc = lib.path, quietly = T)
+library(data.table, lib.loc = lib.path, quietly = T)
+library(here, lib.loc = lib.path, quietly = T)
+
+
+# MAG MAZ trip data 2015
+#mag.trips <- fread(here("data/mag abm/mag-trips.csv"))
+mag.trips <- readRDS("here/mag abm/mag-trips.rds")
+saveRDS(mag.trips, here("data/mag abm/mag-trips.rds"))
+
+# filter to auto modes driver only (exlcude passengers to avoid double counting)
+modes <- c(1, 2, 3, 13) # 1 SOV; 2 HOV2 driver; HOV3+ driver; 13: taxi
+auto.trips <- mag.trips[mode %in% modes,]
+
+# check for negative trip times and negative activity times
+auto.trips[finalTravelMinutes > 0 & is.finite(finalTravelMinutes), .N] / auto.trips[, .N]
+auto.trips[activityMinutesAtDest > 0 & is.finite(activityMinutesAtDest), .N] / auto.trips[, .N]
+
+# check number of inter MAZ vs intra MAZ trips
+auto.trips[origMaz == destMaz, .N] / auto.trips[, .N]
+
+# trip distance (in miles?)
+auto.trips[, .(mean.dist = mean(tripDistance),
+               tot.dist = sum(tripDistance),
+               med.dist = quantile(tripDistance, probs = 0.5),
+               q25.dist = quantile(tripDistance, probs = 0.25),
+               q75.dist = quantile(tripDistance, probs = 0.75))] 
+
+
+# OLD ANALYSIS
 # Load files
 per <- read_sas("NHTS 2009/FullGeoDated/DOT/pp_dotv2.sas7bdat")   # person file
 day <- read_sas("NHTS 2009/FullGeoDated/DOT/dd_dotv2.sas7bdat")   # day (trip) file
@@ -109,10 +154,10 @@ veh.phx.new <- veh.phx # create new data frame for estimating adjustment
 veh.phx.new$EPATMPG <- 36.4
 veh.phx.new$EIADMPG <- veh.phx.new$EPATMPG - veh.phx.new$adj_mpg
 veh.phx.new$GSYRGAL <- veh.phx.new$yrmiles / veh.phx.new$EIADMPG
+
 # total gas consupmtion in Maricopa County from imporvement
 x.new <- (veh.phx.new[,c('GSYRGAL')] %*% veh.phx.new[,c('WTHHFIN')]) 
 paste0(x.new[1,1]," +/- ",0," gallons gas eq in 2009 with new MPG")
-
 
 
 # TRIP DISTRIBUTION OVER TIME IN PHX

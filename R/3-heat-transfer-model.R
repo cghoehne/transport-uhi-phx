@@ -35,7 +35,7 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 ################################
 # DEFINE BATCH RUN ID and NAME #
 ################################
-batch.n <- 1 # choose index for batch run type
+batch.n <- 4 # choose index for batch run type
 
 batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
                          name = c("Asphalt Pavements", 
@@ -58,13 +58,13 @@ layer.profiles <- readRDS(here(paste0("data/outputs/layer-profiles-", batches[ba
 if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B1", "B1", "B1", "B1") # BARE GROUND also B2 good
 } else if(batches[batch.n, id] == "C") {layer.sites <- c("C4", "C4", "C4", "C4", "C4") # CONCRETE also C1 good
 } else if(batches[batch.n, id] == "WA") {layer.sites <- c("C1", "C1", "C1", "C1", "C1") # WHITETOPPED ASPHALT also C4 good
-} else if(batches[batch.n, id] == "OA") {layer.sites <- c("A3", "A3", "A3", "A3", "A3") # ASPHALT OVERLAY CONCRETE also A6 good
+} else if(batches[batch.n, id] == "OC") {layer.sites <- c("A3", "A3", "A3", "A3", "A3") # ASPHALT OVERLAY CONCRETE also A6 good
 } else if(batches[batch.n, id] == "A") {layer.sites <- c("A6", "A6", "A6", "A6", "A6")} # ASPHALT also A3 good
 
 # load validation site data 
-valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
+valid.dates <- readRDS(here("data/outputs/aster-data-my.rds")) # remote sensed temps at valiation sites on specified dates
 valid.dates <- valid.dates[!(date(date.time) %in% date(c("2007-06-26","2013-10-30")))] # drop bad dates **temporary**
-my.sites <- fread(here("data/aster/validation_sites.csv")) # other validation sites info 
+my.sites <- fread(here("data/validation_sites.csv")) # other validation sites info 
 setnames(my.sites, "X", "lon")
 setnames(my.sites, "Y", "lat")
 

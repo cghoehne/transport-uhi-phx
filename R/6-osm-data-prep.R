@@ -48,13 +48,6 @@ fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by 
 blkgrp <- shapefile(here("data/shapefiles/boundaries/phx-blkgrp-geom.shp")) # census blockgroup shapfile (clipped to Maricopa UZA)
 uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA buffered ~1mi
 
-#traffic.net <- xmlParse(here("data/icarus network/optimizedNetwork.xml")) # traffic network from xml
-#traffic <- fread(here("data/icarus_osm_traffic.csv")) # import traffic data aggregated by osm link id and hour
-#traffic.net.dt <- xmlToList(traffic.net)
-# setnames(traffic, "link_id", "osm_id") 
-# merge traffic data to osm data by link id
-#osm.dt <- merge(osm.dt, traffic, by = "id")
-
 
 # OSM DATA FORMAT
 # **Curently, OSM data in Phoenix does not have lane data. in light of this:

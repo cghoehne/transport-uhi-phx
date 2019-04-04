@@ -75,9 +75,10 @@ names(m.o.col) <- m.o.names
 
 # create new names 
 model.runs[, new.name := batch.name]
-model.runs[batch.name == "High Volume Asphalt Pavements", new.name := "High Stress Asphalt"]
-model.runs[batch.name == "Low Volume Asphalt Pavements", new.name := "Low Stress Asphalt"]
-model.runs[batch.name == "Concrete and Composite Concrete-Asphalt Pavements", new.name := "Concrete & Whitetopped Asphalt"]
+model.runs[batch.name == "Concrete Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
+model.runs[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
+model.runs[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Overlaid PCC Pavements"]
+
 
 # create new ordered titles with a:d for facet titles
 p.names <- unique(model.runs[, new.name])
@@ -145,7 +146,9 @@ my.plot.f <- (ggplot(data = model.runs)
 
 # save plot
 dir.create(paste0(folder, "/figures/"), showWarnings = F)
-ggsave(paste0(folder, "/figures/modeled-observed.png"), my.plot.f, 
+ggsave(paste0(folder, "/figures/modeled-observed", 
+              format(strptime(Sys.time(), format = "%Y-%m-%d %H:%M:%S"), 
+                     format = "%Y%m%d_%H%M%S"),".png"), my.plot.f, 
        device = "png", scale = 1.5, width = 6, height = 5, dpi = 300, units = "in")
 
 
@@ -153,18 +156,20 @@ ggsave(paste0(folder, "/figures/modeled-observed.png"), my.plot.f,
 # HEAT FLUX PLOT #
 ##################
 
-# import dataa
+# import data
 all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
+saveRDS(all.surface.data, paste0(folder, "/all_pave_surface_data.rds"))
+
 
 # flux comparisons by type
 all.surface.data[, mean(q.rad + q.cnv), by = c("pave.name", "batch.name", "albedo")][order(V1)]
 
 # new names
 all.surface.data[, new.name := batch.name]
-all.surface.data[batch.name == "High Volume Asphalt Pavements", new.name := "High Stress Asphalt"]
-all.surface.data[batch.name == "Low Volume Asphalt Pavements", new.name := "Low Stress Asphalt"]
-all.surface.data[batch.name == "Concrete and Composite Concrete-Asphalt Pavements", 
-                 new.name := "Concrete & Whitetopped Asphalt"]
+all.surface.data[batch.name == "Concrete Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
+all.surface.data[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
+all.surface.data[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Overlaid PCC Pavements"]
+
 
 # calc flux vars
 all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
@@ -204,11 +209,11 @@ names(p.lty) <- p.names
 
 
 # create better labels for season factor
-setattr(surface.data.a$season,"levels", c("(a) Spring", "(b) Summer", "(c) Fall", "(d) Winter"))
-#setattr(surface.data.a$season,"levels", c("(a) Spring", "(a) Summer", "(c) Fall", "(b) Winter"))
+#setattr(surface.data.a$season,"levels", c("(a) Spring", "(b) Summer", "(c) Fall", "(d) Winter"))
+setattr(surface.data.a$season,"levels", c("(a) Spring", "(a) Summer", "(c) Fall", "(b) Winter"))
 
 # create plot
-p.flux.a <- (ggplot(data = surface.data.a)   #[season %in% c("(a) Summer", "(b) Winter")]
+p.flux.a <- (ggplot(data = surface.data.a[season %in% c("(a) Summer", "(b) Winter")])   #
              
              # custom border
              + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = max.x.flux, yend = min.y.flux))   # x border (x,y) (xend,yend)
@@ -250,7 +255,9 @@ p.flux.a <- (ggplot(data = surface.data.a)   #[season %in% c("(a) Summer", "(b) 
 )
 
 # save plot
-ggsave(paste0(folder, "/figures/heat-flux-diff.png"), p.flux.a, 
+ggsave(paste0(folder, "/figures/heat-flux-diff", 
+              format(strptime(Sys.time(), format = "%Y-%m-%d %H:%M:%S"),
+                     format = "%Y%m%d_%H%M%S"),".png"), p.flux.a, 
        device = "png", scale = 1, width = 7, height = 4.5, dpi = 300, units = "in") 
 
 ##############################

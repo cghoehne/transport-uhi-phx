@@ -51,9 +51,9 @@ getSeason <- function(DATES) {
 
 # first get latest updated output folders to pull model run data from most recent run (can change)
 out.folders <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), 
-                                                recursive = F)), keep.rownames = T)[(.N-3):(.N), rn]
+                                                recursive = F)), keep.rownames = T)[(.N-4):(.N), rn]
 # create summary plots for each run?
-should.plot <- "no" # "yes" or "no"
+should.plot <- "yes" # "yes" or "no"
 
 # loop through each folder of simulation runs
 # and then loop through each run loading simulated pavement temperature data
@@ -463,6 +463,10 @@ for(f in 1:length(out.folders)){
 
 # filter surface pave data to only the 3rd (last day), as that is all we will need
 all.surface.data <- all.surface.data[time.s >= (60*60*24*2),]
+
+# also filter out unneeded vars to reduce file size
+all.surface.data[, c("node", "layer", "depth.m", "k", "rho.c", "R.c", "k.up", "k.dn", "x.up",
+                     "x.dn", "CFL", "CFL_fail", "end.day") := NULL]
 
 # create summaries of error bu variables to identify best/worst 
 RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))} # RMSE function

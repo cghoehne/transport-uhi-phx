@@ -1,0 +1,26 @@
+"layer.profile","batch.name","RMSE","MAPE"
+5,"Bare Ground / Desert Soil",2.99347643563983,0.0713833708363357
+5,"Whitetopped Asphalt Pavements",3.91870149681777,0.0995076202742051
+4,"Whitetopped Asphalt Pavements",4.58824139563849,0.134993058719568
+4,"Bare Ground / Desert Soil",4.85706682264634,0.187457706320599
+5,"Concrete Pavements",5.2569643070387,0.139987805415852
+3,"Whitetopped Asphalt Pavements",5.63957320066806,0.173351754519362
+4,"Concrete Pavements",5.64219043632961,0.187234523456741
+3,"Concrete Pavements",6.73536287975314,0.242256820062712
+3,"Bare Ground / Desert Soil",6.78750000200452,0.263834564527505
+4,"Asphalt Pavements",6.93180372261714,0.221715510225656
+4,"Asphalt Overlays on PCC Pavements",7.19789077236251,0.241927889307392
+5,"Asphalt Pavements",7.82679325472619,0.166215017692092
+1,"Whitetopped Asphalt Pavements",7.86543722847862,0.247270027198481
+3,"Asphalt Overlays on PCC Pavements",8.09909399974611,0.284420457833673
+3,"Asphalt Pavements",8.20034801116106,0.275714484537316
+5,"Asphalt Overlays on PCC Pavements",8.26527030666272,0.209109561099181
+2,"Bare Ground / Desert Soil",8.27246852433248,0.321922326424216
+1,"Concrete Pavements",9.086644045448,0.334865239004845
+1,"Bare Ground / Desert Soil",9.5155261079313,0.369423009357467
+1,"Asphalt Overlays on PCC Pavements",10.5972388529213,0.370974469726906
+1,"Asphalt Pavements",11.1432769541488,0.372728941504587
+2,"Asphalt Pavements",NA,NA
+2,"Concrete Pavements",NA,NA
+2,"Whitetopped Asphalt Pavements",NA,NA
+2,"Asphalt Overlays on PCC Pavements",NA,NA
