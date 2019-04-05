@@ -44,9 +44,11 @@ folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F
 # IMPORT MODEL DATA
 all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
+# filter out any unrealistic pavements
+all.model.runs <- all.model.runs[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
 
 # filter if necessary / as desired
-model.runs <- all.model.runs[p.err <= 0.35 & !is.na(p.err),] # remove poor performers or NAs if there are any 
+model.runs <- all.model.runs  #[p.err <= 0.35 & !is.na(p.err),] # remove poor performers or NAs if there are any 
 
 # summary stats for paper
 model.runs[, RMSE(Modeled, Observed)]
@@ -175,6 +177,9 @@ all.surface.data[batch.name == "Asphalt Overlays on PCC Pavements", new.name := 
 all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
 all.surface.data[, ref.sol := albedo * SVF * solar]
 all.surface.data[, net.flux := -inc.sol + q.rad + q.cnv]
+
+# filter out any unrealistic pavements
+all.surface.data <- all.surface.data[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
 
 # summarize data
 surface.data.a <- all.surface.data[, .(hrs, mins, secs,

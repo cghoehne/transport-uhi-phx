@@ -205,6 +205,7 @@ u <- fread(here("data/icarus/icarus_osm_traffic.csv")) # import traffic data agg
 #setnames(traffic, "link_id", "osm_id") 
 
 network <- xmlToList(xmlParse(here("data/icarus/optimizedNetwork.xml")))  # traffic network from xml file
+#network <- xmlToList(xmlParse(here("data/icarus/TEST_matsim_plans_from_mag.xml")))  # traffic network from xml file
  
 # get data by getting each set of attributes as list of one row data.frames and bind together
 nodes <- rbindlist(lapply(1:length(network[["nodes"]]), 
