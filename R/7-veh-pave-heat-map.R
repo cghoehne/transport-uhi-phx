@@ -201,20 +201,33 @@ shapefile(blkgrp, here("data/outputs/osm-blkgrp-heat-working"), overwrite = T)
 # OSM cleaned XML network from ICARUS model #
 #############################################
 
-u <- fread(here("data/icarus/icarus_osm_traffic.csv")) # import traffic data aggregated by osm link id and hour
-#setnames(traffic, "link_id", "osm_id") 
-
-network <- xmlToList(xmlParse(here("data/icarus/optimizedNetwork.xml")))  # traffic network from xml file
-#network <- xmlToList(xmlParse(here("data/icarus/TEST_matsim_plans_from_mag.xml")))  # traffic network from xml file
+# get XML data for network and plans
+network <- xmlToList(xmlParse(here("data/icarus/optimizedNetwork.xml")))  # traffic network (nodes + links) from xml file
+plans <- xmlToList(xmlParse(here("data/icarus/TEST_matsim_plans_from_mag.xml"))) # plans (trips + activities) from xml file
  
 # get data by getting each set of attributes as list of one row data.frames and bind together
 nodes <- rbindlist(lapply(1:length(network[["nodes"]]), 
                           function (x) as.data.frame.list(network[["nodes"]][[x]][[".attrs"]])))
 
 # for some reason, there is an "invisible link" or phantom child somewhere in the link tree,
-# so a manual hack to reduce the length by 1 is needed or else the reterival fails...
+# so we need to manually reduce the length by 1 or else the reterival fails...
 links <- rbindlist(lapply(1:(length(network[["links"]])-1), 
                           function (x) as.data.frame.list(network[["links"]][[x]][[".attrs"]])))
+
+# get list of person ids
+per.id <- lapply(1:length(plans), function (x) unlist(plans[[x]][[".attrs"]][["id"]]))
+
+# get list of all trips by person
+trips.l <- lapply(1:length(plans), function (x) lapply(which(!(names(plans[[x]][["plan"]]) %in% c("act",".attrs")), arr.ind = T), 
+                                            function (y) as.data.frame.list(plans[[x]][["plan"]][[y]])))
+# get list of all activies by person
+activ.l <- lapply(1:length(plans), function (x) lapply(which(!(names(plans[[x]][["plan"]]) %in% c("leg",".attrs")), arr.ind = T), 
+                                                       function (y) as.data.frame.list(plans[[x]][["plan"]][[y]])))
+# bind all trips together and add person id            
+trips <- rbindlist(lapply(1:length(trips.l), function (x) cbind(rbindlist(trips.l[[x]]), pid = per.id[[x]])))
+
+# bind all activities together and add person id            
+activ <- rbindlist(lapply(1:length(activ.l), function (x) cbind(rbindlist(activ.l[[x]], fill = T), pid = per.id[[x]])), fill = T)
 
 # correct classes and names of x/y in nodes
 nodes <- nodes[, .(id = as.character(id),
@@ -231,52 +244,23 @@ points <- spTransform(points, crs(blkgrp))
 
 # coords of first
 nodes[id == links[1, to], .(lon,lat)]
-nodes[id == links[1, from], .(x,y)]
 
-# OPTIONS FOR POINTS TO LINES
-# NEED TO ONLY PLOT FOR LINKS THAT ARE TO FROM
+#
 
-# the given data
-#https://stackoverflow.com/questions/20531066/convert-begin-and-end-coordinates-into-spatial-lines-in-r
 
 # create list of simple feature geometries (linestrings)
 lines <- vector("list", links[,.N])
 for (i in seq_along(lines)){
-  lines[[i]] <- st_linestring(as.matrix(rbind(nodes[id == links[i, to], .(lon,lat)],  # begin node coords
-                                              nodes[id == links[1, from], .(lon,lat)]))) # end coords
+  lines[[i]] <- st_linestring(as.matrix(rbind(nodes[id == links[i, from], .(lon,lat)],  # begin node coords
+                                              nodes[id == links[1, to], .(lon,lat)]))) # end coords
 }
 # create simple feature geometry list column
-#lines.c <- st_sfc(lines, crs = "+proj=longlat +datum=WGS84")
 lines.c <- st_sfc(lines, crs = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 
 # convert to `sp` object if needed
 lines.sp <- as(lines.c, "Spatial")
 plot(lines.sp)
-plot(points, add = TRUE, col = "blue", pch = 20)
+plot(points, col = "blue", pch = 20)
 
-
-
-# raw list to store lines objects
-l <- vector("list", links[,.N])
-library(sp)
-for (i in seq_along(l)) {
-  l[[i]] <- Lines(list(Line(rbind(nodes[id == links[i, to], .(lon,lat)],  # begin node coords
-                                  nodes[id == links[1, from], .(lon,lat)]))), as.character(i))
-}
-
-# convert to spatial lines
-l.sl <- SpatialLines(l, proj4string = crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-plot(l.sl)
-plot(points)
-
-
-################################################
-# get var names of node and link attributes (just use first obs)
-#node.vars <- names(network[["nodes"]][[1]][[".attrs"]])
-#link.vars <- names(network[["links"]][[1]][[".attrs"]])
-
-# intialize data.tables of node and link metadata
-#nodes <- data.table(1)[, `:=` (c(node.vars), NA)][,V1:=NULL][1:length(network[["nodes"]]),]
-#links <- data.table(1)[, `:=` (c(link.vars), NA)][,V1:=NULL][1:length(network[["links"]]),]
-
-
+# source for method
+#https://stackoverflow.com/questions/20531066/convert-begin-and-end-coordinates-into-spatial-lines-in-r
