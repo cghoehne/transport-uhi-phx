@@ -20,6 +20,7 @@ if (!require("checkpoint")){
 lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
 #.libPaths(paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1"))
 library(mailR, lib.loc = lib.path, quietly = T)
+library(insol, lib.loc = lib.path, quietly = T)
 library(zoo, lib.loc = lib.path, quietly = T)
 library(lubridate, lib.loc = lib.path, quietly = T)
 library(data.table, lib.loc = lib.path, quietly = T)
@@ -35,7 +36,7 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 ################################
 # DEFINE BATCH RUN ID and NAME #
 ################################
-batch.n <- 4 # choose index for batch run type
+batch.n <- 1 # choose index for batch run type
 
 batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
                          name = c("Asphalt Pavements", 
@@ -55,32 +56,29 @@ dir.create(out.folder, showWarnings = FALSE)
 layer.profiles <- readRDS(here(paste0("data/outputs/layer-profiles-", batches[batch.n, id],".rds"))) 
 
 # define validation site location IDs to pull weather data from the nearest weather site to corresponding layer profile
-if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B1", "B1", "B1", "B1") # BARE GROUND also B2 good
-} else if(batches[batch.n, id] == "C") {layer.sites <- c("C4", "C4", "C4", "C4", "C4") # CONCRETE also C1 good
-} else if(batches[batch.n, id] == "WA") {layer.sites <- c("C1", "C1", "C1", "C1", "C1") # WHITETOPPED ASPHALT also C4 good
-} else if(batches[batch.n, id] == "OC") {layer.sites <- c("A3", "A3", "A3", "A3", "A3") # ASPHALT OVERLAY CONCRETE also A6 good
-} else if(batches[batch.n, id] == "A") {layer.sites <- c("A6", "A6", "A6", "A6", "A6")} # ASPHALT also A3 good
+if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B1", "B1") # BARE GROUND also B2 good
+} else if(batches[batch.n, id] == "C") {layer.sites <- c("C4", "C4", "C4") # CONCRETE also C1 good
+} else if(batches[batch.n, id] == "WA") {layer.sites <- c("C1", "C1", "C1") # WHITETOPPED ASPHALT also C4 good
+} else if(batches[batch.n, id] == "OC") {layer.sites <- c("A3", "A3", "A3") # ASPHALT OVERLAY CONCRETE also A6 good
+} else if(batches[batch.n, id] == "A") {layer.sites <- c("A6", "A6", "A6")} # ASPHALT also A3 good
 
 # load validation site data 
 valid.dates <- readRDS(here("data/outputs/aster-data-my.rds")) # remote sensed temps at valiation sites on specified dates
 valid.dates <- valid.dates[!(date(date.time) %in% date(c("2007-06-26","2013-10-30")))] # drop bad dates **temporary**
 my.sites <- fread(here("data/validation_sites.csv")) # other validation sites info 
-setnames(my.sites, "X", "lon")
-setnames(my.sites, "Y", "lat")
 
 # create list of models to run with varied inputs to check sentivity/error
 # first values in each vector will correspond to a refrence run for RMSE calcs where appropriate
 models <- list(run.n = c(0), # dummy run number (replace below)
                nodal.spacing = c(10),# nodal spacing in millimeters
-               n.iterations = c(1), # number of iterations to repeat each model run (not useful b/c converagnce is forced, can keep 1)
                i.top.temp = c(33.5), # starting top boundary layer temperature in deg C
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
-               pave.length = c(10,100), # characteristic length of pavement in meters
-               SVF = c(1), # sky view factor
+               #pave.length = c(200), # characteristic length of pavement in meters
+               SVF = c(0.947), # sky view factor
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
-               n.days = c(3) # number of days to simulate 
+               n.days = c(5) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
@@ -100,39 +98,25 @@ for(a in 1:length(layer.profiles)){ # record other layer profile properties in m
 # LOAD & FILTER WEATHER DATA 
 my.years <- unique(valid.dates[, year(date.time)]) # store all unique years to reterive weather data for those years
 weather.raw <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-weather-data.rds")), readRDS), fill = T) # bind all weather data for the selected years
-weather.raw <- weather.raw[!is.na(solar) & !is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(winspd),] # make sure only to select obs w/o NA of desired vars
-weather.raw[is.na(winspd), winspd := 0] # set NA windspeeds to zero to prevent errors
+weather.raw <- weather.raw[!is.na(temp.c) & !is.na(dewpt.c) ] #& !is.na(solar) & !is.na(winspd),] # make sure only to select obs w/o NA of desired vars
+weather.raw[is.na(winspd), winspd := 0] # force NA windspeeds to zero as this is the limiting weather observation
 
 # pre-trim weather data to only the dates that we will be using weather data from (defined by model.runs$end.day and model.runs$n.days
 all.dates <- unique(do.call("c", mapply(function(x,y) seq(date(x) - days(y - 1), by = "day", length.out = y + 1), model.runs$end.day, model.runs$n.days, SIMPLIFY = F)))
 weather.raw <- weather.raw[date(date.time) %in% all.dates,]
 
 # import station metadata and calculate average number of observations of critical weather parameters
-stations <- rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-station-data.rds")), readRDS)) # load corresonding years of station metadata
-stations <- unique(stations)
+stations <- unique(rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-station-data.rds")), readRDS))) # load corresonding years of station metadata
 
-# define function to calculate distance in kilometers between two lat/lon points
-earth.dist <- function (long1, lat1, long2, lat2){
-  rad <- pi/180
-  a1 <- lat1 * rad
-  a2 <- long1 * rad
-  b1 <- lat2 * rad
-  b2 <- long2 * rad
-  dlon <- b2 - a2
-  dlat <- b1 - a1
-  a <- (sin(dlat/2))^2 + cos(a1) * cos(b1) * (sin(dlon/2))^2
-  c <- 2 * atan2(sqrt(a), sqrt(1 - a))
-  R <- 6378.145
-  d <- R * c
-  return(d)
-}
+# merge latitude from station data for solar rad estimation
+weather.raw <- merge(weather.raw, stations[,.(station.name,lat,lon)], by = "station.name", all.x = T, allow.cartesian = T) 
 
 # create empty object and file to store error messages
 my.errors <- NULL
 run.log <- file(paste0(out.folder,"/run_log.txt"), open = "a")
 
 # BEGIN MODEL LOGIC
-for(run in 1:model.runs[,.N]){  #
+for(run in 1:1){  # model.runs[,.N]
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
@@ -143,7 +127,7 @@ for(run in 1:model.runs[,.N]){  #
     cat(paste0("started run ", run, " at ", start.time, " (", round(difftime(start.time, script.start, units = "min"), ifelse(run == 1, 2, 0))," mins since start script) \n"), file = run.log, append = T)
     
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "earth.dist", "stations",
+    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "stations",
                             "weather.raw", "create.layer", "start.time", "my.errors", "my.sites", "out.folder", "run.log")))
     gc()
     t.start <- Sys.time() # start model run timestamp
@@ -156,7 +140,7 @@ for(run in 1:model.runs[,.N]){  #
     my.site <- my.sites[Location == model.runs$valid.site[run],]
     
     # calculate earth surface distance in km between chosen validation site and available weather stations
-    stations[, my.site.dist := earth.dist(my.site[, lon], my.site[, lat], stations$lon, stations$lat)]
+    stations[, my.site.dist := (GCdistance(my.site[, lat], my.site[, lon], stations$lat, stations$lon)) / 1000 ] # GCdistance reports in meters
     
     # trim weather data to relevant dates for this run (just past end date.time)
     weather <- weather.raw[date.time >= min(my.dates) & date.time <= force_tz(max(my.dates) + hours(1), tz =  tz(weather.raw$date.time[1])) ,]
@@ -167,6 +151,7 @@ for(run in 1:model.runs[,.N]){  #
     weather[, sd.hr.t := sd(temp.c, na.rm = T), by = "date.time.round"]
     weather[, avg.hr.s := mean(solar, na.rm = T), by = "date.time.round"]
     weather[, sd.hr.s := sd(solar, na.rm = T), by = "date.time.round"]
+
     
     # we create another qcflag b/c qcflag in MESOWEST is only for whole station date range
     weather[, qcflag2 := 1]
@@ -176,23 +161,28 @@ for(run in 1:model.runs[,.N]){  #
     # calculate the remaining obs per day for desired time period
     for(s in 1:nrow(stations)){ 
       s.name <- stations[s, station.name]
+      if(weather[station.name == s.name, .N] == 0){next}
       stations[s, n.solar.day := weather[station.name == s.name & !is.na(solar), .N] / day.n]
       stations[s, n.dewpt.day := weather[station.name == s.name & !is.na(dewpt.c), .N] / day.n]
       stations[s, n.tempc.day := weather[station.name == s.name & !is.na(temp.c), .N] / day.n]
+      stations[s, max.gap.hrs := max(difftime(weather[station.name == s.name, date.time],
+                                              weather[station.name == s.name, shift(date.time)], 
+                                              units = "hours"), na.rm = T)]
       stations[s, p.flag := weather[station.name == s.name & qcflag2 == 1, .N] 
                / (weather[station.name == s.name & !is.na(solar) & !is.na(temp.c), .N] + 1)]
     }
     
-    # filter to only stations with at least one observation per hour during desired dates
+    # filter to only stations with an average of one observation per hour during desired dates,
+    # with no gap in observations greater than 2 hours, and
     # with good quality data (low percent of data falling outside expected range)
-    my.stations <- stations[n.solar.day >= 24 & n.dewpt.day >= 24 & n.tempc.day >= 24 & p.flag <= 0.05,]
+    my.stations <- stations[n.dewpt.day >= 24 & n.tempc.day >= 24 & p.flag <= 0.05 & max.gap.hrs < 2,] # n.solar.day >= 24 & 
     
     # determine which of eligible stations are the closest to the validation site
     my.station <- my.stations[my.site.dist == min(my.site.dist, na.rm = T), station.name]
 
-    # finally, trim to station that is chosen
+    # finally, trim weather to station that is chosen
     weather <- weather[station.name == my.station,]
-    
+  
     # store station.name and distance in model.run metadata and my.sites validation data
     model.runs[run.n == run, station.name := my.station]
     model.runs[run.n == run, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
@@ -299,7 +289,9 @@ for(run in 1:model.runs[,.N]){  #
     SVF <- model.runs[run.n == run, SVF] #layer.dt$SVF[1]	# sky view factor (dimensionless [0,1]). assume 1.0: pavement is completely visible to sky
     
     # L in (m) is the characteristic length of the pavement at the test site taken as the ratio of
-    L <- model.runs[run.n == run, pave.length] # the slab length in the direction of the wind to the perimeter
+    #L <- model.runs[run.n == run, pave.length] # the slab length in the direction of the wind to the perimeter
+    L <- my.site[, max.pave.len]
+    model.runs[run.n == run, pave.length := L]
     # assume horizontal & flat, width b and infinite length L, hotter than the environment -> L = b/2
     # L could vary, but minimum for a pavement should be 2 lanes, or about ~10 meters
     
@@ -322,13 +314,24 @@ for(run in 1:model.runs[,.N]){  #
     # first create new data.table for a single node with all obervational weather data matched by timestep (timesteps match)
     # then linearlly approximate between the weather observations for all NA timesteps using zoo::na.approx
     # finally merge to orginal data.table to have all weather observations present such that missing ones are interplotated between
-    aprx <- merge(pave.time[node == 0], weather[, .(time.s, T.sky, T.inf, solar, h.inf)], by = "time.s", all.x = T)
+    aprx <- merge(pave.time[node == 0], weather[, .(time.s, T.sky, T.inf, dewpt.c, solar, h.inf)], by = "time.s", all.x = T)
     aprx[, `:=` (T.sky = na.approx(T.sky, 1:.N, na.rm = F), # sky temperature in K
                  T.inf = na.approx(T.inf, 1:.N, na.rm = F), # atmospheric dry-bulb temperature in K
+                 dewpt.c = na.approx(dewpt.c, 1:.N, na.rm = F), # dew point in C
                  solar = na.approx(solar, 1:.N, na.rm = F), # solar radiation in W/m2
                  h.inf = na.approx(h.inf, 1:.N, na.rm = F))]  # wind speed in m/s
-    pave.time <- merge(pave.time, aprx[, .(time.s, T.sky, T.inf, solar, h.inf)], by = "time.s", all.x = T)
+    pave.time <- merge(pave.time, aprx[, .(time.s, T.sky, T.inf, dewpt.c, solar, h.inf)], by = "time.s", all.x = T)
     
+    # calculate solar radiation (insolation) at validation site coords
+    # assume elevation is nearest stations elevation or otherwise 500m (from calc above)
+    jday <- JD(min(weather$date.time) + seconds(pave.time[node == 0,time.s])) # JD() always calcs julian day respective to UTC time
+    zen <- sunpos(sunvector(jday, latitude = my.site$lat, longitude = my.site$lon, timezone = 0))[,"zenith"]
+    rh <- 100 * (exp((17.625 * pave.time[node == 0, dewpt.c])/(243.04 + pave.time[node == 0, dewpt.c])) / exp((17.625 * pave.time[node == 0, T.inf - 273.15])/(243.04 + pave.time[node == 0, T.inf - 273.15]))) 
+    sol.est <- insolation(zenith = zen, jd = jday, height = elev, visibility = 15, RH = rh, tempK = pave.time[node == 0, T.inf], O3 = 0.00275, alphag = albedo)
+    
+    # add insolation to pave.time data
+    pave.time[node == 0, insol := (sol.est[,1] + sol.est[,2])]
+
     # add k and rho.c
     pave.time <- merge(pave.time, layer.dt[,.(layer,k,rho.c)], by = "layer", all.x = T, allow.cartesian = T) 
     
@@ -361,240 +364,222 @@ for(run in 1:model.runs[,.N]){  #
     pave.time <- pave.time[date.time >= min(my.dates) & date.time <= max(my.dates),]
     
     # MODEL HEAT TRANSFER OF PAVEMENT
-    
     # iterate through from time p to time p.n and model pavement heat transfer at surface, boundary/interface, and interior nodes 
-    iterations <- 1:max(model.runs$n.iterations) # always do max iterations but save intermeidate runs if desired
-    for(iteration in iterations){
+    for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
       
-      for(p in 1:(p.n-1)){ # state at time p is used to model time p+1, so stop and p-1 to get final model output at time p
+      # print progress
+      if(p%%1000 == 0){
         
-        # print progress
-        if(p%%1000 == 0){
+        # print to console
+        cat("r =", run, "/", model.runs[,.N], paste0("(", signif(run/model.runs[,.N], 2) * 100,"%)"),"|",
+            "p =", p, "/", p.n, paste0("(", signif(p/p.n, 2) * 100,"%)"), "|",  
+            round(difftime(Sys.time(), start.time, units = "min"), 0),"mins run", "|",
+            round(difftime(Sys.time(), script.start, units = "min"), 0),"mins script \n")
+        
+        # add to log file
+        cat("r =", run, "/", model.runs[,.N], paste0("(", signif(run/model.runs[,.N], 2) * 100,"%)"),"|",
+            "p =", p, "/", p.n, paste0("(", signif(p/p.n, 2) * 100,"%)"), "|",  
+            round(difftime(Sys.time(), start.time, units = "min"), 0),"mins run", "|",
+            round(difftime(Sys.time(), script.start, units = "min"), 0),"mins script \n",
+            file = run.log, append = T)
+      }
+      
+      # if this is the first time step, we loop over time p == 1 and the initial conditions until we
+      # reach a stable and converged initial condition of pavement temps at all depths 
+      # this is done because if the initial defined pavement temperature is not at/near an equilibrium
+      # with the weather conditions, the initial flux graidents at the surface
+      # will cause severe oscillations and the model will not be able convergence
+      # if it takes more than 1000 times and they aren't converging, end loop to avoid inf looping if no feasible solution
+      # it will otherwise break after one run if the nodes at p and p+1 have converged
+      # therefore allowing all p+2 and beyond calculations to always loop only once (intital and p+1 shouldn't change)
+      
+      for(z in 1:200){
+        
+        # for timestep p, calc the surface heat transfer parameters (surface radiative coefficient, infrared radiation & convection)
+        pave.time[time.s == t.step[p] & node == 0, h.rad := SVF * epsilon * sigma * ((T.K^2) + (T.sky^2)) * (T.K + T.sky)]  # radiative heat transfer coefficient in W/(m2*degK) 
+        pave.time[time.s == t.step[p] & node == 0, q.rad := SVF * epsilon * sigma * ((T.K^4) - (T.sky^4))] # infrared radiation heat transfer at surfaceW/m2
+        pave.time[time.s == t.step[p] & node == 0, q.cnv := h.inf * (T.K - T.inf)] # convection heat transfer W/m2
+        
+        # store these values for surface for all layers to calc CFL later
+        pave.time[time.s == t.step[p], h.rad := pave.time[time.s == t.step[p] & node == 0, h.rad]]
+        pave.time[time.s == t.step[p], q.rad := pave.time[time.s == t.step[p] & node == 0, q.rad]]
+        pave.time[time.s == t.step[p], q.cnv := pave.time[time.s == t.step[p] & node == 0, q.cnv]]
+        
+        
+        # for p == 1, update about surface temp and progress
+        if(p == 1 & (z == 1 | z %% 10)){
           
-          # print to console
-          cat("r =", run, "/", model.runs[,.N], paste0("(", signif(run/model.runs[,.N], 2) * 100,"%)"),"|",
-              "p =", p, "/", p.n, paste0("(", signif(p/p.n, 2) * 100,"%)"), "|",  
-              round(difftime(Sys.time(), start.time, units = "min"), 0),"mins run", "|",
-              round(difftime(Sys.time(), script.start, units = "min"), 0),"mins script \n")
+          cat("run =", run, "|", "z =", z, "|",  # print update in console
+              "node 0:", signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3), "|",
+              "node 5:", signif(pave.time[time.s == t.step[p] & node == 5, T.K - 273.15], 3), "|",
+              "node 10:", signif(pave.time[time.s == t.step[p] & node == 10, T.K - 273.15], 3), "|",
+              "h.rad:", signif(pave.time[time.s == t.step[p] & node == 0, h.rad], 3), "|",
+              "q.rad:", signif(pave.time[time.s == t.step[p] & node == 0, q.rad], 3), "|",
+              "q.cnv:", signif(pave.time[time.s == t.step[p] & node == 0, q.cnv], 3), "|",
+              "C \n")
           
-          # add to log file
-          cat("r =", run, "/", model.runs[,.N], paste0("(", signif(run/model.runs[,.N], 2) * 100,"%)"),"|",
-              "p =", p, "/", p.n, paste0("(", signif(p/p.n, 2) * 100,"%)"), "|",  
-              round(difftime(Sys.time(), start.time, units = "min"), 0),"mins run", "|",
-              round(difftime(Sys.time(), script.start, units = "min"), 0),"mins script \n",
+          cat("run =", run, "|", "z =", z, "|",  # append update in log file
+              "node 0:", signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3),"C \n", 
               file = run.log, append = T)
         }
         
-        # if this is the first time step, we loop over time p == 1 and the initial conditions until we
-        # reach a stable and converged initial condition of pavement temps at all depths 
-        # this is done because if the initial defined pavement temperature is not at/near an equilibrium
-        # with the weather conditions, the initial flux graidents at the surface
-        # will cause severe oscillations and the model will not be able convergence
-        # if it takes more than 1000 times and they aren't converging, end loop to avoid inf looping if no feasible solution
-        # it will otherwise break after one run if the nodes at p and p+1 have converged
-        # therefore allowing all p+2 and beyond calculations to always loop only once (intital and p+1 shouldn't change)
+        # store a temporary data.table at this timestep to store and transfer all node calculations to master data.table.
+        # we do this because the 'shift' function is troublesome within data.table subsets so this is safer and possibly quicker
+        tmp <- pave.time[time.s == t.step[p]] 
         
-        for(z in 1:200){
-          
-          # for timestep p, calc the surface heat transfer parameters (surface radiative coefficient, infrared radiation & convection)
-          pave.time[time.s == t.step[p] & node == 0, h.rad := SVF * epsilon * sigma * ((T.K^2) + (T.sky^2)) * (T.K + T.sky)]  # radiative heat transfer coefficient in W/(m2*degK) 
-          pave.time[time.s == t.step[p] & node == 0, q.rad := SVF * epsilon * sigma * ((T.K^4) - (T.sky^4))] # infrared radiation heat transfer at surfaceW/m2
-          pave.time[time.s == t.step[p] & node == 0, q.cnv := h.inf * (T.K - T.inf)] # convection heat transfer W/m2
-          
-          # store these values for surface for all layers to calc CFL later
-          pave.time[time.s == t.step[p], h.rad := pave.time[time.s == t.step[p] & node == 0, h.rad]]
-          pave.time[time.s == t.step[p], q.rad := pave.time[time.s == t.step[p] & node == 0, q.rad]]
-          pave.time[time.s == t.step[p], q.cnv := pave.time[time.s == t.step[p] & node == 0, q.cnv]]
-          
-          
-          # for p == 1, update about surface temp and progress
-          if(p == 1 & (z == 1 | z %% 10)){
-            
-            cat("run =", run, "|", "z =", z, "|",  # print update in console
-                "node 0:", signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3), "|",
-                "node 5:", signif(pave.time[time.s == t.step[p] & node == 5, T.K - 273.15], 3), "|",
-                "node 10:", signif(pave.time[time.s == t.step[p] & node == 10, T.K - 273.15], 3), "|",
-                "h.rad:", signif(pave.time[time.s == t.step[p] & node == 0, h.rad], 3), "|",
-                "q.rad:", signif(pave.time[time.s == t.step[p] & node == 0, q.rad], 3), "|",
-                "q.cnv:", signif(pave.time[time.s == t.step[p] & node == 0, q.cnv], 3), "|",
-                "C \n")
-            
-            cat("run =", run, "|", "z =", z, "|",  # append update in log file
-                "node 0:", signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3),"C \n", 
-                file = run.log, append = T)
-          }
-          
-          # store a temporary data.table at this timestep to store and transfer all node calculations to master data.table.
-          # we do this because the 'shift' function is troublesome within data.table subsets so this is safer and possibly quicker
-          tmp <- pave.time[time.s == t.step[p]] 
-          
-          # for timestep p+1, calc the surface pavement temperature based on parameters at timestep p
-          # i.e. surface node s (node = 0), eqn 10 in [1]
-          pave.time[time.s == t.step[p+1] & node == 0, T.K := tmp[node == 0, T.K] +  # T.K at node 0 is pavement surface temp (at time p+1)
-                      ((((1 - albedo) * SVF * tmp[node == 0, solar]) # incoming solar radiation (after albedo reflection, and shading)
-                        - tmp[node == 0, q.cnv]  # minus convective heat transfer at surface
-                        - tmp[node == 0, q.rad] # minus outgoing longwave/infrared radiation at surface
-                        + (layer.dt$k[1] * (tmp[node == 1, T.K] - tmp[node == 0, T.K]) / delta.x)) # plus conduction
-                       * (2 * delta.t / (layer.dt$rho.c[1] * delta.x)))] # all multiplied by the proportional change in temp per change in depth 
-          
-          # calculate interior nodes at current timestep p (non-boundary/non-interface nodes) and store into timestep p+1
-          tmp[, T.C.i := # even nodal spacing
-                (k * delta.t / rho.c / (((tmp[, x.up] + tmp[, x.dn]) / 2)^2)
-                 * (tmp[, shift(T.K, type = "lag")]  # T at node m-1 (above) and p
-                    + tmp[, shift(T.K, type = "lead")] # T at node m+1 (below) and p
-                    - 2 * tmp[, T.K])) + tmp[, T.K]] # T at node m and p
-          
-          pave.time[time.s == t.step[p+1] & node != 0 & node != max(node), T.K := 
-                      tmp[node != 0 & node != max(node), T.C.i]]
-          
-          pave.time[time.s == t.step[p+1] & node == max(node), T.K := pave.time[time.s == t.step[p+1] & node == max(node)-1, T.K]] # make last node m-1 T
-          
-          # calculate the heat flux at time p for all nodes (use for estimating boundary temps)
-          tmp[, up.flux := # heat flux to/from above node m-1 in w/m2; negative is downward flux (into m from m+1), positive is upward (out of m to m-1)
-                ((k / x.up) * (tmp[, T.K] # T at node m and p
-                               - tmp[, shift(T.K, type = "lag")]))]  # T at node m-1 (above) and p
-          
-          tmp[, dn.flux := # heat flux from below node m+1 in w/m2; negative is downward flux (out of m to m+1), positive is upward (out of m to m-1)
-                ((k / x.dn) * (tmp[, T.K] # T at node m and p
-                               - tmp[, shift(T.K, type = "lead")]))] # T at node m+1 (below) and p
-          
-          # fix infinite resutls from dividing by 0 in dual boundary node cases to NA,
-          # so that flux through the boundary is only provide once in each direction (just in case)
-          tmp[!is.finite(up.flux), up.flux := NA]
-          tmp[!is.finite(dn.flux), dn.flux := NA]
-          
-          # store heat fluxes into pave.time at time p (with special for surface node)
-          pave.time[time.s == t.step[p], h.flux.up := tmp[, up.flux]]
-          pave.time[time.s == t.step[p], h.flux.dn := tmp[, dn.flux]]
-          
-          # at surface, calc net flux, 
-          pave.time[time.s == t.step[p] & node == 0, h.flux.up := -((1 - albedo) * tmp[node == 0, solar]) + tmp[node == 0, q.rad] + tmp[node == 0, q.cnv] ] # heat flux between air and surface
-          pave.time[time.s == t.step[p] & node == 0, q.sol.rfl := albedo * tmp[node == 0, solar]]
-          pave.time[time.s == t.step[p] & node == 0, h.flux.dn := tmp[, shift(up.flux, type = "lead")][1]] # conduction from node m+1 (below node)
-          
-          # calculate boundary/interface nodes at current timestep p by solving for both cases of R.c zero and non-zero then choose correct values
-          # because boundary/interface is treated as one node, need to calc both interface temperatures (upper and lower layer T's)
-          # for temp at boundary/interface node, just use average of upper and lower T 
-          
-          # solution for non-zero layer resistance (R.c != 0, therfore upper and lower boundary temps are different)
-          tmp[, T.C.b.l_n0 :=
-                ((R.c * (tmp[, shift(dn.flux, type = "lead")] - tmp[, shift(up.flux, type = "lag")])) # flux through interface; negative is downward flux. lead = m+1
-                 + tmp[, shift(T.K, type = "lag")] # lag = m-1 (above node)
-                 - (tmp[, shift(T.K, type = "lead")] # lead = m+1 (below node)
-                    * (k.dn * x.up / k.up / x.dn))) 
-              * k.up * x.dn / ((k.up * x.dn) - (k.dn * x.up))]
-          
-          # solve for other node at interface with R.c
-          tmp[, T.C.b.u_n0 := (R.c * (tmp[, shift(dn.flux, type = "lead")] - tmp[, shift(up.flux, type = "lag")])) + tmp[, shift(T.C.b.l_n0, type = "lag")]] 
-          
-          # solution for zero layer resistance (R.c == 0 therefore upper layer interface T == lower layer interface T)
-          tmp[, T.C.b :=
-                (((k.up / k.dn) * (x.dn / x.up) * tmp[, shift(T.K, type = "lag")]) 
-                 + tmp[, shift(T.K, type = "lead")])
-              / (1 + ((k.up / k.dn) * (x.dn / x.up)))]
-          
-          # store any non-zero R.c interface temps (assume single boundary node is the average of the upper and lower layer interface temps)
-          pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c != 0, T.K := tmp[node %in% boundary.nodes & R.c != 0, (T.C.b.l_n0 + T.C.b.u_n0) / 2]]
-          
-          # store any zero R.c interface temps
-          pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c == 0, T.K := tmp[node %in% boundary.nodes & R.c == 0, T.C.b]]
-          
-          # check finite difference solving method satisfied the Courant-Friedrichs-Lewy (CFL) condition for stability from p to p+1
-          pave.time[time.s == t.step[p], CFL := (rho.c * (((x.up + x.dn) / 2)^2)) / (2 * (h.rad * delta.x + h.inf * ((x.up + x.dn) / 2) + k))] # in seconds
-          pave.time[time.s == t.step[p] & delta.t <= CFL, CFL_fail := 0] # no fail
-          pave.time[time.s == t.step[p] & delta.t > CFL, CFL_fail := 1] # yes fail
-          
-          # break z loop early if non-finite temps detected (error msgs are handled outside of z loop, breaking p loop) 
-          if(any(!is.finite(pave.time[time.s == t.step[p], T.K]))){break}
-          
-          # also break if p != 1 (not initial condition covergance anymore)
-          if(p != 1){break}
-          
-          # break before 200 iterations if the first and second timestep pavement temperatures at each node have converged (within 1/10 deg K of each other) 
-          # after 100 iterations, relax converge constraint to 1 degree K
-          tol <- ifelse(z < 100, 1, 0)
-          # as the initial (p) and p+1 conditions won't change once first converged, this loop breaks always after 1 iteration for all times after p+1
-          if(all(is.finite(pave.time[time.s == t.step[2], T.K])) & # all pave temps at p==2 also need to be finite (b/c below check doesn't work for all NAs)
-             all(round(pave.time[time.s == t.step[1], T.K], tol) == 
-                 round(pave.time[time.s == t.step[2], T.K], tol), 
-                 na.rm = T) == T){
-            # store convergence msg and print
-            cat("initial conditions converged for run", run, "at", "z =", z, "with", "surface temp:", # append update in log file
-                signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3),"C \n", 
-                file = run.log, append = T)
-            cat("initial conditions converged for run", run, "at", "z =", z, "with", "surface temp:", # append update in log file
-                signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3),"C \n")
-            break}
-          
-          # for the first time step only re-adjust the initial pavement temps
-          # to ensure convergence before of intital state before solving past the initial timestep of model
-          # we do this after the check to break because if the initial condition has converged, this isn't needed
-          if(p == 1){
-            pave.time[time.s == t.step[1], T.K := pave.time[time.s %in% t.step[1:2], mean(T.K), by = node][,V1] ] # mean of t1 and 12 T.K
-            #pave.time[time.s == t.step[1], T.K := pave.time[time.s == t.step[2], T.K] ]
-          }
-          
-        } # end z loop that repeats only when times p=1 and p=2 haven't converged
+        # for timestep p+1, calc the surface pavement temperature based on parameters at timestep p
+        # i.e. surface node s (node = 0), eqn 10 in [1]
+        pave.time[time.s == t.step[p+1] & node == 0, T.K := tmp[node == 0, T.K] +  # T.K at node 0 is pavement surface temp (at time p+1)
+                    ((((1 - albedo) * SVF * tmp[node == 0, insol]) # incoming solar radiation (after albedo reflection, and shading)
+                      - tmp[node == 0, q.cnv]  # minus convective heat transfer at surface
+                      - tmp[node == 0, q.rad] # minus outgoing longwave/infrared radiation at surface
+                      + (layer.dt$k[1] * (tmp[node == 1, T.K] - tmp[node == 0, T.K]) / delta.x)) # plus conduction
+                     * (2 * delta.t / (layer.dt$rho.c[1] * delta.x)))] # all multiplied by the proportional change in temp per change in depth 
         
-        # if within this timestep, T.K at p+1 ended up non-finite due to an error or convergance issue, 
-        # break the loop (to prevent wasted time) and store error msgs
-        if(any(!is.finite(pave.time[time.s == t.step[p+1], T.K]))){
-          model.runs[run.n == run, broke.t] <- t.step[p] # store time model stopped
-          assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to non-finite temperatures detected")), envir = .GlobalEnv) # store error msg
-          cat(paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],
-                    "secs due to non-finite temperatures detected \n"))
-          cat(paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],
-                    "secs due to non-finite temperatures detected \n"), 
+        # calculate interior nodes at current timestep p (non-boundary/non-interface nodes) and store into timestep p+1
+        tmp[, T.C.i := # even nodal spacing
+              (k * delta.t / rho.c / (((tmp[, x.up] + tmp[, x.dn]) / 2)^2)
+               * (tmp[, shift(T.K, type = "lag")]  # T at node m-1 (above) and p
+                  + tmp[, shift(T.K, type = "lead")] # T at node m+1 (below) and p
+                  - 2 * tmp[, T.K])) + tmp[, T.K]] # T at node m and p
+        
+        pave.time[time.s == t.step[p+1] & node != 0 & node != max(node), T.K := 
+                    tmp[node != 0 & node != max(node), T.C.i]]
+        
+        pave.time[time.s == t.step[p+1] & node == max(node), T.K := pave.time[time.s == t.step[p+1] & node == max(node)-1, T.K]] # make last node m-1 T
+        
+        # calculate the heat flux at time p for all nodes (use for estimating boundary temps)
+        tmp[, up.flux := # heat flux to/from above node m-1 in w/m2; negative is downward flux (into m from m+1), positive is upward (out of m to m-1)
+              ((k / x.up) * (tmp[, T.K] # T at node m and p
+                             - tmp[, shift(T.K, type = "lag")]))]  # T at node m-1 (above) and p
+        
+        tmp[, dn.flux := # heat flux from below node m+1 in w/m2; negative is downward flux (out of m to m+1), positive is upward (out of m to m-1)
+              ((k / x.dn) * (tmp[, T.K] # T at node m and p
+                             - tmp[, shift(T.K, type = "lead")]))] # T at node m+1 (below) and p
+        
+        # fix infinite resutls from dividing by 0 in dual boundary node cases to NA,
+        # so that flux through the boundary is only provide once in each direction (just in case)
+        tmp[!is.finite(up.flux), up.flux := NA]
+        tmp[!is.finite(dn.flux), dn.flux := NA]
+        
+        # store heat fluxes into pave.time at time p (with special for surface node)
+        pave.time[time.s == t.step[p], h.flux.up := tmp[, up.flux]]
+        pave.time[time.s == t.step[p], h.flux.dn := tmp[, dn.flux]]
+        
+        # at surface, calc net flux, 
+        pave.time[time.s == t.step[p] & node == 0, h.flux.up := -((1 - albedo) * tmp[node == 0, insol]) + tmp[node == 0, q.rad] + tmp[node == 0, q.cnv] ] # heat flux between air and surface
+        pave.time[time.s == t.step[p] & node == 0, q.sol.rfl := albedo * tmp[node == 0, insol]]
+        pave.time[time.s == t.step[p] & node == 0, h.flux.dn := tmp[, shift(up.flux, type = "lead")][1]] # conduction from node m+1 (below node)
+        
+        # calculate boundary/interface nodes at current timestep p by solving for both cases of R.c zero and non-zero then choose correct values
+        # because boundary/interface is treated as one node, need to calc both interface temperatures (upper and lower layer T's)
+        # for temp at boundary/interface node, just use average of upper and lower T 
+        
+        # solution for non-zero layer resistance (R.c != 0, therfore upper and lower boundary temps are different)
+        tmp[, T.C.b.l_n0 :=
+              ((R.c * (tmp[, shift(dn.flux, type = "lead")] - tmp[, shift(up.flux, type = "lag")])) # flux through interface; negative is downward flux. lead = m+1
+               + tmp[, shift(T.K, type = "lag")] # lag = m-1 (above node)
+               - (tmp[, shift(T.K, type = "lead")] # lead = m+1 (below node)
+                  * (k.dn * x.up / k.up / x.dn))) 
+            * k.up * x.dn / ((k.up * x.dn) - (k.dn * x.up))]
+        
+        # solve for other node at interface with R.c
+        tmp[, T.C.b.u_n0 := (R.c * (tmp[, shift(dn.flux, type = "lead")] - tmp[, shift(up.flux, type = "lag")])) + tmp[, shift(T.C.b.l_n0, type = "lag")]] 
+        
+        # solution for zero layer resistance (R.c == 0 therefore upper layer interface T == lower layer interface T)
+        tmp[, T.C.b :=
+              (((k.up / k.dn) * (x.dn / x.up) * tmp[, shift(T.K, type = "lag")]) 
+               + tmp[, shift(T.K, type = "lead")])
+            / (1 + ((k.up / k.dn) * (x.dn / x.up)))]
+        
+        # store any non-zero R.c interface temps (assume single boundary node is the average of the upper and lower layer interface temps)
+        pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c != 0, T.K := tmp[node %in% boundary.nodes & R.c != 0, (T.C.b.l_n0 + T.C.b.u_n0) / 2]]
+        
+        # store any zero R.c interface temps
+        pave.time[time.s == t.step[p+1] & node %in% boundary.nodes & R.c == 0, T.K := tmp[node %in% boundary.nodes & R.c == 0, T.C.b]]
+        
+        # check finite difference solving method satisfied the Courant-Friedrichs-Lewy (CFL) condition for stability from p to p+1
+        pave.time[time.s == t.step[p], CFL := (rho.c * (((x.up + x.dn) / 2)^2)) / (2 * (h.rad * delta.x + h.inf * ((x.up + x.dn) / 2) + k))] # in seconds
+        pave.time[time.s == t.step[p] & delta.t <= CFL, CFL_fail := 0] # no fail
+        pave.time[time.s == t.step[p] & delta.t > CFL, CFL_fail := 1] # yes fail
+        
+        # break z loop early if non-finite temps detected (error msgs are handled outside of z loop, breaking p loop) 
+        if(any(!is.finite(pave.time[time.s == t.step[p], T.K]))){break}
+        
+        # also break if p != 1 (not initial condition covergance anymore)
+        if(p != 1){break}
+        
+        # break before 200 iterations if the first and second timestep pavement temperatures at each node have converged (within 1/10 deg K of each other) 
+        # after 100 iterations, relax converge constraint to 1 degree K
+        tol <- ifelse(z < 100, 1, 0)
+        # as the initial (p) and p+1 conditions won't change once first converged, this loop breaks always after 1 iteration for all times after p+1
+        if(all(is.finite(pave.time[time.s == t.step[2], T.K])) & # all pave temps at p==2 also need to be finite (b/c below check doesn't work for all NAs)
+           all(round(pave.time[time.s == t.step[1], T.K], tol) == 
+               round(pave.time[time.s == t.step[2], T.K], tol), 
+               na.rm = T) == T){
+          # store convergence msg and print
+          cat("initial conditions converged for run", run, "at", "z =", z, "with", "surface temp:", # append update in log file
+              signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3),"C \n", 
               file = run.log, append = T)
-          break
-        } 
+          cat("initial conditions converged for run", run, "at", "z =", z, "with", "surface temp:", # append update in log file
+              signif(pave.time[time.s == t.step[p] & node == 0, T.K - 273.15], 3),"C \n")
+          break}
         
-        # if within this timestep, the CFL condition fails anywhere, break the loop (to prevent wasted time)
-        if(sum(pave.time[time.s == t.step[p], CFL_fail], na.rm = T) > 0){
-          model.runs[run.n == run, broke.t := t.step[p]] # store time model stopped
-          assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to CFL stability condition not satisfied")), envir = .GlobalEnv) # store error msg
-          cat(paste("stopped model run", run,"at", model.runs[run.n == run, broke.t],
-                    "secs due to CFL stability condition not satisfied"),
-              file = run.log, append = T)
-          break
-        } 
-        
-      } # end time step p, go to time p+1
-      
-      # also break the iterations loop too (another iteration is unlikely to fix unstability b/c parameters for this run need changing)
-      if(!is.na(model.runs[run.n == run, broke.t])){break}
-      
-      # if the iteration is not the last iteration and all pavement temp values in the timestep N days in the future are finite, then
-      # store these pavement temp values from the future time step as the initial pavement temps for the new iteration 
-      # because these are likely to be more accurate than the chosen initials
-      if(iteration != max(iterations) & 
-         all(is.finite(pave.time[date.time == min(date.time) + days(model.runs[run.n == run, n.days]), T.K]))){
-        pave.time[time.s == 0, T.K := pave.time[date.time == max(date.time), T.K] ]
-        
-      } else { # otherwise, for model iteration where output is desired (usually max iteration), some housekeeping:
-        
-        pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
-        pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step
-        pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # mean change in temp by node, use for RMSE
-        saveRDS(pave.time, paste0(out.folder,"/run_",run,"_output.rds")) # save model iteration R object
-        model.runs[run.n == run, run.time := as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2))] # store runtime of model iteration in minutes
-        
-        # if the run is a reference run (first run of a unique layer profile scheme), store it as the reference run for other scenarios under the same layer profile scheme
-        if(run == model.runs[run.n == run, ref]){
-          pave.time.ref <- pave.time
+        # for the first time step only re-adjust the initial pavement temps
+        # to ensure convergence before of intital state before solving past the initial timestep of model
+        # we do this after the check to break because if the initial condition has converged, this isn't needed
+        if(p == 1){
+          pave.time[time.s == t.step[1], T.K := pave.time[time.s %in% t.step[1:2], mean(T.K), by = node][,V1] ] # mean of t1 and 12 T.K
+          #pave.time[time.s == t.step[1], T.K := pave.time[time.s == t.step[2], T.K] ]
         }
         
-        # if run isn't a reference run, then store RSME compared to the appropriate ref run
-        # note that RMSE is mean centered temperature across all nodes and timesteps.
-        if(run != model.runs[run.n == run, ref]){ # if the model isn't the refrence run
-          model.runs[run.n == run, RMSE] <- sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean] - 
-                                               pave.time.ref[pave.time, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean])^2))
-        } # end RMSE calcs
-        
-      } # end the 'end of iteration' steps
+      } # end z loop that repeats only when times p=1 and p=2 haven't converged
       
-    } # end model iteration and continue to next 
+      # if within this timestep, T.K at p+1 ended up non-finite due to an error or convergance issue, 
+      # break the loop (to prevent wasted time) and store error msgs
+      if(any(!is.finite(pave.time[time.s == t.step[p+1], T.K]))){
+        model.runs[run.n == run, broke.t := t.step[p]] # store time model stopped
+        assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to non-finite temperatures detected")), envir = .GlobalEnv) # store error msg
+        cat(paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],
+                  "secs due to non-finite temperatures detected \n"))
+        cat(paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],
+                  "secs due to non-finite temperatures detected \n"), 
+            file = run.log, append = T)
+        break
+      } 
+      
+      # if within this timestep, the CFL condition fails anywhere, break the loop (to prevent wasted time)
+      if(sum(pave.time[time.s == t.step[p], CFL_fail], na.rm = T) > 0){
+        model.runs[run.n == run, broke.t := t.step[p]] # store time model stopped
+        assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to CFL stability condition not satisfied")), envir = .GlobalEnv) # store error msg
+        cat(paste("stopped model run", run,"at", model.runs[run.n == run, broke.t],
+                  "secs due to CFL stability condition not satisfied"),
+            file = run.log, append = T)
+        break
+        } 
+
+    } # end time step p, go to time p+1
     
+    # end of run housekeeping
+    pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
+    pave.time <- pave.time[time.s != t.step[p.n]] # remove the last time step
+    pave.time[, delta.T.mean := T.degC - mean(T.degC, na.rm = T), by = node] # mean change in temp by node, use for RMSE
+    saveRDS(pave.time, paste0(out.folder,"/run_",run,"_output.rds")) # save model iteration R object
+    model.runs[run.n == run, run.time := as.numeric(round(difftime(Sys.time(),t.start, units = "mins"),2))] # store runtime of model iteration in minutes
+    
+    # if the run is a reference run (first run of a unique layer profile scheme), 
+    # store it as the reference run for other scenarios under the same layer profile scheme
+    if(run == model.runs[run.n == run, ref]){
+      pave.time.ref <- pave.time
+    }
+    
+    # if run isn't a reference run, then store RSME compared to the appropriate ref run
+    # note that RMSE is mean centered temperature across all nodes and timesteps.
+    if(run != model.runs[run.n == run, ref]){ # if the model isn't the refrence run
+      model.runs[run.n == run, RMSE := sqrt(mean((pave.time[pave.time.ref, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean] - 
+                                                    pave.time.ref[pave.time, .(time.s,depth.m,delta.T.mean), on = c("time.s","depth.m")][!is.na(delta.T.mean), delta.T.mean])^2))]
+    } # end RMSE calcs
+
   }, error = function(e){ # catch and print/store errors
     
     cat("ERROR:",conditionMessage(e), "\n") # print error msg in console
@@ -652,3 +637,19 @@ msg
 #plot(pave.time[node == 0, .(date.time, T.degC)],type="l",col="red")
 #plot(pave.time[node == max(node), .(date.time, T.degC)],type="l",col="red")
 #plot(pave.time[node == max(node)-1, .(date.time, T.degC)],type="l",col="red")
+
+# define function to calculate distance in kilometers between two lat/lon points
+#earth.dist <- function (long1, lat1, long2, lat2){
+#  rad <- pi/180
+#  a1 <- lat1 * rad
+#  a2 <- long1 * rad
+#  b1 <- lat2 * rad
+#  b2 <- long2 * rad
+#  dlon <- b2 - a2
+#  dlat <- b1 - a1
+#  a <- (sin(dlat/2))^2 + cos(a1) * cos(b1) * (sin(dlon/2))^2
+#  c <- 2 * atan2(sqrt(a), sqrt(1 - a))
+#  R <- 6378.145
+#  d <- R * c
+#  return(d)
+#}

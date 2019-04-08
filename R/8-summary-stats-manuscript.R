@@ -31,6 +31,10 @@ folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F
 # MODEL METADATA
 all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
+# filter out any unrealistic pavements
+all.model.runs <- all.model.runs[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
+
+
 # min, avg, max of temps at nearest node to 1.0 meter depth for all runs
 all.model.runs[, .(min.T_1.0m = min(min.T_1.0m, na.rm = T),
                    avg.T_1.0m = mean(avg.T_1.0m, na.rm = T),
@@ -40,6 +44,7 @@ all.model.runs[, .(min.T_1.0m = min(min.T_1.0m, na.rm = T),
                    avg.T_1.0m = mean(avg.T_1.0m, na.rm = T),
                    max.T_1.0m = max(max.T_1.0m, na.rm = T)),
                by = c("pave.name")][order(avg.T_1.0m)]
+
 
 # WEATHER
 #import data
@@ -55,7 +60,9 @@ weather.raw[, .(mean.temp.c = mean(temp.c, na.rm = T)), by = hour(date.time)][or
 
 # PAVEMENT SURFACE
 all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
-#colnames(all.surface.data)
+
+# filter out any unrealistic pavements
+all.surface.data <- all.surface.data[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
 
 # add daytime factor
 all.surface.data[, daytime := factor(ifelse(hour(date.time) %in% c(7:18), "Day", "Night"), 

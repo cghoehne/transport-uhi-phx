@@ -1,0 +1,27 @@
+GCdistance              Great circle distance
+JD                      Julian Day from POSIXct
+JDymd                   Julian Day from yyyy, mm, dd
+aspect                  Aspect or orientation of the slope
+cgrad                   Normal vector to every grid cell in a DEM
+daydoy                  Dates to day of the year
+daylength               Length of daylight
+declination             Declination
+degrees                 Radians to degrees
+doshade                 Cast shadows
+doyday                  Day of the year to date
+eqtime                  Equation of time
+hillshading             Intensity of illumination over a surface
+hourangle               Hour angle
+insol-package           Solar Radiation
+insolation              Direct and diffuse solar radiation.
+meteoandes              Mountain meteorological data
+normalvector            Vector normal to surface
+p2rho                   Air pressure to density
+radians                 Degrees to radians
+rh2sh                   Relative humidity to specific humidity
+slope                   Slope of grid cells in a DEM
+sunpos                  Azimuth and zenith of the Sun
+sunr                    Earth radius vector
+sunvector               Solar vector
+wvapsat                 Saturation pressure of water vapor
+z2p                     Altitude to pressure

@@ -1,0 +1,4 @@
+import(methods)
+useDynLib(insol)
+exportPattern("^[^\\.]")
+

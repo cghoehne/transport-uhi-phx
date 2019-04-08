@@ -255,4 +255,3 @@ blkgrp$avg_day_heat_GJha <- blkgrp$avg_day_heat_total / blkgrp$hectares
 
 # output data
 shapefile(blkgrp, here("data/outputs/osm-blkgrp-heat-working"), overwrite = T)
-

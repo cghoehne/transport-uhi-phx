@@ -1,20 +1,20 @@
-Location,X,Y,dom.type,con.yr,albedo,type,Descrip,trees,other.green,other.shade
-A6,-112.259363,33.528684,asphalt,2007,,parking lot,stadium,low,low,none
-A3,-111.881101,33.631816,asphalt,2005,high,parking lot,,none,none,none
-B2,-112.095158,33.41734,bare ground,NA,NA,NA,bare ground/dirt lot; 1000m by 700m; 1-5% paved paths,,low,none
-C1,-112.04495,33.433293,concrete,2006,,parking lot,often full lot,low; near edges,low; near edges,"low; building one side, two tents"
-B3,-112.385565,33.432938,bare ground,NA,NA,NA,bare ground/dirt; 700m by 450m,none,medium,none
-A1,-112.157072,33.606754,asphalt,2005,low,parking lot,,none,none,none
-A2,-112.227425,33.640428,asphalt,1997,med,parking lot,,low,none,low; building one side
-B1,-112.153271,33.608759,bare ground,NA,NA,NA,bare ground/dirt lot; 600m by 300m,none,none,none
-C3,-112.492907,33.793523,concrete,2010,,test track,Arizona Proving Ground,none,none,none
-M1,-111.890077,33.480361,mixed,1997,,interchange,"mixed materials; concrete, asphalt, and bare ground/dirt; 101 and Thomas interchange in Scottsdale",none,none,none
-A4,-112.05754,33.440295,asphalt,1997,med,parking lot,,none,none,none
-B4,-112.156999,33.695914,bare ground,NA,NA,NA,,none,low,
-A5,-112.028267,33.433527,asphalt,1997,low,tarmac,airport,none,none,none
-A7,-111.938999,33.420517,asphalt,1997,,parking lot,ASU,low,none,none
-A8,-111.950478,33.445164,asphalt,1997,low,parking lot,,low,,
-A9,-111.957555,33.449815,asphalt,1997,high,parking lot,,,,
-C4,-112.017517,33.424793,concrete,2002,,tarmac,airport,none,none,none
-M2,-111.966146,33.383745,mixed,2003,,mall,"mixed materials; concrete, and asphalt; AZ mills mall tempe",none,none,none
-C2,-111.853764,33.282862,concrete,2009,,parking lot,church,,,
+Location,lon,lat,dom.type,max.pave.len,con.yr,albedo,type,Descrip,trees,other.green,other.shade
+A6,-112.259363,33.528684,asphalt,320,2007,low,parking lot,stadium,low,low,none
+A3,-111.881101,33.631816,asphalt,245,2005,high,parking lot,,none,none,none
+B2,-112.095158,33.41734,bare ground,800,NA,high,NA,bare ground/dirt lot; 1000m by 700m; 1-5% paved paths,,low,none
+C1,-112.04495,33.433293,concrete,150,2006,high,parking lot,often full lot,low; near edges,low; near edges,"low; building one side, two tents"
+B3,-112.385565,33.432938,bare ground,200,NA,high,NA,bare ground/dirt; 700m by 450m,none,medium,none
+A1,-112.157072,33.606754,asphalt,200,2005,low,parking lot,,none,none,none
+A2,-112.227425,33.640428,asphalt,200,1997,med,parking lot,,low,none,low; building one side
+B1,-112.153271,33.608759,bare ground,300,NA,high,NA,bare ground/dirt lot; 600m by 300m,none,none,none
+C3,-112.492907,33.793523,concrete,200,2010,,test track,Arizona Proving Ground,none,none,none
+M1,-111.890077,33.480361,mixed,200,1997,,interchange,"mixed materials; concrete, asphalt, and bare ground/dirt; 101 and Thomas interchange in Scottsdale",none,none,none
+A4,-112.05754,33.440295,asphalt,200,1997,med,parking lot,,none,none,none
+B4,-112.156999,33.695914,bare ground,200,NA,med,NA,,none,low,
+A5,-112.028267,33.433527,asphalt,200,1997,low,tarmac,airport,none,none,none
+A7,-111.938999,33.420517,asphalt,200,1997,,parking lot,ASU,low,none,none
+A8,-111.950478,33.445164,asphalt,200,1997,low,parking lot,,low,,
+A9,-111.957555,33.449815,asphalt,200,1997,high,parking lot,,,,
+C4,-112.017517,33.424793,concrete,275,2002,high,tarmac,airport,none,none,none
+M2,-111.966146,33.383745,mixed,200,2003,,mall,"mixed materials; concrete, and asphalt; AZ mills mall tempe",none,none,none
+C2,-111.853764,33.282862,concrete,200,2009,,parking lot,church,,,

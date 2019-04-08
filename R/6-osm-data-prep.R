@@ -8,7 +8,7 @@
 
 # clear space and allocate memory
 gc()
-memory.limit(size = 56000) 
+memory.limit(size = 50000) 
 script.start <- Sys.time() # start script timestamp
 
 # first make sure checkpoint is installed locally
