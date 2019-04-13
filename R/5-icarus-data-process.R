@@ -17,16 +17,15 @@ if (!require("checkpoint")){
 
 # load all other dependant packages from the local repo
 lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
-library(XML, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(sp, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(sf, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(raster, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(rgdal, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(rgeos, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(maptools, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(gdalUtils, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(data.table, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(here, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(XML, lib.loc = lib.path)
+library(sp, lib.loc = lib.path)
+library(sf, lib.loc = lib.path)
+library(raster, lib.loc = lib.path)
+library(rgdal, lib.loc = lib.path)
+library(rgeos, lib.loc = lib.path)
+library(gdalUtils, lib.loc = lib.path)
+library(data.table, lib.loc = lib.path)
+library(here, lib.loc = lib.path)
 
 # archive/update snapshot of packages at checkpoint date
 checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday

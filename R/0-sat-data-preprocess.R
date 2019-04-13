@@ -16,17 +16,17 @@ script.start <- Sys.time() # start script timestamp
 # checkpoint does not archive itself and it should not create dependency issues
 if (!require("checkpoint")){
   install.packages("checkpoint")
-  library(checkpoint, quietly = T)
+  library(checkpoint)
 }
 
 # load all other dependant packages from the local repo
 lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
-library(sp, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(raster, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(rgdal, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(gdalUtils, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(rgeos, lib.loc = lib.path, quietly = T, warn.conflicts = F)
-library(here, lib.loc = lib.path, quietly = T, warn.conflicts = F)
+library(sp, lib.loc = lib.path)
+library(raster, lib.loc = lib.path)
+library(rgdal, lib.loc = lib.path)
+library(gdalUtils, lib.loc = lib.path)
+library(rgeos, lib.loc = lib.path)
+library(here, lib.loc = lib.path)
 
 # archive/update snapshot of packages at checkpoint date
 checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday

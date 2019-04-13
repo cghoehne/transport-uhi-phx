@@ -10,16 +10,16 @@ t.start <- Sys.time() # start script timestamp
 # checkpoint does not archive itself and it should not create dependency issues
 if (!require("checkpoint")){
   install.packages("checkpoint")
-  library(checkpoint, quietly = T)
+  library(checkpoint)
 }
 
 # load all other dependant packages from the local repo
 lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
-library(httr, lib.loc = lib.path, quietly = T)
-library(jsonlite, lib.loc = lib.path, quietly = T)
-library(lubridate, lib.loc = lib.path, quietly = T)
-library(data.table, lib.loc = lib.path, quietly = T)
-library(here, lib.loc = lib.path, quietly = T)
+library(httr, lib.loc = lib.path)
+library(jsonlite, lib.loc = lib.path)
+library(lubridate, lib.loc = lib.path)
+library(data.table, lib.loc = lib.path)
+library(here, lib.loc = lib.path)
 
 # archive/update snapshot of packages at checkpoint date
 checkpoint("2019-01-01", # archive date for all used packages (besides checkpoint itself!)

@@ -22,6 +22,7 @@ if (!require("checkpoint")){
 # load all other dependant packages from the local repo
 .libPaths(paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1"))
 #lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1") # lib.loc = lib.path, 
+library(XML)
 library(sp)
 library(sf)
 library(raster)

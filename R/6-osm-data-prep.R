@@ -21,19 +21,16 @@ if (!require("checkpoint")){
 
 # load all other dependant packages from the local repo
 .libPaths(paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1"))
-library(doParallel, quietly = T, warn.conflicts = F)
-library(foreach, quietly = T, warn.conflicts = F)
-library(doParallel, quietly = T, warn.conflicts = F)
-library(foreach, quietly = T, warn.conflicts = F)
-library(sp, quietly = T, warn.conflicts = F)
-library(raster, quietly = T, warn.conflicts = F)
-library(rgdal, quietly = T, warn.conflicts = F)
-library(rgeos, quietly = T, warn.conflicts = F)
-library(maptools, quietly = T, warn.conflicts = F)
-library(cleangeo, quietly = T, warn.conflicts = F)
-library(gdalUtils, quietly = T, warn.conflicts = F)
-library(data.table, quietly = T, warn.conflicts = F)
-library(here, quietly = T, warn.conflicts = F)
+library(doParallel)
+library(foreach)
+library(sf)
+library(sp)
+library(raster)
+library(rgdal)
+library(rgeos)
+library(maptools)
+library(data.table)
+library(here)
 
 # archive/update snapshot of packages at checkpoint date
 checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yestersday
@@ -51,14 +48,21 @@ uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA b
 
 # OSM DATA FORMAT
 # **Curently, OSM data in Phoenix does not have lane data. in light of this:
-# assign roadway widths based on roadway fclass 
-# assume roadway widths are constant by fclass
-# 1way roadway width is based on typical regional street design 
-# and average observed roadway widths by functional class
+# assign minimum & maximum roadway widths based on roadway fclass 
+# ranges of roadway width are based on typical regional street design & observation
 # this data is all proj in EPSG 2223 and units are in feet
+
+# remove unnecessary variables to reduce size
+osm$ref <- NULL # irrelevant variable
+osm$layer <- NULL # irrelevant variable
+osm$maxspeed <- NULL # unused, most are 0 or missing so unuseable in this case
+osm$bridge <- NULL # unused
 
 # transform osm crs to EPSG:2223
 osm <- spTransform(osm, crs(uza.buffer))
+
+# clip osm data to buffer uza for quicker computing
+osm <- intersect(osm, uza.buffer) # better than gIntersection b/c it keeps attributes
 
 # store osm data for quick calcs of new variables and rebind later
 osm.dt <- as.data.table(osm@data)
@@ -71,74 +75,54 @@ osm.dt <- osm.dt[tunnel == "F" & min.2w.width.m > 0
                  & !(fclass %in% c("bridleway", "path", "track_grade3",
                                    "track_grade4", "track_grade5", "unknown")),]
 
-# calc min/max buffer radius (in ft from m) of each road (to account for oneway roads)
-osm.dt[, min.r.buf := min.2w.width.m * ifelse(oneway == "B", 0.5, 0.25) * 3.28084]
-osm.dt[, max.r.buf := max.2w.width.m * ifelse(oneway == "B", 0.5, 0.25) * 3.28084]
+# calc min/max road width based on 2way widths and 1way/2way ("B" == both, "T"/"F" True/False for driving in the opposite dir of linestring)
+osm.dt[oneway == "B", max.width := as.numeric(max.2w.width.m)]
+osm.dt[oneway == "B", min.width := as.numeric(min.2w.width.m)]
+osm.dt[oneway == "T" | oneway == "F", max.width := as.numeric(max.2w.width.m / 2)]
+osm.dt[oneway == "T" | oneway == "F", min.width := as.numeric(min.2w.width.m / 2)]
 
-# merge new relevant vars back to spatial osm data so they appear in osm@data w/ excluded fclasses and tunnels
-osm <- merge(osm, osm.dt[, .(osm_id, pave.type, descrip, min.r.buf, max.r.buf)], by = "osm_id", all.x = F)
+# merge filtered data with min/max roadway widths to spatial osm data
+osm <- merge(osm, osm.dt[, .(osm_id, min.width, max.width)], by = "osm_id", all.x = F)
 
-# remove unnecessary variables before exporting
-osm$ref <- NULL # irrelevant variable
-osm$layer <- NULL # irrelevant variable
-osm$maxspeed <- NULL # most are 0 or missing so unuseable in this case
+# remove tunnel and oneway as no longer needed
+osm$tunnel <- NULL
+osm$oneway <- NULL
 
-# clip osm data to buffer uza for quicker computing
-osm <- intersect(osm, uza.buffer) # better than gIntersection b/c it keeps attributes
-
-# save out as backup for QGIS 
-#shapefile(osm, here("data/shapefiles/processed/osm-uza-processed"), overwrite = T) # station points shapefile
+# create node spatial file where a node is created at each link intersection 
+# store the 2way widths of each intersection fclass with adjustment for direction
+fclasses <- unique(osm$fclass)
+test <- gNode(osm)
 
 # clean up space
 rm(list=setdiff(ls(), c("osm","blkgrp","script.start")))
 gc()
 memory.limit(size = 56000)
 
-# buffer clipped osm data twice, for range of likely roadway area (min and max roadway widths)
-# foreach loop in parallel to buffer links
-# (stores as list of SpatialPointDataFrames)
-my.cores <- parallel::detectCores()  # store computers cores
+# create empty raster at desired extent (use uza buffer to ensure everything captured)
+r <- raster(ext = extent(uza.buffer), crs = crs(uza.buffer), res = 32.8084) # create raster = ~10 x 10 m
+#r <- raster(ext = extent(uza.buffer), crs = crs(uza.buffer), res = 3280.84) # create raster = ~1000 x 1000 m
+
+# calculate the number of cores
+my.cores <- parallel::detectCores() - 1 # store computers cores
+
+# number of polygons features in SPDF
+features <- 1:nrow(osm[,])
+
+# split features in n parts
+n <- my.cores
+parts <- split(features, cut(features, n))
+
+# initiate cluster after loading all the necessary object to R environment
 cl <- makeCluster(my.cores)
 registerDoParallel(cl) # register parallel backend
 clusterCall(cl, function(x) .libPaths(x), .libPaths())
+print(cl)
 
-w.min <- unique(osm$min.r.buf)  # list of unique min buffer widths based on oneway and estiamted roadway width
-b.min <- list() # create empty list for foreach
-osm.buf.min <- foreach(i = 1:length(w.min), .packages = c("sp","rgeos")) %dopar% {
-  #b.min[[i]] <- buffer(osm[osm$min.r.buf == w.min[i], ], width = w.min[i])
-  b.min[[i]] <- gBuffer(osm[osm$min.r.buf == w.min[i], ], byid = F, width = w.min[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
-} # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
+# rasterize parts of min/max road network area and save in parellel
+system.time(foreach(i = 1:n, .packages = c("raster", "here")) %dopar% {
+  rasterize(osm[parts[[i]],], r, getCover = T, background = 0, 
+            filename = here(paste0("data/outputs/temp/road-min-part-", i, ".tif")), 
+            overwrite = T)})
 
-w.max <- unique(osm$max.r.buf)  # list of unique min buffer widths based on oneway and estiamted roadway width
-b.max <- list() # create empty list for foreach
-osm.buf.max <- foreach(i = 1:length(w.max), .packages = c("sp","rgeos")) %dopar% {
-  #b.max[[i]] <- buffer(osm[osm$max.r.buf == w.max[i], ], width = w.max[i])
-  b.max[[i]] <- gBuffer(osm[osm$max.r.buf == w.max[i], ], byid = F, width = w.max[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
-} # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
-
-# bind the buffered osm data output
-osm.buf.mrg.min <- do.call(raster::bind, osm.buf.min) # bind list of spatial objects into single spatial obj
-osm.buf.mrg.max <- do.call(raster::bind, osm.buf.max) # bind list of spatial objects into single spatial obj
-
-# options for fixing invalid geometery issues if needed
-#osm.cleaned.min <- clgeo_Clean(osm.buf.mrg.min)        # start w/ simple clean function
-#osm.cleaned.min <- gSimplify(osm.cleaned.min, tol = 0.1)  # simplify polygons with Douglas-Peucker algorithm and a tolerance of 0.1 ft
-#osm.cleaned.min <- gBuffer(osm.cleaned.min, width = 0)  # width = 0 as hack to clean polygon errors such as self intersetions
-
-# dissolve the roadway buffer to a single polygon to calculate area w/o overlaps
-osm.dissolved.min <- gUnaryUnion(osm.buf.mrg.min) #osm.cleaned.min
-osm.dissolved.max <- gUnaryUnion(osm.buf.mrg.max) #osm.cleaned.max
-
-# clip osm buffers by blockgroup boundaries
-osm.block.min <- intersect(osm.dissolved.min, blkgrp) # better than gIntersection b/c it keeps attributes
-osm.block.max <- intersect(osm.dissolved.max, blkgrp) # better than gIntersection b/c it keeps attributes
-
-# save
-save.image(here("data/outputs/temp/phx-pave-heat-map.RData")) # save workspace
-saveRDS(osm.block.min, here("data/outputs/osm-blockgroup-dissolved-min.rds"))
-saveRDS(osm.block.max, here("data/outputs/osm-blockgroup-dissolved-max.rds"))
-
-# for QGIS
-shapefile(osm.block.min, here("data/outputs/temp/osm-blkgrp-dissolved-min"), overwrite = T)
-shapefile(osm.block.max, here("data/outputs/temp/osm-blkgrp-dissolved-max"), overwrite = T)
-
+# stop cluster
+stopCluster(cl)
