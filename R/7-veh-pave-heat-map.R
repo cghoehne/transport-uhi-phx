@@ -39,101 +39,25 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
            checkpointLocation = here(), # calls here package
            verbose = F) 
 
-# R function to write both a .csv and a .csvt file from single data.frame/data.table to be imported into QGIS
-write.qgis.csv <- function(df, filename){
-  csvt <- vector(mode = "list", length = ncol(df))
-  csvt[] <- sapply(df, class)
-  csvt[] <- ifelse(csvt == "numeric","Real", csvt)
-  csvt[] <- ifelse(csvt == "integer","Integer", csvt)
-  csvt[] <- ifelse(csvt != "Real" & csvt != "Integer","String", csvt)
-  filename <- ifelse(substr(filename, nchar(filename) - 3, nchar(filename)) == ".csv", filename, paste0(filename,".csv"))
-  write.csv(df, file = filename, row.names = F)
-  write.table(csvt, file = paste0(filename,"t"), sep = ",", row.names = F, col.names = F)
-}
-
 # import data
 blkgrp <- shapefile(here("data/shapefiles/boundaries/phx-blkgrp-geom.shp")) # census blockgroup shapfile (clipped to Maricopa UZA)
-osm.block.min <- readRDS(here("data/outputs/osm-blockgroup-dissolved-min.rds"))
-osm.block.max <- readRDS(here("data/outputs/osm-blockgroup-dissolved-max.rds"))
 uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA buffered ~1mi
-
-# rasterize polygon roadway min/max data and point parking data
-# note: "For polygons, values are transferred if the polygon covers the center of a raster cell."
-
-########
-start.time <- Sys.time() # start script timestamp
-
-# create empty raster at desired extent (use uza buffer to ensure everything captured)
-#r <- raster(ext = extent(uza.buffer), crs = crs(uza.buffer), res = 32.8084) # create raster = ~10 x 10 m, 50 hrs est. run time with this time
-#r <- raster(ext = extent(uza.buffer), crs = crs(uza.buffer), res = 1640.42) # create raster = ~500 x 500 m, ~ 40 mins
-r <- raster(ext = extent(uza.buffer), crs = crs(uza.buffer), res = 3280.84) # create raster = ~1000 x 1000 m, ~ 5 mins
-
-# calculate the number of cores
-my.cores <- parallel::detectCores() - 1 # store computers cores
-
-# number of polygons features in SPDF
-features.min <- 1:nrow(osm.block.min[,])
-features.max <- 1:nrow(osm.block.max[,])
-
-# split features in n parts
-n <- my.cores
-parts.min <- split(features.min, cut(features.min, n))
-parts.max <- split(features.max, cut(features.max, n))
-
-# initiate cluster after loading all the necessary object to R environment
-cl <- makeCluster(my.cores)
-registerDoParallel(cl) # register parallel backend
-clusterCall(cl, function(x) .libPaths(x), .libPaths())
-print(cl)
-
-# rasterize parts of min/max road network area and save in parellel
-system.time(foreach(i = 1:n, .packages = c("raster", "here")) %dopar% {
-  rasterize(osm.block.min[parts.min[[i]],], r, getCover = T, background = 0, 
-            filename = here(paste0("data/outputs/temp/road-min-part-", i, ".tif")), 
-            overwrite = T)})
-
-system.time(foreach(i = 1:n, .packages = c("raster", "here")) %dopar% {
-  rasterize(osm.block.max[parts.max[[i]],], r, getCover = T, background = 0, 
-            filename = here(paste0("data/outputs/temp/road-max-part-", i, ".tif")), 
-            overwrite = T)})
-
-# stop cluster
-stopCluster(cl)
-
-# create list of raster parts from file
-r.road.min <- lapply(1:n, function (i) raster(here(paste0("data/outputs/temp/road-min-part-", i, ".tif"))))
-r.road.max <- lapply(1:n, function (i) raster(here(paste0("data/outputs/temp/road-max-part-", i, ".tif"))))
-
-# merge all raster parts
-r.road.min$fun <- sum
-r.road.max$fun <- sum
-r.road.min.m <- do.call(mosaic, r.road.min)
-r.road.max.m <- do.call(mosaic, r.road.max)
-
-# plot merged raster
-plot(r.road.min.m)
-plot(r.road.max.m)
-
-# export to check how accurate in QGIS 
-writeRaster(r.road.min.m, here("data/outputs/temp/osm-min-area-raster.tif"), format = "GTiff", overwrite = T)
-writeRaster(r.road.max.m, here("data/outputs/temp/osm-max-area-raster.tif"), format = "GTiff", overwrite = T)
-
-# save R objects
-saveRDS(r.road.min.m, here("data/outputs/temp/osm-min-area-raster.rds"))
-saveRDS(r.road.max.m, here("data/outputs/temp/osm-max-area-raster.rds"))
-
-# save image 
-save.image(here("data/outputs/temp/7-veh-pave-heat-map.RData"))
-
-paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(),
-       ". Model run length: ", round(difftime(Sys.time(), start.time, units = "mins"),0)," mins.")
-
-############
-
-# import parking data
 parking <- fread(here("data/parking/phx-parking-blkgrp.csv")) # phoenix total parking data (aggregated to blockgroup id)
 parking.par <- readRDS(here("data/parking/phoenix-parking-parcel.rds")) # phoenix off-street parking data (raw by parcel)
 parking.pts <- shapefile(here("data/parking/phx-parcel-points.shp")) # points of center of APN of parcels
+
+# import raw parcel polygons
+parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds"))
+
+# dissolve the parcel polygons by APN 
+parcels.d <- unionSpatialPolygons(parcels, parcels$APN)
+
+# get list of unique APNs
+APNs <- unique(parcels$APN)
+
+# rebind the APNs and create a SPDF of dissolved parcels
+parcels.a <- SpatialPolygonsDataFrame(Sr = parcels.d, data = data.frame(row.names = APNs, APNs))
+
 
 # simplify prop type var
 parking.par <- parking.par[PROPTYPE == "Non-residential Off-street Spaces", type := "com"][PROPTYPE == "Residential Off-street Spaces", type := "res"]
@@ -147,12 +71,6 @@ parking.pts.u <- parking.pts[which(!duplicated(parking.pts$APN)), ]
 # merge parking spaces totals to points by  APN
 parking.merged <- merge(parking.pts.u, parking.par.m, by = "APN")
 saveRDS(parking.merged, here("data/parking/phoenix-parking-parcel-points.rds"))
-
-# export parking parcel data to merge in qgis
-#write.qgis.csv(parking.par.m, here("data/parking/parcel-off"))
-
-# rasterize parking and min/max road area 
-#r.park <- rasterize(parking.merged[parking.merged$spaces,], r, field = "spaces") 42 Gb
 
 
 # import most recent pavement model run data

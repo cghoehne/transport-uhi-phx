@@ -1,5 +1,5 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis projectname="" version="3.0.0-Girona">
+<qgis version="3.0.0-Girona" projectname="">
   <title></title>
   <autotransaction active="0"/>
   <evaluateDefaultValues active="0"/>
@@ -18,106 +18,106 @@
   </projectCrs>
   <layer-tree-group>
     <customproperties/>
-    <layer-tree-layer expanded="1" source="../data/shapefiles/processed/valid-select.shp" providerKey="ogr" checked="Qt::Checked" name="validation sites" id="valid_select_2c2dac8d_202d_4ab1_8902_a2879afdbe3c">
+    <layer-tree-layer id="valid_select_2c2dac8d_202d_4ab1_8902_a2879afdbe3c" providerKey="ogr" name="validation sites" checked="Qt::Checked" source="../data/outputs/shapefiles/valid-select.shp" expanded="1">
       <customproperties/>
     </layer-tree-layer>
-    <layer-tree-layer expanded="1" source="../data/shapefiles/processed/valid-select.shp" providerKey="ogr" checked="Qt::Unchecked" name="validation sites" id="validation_sites_e922b4b4_4d58_44a9_b396_326f66763da1">
+    <layer-tree-layer id="validation_sites_e922b4b4_4d58_44a9_b396_326f66763da1" providerKey="ogr" name="validation sites" checked="Qt::Unchecked" source="../data/outputs/shapefiles/valid-select.shp" expanded="1">
       <customproperties/>
     </layer-tree-layer>
-    <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00302202014053514_20190206145248_987.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Checked" name="ASTER LST 03-22-2014 05:35:14 UTC" id="AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009">
+    <layer-tree-layer id="AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009" providerKey="gdal" name="ASTER LST 03-22-2014 05:35:14 UTC" checked="Qt::Checked" source="../data/aster/best/AST_08_00302202014053514_20190206145248_987.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
       <customproperties>
         <property key="expandedLegendNodes"/>
       </customproperties>
     </layer-tree-layer>
-    <layer-tree-group expanded="0" checked="Qt::Checked" name="other ASTER files">
+    <layer-tree-group name="other ASTER files" checked="Qt::Checked" expanded="0">
       <customproperties/>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00302092012181501_20190206151456_365_SurfaceKineticTemperature_KineticTemperature_44bf9be5_de6f_4b78_82d6_8866ca41223c">
+      <layer-tree-layer id="AST_08_00302092012181501_20190206151456_365_SurfaceKineticTemperature_KineticTemperature_44bf9be5_de6f_4b78_82d6_8866ca41223c" providerKey="gdal" name="AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00302272007181537_20190206152607_55367_SurfaceKineticTemperature_KineticTemperature_3dc46cc5_51a3_4b88_9c1f_f1fa86e90e90">
+      <layer-tree-layer id="AST_08_00302272007181537_20190206152607_55367_SurfaceKineticTemperature_KineticTemperature_3dc46cc5_51a3_4b88_9c1f_f1fa86e90e90" providerKey="gdal" name="AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00304242008053511_20190206152006_14803_SurfaceKineticTemperature_KineticTemperature_ba6e8f8e_641c_4a48_8f1d_cb5595ab9815">
+      <layer-tree-layer id="AST_08_00304242008053511_20190206152006_14803_SurfaceKineticTemperature_KineticTemperature_ba6e8f8e_641c_4a48_8f1d_cb5595ab9815" providerKey="gdal" name="AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00305022007181522_20190206152927_62663_SurfaceKineticTemperature_KineticTemperature_0735a3b9_710a_46a8_add4_42248901c4ef">
+      <layer-tree-layer id="AST_08_00305022007181522_20190206152927_62663_SurfaceKineticTemperature_KineticTemperature_0735a3b9_710a_46a8_add4_42248901c4ef" providerKey="gdal" name="AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00306232018053637_20190206145854_16886_SurfaceKineticTemperature_KineticTemperature_56b6347d_c9f2_4c14_9ef2_732419a351a6">
+      <layer-tree-layer id="AST_08_00306232018053637_20190206145854_16886_SurfaceKineticTemperature_KineticTemperature_56b6347d_c9f2_4c14_9ef2_732419a351a6" providerKey="gdal" name="AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00306262007182124_20190206151732_23638_SurfaceKineticTemperature_KineticTemperature_c94c0773_53a7_4e42_b56a_50987bbabdc2">
+      <layer-tree-layer id="AST_08_00306262007182124_20190206151732_23638_SurfaceKineticTemperature_KineticTemperature_c94c0773_53a7_4e42_b56a_50987bbabdc2" providerKey="gdal" name="AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00307132016181615_20190206151142_4991_SurfaceKineticTemperature_KineticTemperature_9c0385a5_0f9f_4599_9855_2e31c5f2ba02">
+      <layer-tree-layer id="AST_08_00307132016181615_20190206151142_4991_SurfaceKineticTemperature_KineticTemperature_9c0385a5_0f9f_4599_9855_2e31c5f2ba02" providerKey="gdal" name="AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00307272015181632_20190206150531_14752_SurfaceKineticTemperature_KineticTemperature_b8e84498_4fdf_421b_aab6_4b159ca53f6a">
+      <layer-tree-layer id="AST_08_00307272015181632_20190206150531_14752_SurfaceKineticTemperature_KineticTemperature_b8e84498_4fdf_421b_aab6_4b159ca53f6a" providerKey="gdal" name="AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00307302014053514_20190206144413_29035_SurfaceKineticTemperature_KineticTemperature_3347995a_53db_4c43_9564_82b293e1043a">
+      <layer-tree-layer id="AST_08_00307302014053514_20190206144413_29035_SurfaceKineticTemperature_KineticTemperature_3347995a_53db_4c43_9564_82b293e1043a" providerKey="gdal" name="AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00308312014053536_20190206150245_25957_SurfaceKineticTemperature_KineticTemperature_139f8bc5_25c3_459b_9620_11a3d394c561">
+      <layer-tree-layer id="AST_08_00308312014053536_20190206150245_25957_SurfaceKineticTemperature_KineticTemperature_139f8bc5_25c3_459b_9620_11a3d394c561" providerKey="gdal" name="AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00310022014053533_20190206150105_22212_SurfaceKineticTemperature_KineticTemperature_1072a47d_1dcf_4ab8_91d2_61f054618e19">
+      <layer-tree-layer id="AST_08_00310022014053533_20190206150105_22212_SurfaceKineticTemperature_KineticTemperature_1072a47d_1dcf_4ab8_91d2_61f054618e19" providerKey="gdal" name="AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00310222012181451_20190206150845_15275_SurfaceKineticTemperature_KineticTemperature_5b760108_121d_434e_b77c_1c258b6bbfbb">
+      <layer-tree-layer id="AST_08_00310222012181451_20190206150845_15275_SurfaceKineticTemperature_KineticTemperature_5b760108_121d_434e_b77c_1c258b6bbfbb" providerKey="gdal" name="AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00310312013053454_20190206151043_15841_SurfaceKineticTemperature_KineticTemperature_dda5d815_7625_4f12_acce_1c1631c80f2f">
+      <layer-tree-layer id="AST_08_00310312013053454_20190206151043_15841_SurfaceKineticTemperature_KineticTemperature_dda5d815_7625_4f12_acce_1c1631c80f2f" providerKey="gdal" name="AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00311022010181454_20190206150228_29517_SurfaceKineticTemperature_KineticTemperature_790f1425_8be4_4cfc_810d_95fcfe9228f2">
+      <layer-tree-layer id="AST_08_00311022010181454_20190206150228_29517_SurfaceKineticTemperature_KineticTemperature_790f1425_8be4_4cfc_810d_95fcfe9228f2" providerKey="gdal" name="AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00311032014053519_20190206145845_13098_SurfaceKineticTemperature_KineticTemperature_bf436003_dabf_4ef2_b589_76c0b28cac81">
+      <layer-tree-layer id="AST_08_00311032014053519_20190206145845_13098_SurfaceKineticTemperature_KineticTemperature_bf436003_dabf_4ef2_b589_76c0b28cac81" providerKey="gdal" name="AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00311162013053459_20190206150129_27725_SurfaceKineticTemperature_KineticTemperature_b77b86b0_b800_4890_a796_c8f7ca304305">
+      <layer-tree-layer id="AST_08_00311162013053459_20190206150129_27725_SurfaceKineticTemperature_KineticTemperature_b77b86b0_b800_4890_a796_c8f7ca304305" providerKey="gdal" name="AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer expanded="0" source="../data/aster/best/AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature.tif" providerKey="gdal" checked="Qt::Unchecked" name="AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature" id="AST_08_00311192008182137_20190206150452_3848_SurfaceKineticTemperature_KineticTemperature_8fd170d4_2e18_4e26_a946_34b0b2cb7fa5">
+      <layer-tree-layer id="AST_08_00311192008182137_20190206150452_3848_SurfaceKineticTemperature_KineticTemperature_8fd170d4_2e18_4e26_a946_34b0b2cb7fa5" providerKey="gdal" name="AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature" checked="Qt::Unchecked" source="../data/aster/best/AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature.tif" expanded="0">
         <customproperties>
           <property key="expandedLegendNodes"/>
         </customproperties>
       </layer-tree-layer>
     </layer-tree-group>
-    <layer-tree-layer expanded="0" source="crs=EPSG:3857&amp;format&amp;type=xyz&amp;url=https://mt1.google.com/vt/lyrs%3Ds%26x%3D%7Bx%7D%26y%3D%7By%7D%26z%3D%7Bz%7D&amp;zmax=19&amp;zmin=0" providerKey="wms" checked="Qt::Unchecked" name="Google Satellite" id="Google_Satellite_346c1db4_5c29_4a73_889f_bdbaf5899530">
+    <layer-tree-layer id="Google_Satellite_346c1db4_5c29_4a73_889f_bdbaf5899530" providerKey="wms" name="Google Satellite" checked="Qt::Unchecked" source="crs=EPSG:3857&amp;format&amp;type=xyz&amp;url=https://mt1.google.com/vt/lyrs%3Ds%26x%3D%7Bx%7D%26y%3D%7By%7D%26z%3D%7Bz%7D&amp;zmax=19&amp;zmin=0" expanded="0">
       <customproperties/>
     </layer-tree-layer>
     <custom-order enabled="0">
@@ -144,14 +144,14 @@
       <item>validation_sites_e922b4b4_4d58_44a9_b396_326f66763da1</item>
     </custom-order>
   </layer-tree-group>
-  <snapping-settings type="1" mode="2" intersection-snapping="0" enabled="0" tolerance="12" unit="1">
+  <snapping-settings tolerance="12" unit="1" intersection-snapping="0" mode="2" type="1" enabled="0">
     <individual-layer-settings>
-      <layer-setting type="1" units="1" enabled="0" tolerance="12" id="valid_select_2c2dac8d_202d_4ab1_8902_a2879afdbe3c"/>
-      <layer-setting type="1" units="1" enabled="0" tolerance="12" id="validation_sites_e922b4b4_4d58_44a9_b396_326f66763da1"/>
+      <layer-setting tolerance="12" id="validation_sites_e922b4b4_4d58_44a9_b396_326f66763da1" units="1" type="1" enabled="0"/>
+      <layer-setting tolerance="12" id="valid_select_2c2dac8d_202d_4ab1_8902_a2879afdbe3c" units="1" type="1" enabled="0"/>
     </individual-layer-settings>
   </snapping-settings>
   <relations/>
-  <mapcanvas annotationsVisible="1" name="theMapCanvas">
+  <mapcanvas name="theMapCanvas" annotationsVisible="1">
     <units>meters</units>
     <extent>
       <xmin>115855.60307139862561598</xmin>
@@ -175,118 +175,118 @@
     <rendermaptile>0</rendermaptile>
   </mapcanvas>
   <legend updateDrawingOrder="true">
-    <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="validation sites" showFeatureCount="0">
-      <filegroup open="true" hidden="false">
-        <legendlayerfile visible="1" isInOverview="0" layerid="valid_select_2c2dac8d_202d_4ab1_8902_a2879afdbe3c"/>
+    <legendlayer checked="Qt::Checked" name="validation sites" drawingOrder="-1" showFeatureCount="0" open="true">
+      <filegroup hidden="false" open="true">
+        <legendlayerfile isInOverview="0" visible="1" layerid="valid_select_2c2dac8d_202d_4ab1_8902_a2879afdbe3c"/>
       </filegroup>
     </legendlayer>
-    <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="validation sites" showFeatureCount="0">
-      <filegroup open="true" hidden="false">
-        <legendlayerfile visible="0" isInOverview="0" layerid="validation_sites_e922b4b4_4d58_44a9_b396_326f66763da1"/>
+    <legendlayer checked="Qt::Unchecked" name="validation sites" drawingOrder="-1" showFeatureCount="0" open="true">
+      <filegroup hidden="false" open="true">
+        <legendlayerfile isInOverview="0" visible="0" layerid="validation_sites_e922b4b4_4d58_44a9_b396_326f66763da1"/>
       </filegroup>
     </legendlayer>
-    <legendlayer drawingOrder="-1" open="false" checked="Qt::Checked" name="ASTER LST 03-22-2014 05:35:14 UTC" showFeatureCount="0">
-      <filegroup open="false" hidden="false">
-        <legendlayerfile visible="1" isInOverview="0" layerid="AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009"/>
+    <legendlayer checked="Qt::Checked" name="ASTER LST 03-22-2014 05:35:14 UTC" drawingOrder="-1" showFeatureCount="0" open="false">
+      <filegroup hidden="false" open="false">
+        <legendlayerfile isInOverview="0" visible="1" layerid="AST_08_00302202014053514_20190206145248_987_SurfaceKineticTemperature_KineticTemperature_b22d6390_0014_48cb_a620_a393c6278009"/>
       </filegroup>
     </legendlayer>
-    <legendgroup open="false" checked="Qt::Checked" name="other ASTER files">
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00302092012181501_20190206151456_365_SurfaceKineticTemperature_KineticTemperature_44bf9be5_de6f_4b78_82d6_8866ca41223c"/>
+    <legendgroup name="other ASTER files" checked="Qt::Checked" open="false">
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00302092012181501_20190206151456_365.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00302092012181501_20190206151456_365_SurfaceKineticTemperature_KineticTemperature_44bf9be5_de6f_4b78_82d6_8866ca41223c"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00302272007181537_20190206152607_55367_SurfaceKineticTemperature_KineticTemperature_3dc46cc5_51a3_4b88_9c1f_f1fa86e90e90"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00302272007181537_20190206152607_55367.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00302272007181537_20190206152607_55367_SurfaceKineticTemperature_KineticTemperature_3dc46cc5_51a3_4b88_9c1f_f1fa86e90e90"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00304242008053511_20190206152006_14803_SurfaceKineticTemperature_KineticTemperature_ba6e8f8e_641c_4a48_8f1d_cb5595ab9815"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00304242008053511_20190206152006_14803.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00304242008053511_20190206152006_14803_SurfaceKineticTemperature_KineticTemperature_ba6e8f8e_641c_4a48_8f1d_cb5595ab9815"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00305022007181522_20190206152927_62663_SurfaceKineticTemperature_KineticTemperature_0735a3b9_710a_46a8_add4_42248901c4ef"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00305022007181522_20190206152927_62663.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00305022007181522_20190206152927_62663_SurfaceKineticTemperature_KineticTemperature_0735a3b9_710a_46a8_add4_42248901c4ef"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00306232018053637_20190206145854_16886_SurfaceKineticTemperature_KineticTemperature_56b6347d_c9f2_4c14_9ef2_732419a351a6"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00306232018053637_20190206145854_16886.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00306232018053637_20190206145854_16886_SurfaceKineticTemperature_KineticTemperature_56b6347d_c9f2_4c14_9ef2_732419a351a6"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00306262007182124_20190206151732_23638_SurfaceKineticTemperature_KineticTemperature_c94c0773_53a7_4e42_b56a_50987bbabdc2"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00306262007182124_20190206151732_23638.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00306262007182124_20190206151732_23638_SurfaceKineticTemperature_KineticTemperature_c94c0773_53a7_4e42_b56a_50987bbabdc2"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00307132016181615_20190206151142_4991_SurfaceKineticTemperature_KineticTemperature_9c0385a5_0f9f_4599_9855_2e31c5f2ba02"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00307132016181615_20190206151142_4991.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00307132016181615_20190206151142_4991_SurfaceKineticTemperature_KineticTemperature_9c0385a5_0f9f_4599_9855_2e31c5f2ba02"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00307272015181632_20190206150531_14752_SurfaceKineticTemperature_KineticTemperature_b8e84498_4fdf_421b_aab6_4b159ca53f6a"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00307272015181632_20190206150531_14752.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00307272015181632_20190206150531_14752_SurfaceKineticTemperature_KineticTemperature_b8e84498_4fdf_421b_aab6_4b159ca53f6a"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00307302014053514_20190206144413_29035_SurfaceKineticTemperature_KineticTemperature_3347995a_53db_4c43_9564_82b293e1043a"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00307302014053514_20190206144413_29035.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00307302014053514_20190206144413_29035_SurfaceKineticTemperature_KineticTemperature_3347995a_53db_4c43_9564_82b293e1043a"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00308312014053536_20190206150245_25957_SurfaceKineticTemperature_KineticTemperature_139f8bc5_25c3_459b_9620_11a3d394c561"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00308312014053536_20190206150245_25957.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00308312014053536_20190206150245_25957_SurfaceKineticTemperature_KineticTemperature_139f8bc5_25c3_459b_9620_11a3d394c561"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00310022014053533_20190206150105_22212_SurfaceKineticTemperature_KineticTemperature_1072a47d_1dcf_4ab8_91d2_61f054618e19"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00310022014053533_20190206150105_22212.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00310022014053533_20190206150105_22212_SurfaceKineticTemperature_KineticTemperature_1072a47d_1dcf_4ab8_91d2_61f054618e19"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00310222012181451_20190206150845_15275_SurfaceKineticTemperature_KineticTemperature_5b760108_121d_434e_b77c_1c258b6bbfbb"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00310222012181451_20190206150845_15275.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00310222012181451_20190206150845_15275_SurfaceKineticTemperature_KineticTemperature_5b760108_121d_434e_b77c_1c258b6bbfbb"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00310312013053454_20190206151043_15841_SurfaceKineticTemperature_KineticTemperature_dda5d815_7625_4f12_acce_1c1631c80f2f"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00310312013053454_20190206151043_15841.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00310312013053454_20190206151043_15841_SurfaceKineticTemperature_KineticTemperature_dda5d815_7625_4f12_acce_1c1631c80f2f"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00311022010181454_20190206150228_29517_SurfaceKineticTemperature_KineticTemperature_790f1425_8be4_4cfc_810d_95fcfe9228f2"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00311022010181454_20190206150228_29517.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00311022010181454_20190206150228_29517_SurfaceKineticTemperature_KineticTemperature_790f1425_8be4_4cfc_810d_95fcfe9228f2"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00311032014053519_20190206145845_13098_SurfaceKineticTemperature_KineticTemperature_bf436003_dabf_4ef2_b589_76c0b28cac81"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00311032014053519_20190206145845_13098.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00311032014053519_20190206145845_13098_SurfaceKineticTemperature_KineticTemperature_bf436003_dabf_4ef2_b589_76c0b28cac81"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00311162013053459_20190206150129_27725_SurfaceKineticTemperature_KineticTemperature_b77b86b0_b800_4890_a796_c8f7ca304305"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00311162013053459_20190206150129_27725.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00311162013053459_20190206150129_27725_SurfaceKineticTemperature_KineticTemperature_b77b86b0_b800_4890_a796_c8f7ca304305"/>
         </filegroup>
       </legendlayer>
-      <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature" showFeatureCount="0">
-        <filegroup open="false" hidden="false">
-          <legendlayerfile visible="0" isInOverview="0" layerid="AST_08_00311192008182137_20190206150452_3848_SurfaceKineticTemperature_KineticTemperature_8fd170d4_2e18_4e26_a946_34b0b2cb7fa5"/>
+      <legendlayer checked="Qt::Unchecked" name="AST_08_00311192008182137_20190206150452_3848.SurfaceKineticTemperature.KineticTemperature" drawingOrder="-1" showFeatureCount="0" open="false">
+        <filegroup hidden="false" open="false">
+          <legendlayerfile isInOverview="0" visible="0" layerid="AST_08_00311192008182137_20190206150452_3848_SurfaceKineticTemperature_KineticTemperature_8fd170d4_2e18_4e26_a946_34b0b2cb7fa5"/>
         </filegroup>
       </legendlayer>
     </legendgroup>
-    <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="Google Satellite" showFeatureCount="0">
-      <filegroup open="false" hidden="false">
-        <legendlayerfile visible="0" isInOverview="0" layerid="Google_Satellite_346c1db4_5c29_4a73_889f_bdbaf5899530"/>
+    <legendlayer checked="Qt::Unchecked" name="Google Satellite" drawingOrder="-1" showFeatureCount="0" open="false">
+      <filegroup hidden="false" open="false">
+        <legendlayerfile isInOverview="0" visible="0" layerid="Google_Satellite_346c1db4_5c29_4a73_889f_bdbaf5899530"/>
       </filegroup>
     </legendlayer>
   </legend>
   <mapViewDocks/>
   <mapViewDocks3D/>
   <projectlayers>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>365745.90562443598173559</xmin>
         <ymin>3655488.02427532803267241</ymin>
@@ -336,17 +336,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -363,12 +363,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>346899.32529714802512899</xmin>
         <ymin>3678659.45114281680434942</ymin>
@@ -415,7 +415,7 @@
           </spatialrefsys>
         </crs>
         <extent>
-          <spatial maxx="0" dimensions="2" maxz="0" crs="" miny="0" maxy="0" minx="0" minz="0"/>
+          <spatial maxx="0" maxy="0" minx="0" maxz="0" crs="" dimensions="2" miny="0" minz="0"/>
           <temporal>
             <period>
               <start></start>
@@ -435,20 +435,20 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="WMSBackgroundLayer" value="false"/>
-        <property key="WMSPublishDataSourceUrl" value="false"/>
-        <property key="embeddedWidgets/count" value="0"/>
-        <property key="identify/format" value="Value"/>
+        <property value="false" key="WMSBackgroundLayer"/>
+        <property value="false" key="WMSPublishDataSourceUrl"/>
+        <property value="0" key="embeddedWidgets/count"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer band="1" classificationMax="19.0308" opacity="1" classificationMin="0" type="singlebandpseudocolor" alphaBand="-1">
+        <rasterrenderer classificationMax="19.0308" band="1" type="singlebandpseudocolor" classificationMin="0" alphaBand="-1" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>None</limits>
@@ -459,30 +459,30 @@
             <stdDevFactor>2</stdDevFactor>
           </minMaxOrigin>
           <rastershader>
-            <colorrampshader classificationMode="1" colorRampType="INTERPOLATED" clip="0">
-              <colorramp type="gradient" name="[source]">
-                <prop k="color1" v="43,131,186,255"/>
-                <prop k="color2" v="215,25,28,255"/>
-                <prop k="discrete" v="0"/>
-                <prop k="rampType" v="gradient"/>
-                <prop k="stops" v="0.25;171,221,164,255:0.5;255,255,191,255:0.75;253,174,97,255"/>
+            <colorrampshader classificationMode="1" clip="0" colorRampType="INTERPOLATED">
+              <colorramp name="[source]" type="gradient">
+                <prop v="43,131,186,255" k="color1"/>
+                <prop v="215,25,28,255" k="color2"/>
+                <prop v="0" k="discrete"/>
+                <prop v="gradient" k="rampType"/>
+                <prop v="0.25;171,221,164,255:0.5;255,255,191,255:0.75;253,174,97,255" k="stops"/>
               </colorramp>
-              <item alpha="0" color="#ff00ff" value="0" label="0"/>
-              <item alpha="255" color="#2b83ba" value="0.00300013" label="0.003"/>
-              <item alpha="255" color="#abdda4" value="4.7599500975" label="4.76"/>
-              <item alpha="255" color="#ffffbf" value="9.516900065" label="9.52"/>
-              <item alpha="255" color="#fdae61" value="14.2738500325" label="14.3"/>
-              <item alpha="255" color="#d7191c" value="19.0308" label="19"/>
+              <item value="0" color="#ff00ff" label="0" alpha="0"/>
+              <item value="0.00300013" color="#2b83ba" label="0.003" alpha="255"/>
+              <item value="4.7599500975" color="#abdda4" label="4.76" alpha="255"/>
+              <item value="9.516900065" color="#ffffbf" label="9.52" alpha="255"/>
+              <item value="14.2738500325" color="#fdae61" label="14.3" alpha="255"/>
+              <item value="19.0308" color="#d7191c" label="19" alpha="255"/>
             </colorrampshader>
           </rastershader>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>358849.94475119997514412</xmin>
         <ymin>3656676.08959032688289881</ymin>
@@ -532,17 +532,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -559,12 +559,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>353930.55406523001147434</xmin>
         <ymin>3679801.01457381807267666</ymin>
@@ -614,17 +614,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -641,12 +641,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>365045.8770944899879396</xmin>
         <ymin>3655601.78473809221759439</ymin>
@@ -696,17 +696,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -723,12 +723,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>335065.14482312701875344</xmin>
         <ymin>3676718.25617683213204145</ymin>
@@ -778,17 +778,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -805,12 +805,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>374037.74793099198723212</xmin>
         <ymin>3691568.08275929791852832</ymin>
@@ -860,17 +860,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -887,12 +887,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>357252.8466052120202221</xmin>
         <ymin>3656948.72380626806989312</ymin>
@@ -942,17 +942,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -969,12 +969,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>351946.53220654197502881</xmin>
         <ymin>3657875.18344637099653482</ymin>
@@ -1024,17 +1024,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -1051,12 +1051,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>358641.52731243800371885</xmin>
         <ymin>3680581.38273749500513077</ymin>
@@ -1106,17 +1106,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -1133,12 +1133,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>350553.14873957599047571</xmin>
         <ymin>3679267.41866242792457342</ymin>
@@ -1188,17 +1188,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -1215,12 +1215,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>350927.62314937001792714</xmin>
         <ymin>3679313.80672349687665701</ymin>
@@ -1270,17 +1270,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -1297,12 +1297,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>368999.05038006399990991</xmin>
         <ymin>3654924.61591992899775505</ymin>
@@ -1352,17 +1352,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -1379,12 +1379,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>355750.04166305699618533</xmin>
         <ymin>3680102.28961943322792649</ymin>
@@ -1431,7 +1431,7 @@
           </spatialrefsys>
         </crs>
         <extent>
-          <spatial maxx="0" dimensions="2" maxz="0" crs="" miny="0" maxy="0" minx="0" minz="0"/>
+          <spatial maxx="0" maxy="0" minx="0" maxz="0" crs="" dimensions="2" miny="0" minz="0"/>
           <temporal>
             <period>
               <start></start>
@@ -1451,20 +1451,20 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="WMSBackgroundLayer" value="false"/>
-        <property key="WMSPublishDataSourceUrl" value="false"/>
-        <property key="embeddedWidgets/count" value="0"/>
-        <property key="identify/format" value="Value"/>
+        <property value="false" key="WMSBackgroundLayer"/>
+        <property value="false" key="WMSPublishDataSourceUrl"/>
+        <property value="0" key="embeddedWidgets/count"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer band="1" classificationMax="16.1368" opacity="1" classificationMin="0" type="singlebandpseudocolor" alphaBand="-1">
+        <rasterrenderer classificationMax="16.1368" band="1" type="singlebandpseudocolor" classificationMin="0" alphaBand="-1" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>None</limits>
@@ -1475,30 +1475,30 @@
             <stdDevFactor>2</stdDevFactor>
           </minMaxOrigin>
           <rastershader>
-            <colorrampshader classificationMode="1" colorRampType="INTERPOLATED" clip="0">
-              <colorramp type="gradient" name="[source]">
-                <prop k="color1" v="43,131,186,255"/>
-                <prop k="color2" v="215,25,28,255"/>
-                <prop k="discrete" v="0"/>
-                <prop k="rampType" v="gradient"/>
-                <prop k="stops" v="0.25;171,221,164,255:0.5;255,255,191,255:0.75;253,174,97,255"/>
+            <colorrampshader classificationMode="1" clip="0" colorRampType="INTERPOLATED">
+              <colorramp name="[source]" type="gradient">
+                <prop v="43,131,186,255" k="color1"/>
+                <prop v="215,25,28,255" k="color2"/>
+                <prop v="0" k="discrete"/>
+                <prop v="gradient" k="rampType"/>
+                <prop v="0.25;171,221,164,255:0.5;255,255,191,255:0.75;253,174,97,255" k="stops"/>
               </colorramp>
-              <item alpha="0" color="#ff00ff" value="0" label="0"/>
-              <item alpha="255" color="#2b83ba" value="0.001" label="0.001"/>
-              <item alpha="255" color="#abdda4" value="4.03495" label="4.03"/>
-              <item alpha="255" color="#ffffbf" value="8.0689" label="8.07"/>
-              <item alpha="255" color="#fdae61" value="12.10285" label="12.1"/>
-              <item alpha="255" color="#d7191c" value="16.1368" label="16.1"/>
+              <item value="0" color="#ff00ff" label="0" alpha="0"/>
+              <item value="0.001" color="#2b83ba" label="0.001" alpha="255"/>
+              <item value="4.03495" color="#abdda4" label="4.03" alpha="255"/>
+              <item value="8.0689" color="#ffffbf" label="8.07" alpha="255"/>
+              <item value="12.10285" color="#fdae61" label="12.1" alpha="255"/>
+              <item value="16.1368" color="#d7191c" label="16.1" alpha="255"/>
             </colorrampshader>
           </rastershader>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>363956.02714181202463806</xmin>
         <ymin>3655789.0827051498927176</ymin>
@@ -1548,17 +1548,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -1575,12 +1575,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>353951.61845025699585676</xmin>
         <ymin>3679766.40997614106163383</ymin>
@@ -1630,17 +1630,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -1657,12 +1657,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>354547.55279083497589454</xmin>
         <ymin>3679921.65578017104417086</ymin>
@@ -1712,17 +1712,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -1739,12 +1739,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>377692.00885246199322864</xmin>
         <ymin>3690885.28398292418569326</ymin>
@@ -1794,17 +1794,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Value"/>
+        <property value="Value" key="identify/format"/>
       </customproperties>
       <provider>gdal</provider>
       <noData>
-        <noDataList useSrcNoData="1" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="1"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer opacity="1" type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite">
+        <rasterrenderer type="singlebandgray" grayBand="1" alphaBand="-1" gradient="BlackToWhite" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>MinMax</limits>
@@ -1821,12 +1821,12 @@
           </contrastEnhancement>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" type="raster" minScale="1e+8" maxScale="0" autoRefreshTime="0" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" autoRefreshEnabled="0" type="raster" autoRefreshTime="0" refreshOnNotifyEnabled="0">
       <extent>
         <xmin>-20037508.34278924390673637</xmin>
         <ymin>-20037508.34278925508260727</ymin>
@@ -1876,17 +1876,17 @@
         <links/>
       </resourceMetadata>
       <customproperties>
-        <property key="identify/format" value="Undefined"/>
+        <property value="Undefined" key="identify/format"/>
       </customproperties>
       <provider>wms</provider>
       <noData>
-        <noDataList useSrcNoData="0" bandNo="1"/>
+        <noDataList bandNo="1" useSrcNoData="0"/>
       </noData>
       <map-layer-style-manager current="default">
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <pipe>
-        <rasterrenderer band="1" opacity="1" type="singlebandcolordata" alphaBand="-1">
+        <rasterrenderer band="1" type="singlebandcolordata" alphaBand="-1" opacity="1">
           <rasterTransparency/>
           <minMaxOrigin>
             <limits>None</limits>
@@ -1898,12 +1898,12 @@
           </minMaxOrigin>
         </rasterrenderer>
         <brightnesscontrast contrast="0" brightness="0"/>
-        <huesaturation saturation="0" grayscaleMode="0" colorizeOn="0" colorizeStrength="100" colorizeRed="255" colorizeGreen="128" colorizeBlue="128"/>
+        <huesaturation colorizeStrength="100" grayscaleMode="0" colorizeGreen="128" saturation="0" colorizeRed="255" colorizeBlue="128" colorizeOn="0"/>
         <rasterresampler maxOversampling="2"/>
       </pipe>
       <blendMode>0</blendMode>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" simplifyDrawingTol="1" hasScaleBasedVisibilityFlag="0" simplifyMaxScale="1" refreshOnNotifyEnabled="0" simplifyLocal="1" simplifyAlgorithm="0" readOnly="0" type="vector" minScale="1e+8" labelsEnabled="0" maxScale="0" simplifyDrawingHints="0" autoRefreshTime="0" geometry="Point" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" simplifyDrawingHints="0" autoRefreshEnabled="0" type="vector" simplifyDrawingTol="1" autoRefreshTime="0" simplifyLocal="1" readOnly="0" refreshOnNotifyEnabled="0" labelsEnabled="0" simplifyMaxScale="1" geometry="Point" simplifyAlgorithm="0">
       <extent>
         <xmin>-112.38556499999999971</xmin>
         <ymin>33.41734000000000293</ymin>
@@ -1911,7 +1911,7 @@
         <ymax>33.69591400000000192</ymax>
       </extent>
       <id>valid_select_2c2dac8d_202d_4ab1_8902_a2879afdbe3c</id>
-      <datasource>../data/shapefiles/processed/valid-select.shp</datasource>
+      <datasource>../data/outputs/shapefiles/valid-select.shp</datasource>
       <keywordList>
         <value></value>
       </keywordList>
@@ -1950,7 +1950,7 @@
           </spatialrefsys>
         </crs>
         <extent>
-          <spatial maxx="0" dimensions="2" maxz="0" crs="" miny="0" maxy="0" minx="0" minz="0"/>
+          <spatial maxx="0" maxy="0" minx="0" maxz="0" crs="" dimensions="2" miny="0" minz="0"/>
           <temporal>
             <period>
               <start></start>
@@ -1978,60 +1978,60 @@
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <auxiliaryLayer/>
-      <renderer-v2 enableorderby="0" symbollevels="0" forceraster="0" type="singleSymbol">
+      <renderer-v2 symbollevels="0" enableorderby="0" type="singleSymbol" forceraster="0">
         <symbols>
-          <symbol clip_to_extent="1" type="marker" alpha="1" name="0">
-            <layer enabled="1" class="SimpleMarker" pass="0" locked="0">
-              <prop k="angle" v="0"/>
-              <prop k="color" v="255,255,255,0"/>
-              <prop k="horizontal_anchor_point" v="1"/>
-              <prop k="joinstyle" v="bevel"/>
-              <prop k="name" v="circle"/>
-              <prop k="offset" v="0,0"/>
-              <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="offset_unit" v="MM"/>
-              <prop k="outline_color" v="0,0,0,255"/>
-              <prop k="outline_style" v="solid"/>
-              <prop k="outline_width" v="0.4"/>
-              <prop k="outline_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="outline_width_unit" v="MM"/>
-              <prop k="scale_method" v="area"/>
-              <prop k="size" v="4"/>
-              <prop k="size_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="size_unit" v="MM"/>
-              <prop k="vertical_anchor_point" v="1"/>
+          <symbol clip_to_extent="1" name="0" type="marker" alpha="1">
+            <layer locked="0" pass="0" class="SimpleMarker" enabled="1">
+              <prop v="0" k="angle"/>
+              <prop v="255,255,255,0" k="color"/>
+              <prop v="1" k="horizontal_anchor_point"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="circle" k="name"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="0,0,0,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.4" k="outline_width"/>
+              <prop v="3x:0,0,0,0,0,0" k="outline_width_map_unit_scale"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="area" k="scale_method"/>
+              <prop v="4" k="size"/>
+              <prop v="3x:0,0,0,0,0,0" k="size_map_unit_scale"/>
+              <prop v="MM" k="size_unit"/>
+              <prop v="1" k="vertical_anchor_point"/>
               <data_defined_properties>
                 <Option type="Map">
-                  <Option type="QString" value="" name="name"/>
+                  <Option value="" name="name" type="QString"/>
                   <Option name="properties"/>
-                  <Option type="QString" value="collection" name="type"/>
+                  <Option value="collection" name="type" type="QString"/>
                 </Option>
               </data_defined_properties>
             </layer>
-            <layer enabled="1" class="SimpleMarker" pass="0" locked="0">
-              <prop k="angle" v="0"/>
-              <prop k="color" v="0,0,0,255"/>
-              <prop k="horizontal_anchor_point" v="1"/>
-              <prop k="joinstyle" v="bevel"/>
-              <prop k="name" v="circle"/>
-              <prop k="offset" v="0,0"/>
-              <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="offset_unit" v="MM"/>
-              <prop k="outline_color" v="0,0,0,255"/>
-              <prop k="outline_style" v="no"/>
-              <prop k="outline_width" v="0.4"/>
-              <prop k="outline_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="outline_width_unit" v="MM"/>
-              <prop k="scale_method" v="area"/>
-              <prop k="size" v="0.75"/>
-              <prop k="size_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="size_unit" v="MM"/>
-              <prop k="vertical_anchor_point" v="1"/>
+            <layer locked="0" pass="0" class="SimpleMarker" enabled="1">
+              <prop v="0" k="angle"/>
+              <prop v="0,0,0,255" k="color"/>
+              <prop v="1" k="horizontal_anchor_point"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="circle" k="name"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="0,0,0,255" k="outline_color"/>
+              <prop v="no" k="outline_style"/>
+              <prop v="0.4" k="outline_width"/>
+              <prop v="3x:0,0,0,0,0,0" k="outline_width_map_unit_scale"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="area" k="scale_method"/>
+              <prop v="0.75" k="size"/>
+              <prop v="3x:0,0,0,0,0,0" k="size_map_unit_scale"/>
+              <prop v="MM" k="size_unit"/>
+              <prop v="1" k="vertical_anchor_point"/>
               <data_defined_properties>
                 <Option type="Map">
-                  <Option type="QString" value="" name="name"/>
+                  <Option value="" name="name" type="QString"/>
                   <Option name="properties"/>
-                  <Option type="QString" value="collection" name="type"/>
+                  <Option value="collection" name="type" type="QString"/>
                 </Option>
               </data_defined_properties>
             </layer>
@@ -2041,8 +2041,8 @@
         <sizescale/>
       </renderer-v2>
       <customproperties>
-        <property key="dualview/previewExpressions" value="Name"/>
-        <property key="embeddedWidgets/count" value="0"/>
+        <property value="Name" key="dualview/previewExpressions"/>
+        <property value="0" key="embeddedWidgets/count"/>
         <property key="variableNames"/>
         <property key="variableValues"/>
       </customproperties>
@@ -2050,17 +2050,17 @@
       <featureBlendMode>0</featureBlendMode>
       <layerOpacity>1</layerOpacity>
       <SingleCategoryDiagramRenderer diagramType="Histogram" attributeLegend="1">
-        <DiagramCategory minimumSize="0" lineSizeType="MM" diagramOrientation="Up" barWidth="5" scaleBasedVisibility="0" penColor="#000000" backgroundAlpha="255" scaleDependency="Area" enabled="0" rotationOffset="270" width="15" maxScaleDenominator="1e+8" sizeScale="3x:0,0,0,0,0,0" height="15" penWidth="0" sizeType="MM" minScaleDenominator="0" backgroundColor="#ffffff" labelPlacementMethod="XHeight" opacity="1" lineSizeScale="3x:0,0,0,0,0,0" penAlpha="255">
+        <DiagramCategory backgroundAlpha="255" minimumSize="0" height="15" backgroundColor="#ffffff" scaleBasedVisibility="0" diagramOrientation="Up" penColor="#000000" sizeScale="3x:0,0,0,0,0,0" scaleDependency="Area" minScaleDenominator="0" lineSizeType="MM" barWidth="5" penWidth="0" rotationOffset="270" labelPlacementMethod="XHeight" maxScaleDenominator="1e+8" width="15" sizeType="MM" lineSizeScale="3x:0,0,0,0,0,0" penAlpha="255" enabled="0" opacity="1">
           <fontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
-          <attribute field="" color="#000000" label=""/>
+          <attribute color="#000000" label="" field=""/>
         </DiagramCategory>
       </SingleCategoryDiagramRenderer>
-      <DiagramLayerSettings linePlacementFlags="18" zIndex="0" obstacle="0" dist="0" placement="0" priority="0" showAll="1">
+      <DiagramLayerSettings zIndex="0" obstacle="0" placement="0" dist="0" showAll="1" priority="0" linePlacementFlags="18">
         <properties>
           <Option type="Map">
-            <Option type="QString" value="" name="name"/>
+            <Option value="" name="name" type="QString"/>
             <Option name="properties"/>
-            <Option type="QString" value="collection" name="type"/>
+            <Option value="collection" name="type" type="QString"/>
           </Option>
         </properties>
       </DiagramLayerSettings>
@@ -2144,76 +2144,76 @@
         </field>
       </fieldConfiguration>
       <aliases>
-        <alias index="0" field="Name" name=""/>
-        <alias index="1" field="descriptio" name=""/>
-        <alias index="2" field="timestamp" name=""/>
-        <alias index="3" field="begin" name=""/>
-        <alias index="4" field="end" name=""/>
-        <alias index="5" field="altitudeMo" name=""/>
-        <alias index="6" field="tessellate" name=""/>
-        <alias index="7" field="extrude" name=""/>
-        <alias index="8" field="visibility" name=""/>
-        <alias index="9" field="drawOrder" name=""/>
-        <alias index="10" field="icon" name=""/>
+        <alias name="" index="0" field="Name"/>
+        <alias name="" index="1" field="descriptio"/>
+        <alias name="" index="2" field="timestamp"/>
+        <alias name="" index="3" field="begin"/>
+        <alias name="" index="4" field="end"/>
+        <alias name="" index="5" field="altitudeMo"/>
+        <alias name="" index="6" field="tessellate"/>
+        <alias name="" index="7" field="extrude"/>
+        <alias name="" index="8" field="visibility"/>
+        <alias name="" index="9" field="drawOrder"/>
+        <alias name="" index="10" field="icon"/>
       </aliases>
       <excludeAttributesWMS/>
       <excludeAttributesWFS/>
       <defaults>
-        <default field="Name" applyOnUpdate="0" expression=""/>
-        <default field="descriptio" applyOnUpdate="0" expression=""/>
-        <default field="timestamp" applyOnUpdate="0" expression=""/>
-        <default field="begin" applyOnUpdate="0" expression=""/>
-        <default field="end" applyOnUpdate="0" expression=""/>
-        <default field="altitudeMo" applyOnUpdate="0" expression=""/>
-        <default field="tessellate" applyOnUpdate="0" expression=""/>
-        <default field="extrude" applyOnUpdate="0" expression=""/>
-        <default field="visibility" applyOnUpdate="0" expression=""/>
-        <default field="drawOrder" applyOnUpdate="0" expression=""/>
-        <default field="icon" applyOnUpdate="0" expression=""/>
+        <default applyOnUpdate="0" expression="" field="Name"/>
+        <default applyOnUpdate="0" expression="" field="descriptio"/>
+        <default applyOnUpdate="0" expression="" field="timestamp"/>
+        <default applyOnUpdate="0" expression="" field="begin"/>
+        <default applyOnUpdate="0" expression="" field="end"/>
+        <default applyOnUpdate="0" expression="" field="altitudeMo"/>
+        <default applyOnUpdate="0" expression="" field="tessellate"/>
+        <default applyOnUpdate="0" expression="" field="extrude"/>
+        <default applyOnUpdate="0" expression="" field="visibility"/>
+        <default applyOnUpdate="0" expression="" field="drawOrder"/>
+        <default applyOnUpdate="0" expression="" field="icon"/>
       </defaults>
       <constraints>
-        <constraint unique_strength="0" field="Name" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="descriptio" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="timestamp" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="begin" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="end" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="altitudeMo" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="tessellate" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="extrude" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="visibility" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="drawOrder" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="icon" constraints="0" exp_strength="0" notnull_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="Name" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="descriptio" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="timestamp" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="begin" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="end" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="altitudeMo" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="tessellate" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="extrude" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="visibility" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="drawOrder" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="icon" exp_strength="0"/>
       </constraints>
       <constraintExpressions>
-        <constraint field="Name" exp="" desc=""/>
-        <constraint field="descriptio" exp="" desc=""/>
-        <constraint field="timestamp" exp="" desc=""/>
-        <constraint field="begin" exp="" desc=""/>
-        <constraint field="end" exp="" desc=""/>
-        <constraint field="altitudeMo" exp="" desc=""/>
-        <constraint field="tessellate" exp="" desc=""/>
-        <constraint field="extrude" exp="" desc=""/>
-        <constraint field="visibility" exp="" desc=""/>
-        <constraint field="drawOrder" exp="" desc=""/>
-        <constraint field="icon" exp="" desc=""/>
+        <constraint exp="" field="Name" desc=""/>
+        <constraint exp="" field="descriptio" desc=""/>
+        <constraint exp="" field="timestamp" desc=""/>
+        <constraint exp="" field="begin" desc=""/>
+        <constraint exp="" field="end" desc=""/>
+        <constraint exp="" field="altitudeMo" desc=""/>
+        <constraint exp="" field="tessellate" desc=""/>
+        <constraint exp="" field="extrude" desc=""/>
+        <constraint exp="" field="visibility" desc=""/>
+        <constraint exp="" field="drawOrder" desc=""/>
+        <constraint exp="" field="icon" desc=""/>
       </constraintExpressions>
       <attributeactions>
-        <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"/>
+        <defaultAction value="{00000000-0000-0000-0000-000000000000}" key="Canvas"/>
       </attributeactions>
-      <attributetableconfig sortExpression="&quot;begin&quot;" actionWidgetStyle="dropDown" sortOrder="0">
+      <attributetableconfig sortExpression="&quot;begin&quot;" sortOrder="0" actionWidgetStyle="dropDown">
         <columns>
-          <column type="field" name="Name" width="-1" hidden="0"/>
-          <column type="field" name="descriptio" width="-1" hidden="0"/>
-          <column type="field" name="timestamp" width="-1" hidden="0"/>
-          <column type="field" name="begin" width="-1" hidden="0"/>
-          <column type="field" name="end" width="-1" hidden="0"/>
-          <column type="field" name="altitudeMo" width="-1" hidden="0"/>
-          <column type="field" name="tessellate" width="-1" hidden="0"/>
-          <column type="field" name="extrude" width="-1" hidden="0"/>
-          <column type="field" name="visibility" width="-1" hidden="0"/>
-          <column type="field" name="drawOrder" width="-1" hidden="0"/>
-          <column type="field" name="icon" width="-1" hidden="0"/>
-          <column type="actions" width="-1" hidden="1"/>
+          <column name="Name" width="-1" type="field" hidden="0"/>
+          <column name="descriptio" width="-1" type="field" hidden="0"/>
+          <column name="timestamp" width="-1" type="field" hidden="0"/>
+          <column name="begin" width="-1" type="field" hidden="0"/>
+          <column name="end" width="-1" type="field" hidden="0"/>
+          <column name="altitudeMo" width="-1" type="field" hidden="0"/>
+          <column name="tessellate" width="-1" type="field" hidden="0"/>
+          <column name="extrude" width="-1" type="field" hidden="0"/>
+          <column name="visibility" width="-1" type="field" hidden="0"/>
+          <column name="drawOrder" width="-1" type="field" hidden="0"/>
+          <column name="icon" width="-1" type="field" hidden="0"/>
+          <column width="-1" type="actions" hidden="1"/>
         </columns>
       </attributetableconfig>
       <editform>.</editform>
@@ -2240,17 +2240,17 @@ def my_form_open(dialog, layer, feature):
       <featformsuppress>0</featformsuppress>
       <editorlayout>generatedlayout</editorlayout>
       <editable>
-        <field editable="1" name="Name"/>
-        <field editable="1" name="altitudeMo"/>
-        <field editable="1" name="begin"/>
-        <field editable="1" name="descriptio"/>
-        <field editable="1" name="drawOrder"/>
-        <field editable="1" name="end"/>
-        <field editable="1" name="extrude"/>
-        <field editable="1" name="icon"/>
-        <field editable="1" name="tessellate"/>
-        <field editable="1" name="timestamp"/>
-        <field editable="1" name="visibility"/>
+        <field name="Name" editable="1"/>
+        <field name="altitudeMo" editable="1"/>
+        <field name="begin" editable="1"/>
+        <field name="descriptio" editable="1"/>
+        <field name="drawOrder" editable="1"/>
+        <field name="end" editable="1"/>
+        <field name="extrude" editable="1"/>
+        <field name="icon" editable="1"/>
+        <field name="tessellate" editable="1"/>
+        <field name="timestamp" editable="1"/>
+        <field name="visibility" editable="1"/>
       </editable>
       <labelOnTop>
         <field labelOnTop="0" name="Name"/>
@@ -2274,7 +2274,7 @@ def my_form_open(dialog, layer, feature):
       <previewExpression>Name</previewExpression>
       <mapTip></mapTip>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" simplifyDrawingTol="1" hasScaleBasedVisibilityFlag="0" simplifyMaxScale="1" refreshOnNotifyEnabled="0" simplifyLocal="1" simplifyAlgorithm="0" readOnly="0" type="vector" minScale="1e+8" labelsEnabled="0" maxScale="0" simplifyDrawingHints="0" autoRefreshTime="0" geometry="Point" refreshOnNotifyMessage="">
+    <maplayer maxScale="0" minScale="1e+8" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" simplifyDrawingHints="0" autoRefreshEnabled="0" type="vector" simplifyDrawingTol="1" autoRefreshTime="0" simplifyLocal="1" readOnly="0" refreshOnNotifyEnabled="0" labelsEnabled="0" simplifyMaxScale="1" geometry="Point" simplifyAlgorithm="0">
       <extent>
         <xmin>-112.38556499999999971</xmin>
         <ymin>33.41734000000000293</ymin>
@@ -2282,7 +2282,7 @@ def my_form_open(dialog, layer, feature):
         <ymax>33.69591400000000192</ymax>
       </extent>
       <id>validation_sites_e922b4b4_4d58_44a9_b396_326f66763da1</id>
-      <datasource>../data/shapefiles/processed/valid-select.shp</datasource>
+      <datasource>../data/outputs/shapefiles/valid-select.shp</datasource>
       <keywordList>
         <value></value>
       </keywordList>
@@ -2321,7 +2321,7 @@ def my_form_open(dialog, layer, feature):
           </spatialrefsys>
         </crs>
         <extent>
-          <spatial maxx="0" dimensions="2" maxz="0" crs="" miny="0" maxy="0" minx="0" minz="0"/>
+          <spatial maxx="0" maxy="0" minx="0" maxz="0" crs="" dimensions="2" miny="0" minz="0"/>
           <temporal>
             <period>
               <start></start>
@@ -2349,60 +2349,60 @@ def my_form_open(dialog, layer, feature):
         <map-layer-style name="default"/>
       </map-layer-style-manager>
       <auxiliaryLayer/>
-      <renderer-v2 enableorderby="0" symbollevels="0" forceraster="0" type="singleSymbol">
+      <renderer-v2 symbollevels="0" enableorderby="0" type="singleSymbol" forceraster="0">
         <symbols>
-          <symbol clip_to_extent="1" type="marker" alpha="1" name="0">
-            <layer enabled="1" class="SimpleMarker" pass="0" locked="0">
-              <prop k="angle" v="0"/>
-              <prop k="color" v="255,255,255,0"/>
-              <prop k="horizontal_anchor_point" v="1"/>
-              <prop k="joinstyle" v="bevel"/>
-              <prop k="name" v="circle"/>
-              <prop k="offset" v="0,0"/>
-              <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="offset_unit" v="MM"/>
-              <prop k="outline_color" v="0,0,0,255"/>
-              <prop k="outline_style" v="no"/>
-              <prop k="outline_width" v="0.4"/>
-              <prop k="outline_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="outline_width_unit" v="MM"/>
-              <prop k="scale_method" v="area"/>
-              <prop k="size" v="4"/>
-              <prop k="size_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="size_unit" v="MM"/>
-              <prop k="vertical_anchor_point" v="1"/>
+          <symbol clip_to_extent="1" name="0" type="marker" alpha="1">
+            <layer locked="0" pass="0" class="SimpleMarker" enabled="1">
+              <prop v="0" k="angle"/>
+              <prop v="255,255,255,0" k="color"/>
+              <prop v="1" k="horizontal_anchor_point"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="circle" k="name"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="0,0,0,255" k="outline_color"/>
+              <prop v="no" k="outline_style"/>
+              <prop v="0.4" k="outline_width"/>
+              <prop v="3x:0,0,0,0,0,0" k="outline_width_map_unit_scale"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="area" k="scale_method"/>
+              <prop v="4" k="size"/>
+              <prop v="3x:0,0,0,0,0,0" k="size_map_unit_scale"/>
+              <prop v="MM" k="size_unit"/>
+              <prop v="1" k="vertical_anchor_point"/>
               <data_defined_properties>
                 <Option type="Map">
-                  <Option type="QString" value="" name="name"/>
+                  <Option value="" name="name" type="QString"/>
                   <Option name="properties"/>
-                  <Option type="QString" value="collection" name="type"/>
+                  <Option value="collection" name="type" type="QString"/>
                 </Option>
               </data_defined_properties>
             </layer>
-            <layer enabled="1" class="SimpleMarker" pass="0" locked="0">
-              <prop k="angle" v="0"/>
-              <prop k="color" v="0,0,0,255"/>
-              <prop k="horizontal_anchor_point" v="1"/>
-              <prop k="joinstyle" v="bevel"/>
-              <prop k="name" v="circle"/>
-              <prop k="offset" v="0,0"/>
-              <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="offset_unit" v="MM"/>
-              <prop k="outline_color" v="0,0,0,255"/>
-              <prop k="outline_style" v="no"/>
-              <prop k="outline_width" v="0.4"/>
-              <prop k="outline_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="outline_width_unit" v="MM"/>
-              <prop k="scale_method" v="area"/>
-              <prop k="size" v="2"/>
-              <prop k="size_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-              <prop k="size_unit" v="MM"/>
-              <prop k="vertical_anchor_point" v="1"/>
+            <layer locked="0" pass="0" class="SimpleMarker" enabled="1">
+              <prop v="0" k="angle"/>
+              <prop v="0,0,0,255" k="color"/>
+              <prop v="1" k="horizontal_anchor_point"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="circle" k="name"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="0,0,0,255" k="outline_color"/>
+              <prop v="no" k="outline_style"/>
+              <prop v="0.4" k="outline_width"/>
+              <prop v="3x:0,0,0,0,0,0" k="outline_width_map_unit_scale"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="area" k="scale_method"/>
+              <prop v="2" k="size"/>
+              <prop v="3x:0,0,0,0,0,0" k="size_map_unit_scale"/>
+              <prop v="MM" k="size_unit"/>
+              <prop v="1" k="vertical_anchor_point"/>
               <data_defined_properties>
                 <Option type="Map">
-                  <Option type="QString" value="" name="name"/>
+                  <Option value="" name="name" type="QString"/>
                   <Option name="properties"/>
-                  <Option type="QString" value="collection" name="type"/>
+                  <Option value="collection" name="type" type="QString"/>
                 </Option>
               </data_defined_properties>
             </layer>
@@ -2412,8 +2412,8 @@ def my_form_open(dialog, layer, feature):
         <sizescale/>
       </renderer-v2>
       <customproperties>
-        <property key="dualview/previewExpressions" value="Name"/>
-        <property key="embeddedWidgets/count" value="0"/>
+        <property value="Name" key="dualview/previewExpressions"/>
+        <property value="0" key="embeddedWidgets/count"/>
         <property key="variableNames"/>
         <property key="variableValues"/>
       </customproperties>
@@ -2421,17 +2421,17 @@ def my_form_open(dialog, layer, feature):
       <featureBlendMode>0</featureBlendMode>
       <layerOpacity>1</layerOpacity>
       <SingleCategoryDiagramRenderer diagramType="Histogram" attributeLegend="1">
-        <DiagramCategory minimumSize="0" lineSizeType="MM" diagramOrientation="Up" barWidth="5" scaleBasedVisibility="0" penColor="#000000" backgroundAlpha="255" scaleDependency="Area" enabled="0" rotationOffset="270" width="15" maxScaleDenominator="1e+8" sizeScale="3x:0,0,0,0,0,0" height="15" penWidth="0" sizeType="MM" minScaleDenominator="0" backgroundColor="#ffffff" labelPlacementMethod="XHeight" opacity="1" lineSizeScale="3x:0,0,0,0,0,0" penAlpha="255">
+        <DiagramCategory backgroundAlpha="255" minimumSize="0" height="15" backgroundColor="#ffffff" scaleBasedVisibility="0" diagramOrientation="Up" penColor="#000000" sizeScale="3x:0,0,0,0,0,0" scaleDependency="Area" minScaleDenominator="0" lineSizeType="MM" barWidth="5" penWidth="0" rotationOffset="270" labelPlacementMethod="XHeight" maxScaleDenominator="1e+8" width="15" sizeType="MM" lineSizeScale="3x:0,0,0,0,0,0" penAlpha="255" enabled="0" opacity="1">
           <fontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
-          <attribute field="" color="#000000" label=""/>
+          <attribute color="#000000" label="" field=""/>
         </DiagramCategory>
       </SingleCategoryDiagramRenderer>
-      <DiagramLayerSettings linePlacementFlags="18" zIndex="0" obstacle="0" dist="0" placement="0" priority="0" showAll="1">
+      <DiagramLayerSettings zIndex="0" obstacle="0" placement="0" dist="0" showAll="1" priority="0" linePlacementFlags="18">
         <properties>
           <Option type="Map">
-            <Option type="QString" value="" name="name"/>
+            <Option value="" name="name" type="QString"/>
             <Option name="properties"/>
-            <Option type="QString" value="collection" name="type"/>
+            <Option value="collection" name="type" type="QString"/>
           </Option>
         </properties>
       </DiagramLayerSettings>
@@ -2515,76 +2515,76 @@ def my_form_open(dialog, layer, feature):
         </field>
       </fieldConfiguration>
       <aliases>
-        <alias index="0" field="Name" name=""/>
-        <alias index="1" field="descriptio" name=""/>
-        <alias index="2" field="timestamp" name=""/>
-        <alias index="3" field="begin" name=""/>
-        <alias index="4" field="end" name=""/>
-        <alias index="5" field="altitudeMo" name=""/>
-        <alias index="6" field="tessellate" name=""/>
-        <alias index="7" field="extrude" name=""/>
-        <alias index="8" field="visibility" name=""/>
-        <alias index="9" field="drawOrder" name=""/>
-        <alias index="10" field="icon" name=""/>
+        <alias name="" index="0" field="Name"/>
+        <alias name="" index="1" field="descriptio"/>
+        <alias name="" index="2" field="timestamp"/>
+        <alias name="" index="3" field="begin"/>
+        <alias name="" index="4" field="end"/>
+        <alias name="" index="5" field="altitudeMo"/>
+        <alias name="" index="6" field="tessellate"/>
+        <alias name="" index="7" field="extrude"/>
+        <alias name="" index="8" field="visibility"/>
+        <alias name="" index="9" field="drawOrder"/>
+        <alias name="" index="10" field="icon"/>
       </aliases>
       <excludeAttributesWMS/>
       <excludeAttributesWFS/>
       <defaults>
-        <default field="Name" applyOnUpdate="0" expression=""/>
-        <default field="descriptio" applyOnUpdate="0" expression=""/>
-        <default field="timestamp" applyOnUpdate="0" expression=""/>
-        <default field="begin" applyOnUpdate="0" expression=""/>
-        <default field="end" applyOnUpdate="0" expression=""/>
-        <default field="altitudeMo" applyOnUpdate="0" expression=""/>
-        <default field="tessellate" applyOnUpdate="0" expression=""/>
-        <default field="extrude" applyOnUpdate="0" expression=""/>
-        <default field="visibility" applyOnUpdate="0" expression=""/>
-        <default field="drawOrder" applyOnUpdate="0" expression=""/>
-        <default field="icon" applyOnUpdate="0" expression=""/>
+        <default applyOnUpdate="0" expression="" field="Name"/>
+        <default applyOnUpdate="0" expression="" field="descriptio"/>
+        <default applyOnUpdate="0" expression="" field="timestamp"/>
+        <default applyOnUpdate="0" expression="" field="begin"/>
+        <default applyOnUpdate="0" expression="" field="end"/>
+        <default applyOnUpdate="0" expression="" field="altitudeMo"/>
+        <default applyOnUpdate="0" expression="" field="tessellate"/>
+        <default applyOnUpdate="0" expression="" field="extrude"/>
+        <default applyOnUpdate="0" expression="" field="visibility"/>
+        <default applyOnUpdate="0" expression="" field="drawOrder"/>
+        <default applyOnUpdate="0" expression="" field="icon"/>
       </defaults>
       <constraints>
-        <constraint unique_strength="0" field="Name" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="descriptio" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="timestamp" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="begin" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="end" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="altitudeMo" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="tessellate" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="extrude" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="visibility" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="drawOrder" constraints="0" exp_strength="0" notnull_strength="0"/>
-        <constraint unique_strength="0" field="icon" constraints="0" exp_strength="0" notnull_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="Name" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="descriptio" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="timestamp" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="begin" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="end" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="altitudeMo" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="tessellate" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="extrude" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="visibility" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="drawOrder" exp_strength="0"/>
+        <constraint constraints="0" notnull_strength="0" unique_strength="0" field="icon" exp_strength="0"/>
       </constraints>
       <constraintExpressions>
-        <constraint field="Name" exp="" desc=""/>
-        <constraint field="descriptio" exp="" desc=""/>
-        <constraint field="timestamp" exp="" desc=""/>
-        <constraint field="begin" exp="" desc=""/>
-        <constraint field="end" exp="" desc=""/>
-        <constraint field="altitudeMo" exp="" desc=""/>
-        <constraint field="tessellate" exp="" desc=""/>
-        <constraint field="extrude" exp="" desc=""/>
-        <constraint field="visibility" exp="" desc=""/>
-        <constraint field="drawOrder" exp="" desc=""/>
-        <constraint field="icon" exp="" desc=""/>
+        <constraint exp="" field="Name" desc=""/>
+        <constraint exp="" field="descriptio" desc=""/>
+        <constraint exp="" field="timestamp" desc=""/>
+        <constraint exp="" field="begin" desc=""/>
+        <constraint exp="" field="end" desc=""/>
+        <constraint exp="" field="altitudeMo" desc=""/>
+        <constraint exp="" field="tessellate" desc=""/>
+        <constraint exp="" field="extrude" desc=""/>
+        <constraint exp="" field="visibility" desc=""/>
+        <constraint exp="" field="drawOrder" desc=""/>
+        <constraint exp="" field="icon" desc=""/>
       </constraintExpressions>
       <attributeactions>
-        <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"/>
+        <defaultAction value="{00000000-0000-0000-0000-000000000000}" key="Canvas"/>
       </attributeactions>
-      <attributetableconfig sortExpression="&quot;begin&quot;" actionWidgetStyle="dropDown" sortOrder="0">
+      <attributetableconfig sortExpression="&quot;begin&quot;" sortOrder="0" actionWidgetStyle="dropDown">
         <columns>
-          <column type="field" name="Name" width="-1" hidden="0"/>
-          <column type="field" name="descriptio" width="-1" hidden="0"/>
-          <column type="field" name="timestamp" width="-1" hidden="0"/>
-          <column type="field" name="begin" width="-1" hidden="0"/>
-          <column type="field" name="end" width="-1" hidden="0"/>
-          <column type="field" name="altitudeMo" width="-1" hidden="0"/>
-          <column type="field" name="tessellate" width="-1" hidden="0"/>
-          <column type="field" name="extrude" width="-1" hidden="0"/>
-          <column type="field" name="visibility" width="-1" hidden="0"/>
-          <column type="field" name="drawOrder" width="-1" hidden="0"/>
-          <column type="field" name="icon" width="-1" hidden="0"/>
-          <column type="actions" width="-1" hidden="1"/>
+          <column name="Name" width="-1" type="field" hidden="0"/>
+          <column name="descriptio" width="-1" type="field" hidden="0"/>
+          <column name="timestamp" width="-1" type="field" hidden="0"/>
+          <column name="begin" width="-1" type="field" hidden="0"/>
+          <column name="end" width="-1" type="field" hidden="0"/>
+          <column name="altitudeMo" width="-1" type="field" hidden="0"/>
+          <column name="tessellate" width="-1" type="field" hidden="0"/>
+          <column name="extrude" width="-1" type="field" hidden="0"/>
+          <column name="visibility" width="-1" type="field" hidden="0"/>
+          <column name="drawOrder" width="-1" type="field" hidden="0"/>
+          <column name="icon" width="-1" type="field" hidden="0"/>
+          <column width="-1" type="actions" hidden="1"/>
         </columns>
       </attributetableconfig>
       <editform>.</editform>
@@ -2611,17 +2611,17 @@ def my_form_open(dialog, layer, feature):
       <featformsuppress>0</featformsuppress>
       <editorlayout>generatedlayout</editorlayout>
       <editable>
-        <field editable="1" name="Name"/>
-        <field editable="1" name="altitudeMo"/>
-        <field editable="1" name="begin"/>
-        <field editable="1" name="descriptio"/>
-        <field editable="1" name="drawOrder"/>
-        <field editable="1" name="end"/>
-        <field editable="1" name="extrude"/>
-        <field editable="1" name="icon"/>
-        <field editable="1" name="tessellate"/>
-        <field editable="1" name="timestamp"/>
-        <field editable="1" name="visibility"/>
+        <field name="Name" editable="1"/>
+        <field name="altitudeMo" editable="1"/>
+        <field name="begin" editable="1"/>
+        <field name="descriptio" editable="1"/>
+        <field name="drawOrder" editable="1"/>
+        <field name="end" editable="1"/>
+        <field name="extrude" editable="1"/>
+        <field name="icon" editable="1"/>
+        <field name="tessellate" editable="1"/>
+        <field name="timestamp" editable="1"/>
+        <field name="visibility" editable="1"/>
       </editable>
       <labelOnTop>
         <field labelOnTop="0" name="Name"/>
@@ -2670,131 +2670,131 @@ def my_form_open(dialog, layer, feature):
     <layer id="validation_sites_e922b4b4_4d58_44a9_b396_326f66763da1"/>
   </layerorder>
   <properties>
-    <SpatialRefSys>
-      <ProjectionsEnabled type="int">1</ProjectionsEnabled>
-    </SpatialRefSys>
-    <WFSTLayers>
-      <Insert type="QStringList"/>
-      <Delete type="QStringList"/>
-      <Update type="QStringList"/>
-    </WFSTLayers>
+    <WMSContactPosition type="QString"></WMSContactPosition>
+    <Paths>
+      <Absolute type="bool">false</Absolute>
+    </Paths>
+    <PositionPrecision>
+      <Automatic type="bool">true</Automatic>
+      <DecimalPlaces type="int">2</DecimalPlaces>
+      <DegreeFormat type="QString">MU</DegreeFormat>
+    </PositionPrecision>
     <WCSUrl type="QString"></WCSUrl>
-    <WFSLayers type="QStringList"/>
-    <Gui>
-      <SelectionColorRedPart type="int">255</SelectionColorRedPart>
-      <CanvasColorRedPart type="int">255</CanvasColorRedPart>
-      <CanvasColorGreenPart type="int">255</CanvasColorGreenPart>
-      <CanvasColorBluePart type="int">255</CanvasColorBluePart>
-      <SelectionColorBluePart type="int">0</SelectionColorBluePart>
-      <SelectionColorAlphaPart type="int">255</SelectionColorAlphaPart>
-      <SelectionColorGreenPart type="int">255</SelectionColorGreenPart>
-    </Gui>
-    <WCSLayers type="QStringList"/>
+    <Legend>
+      <filterByMap type="bool">false</filterByMap>
+    </Legend>
+    <WFSUrl type="QString"></WFSUrl>
+    <WMSKeywordList type="QStringList">
+      <value></value>
+    </WMSKeywordList>
+    <WMSUseLayerIDs type="bool">false</WMSUseLayerIDs>
     <Measurement>
       <AreaUnits type="QString">m2</AreaUnits>
       <DistanceUnits type="QString">meters</DistanceUnits>
     </Measurement>
-    <WMSServiceTitle type="QString"></WMSServiceTitle>
-    <WMSFees type="QString">conditions unknown</WMSFees>
-    <WMSContactMail type="QString"></WMSContactMail>
+    <WMSUrl type="QString"></WMSUrl>
+    <WMSContactPhone type="QString"></WMSContactPhone>
+    <DefaultStyles>
+      <Marker type="QString"></Marker>
+      <ColorRamp type="QString"></ColorRamp>
+      <Fill type="QString"></Fill>
+      <Line type="QString"></Line>
+      <Opacity type="double">1</Opacity>
+      <RandomColors type="bool">true</RandomColors>
+    </DefaultStyles>
+    <WFSTLayers>
+      <Update type="QStringList"/>
+      <Insert type="QStringList"/>
+      <Delete type="QStringList"/>
+    </WFSTLayers>
     <Macros>
       <pythonCode type="QString"></pythonCode>
     </Macros>
+    <WMSOnlineResource type="QString"></WMSOnlineResource>
     <WMSContactOrganization type="QString"></WMSContactOrganization>
-    <WMSServiceCapabilities type="bool">false</WMSServiceCapabilities>
-    <WMSSegmentizeFeatureInfoGeometry type="bool">false</WMSSegmentizeFeatureInfoGeometry>
+    <WMSImageQuality type="int">90</WMSImageQuality>
+    <WMSContactMail type="QString"></WMSContactMail>
+    <WCSLayers type="QStringList"/>
+    <WMSContactPerson type="QString"></WMSContactPerson>
+    <WMSServiceTitle type="QString"></WMSServiceTitle>
+    <WFSLayers type="QStringList"/>
+    <WMSAccessConstraints type="QString">None</WMSAccessConstraints>
     <Measure>
       <Ellipsoid type="QString">GRS80</Ellipsoid>
     </Measure>
-    <WMSOnlineResource type="QString"></WMSOnlineResource>
-    <WMSAccessConstraints type="QString">None</WMSAccessConstraints>
+    <Gui>
+      <CanvasColorRedPart type="int">255</CanvasColorRedPart>
+      <CanvasColorGreenPart type="int">255</CanvasColorGreenPart>
+      <SelectionColorAlphaPart type="int">255</SelectionColorAlphaPart>
+      <SelectionColorGreenPart type="int">255</SelectionColorGreenPart>
+      <SelectionColorRedPart type="int">255</SelectionColorRedPart>
+      <CanvasColorBluePart type="int">255</CanvasColorBluePart>
+      <SelectionColorBluePart type="int">0</SelectionColorBluePart>
+    </Gui>
+    <WMSRequestDefinedDataSources type="bool">false</WMSRequestDefinedDataSources>
+    <WMSServiceAbstract type="QString"></WMSServiceAbstract>
     <Identify>
       <disabledLayers type="QStringList"/>
     </Identify>
-    <Legend>
-      <filterByMap type="bool">false</filterByMap>
-    </Legend>
-    <WMSServiceAbstract type="QString"></WMSServiceAbstract>
-    <WMSContactPhone type="QString"></WMSContactPhone>
-    <WFSUrl type="QString"></WFSUrl>
-    <WMSPrecision type="QString">8</WMSPrecision>
+    <WMSServiceCapabilities type="bool">false</WMSServiceCapabilities>
+    <WMSFees type="QString">conditions unknown</WMSFees>
     <WMSAddWktGeometry type="bool">false</WMSAddWktGeometry>
-    <Paths>
-      <Absolute type="bool">false</Absolute>
-    </Paths>
-    <WMSUrl type="QString"></WMSUrl>
-    <WMSImageQuality type="int">90</WMSImageQuality>
-    <PositionPrecision>
-      <DegreeFormat type="QString">MU</DegreeFormat>
-      <Automatic type="bool">true</Automatic>
-      <DecimalPlaces type="int">2</DecimalPlaces>
-    </PositionPrecision>
-    <WMSContactPerson type="QString"></WMSContactPerson>
-    <WMSKeywordList type="QStringList">
-      <value></value>
-    </WMSKeywordList>
-    <WMSRequestDefinedDataSources type="bool">false</WMSRequestDefinedDataSources>
-    <WMSContactPosition type="QString"></WMSContactPosition>
-    <WMSUseLayerIDs type="bool">false</WMSUseLayerIDs>
-    <DefaultStyles>
-      <Marker type="QString"></Marker>
-      <RandomColors type="bool">true</RandomColors>
-      <Fill type="QString"></Fill>
-      <ColorRamp type="QString"></ColorRamp>
-      <Line type="QString"></Line>
-      <Opacity type="double">1</Opacity>
-    </DefaultStyles>
+    <WMSSegmentizeFeatureInfoGeometry type="bool">false</WMSSegmentizeFeatureInfoGeometry>
+    <WMSPrecision type="QString">8</WMSPrecision>
+    <SpatialRefSys>
+      <ProjectionsEnabled type="int">1</ProjectionsEnabled>
+    </SpatialRefSys>
     <PAL>
-      <DrawRectOnly type="bool">false</DrawRectOnly>
-      <CandidatesLine type="int">50</CandidatesLine>
-      <ShowingCandidates type="bool">false</ShowingCandidates>
-      <DrawOutlineLabels type="bool">true</DrawOutlineLabels>
-      <SearchMethod type="int">0</SearchMethod>
-      <CandidatesPolygon type="int">30</CandidatesPolygon>
       <ShowingAllLabels type="bool">false</ShowingAllLabels>
-      <ShowingPartialsLabels type="bool">true</ShowingPartialsLabels>
       <CandidatesPoint type="int">16</CandidatesPoint>
+      <ShowingPartialsLabels type="bool">true</ShowingPartialsLabels>
+      <ShowingCandidates type="bool">false</ShowingCandidates>
+      <SearchMethod type="int">0</SearchMethod>
+      <CandidatesLine type="int">50</CandidatesLine>
+      <DrawOutlineLabels type="bool">true</DrawOutlineLabels>
+      <CandidatesPolygon type="int">30</CandidatesPolygon>
+      <DrawRectOnly type="bool">false</DrawRectOnly>
     </PAL>
   </properties>
   <visibility-presets/>
   <transformContext/>
   <Annotations/>
   <Layouts>
-    <Layout printResolution="300" units="mm" worldFileMap="" name="ASTER-fig">
-      <Snapper snapToItems="1" snapToGrid="0" snapToGuides="1" tolerance="5"/>
-      <Grid offsetX="0" offsetY="0" offsetUnits="mm" resUnits="mm" resolution="10"/>
+    <Layout worldFileMap="" units="mm" name="ASTER-fig" printResolution="300">
+      <Snapper tolerance="5" snapToGrid="0" snapToItems="1" snapToGuides="1"/>
+      <Grid resUnits="mm" offsetUnits="mm" resolution="10" offsetX="0" offsetY="0"/>
       <PageCollection>
-        <symbol clip_to_extent="1" type="fill" alpha="1" name="">
-          <layer enabled="1" class="SimpleFill" pass="0" locked="0">
-            <prop k="border_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="color" v="255,255,255,255"/>
-            <prop k="joinstyle" v="miter"/>
-            <prop k="offset" v="0,0"/>
-            <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="offset_unit" v="MM"/>
-            <prop k="outline_color" v="35,35,35,255"/>
-            <prop k="outline_style" v="no"/>
-            <prop k="outline_width" v="0.26"/>
-            <prop k="outline_width_unit" v="MM"/>
-            <prop k="style" v="solid"/>
+        <symbol clip_to_extent="1" name="" type="fill" alpha="1">
+          <layer locked="0" pass="0" class="SimpleFill" enabled="1">
+            <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+            <prop v="255,255,255,255" k="color"/>
+            <prop v="miter" k="joinstyle"/>
+            <prop v="0,0" k="offset"/>
+            <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+            <prop v="MM" k="offset_unit"/>
+            <prop v="35,35,35,255" k="outline_color"/>
+            <prop v="no" k="outline_style"/>
+            <prop v="0.26" k="outline_width"/>
+            <prop v="MM" k="outline_width_unit"/>
+            <prop v="solid" k="style"/>
             <data_defined_properties>
               <Option type="Map">
-                <Option type="QString" value="" name="name"/>
+                <Option value="" name="name" type="QString"/>
                 <Option name="properties"/>
-                <Option type="QString" value="collection" name="type"/>
+                <Option value="collection" name="type" type="QString"/>
               </Option>
             </data_defined_properties>
           </layer>
         </symbol>
-        <LayoutItem type="65638" itemRotation="0" visibility="1" frameJoinStyle="miter" id="" zValue="0" referencePoint="0" size="297,210,mm" uuid="{ef27613d-414f-4f64-81f9-c62c1aacd87a}" positionLock="false" position="0,0,mm" positionOnPage="0,0,mm" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="true" outlineWidthM="0.3,mm" groupUuid="" templateUuid="{ef27613d-414f-4f64-81f9-c62c1aacd87a}">
-          <FrameColor blue="0" alpha="255" red="0" green="0"/>
-          <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+        <LayoutItem background="true" positionOnPage="0,0,mm" size="297,210,mm" templateUuid="{ef27613d-414f-4f64-81f9-c62c1aacd87a}" visibility="1" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" excludeFromExports="0" position="0,0,mm" id="" itemRotation="0" type="65638" blendMode="0" uuid="{ef27613d-414f-4f64-81f9-c62c1aacd87a}" zValue="0" referencePoint="0" groupUuid="" positionLock="false" opacity="1">
+          <FrameColor red="0" alpha="255" green="0" blue="0"/>
+          <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
           <LayoutObject>
             <dataDefinedProperties>
               <Option type="Map">
-                <Option type="QString" value="" name="name"/>
+                <Option value="" name="name" type="QString"/>
                 <Option name="properties"/>
-                <Option type="QString" value="collection" name="type"/>
+                <Option value="collection" name="type" type="QString"/>
               </Option>
             </dataDefinedProperties>
             <customproperties/>
@@ -2802,93 +2802,93 @@ def my_form_open(dialog, layer, feature):
         </LayoutItem>
         <GuideCollection visible="1"/>
       </PageCollection>
-      <LayoutItem type="65641" itemRotation="0" visibility="1" valign="128" frameJoinStyle="miter" marginX="0" id="" halign="4" zValue="73" htmlState="0" referencePoint="0" size="30.2324,5.93852,mm" uuid="{d81ecefc-c3cd-4816-955b-4653386ada73}" positionLock="false" position="39.2203,71.1887,mm" positionOnPage="39.2203,71.1887,mm" marginY="0" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.3,mm" labelText="Bare Ground" groupUuid="" templateUuid="{d81ecefc-c3cd-4816-955b-4653386ada73}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" htmlState="0" halign="4" positionOnPage="39.2203,71.1887,mm" size="30.2324,5.93852,mm" templateUuid="{d81ecefc-c3cd-4816-955b-4653386ada73}" visibility="1" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" excludeFromExports="0" position="39.2203,71.1887,mm" id="" itemRotation="0" marginX="0" type="65641" blendMode="0" uuid="{d81ecefc-c3cd-4816-955b-4653386ada73}" valign="128" zValue="73" referencePoint="0" groupUuid="" marginY="0" labelText="Bare Ground" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
         <LabelFont description="Century Gothic,11,-1,5,50,0,0,0,0,0,Regular" style="Regular"/>
-        <FontColor blue="0" red="0" green="0"/>
+        <FontColor red="0" green="0" blue="0"/>
       </LayoutItem>
-      <LayoutItem type="65641" itemRotation="0" visibility="1" valign="128" frameJoinStyle="miter" marginX="0" id="" halign="4" zValue="72" htmlState="0" referencePoint="0" size="30.2324,5.93852,mm" uuid="{5334781b-c8eb-42d8-9a06-d286e3d15c12}" positionLock="false" position="45.0198,159.408,mm" positionOnPage="45.0198,159.408,mm" marginY="0" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.3,mm" labelText="Asphalt" groupUuid="" templateUuid="{5334781b-c8eb-42d8-9a06-d286e3d15c12}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" htmlState="0" halign="4" positionOnPage="45.0198,159.408,mm" size="30.2324,5.93852,mm" templateUuid="{5334781b-c8eb-42d8-9a06-d286e3d15c12}" visibility="1" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" excludeFromExports="0" position="45.0198,159.408,mm" id="" itemRotation="0" marginX="0" type="65641" blendMode="0" uuid="{5334781b-c8eb-42d8-9a06-d286e3d15c12}" valign="128" zValue="72" referencePoint="0" groupUuid="" marginY="0" labelText="Asphalt" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
         <LabelFont description="Century Gothic,11,-1,5,50,0,0,0,0,0,Regular" style="Regular"/>
-        <FontColor blue="0" red="0" green="0"/>
+        <FontColor red="0" green="0" blue="0"/>
       </LayoutItem>
-      <LayoutItem type="65641" itemRotation="0" visibility="1" valign="128" frameJoinStyle="miter" marginX="0" id="" halign="4" zValue="53" htmlState="0" referencePoint="0" size="30.2324,5.93852,mm" uuid="{569cc117-6822-4d1d-96e6-e2d511ef4903}" positionLock="false" position="195.429,38.7847,mm" positionOnPage="195.429,38.7847,mm" marginY="0" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.3,mm" labelText="Asphalt" groupUuid="" templateUuid="{569cc117-6822-4d1d-96e6-e2d511ef4903}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" htmlState="0" halign="4" positionOnPage="195.429,38.7847,mm" size="30.2324,5.93852,mm" templateUuid="{569cc117-6822-4d1d-96e6-e2d511ef4903}" visibility="1" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" excludeFromExports="0" position="195.429,38.7847,mm" id="" itemRotation="0" marginX="0" type="65641" blendMode="0" uuid="{569cc117-6822-4d1d-96e6-e2d511ef4903}" valign="128" zValue="53" referencePoint="0" groupUuid="" marginY="0" labelText="Asphalt" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
         <LabelFont description="Century Gothic,11,-1,5,50,0,0,0,0,0,Regular" style="Regular"/>
-        <FontColor blue="0" red="0" green="0"/>
+        <FontColor red="0" green="0" blue="0"/>
       </LayoutItem>
-      <LayoutItem type="65641" itemRotation="0" visibility="1" valign="128" frameJoinStyle="miter" marginX="0" id="" halign="4" zValue="35" htmlState="0" referencePoint="0" size="30.2324,5.93852,mm" uuid="{ae5175d4-698c-49da-9715-b46ee221f8fb}" positionLock="false" position="204.49,124.087,mm" positionOnPage="204.49,124.087,mm" marginY="0" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.3,mm" labelText="Concrete" groupUuid="" templateUuid="{ae5175d4-698c-49da-9715-b46ee221f8fb}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" htmlState="0" halign="4" positionOnPage="204.49,124.087,mm" size="30.2324,5.93852,mm" templateUuid="{ae5175d4-698c-49da-9715-b46ee221f8fb}" visibility="1" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" excludeFromExports="0" position="204.49,124.087,mm" id="" itemRotation="0" marginX="0" type="65641" blendMode="0" uuid="{ae5175d4-698c-49da-9715-b46ee221f8fb}" valign="128" zValue="35" referencePoint="0" groupUuid="" marginY="0" labelText="Concrete" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
         <LabelFont description="Century Gothic,11,-1,5,50,0,0,0,0,0,Regular" style="Regular"/>
-        <FontColor blue="0" red="0" green="0"/>
+        <FontColor red="0" green="0" blue="0"/>
       </LayoutItem>
-      <LayoutItem type="65640" itemRotation="0" visibility="1" frameJoinStyle="miter" northMode="0" pictureHeight="38.096" mapUuid="" id="" svgFillColor="255,255,255,255" zValue="22" pictureRotation="0" svgBorderWidth="0.2" referencePoint="4" size="40.648,38.096,mm" svgBorderColor="0,0,0,255" uuid="{1e0b1f32-c83d-40d0-bfde-ae9ee1d801d0}" positionLock="false" position="60.136,140.891,mm" pictureWidth="40.648" file="../figures/A7-site.PNG" positionOnPage="60.136,140.891,mm" resizeMode="2" anchorPoint="1" frame="true" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.6,mm" northOffset="0" groupUuid="" templateUuid="{1e0b1f32-c83d-40d0-bfde-ae9ee1d801d0}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="60.136,140.891,mm" pictureHeight="38.096" size="40.648,38.096,mm" svgFillColor="255,255,255,255" templateUuid="{1e0b1f32-c83d-40d0-bfde-ae9ee1d801d0}" visibility="1" anchorPoint="1" northMode="0" frame="true" outlineWidthM="0.6,mm" frameJoinStyle="miter" mapUuid="" excludeFromExports="0" file="../figures/A7-site.PNG" position="60.136,140.891,mm" id="" itemRotation="0" svgBorderWidth="0.2" type="65640" pictureRotation="0" blendMode="0" resizeMode="2" svgBorderColor="0,0,0,255" uuid="{1e0b1f32-c83d-40d0-bfde-ae9ee1d801d0}" zValue="22" referencePoint="4" groupUuid="" pictureWidth="40.648" northOffset="0" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
       </LayoutItem>
-      <LayoutItem type="65637" itemRotation="0" visibility="1" frameJoinStyle="miter" id="" zValue="21" referencePoint="0" size="83.1391,20.3722,mm" uuid="{b38ae58a-7c7c-422b-9fc1-31ab87915188}" positionLock="false" position="149.497,145.155,mm" positionOnPage="149.497,145.155,mm" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="true" outlineWidthM="0.3,mm" groupUuid="" templateUuid="{b38ae58a-7c7c-422b-9fc1-31ab87915188}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="true" positionOnPage="149.497,145.155,mm" size="83.1391,20.3722,mm" templateUuid="{b38ae58a-7c7c-422b-9fc1-31ab87915188}" visibility="1" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" excludeFromExports="0" position="149.497,145.155,mm" id="" itemRotation="0" type="65637" blendMode="0" uuid="{b38ae58a-7c7c-422b-9fc1-31ab87915188}" zValue="21" referencePoint="0" groupUuid="" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
@@ -2897,446 +2897,446 @@ def my_form_open(dialog, layer, feature):
         <ComposerItemGroupElement uuid="{4d4ecf53-891f-44ca-806b-9df5e3d9b814}"/>
         <ComposerItemGroupElement uuid="{6f2565b7-66ab-46f2-9239-cd540cbec21f}"/>
       </LayoutItem>
-      <LayoutItem type="65640" itemRotation="0" visibility="1" frameJoinStyle="miter" northMode="0" pictureHeight="36.7636" mapUuid="" id="" svgFillColor="255,255,255,255" zValue="21" pictureRotation="0" svgBorderWidth="0.2" referencePoint="0" size="40.6483,36.7636,mm" svgBorderColor="0,0,0,255" uuid="{70d5b6ba-4f05-4f8e-9f5b-292dcad50f26}" positionLock="false" position="34.0123,77.4272,mm" pictureWidth="40.6483" file="../figures/B1-site.PNG" positionOnPage="34.0123,77.4272,mm" resizeMode="2" anchorPoint="4" frame="true" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.6,mm" northOffset="0" groupUuid="" templateUuid="{70d5b6ba-4f05-4f8e-9f5b-292dcad50f26}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="34.0123,77.4272,mm" pictureHeight="36.7636" size="40.6483,36.7636,mm" svgFillColor="255,255,255,255" templateUuid="{70d5b6ba-4f05-4f8e-9f5b-292dcad50f26}" visibility="1" anchorPoint="4" northMode="0" frame="true" outlineWidthM="0.6,mm" frameJoinStyle="miter" mapUuid="" excludeFromExports="0" file="../figures/B1-site.PNG" position="34.0123,77.4272,mm" id="" itemRotation="0" svgBorderWidth="0.2" type="65640" pictureRotation="0" blendMode="0" resizeMode="2" svgBorderColor="0,0,0,255" uuid="{70d5b6ba-4f05-4f8e-9f5b-292dcad50f26}" zValue="21" referencePoint="0" groupUuid="" pictureWidth="40.6483" northOffset="0" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
       </LayoutItem>
-      <LayoutItem type="65640" itemRotation="0" visibility="1" frameJoinStyle="miter" northMode="0" pictureHeight="8.06872" mapUuid="" id="" svgFillColor="0,0,0,255" zValue="17" pictureRotation="0" svgBorderWidth="0.2" referencePoint="0" size="8.06872,11.2516,mm" svgBorderColor="0,0,0,255" uuid="{9c32b4bb-f8ba-47df-ad9a-912b999ad114}" positionLock="false" position="82.5993,57.7792,mm" pictureWidth="8.06872" file="arrows/Arrow_05.svg" positionOnPage="82.5993,57.7792,mm" resizeMode="0" anchorPoint="0" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.3,mm" northOffset="0" groupUuid="" templateUuid="{9c32b4bb-f8ba-47df-ad9a-912b999ad114}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="82.5993,57.7792,mm" pictureHeight="8.06872" size="8.06872,11.2516,mm" svgFillColor="0,0,0,255" templateUuid="{9c32b4bb-f8ba-47df-ad9a-912b999ad114}" visibility="1" anchorPoint="0" northMode="0" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" mapUuid="" excludeFromExports="0" file="arrows/Arrow_05.svg" position="82.5993,57.7792,mm" id="" itemRotation="0" svgBorderWidth="0.2" type="65640" pictureRotation="0" blendMode="0" resizeMode="0" svgBorderColor="0,0,0,255" uuid="{9c32b4bb-f8ba-47df-ad9a-912b999ad114}" zValue="17" referencePoint="0" groupUuid="" pictureWidth="8.06872" northOffset="0" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
       </LayoutItem>
-      <LayoutItem type="65645" itemRotation="0" visibility="1" frameJoinStyle="miter" markerMode="1" id="" endMarkerFile="" zValue="16" referencePoint="0" arrowHeadOutlineColor="0,0,0,255" size="66.0025,6.86473,mm" uuid="{249223bf-a9ef-49cb-a73b-18647c7c1198}" positionLock="false" position="74.9606,90.6693,mm" startMarkerMode="0" positionOnPage="74.9606,90.6693,mm" frame="false" blendMode="0" opacity="1" startMarkerFile="" arrowHeadWidth="4" excludeFromExports="0" background="false" arrowHeadFillColor="0,0,0,255" outlineWidthM="0.3,mm" outlineWidth="1" groupUuid="" templateUuid="{249223bf-a9ef-49cb-a73b-18647c7c1198}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="74.9606,90.6693,mm" size="66.0025,6.86473,mm" templateUuid="{249223bf-a9ef-49cb-a73b-18647c7c1198}" visibility="1" markerMode="1" frame="false" outlineWidthM="0.3,mm" outlineWidth="1" frameJoinStyle="miter" startMarkerFile="" excludeFromExports="0" arrowHeadOutlineColor="0,0,0,255" position="74.9606,90.6693,mm" id="" itemRotation="0" type="65645" blendMode="0" arrowHeadFillColor="0,0,0,255" startMarkerMode="0" uuid="{249223bf-a9ef-49cb-a73b-18647c7c1198}" zValue="16" referencePoint="0" groupUuid="" arrowHeadWidth="4" positionLock="false" opacity="1" endMarkerFile="">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
-        <symbol clip_to_extent="1" type="line" alpha="1" name="">
-          <layer enabled="1" class="SimpleLine" pass="0" locked="0">
-            <prop k="capstyle" v="square"/>
-            <prop k="customdash" v="5;2"/>
-            <prop k="customdash_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="customdash_unit" v="MM"/>
-            <prop k="draw_inside_polygon" v="0"/>
-            <prop k="joinstyle" v="bevel"/>
-            <prop k="line_color" v="0,0,0,255"/>
-            <prop k="line_style" v="solid"/>
-            <prop k="line_width" v="0.3"/>
-            <prop k="line_width_unit" v="MM"/>
-            <prop k="offset" v="0"/>
-            <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="offset_unit" v="MM"/>
-            <prop k="use_custom_dash" v="0"/>
-            <prop k="width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+        <symbol clip_to_extent="1" name="" type="line" alpha="1">
+          <layer locked="0" pass="0" class="SimpleLine" enabled="1">
+            <prop v="square" k="capstyle"/>
+            <prop v="5;2" k="customdash"/>
+            <prop v="3x:0,0,0,0,0,0" k="customdash_map_unit_scale"/>
+            <prop v="MM" k="customdash_unit"/>
+            <prop v="0" k="draw_inside_polygon"/>
+            <prop v="bevel" k="joinstyle"/>
+            <prop v="0,0,0,255" k="line_color"/>
+            <prop v="solid" k="line_style"/>
+            <prop v="0.3" k="line_width"/>
+            <prop v="MM" k="line_width_unit"/>
+            <prop v="0" k="offset"/>
+            <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+            <prop v="MM" k="offset_unit"/>
+            <prop v="0" k="use_custom_dash"/>
+            <prop v="3x:0,0,0,0,0,0" k="width_map_unit_scale"/>
             <data_defined_properties>
               <Option type="Map">
-                <Option type="QString" value="" name="name"/>
+                <Option value="" name="name" type="QString"/>
                 <Option name="properties"/>
-                <Option type="QString" value="collection" name="type"/>
+                <Option value="collection" name="type" type="QString"/>
               </Option>
             </data_defined_properties>
           </layer>
         </symbol>
         <nodes>
-          <node y="6.86473" x="0"/>
-          <node y="0" x="66.0025"/>
+          <node x="0" y="6.86473"/>
+          <node x="66.0025" y="0"/>
         </nodes>
       </LayoutItem>
-      <LayoutItem type="65645" itemRotation="0" visibility="1" frameJoinStyle="miter" markerMode="1" id="" endMarkerFile="" zValue="15" referencePoint="0" arrowHeadOutlineColor="0,0,0,255" size="92.1103,17.0549,mm" uuid="{55b750f1-16ae-4fae-91e3-9feca0178f55}" positionLock="false" position="80.76,123.95,mm" startMarkerMode="0" positionOnPage="80.76,123.95,mm" frame="false" blendMode="0" opacity="1" startMarkerFile="" arrowHeadWidth="4" excludeFromExports="0" background="false" arrowHeadFillColor="0,0,0,255" outlineWidthM="0.3,mm" outlineWidth="1" groupUuid="" templateUuid="{55b750f1-16ae-4fae-91e3-9feca0178f55}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="80.76,123.95,mm" size="92.1103,17.0549,mm" templateUuid="{55b750f1-16ae-4fae-91e3-9feca0178f55}" visibility="1" markerMode="1" frame="false" outlineWidthM="0.3,mm" outlineWidth="1" frameJoinStyle="miter" startMarkerFile="" excludeFromExports="0" arrowHeadOutlineColor="0,0,0,255" position="80.76,123.95,mm" id="" itemRotation="0" type="65645" blendMode="0" arrowHeadFillColor="0,0,0,255" startMarkerMode="0" uuid="{55b750f1-16ae-4fae-91e3-9feca0178f55}" zValue="15" referencePoint="0" groupUuid="" arrowHeadWidth="4" positionLock="false" opacity="1" endMarkerFile="">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
-        <symbol clip_to_extent="1" type="line" alpha="1" name="">
-          <layer enabled="1" class="SimpleLine" pass="0" locked="0">
-            <prop k="capstyle" v="square"/>
-            <prop k="customdash" v="5;2"/>
-            <prop k="customdash_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="customdash_unit" v="MM"/>
-            <prop k="draw_inside_polygon" v="0"/>
-            <prop k="joinstyle" v="bevel"/>
-            <prop k="line_color" v="0,0,0,255"/>
-            <prop k="line_style" v="solid"/>
-            <prop k="line_width" v="0.3"/>
-            <prop k="line_width_unit" v="MM"/>
-            <prop k="offset" v="0"/>
-            <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="offset_unit" v="MM"/>
-            <prop k="use_custom_dash" v="0"/>
-            <prop k="width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+        <symbol clip_to_extent="1" name="" type="line" alpha="1">
+          <layer locked="0" pass="0" class="SimpleLine" enabled="1">
+            <prop v="square" k="capstyle"/>
+            <prop v="5;2" k="customdash"/>
+            <prop v="3x:0,0,0,0,0,0" k="customdash_map_unit_scale"/>
+            <prop v="MM" k="customdash_unit"/>
+            <prop v="0" k="draw_inside_polygon"/>
+            <prop v="bevel" k="joinstyle"/>
+            <prop v="0,0,0,255" k="line_color"/>
+            <prop v="solid" k="line_style"/>
+            <prop v="0.3" k="line_width"/>
+            <prop v="MM" k="line_width_unit"/>
+            <prop v="0" k="offset"/>
+            <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+            <prop v="MM" k="offset_unit"/>
+            <prop v="0" k="use_custom_dash"/>
+            <prop v="3x:0,0,0,0,0,0" k="width_map_unit_scale"/>
             <data_defined_properties>
               <Option type="Map">
-                <Option type="QString" value="" name="name"/>
+                <Option value="" name="name" type="QString"/>
                 <Option name="properties"/>
-                <Option type="QString" value="collection" name="type"/>
+                <Option value="collection" name="type" type="QString"/>
               </Option>
             </data_defined_properties>
           </layer>
         </symbol>
         <nodes>
-          <node y="17.0549" x="0"/>
-          <node y="0" x="92.1103"/>
+          <node x="0" y="17.0549"/>
+          <node x="92.1103" y="0"/>
         </nodes>
       </LayoutItem>
-      <LayoutItem type="65645" itemRotation="0" visibility="1" frameJoinStyle="miter" markerMode="1" id="" endMarkerFile="" zValue="14" referencePoint="0" arrowHeadOutlineColor="0,0,0,255" size="28.1127,56.3086,mm" uuid="{54570a63-3ae2-4689-b083-c05516a8ad15}" positionLock="false" position="161.808,63.405,mm" startMarkerMode="0" positionOnPage="161.808,63.405,mm" frame="false" blendMode="0" opacity="1" startMarkerFile="" arrowHeadWidth="4" excludeFromExports="0" background="false" arrowHeadFillColor="0,0,0,255" outlineWidthM="0.3,mm" outlineWidth="1" groupUuid="" templateUuid="{54570a63-3ae2-4689-b083-c05516a8ad15}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="161.808,63.405,mm" size="28.1127,56.3086,mm" templateUuid="{54570a63-3ae2-4689-b083-c05516a8ad15}" visibility="1" markerMode="1" frame="false" outlineWidthM="0.3,mm" outlineWidth="1" frameJoinStyle="miter" startMarkerFile="" excludeFromExports="0" arrowHeadOutlineColor="0,0,0,255" position="161.808,63.405,mm" id="" itemRotation="0" type="65645" blendMode="0" arrowHeadFillColor="0,0,0,255" startMarkerMode="0" uuid="{54570a63-3ae2-4689-b083-c05516a8ad15}" zValue="14" referencePoint="0" groupUuid="" arrowHeadWidth="4" positionLock="false" opacity="1" endMarkerFile="">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
-        <symbol clip_to_extent="1" type="line" alpha="1" name="">
-          <layer enabled="1" class="SimpleLine" pass="0" locked="0">
-            <prop k="capstyle" v="square"/>
-            <prop k="customdash" v="5;2"/>
-            <prop k="customdash_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="customdash_unit" v="MM"/>
-            <prop k="draw_inside_polygon" v="0"/>
-            <prop k="joinstyle" v="bevel"/>
-            <prop k="line_color" v="0,0,0,255"/>
-            <prop k="line_style" v="solid"/>
-            <prop k="line_width" v="0.3"/>
-            <prop k="line_width_unit" v="MM"/>
-            <prop k="offset" v="0"/>
-            <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="offset_unit" v="MM"/>
-            <prop k="use_custom_dash" v="0"/>
-            <prop k="width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+        <symbol clip_to_extent="1" name="" type="line" alpha="1">
+          <layer locked="0" pass="0" class="SimpleLine" enabled="1">
+            <prop v="square" k="capstyle"/>
+            <prop v="5;2" k="customdash"/>
+            <prop v="3x:0,0,0,0,0,0" k="customdash_map_unit_scale"/>
+            <prop v="MM" k="customdash_unit"/>
+            <prop v="0" k="draw_inside_polygon"/>
+            <prop v="bevel" k="joinstyle"/>
+            <prop v="0,0,0,255" k="line_color"/>
+            <prop v="solid" k="line_style"/>
+            <prop v="0.3" k="line_width"/>
+            <prop v="MM" k="line_width_unit"/>
+            <prop v="0" k="offset"/>
+            <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+            <prop v="MM" k="offset_unit"/>
+            <prop v="0" k="use_custom_dash"/>
+            <prop v="3x:0,0,0,0,0,0" k="width_map_unit_scale"/>
             <data_defined_properties>
               <Option type="Map">
-                <Option type="QString" value="" name="name"/>
+                <Option value="" name="name" type="QString"/>
                 <Option name="properties"/>
-                <Option type="QString" value="collection" name="type"/>
+                <Option value="collection" name="type" type="QString"/>
               </Option>
             </data_defined_properties>
           </layer>
         </symbol>
         <nodes>
-          <node y="0" x="28.1127"/>
-          <node y="56.3086" x="0"/>
+          <node x="28.1127" y="0"/>
+          <node x="0" y="56.3086"/>
         </nodes>
       </LayoutItem>
-      <LayoutItem type="65645" itemRotation="0" visibility="1" frameJoinStyle="miter" markerMode="1" id="" endMarkerFile="" zValue="13" referencePoint="0" arrowHeadOutlineColor="0,0,0,255" size="34.9759,17.2833,mm" uuid="{fd1ad3e8-b202-43a6-a3e8-c7f5fd2baa1f}" positionLock="false" position="164.006,104.85,mm" startMarkerMode="0" positionOnPage="164.006,104.85,mm" frame="false" blendMode="0" opacity="1" startMarkerFile="" arrowHeadWidth="4" excludeFromExports="0" background="false" arrowHeadFillColor="0,0,0,255" outlineWidthM="0.3,mm" outlineWidth="1" groupUuid="" templateUuid="{fd1ad3e8-b202-43a6-a3e8-c7f5fd2baa1f}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="164.006,104.85,mm" size="34.9759,17.2833,mm" templateUuid="{fd1ad3e8-b202-43a6-a3e8-c7f5fd2baa1f}" visibility="1" markerMode="1" frame="false" outlineWidthM="0.3,mm" outlineWidth="1" frameJoinStyle="miter" startMarkerFile="" excludeFromExports="0" arrowHeadOutlineColor="0,0,0,255" position="164.006,104.85,mm" id="" itemRotation="0" type="65645" blendMode="0" arrowHeadFillColor="0,0,0,255" startMarkerMode="0" uuid="{fd1ad3e8-b202-43a6-a3e8-c7f5fd2baa1f}" zValue="13" referencePoint="0" groupUuid="" arrowHeadWidth="4" positionLock="false" opacity="1" endMarkerFile="">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
-        <symbol clip_to_extent="1" type="line" alpha="1" name="">
-          <layer enabled="1" class="SimpleLine" pass="0" locked="0">
-            <prop k="capstyle" v="square"/>
-            <prop k="customdash" v="5;2"/>
-            <prop k="customdash_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="customdash_unit" v="MM"/>
-            <prop k="draw_inside_polygon" v="0"/>
-            <prop k="joinstyle" v="bevel"/>
-            <prop k="line_color" v="0,0,0,255"/>
-            <prop k="line_style" v="solid"/>
-            <prop k="line_width" v="0.3"/>
-            <prop k="line_width_unit" v="MM"/>
-            <prop k="offset" v="0"/>
-            <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="offset_unit" v="MM"/>
-            <prop k="use_custom_dash" v="0"/>
-            <prop k="width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+        <symbol clip_to_extent="1" name="" type="line" alpha="1">
+          <layer locked="0" pass="0" class="SimpleLine" enabled="1">
+            <prop v="square" k="capstyle"/>
+            <prop v="5;2" k="customdash"/>
+            <prop v="3x:0,0,0,0,0,0" k="customdash_map_unit_scale"/>
+            <prop v="MM" k="customdash_unit"/>
+            <prop v="0" k="draw_inside_polygon"/>
+            <prop v="bevel" k="joinstyle"/>
+            <prop v="0,0,0,255" k="line_color"/>
+            <prop v="solid" k="line_style"/>
+            <prop v="0.3" k="line_width"/>
+            <prop v="MM" k="line_width_unit"/>
+            <prop v="0" k="offset"/>
+            <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+            <prop v="MM" k="offset_unit"/>
+            <prop v="0" k="use_custom_dash"/>
+            <prop v="3x:0,0,0,0,0,0" k="width_map_unit_scale"/>
             <data_defined_properties>
               <Option type="Map">
-                <Option type="QString" value="" name="name"/>
+                <Option value="" name="name" type="QString"/>
                 <Option name="properties"/>
-                <Option type="QString" value="collection" name="type"/>
+                <Option value="collection" name="type" type="QString"/>
               </Option>
             </data_defined_properties>
           </layer>
         </symbol>
         <nodes>
-          <node y="0" x="34.9759"/>
-          <node y="17.2833" x="0"/>
+          <node x="34.9759" y="0"/>
+          <node x="0" y="17.2833"/>
         </nodes>
       </LayoutItem>
-      <LayoutItem type="65640" itemRotation="0" visibility="1" frameJoinStyle="miter" northMode="0" pictureHeight="36.7636" mapUuid="" id="" svgFillColor="255,255,255,255" zValue="13" pictureRotation="0" svgBorderWidth="0.2" referencePoint="0" size="40.6483,36.7636,mm" svgBorderColor="0,0,0,255" uuid="{2e488c49-a75c-4123-a0ea-3df3d1c6fb5b}" positionLock="false" position="190.221,45.0232,mm" pictureWidth="40.6483" file="../figures/A5-site.PNG" positionOnPage="190.221,45.0232,mm" resizeMode="2" anchorPoint="4" frame="true" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.6,mm" northOffset="0" groupUuid="" templateUuid="{2e488c49-a75c-4123-a0ea-3df3d1c6fb5b}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="190.221,45.0232,mm" pictureHeight="36.7636" size="40.6483,36.7636,mm" svgFillColor="255,255,255,255" templateUuid="{2e488c49-a75c-4123-a0ea-3df3d1c6fb5b}" visibility="1" anchorPoint="4" northMode="0" frame="true" outlineWidthM="0.6,mm" frameJoinStyle="miter" mapUuid="" excludeFromExports="0" file="../figures/A5-site.PNG" position="190.221,45.0232,mm" id="" itemRotation="0" svgBorderWidth="0.2" type="65640" pictureRotation="0" blendMode="0" resizeMode="2" svgBorderColor="0,0,0,255" uuid="{2e488c49-a75c-4123-a0ea-3df3d1c6fb5b}" zValue="13" referencePoint="0" groupUuid="" pictureWidth="40.6483" northOffset="0" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
       </LayoutItem>
-      <LayoutItem type="65645" itemRotation="0" visibility="1" frameJoinStyle="miter" markerMode="1" id="" endMarkerFile="" zValue="12" referencePoint="0" arrowHeadOutlineColor="0,0,0,255" size="0,0,mm" uuid="{901136fe-91fc-426f-8aea-47f4be23c527}" positionLock="false" position="198.982,105,mm" startMarkerMode="0" positionOnPage="198.982,105,mm" frame="false" blendMode="0" opacity="1" startMarkerFile="" arrowHeadWidth="4" excludeFromExports="0" background="false" arrowHeadFillColor="0,0,0,255" outlineWidthM="0.3,mm" outlineWidth="1" groupUuid="" templateUuid="{901136fe-91fc-426f-8aea-47f4be23c527}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="198.982,105,mm" size="0,0,mm" templateUuid="{901136fe-91fc-426f-8aea-47f4be23c527}" visibility="1" markerMode="1" frame="false" outlineWidthM="0.3,mm" outlineWidth="1" frameJoinStyle="miter" startMarkerFile="" excludeFromExports="0" arrowHeadOutlineColor="0,0,0,255" position="198.982,105,mm" id="" itemRotation="0" type="65645" blendMode="0" arrowHeadFillColor="0,0,0,255" startMarkerMode="0" uuid="{901136fe-91fc-426f-8aea-47f4be23c527}" zValue="12" referencePoint="0" groupUuid="" arrowHeadWidth="4" positionLock="false" opacity="1" endMarkerFile="">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
-        <symbol clip_to_extent="1" type="line" alpha="1" name="">
-          <layer enabled="1" class="SimpleLine" pass="0" locked="0">
-            <prop k="capstyle" v="square"/>
-            <prop k="customdash" v="5;2"/>
-            <prop k="customdash_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="customdash_unit" v="MM"/>
-            <prop k="draw_inside_polygon" v="0"/>
-            <prop k="joinstyle" v="bevel"/>
-            <prop k="line_color" v="0,0,0,255"/>
-            <prop k="line_style" v="solid"/>
-            <prop k="line_width" v="0.3"/>
-            <prop k="line_width_unit" v="MM"/>
-            <prop k="offset" v="0"/>
-            <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="offset_unit" v="MM"/>
-            <prop k="use_custom_dash" v="0"/>
-            <prop k="width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+        <symbol clip_to_extent="1" name="" type="line" alpha="1">
+          <layer locked="0" pass="0" class="SimpleLine" enabled="1">
+            <prop v="square" k="capstyle"/>
+            <prop v="5;2" k="customdash"/>
+            <prop v="3x:0,0,0,0,0,0" k="customdash_map_unit_scale"/>
+            <prop v="MM" k="customdash_unit"/>
+            <prop v="0" k="draw_inside_polygon"/>
+            <prop v="bevel" k="joinstyle"/>
+            <prop v="0,0,0,255" k="line_color"/>
+            <prop v="solid" k="line_style"/>
+            <prop v="0.3" k="line_width"/>
+            <prop v="MM" k="line_width_unit"/>
+            <prop v="0" k="offset"/>
+            <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+            <prop v="MM" k="offset_unit"/>
+            <prop v="0" k="use_custom_dash"/>
+            <prop v="3x:0,0,0,0,0,0" k="width_map_unit_scale"/>
             <data_defined_properties>
               <Option type="Map">
-                <Option type="QString" value="" name="name"/>
+                <Option value="" name="name" type="QString"/>
                 <Option name="properties"/>
-                <Option type="QString" value="collection" name="type"/>
+                <Option value="collection" name="type" type="QString"/>
               </Option>
             </data_defined_properties>
           </layer>
         </symbol>
         <nodes>
-          <node y="0" x="0"/>
+          <node x="0" y="0"/>
         </nodes>
       </LayoutItem>
-      <LayoutItem type="65645" itemRotation="0" visibility="1" frameJoinStyle="miter" markerMode="1" id="" endMarkerFile="" zValue="11" referencePoint="0" arrowHeadOutlineColor="0,0,0,255" size="0,0,mm" uuid="{f4455752-e290-44a0-b9ed-ca90dc8c7447}" positionLock="false" position="222.178,99.5081,mm" startMarkerMode="0" positionOnPage="222.178,99.5081,mm" frame="false" blendMode="0" opacity="1" startMarkerFile="" arrowHeadWidth="4" excludeFromExports="0" background="false" arrowHeadFillColor="0,0,0,255" outlineWidthM="0.3,mm" outlineWidth="1" groupUuid="" templateUuid="{f4455752-e290-44a0-b9ed-ca90dc8c7447}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="222.178,99.5081,mm" size="0,0,mm" templateUuid="{f4455752-e290-44a0-b9ed-ca90dc8c7447}" visibility="1" markerMode="1" frame="false" outlineWidthM="0.3,mm" outlineWidth="1" frameJoinStyle="miter" startMarkerFile="" excludeFromExports="0" arrowHeadOutlineColor="0,0,0,255" position="222.178,99.5081,mm" id="" itemRotation="0" type="65645" blendMode="0" arrowHeadFillColor="0,0,0,255" startMarkerMode="0" uuid="{f4455752-e290-44a0-b9ed-ca90dc8c7447}" zValue="11" referencePoint="0" groupUuid="" arrowHeadWidth="4" positionLock="false" opacity="1" endMarkerFile="">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
-        <symbol clip_to_extent="1" type="line" alpha="1" name="">
-          <layer enabled="1" class="SimpleLine" pass="0" locked="0">
-            <prop k="capstyle" v="square"/>
-            <prop k="customdash" v="5;2"/>
-            <prop k="customdash_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="customdash_unit" v="MM"/>
-            <prop k="draw_inside_polygon" v="0"/>
-            <prop k="joinstyle" v="bevel"/>
-            <prop k="line_color" v="0,0,0,255"/>
-            <prop k="line_style" v="solid"/>
-            <prop k="line_width" v="0.3"/>
-            <prop k="line_width_unit" v="MM"/>
-            <prop k="offset" v="0"/>
-            <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="offset_unit" v="MM"/>
-            <prop k="use_custom_dash" v="0"/>
-            <prop k="width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+        <symbol clip_to_extent="1" name="" type="line" alpha="1">
+          <layer locked="0" pass="0" class="SimpleLine" enabled="1">
+            <prop v="square" k="capstyle"/>
+            <prop v="5;2" k="customdash"/>
+            <prop v="3x:0,0,0,0,0,0" k="customdash_map_unit_scale"/>
+            <prop v="MM" k="customdash_unit"/>
+            <prop v="0" k="draw_inside_polygon"/>
+            <prop v="bevel" k="joinstyle"/>
+            <prop v="0,0,0,255" k="line_color"/>
+            <prop v="solid" k="line_style"/>
+            <prop v="0.3" k="line_width"/>
+            <prop v="MM" k="line_width_unit"/>
+            <prop v="0" k="offset"/>
+            <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+            <prop v="MM" k="offset_unit"/>
+            <prop v="0" k="use_custom_dash"/>
+            <prop v="3x:0,0,0,0,0,0" k="width_map_unit_scale"/>
             <data_defined_properties>
               <Option type="Map">
-                <Option type="QString" value="" name="name"/>
+                <Option value="" name="name" type="QString"/>
                 <Option name="properties"/>
-                <Option type="QString" value="collection" name="type"/>
+                <Option value="collection" name="type" type="QString"/>
               </Option>
             </data_defined_properties>
           </layer>
         </symbol>
         <nodes>
-          <node y="0" x="0"/>
+          <node x="0" y="0"/>
         </nodes>
       </LayoutItem>
-      <LayoutItem type="65641" itemRotation="0" visibility="1" valign="128" frameJoinStyle="miter" marginX="0" id="" halign="4" zValue="10" htmlState="0" referencePoint="0" size="69.8847,4.66477,mm" uuid="{4d381e30-93b8-415f-b17a-7f0d3f61d959}" positionLock="false" position="155.475,152.574,mm" positionOnPage="155.475,152.574,mm" marginY="0" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.3,mm" labelText="0&#x9;&#x9;&#x9; &#x9;&#x9; &#x9;&#x9;5&#x9;&#x9;&#x9;&#x9;&#x9;  &#x9;&#x9;10&#x9;&#x9; &#x9;&#x9;&#x9;&#x9;&#x9;15&#x9;&#x9;&#x9;&#x9; &#x9;&#x9;20" groupUuid="{b38ae58a-7c7c-422b-9fc1-31ab87915188}" templateUuid="{4d381e30-93b8-415f-b17a-7f0d3f61d959}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" htmlState="0" halign="4" positionOnPage="155.475,152.574,mm" size="69.8847,4.66477,mm" templateUuid="{4d381e30-93b8-415f-b17a-7f0d3f61d959}" visibility="1" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" excludeFromExports="0" position="155.475,152.574,mm" id="" itemRotation="0" marginX="0" type="65641" blendMode="0" uuid="{4d381e30-93b8-415f-b17a-7f0d3f61d959}" valign="128" zValue="10" referencePoint="0" groupUuid="{b38ae58a-7c7c-422b-9fc1-31ab87915188}" marginY="0" labelText="0&#x9;&#x9;&#x9; &#x9;&#x9; &#x9;&#x9;5&#x9;&#x9;&#x9;&#x9;&#x9;  &#x9;&#x9;10&#x9;&#x9; &#x9;&#x9;&#x9;&#x9;&#x9;15&#x9;&#x9;&#x9;&#x9; &#x9;&#x9;20" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
         <LabelFont description="Century Gothic,13,-1,5,50,0,0,0,0,0,Regular" style="Regular"/>
-        <FontColor blue="0" red="0" green="0"/>
+        <FontColor red="0" green="0" blue="0"/>
       </LayoutItem>
-      <LayoutItem type="65640" itemRotation="0" visibility="1" frameJoinStyle="miter" northMode="0" pictureHeight="36.7636" mapUuid="" id="" svgFillColor="255,255,255,255" zValue="6" pictureRotation="0" svgBorderWidth="0.2" referencePoint="0" size="40.6483,36.7636,mm" svgBorderColor="0,0,0,255" uuid="{ba0e543f-5547-4c83-b861-c9c14fc3dd63}" positionLock="false" position="199.282,87.0232,mm" pictureWidth="40.6483" file="../figures/C4-site.PNG" positionOnPage="199.282,87.0232,mm" resizeMode="2" anchorPoint="0" frame="true" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.6,mm" northOffset="0" groupUuid="" templateUuid="{ba0e543f-5547-4c83-b861-c9c14fc3dd63}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="199.282,87.0232,mm" pictureHeight="36.7636" size="40.6483,36.7636,mm" svgFillColor="255,255,255,255" templateUuid="{ba0e543f-5547-4c83-b861-c9c14fc3dd63}" visibility="1" anchorPoint="0" northMode="0" frame="true" outlineWidthM="0.6,mm" frameJoinStyle="miter" mapUuid="" excludeFromExports="0" file="../figures/C4-site.PNG" position="199.282,87.0232,mm" id="" itemRotation="0" svgBorderWidth="0.2" type="65640" pictureRotation="0" blendMode="0" resizeMode="2" svgBorderColor="0,0,0,255" uuid="{ba0e543f-5547-4c83-b861-c9c14fc3dd63}" zValue="6" referencePoint="0" groupUuid="" pictureWidth="40.6483" northOffset="0" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
       </LayoutItem>
-      <LayoutItem type="65641" itemRotation="0" visibility="1" valign="128" frameJoinStyle="miter" marginX="0" id="" halign="4" zValue="5" htmlState="0" referencePoint="0" size="83.1391,6.74156,mm" uuid="{4d4ecf53-891f-44ca-806b-9df5e3d9b814}" positionLock="false" position="149.497,145.155,mm" positionOnPage="149.497,145.155,mm" marginY="0" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.3,mm" labelText="Land Surface Temperature (°C)" groupUuid="{b38ae58a-7c7c-422b-9fc1-31ab87915188}" templateUuid="{4d4ecf53-891f-44ca-806b-9df5e3d9b814}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" htmlState="0" halign="4" positionOnPage="149.497,145.155,mm" size="83.1391,6.74156,mm" templateUuid="{4d4ecf53-891f-44ca-806b-9df5e3d9b814}" visibility="1" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" excludeFromExports="0" position="149.497,145.155,mm" id="" itemRotation="0" marginX="0" type="65641" blendMode="0" uuid="{4d4ecf53-891f-44ca-806b-9df5e3d9b814}" valign="128" zValue="5" referencePoint="0" groupUuid="{b38ae58a-7c7c-422b-9fc1-31ab87915188}" marginY="0" labelText="Land Surface Temperature (°C)" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
         <LabelFont description="Century Gothic,14,-1,5,50,0,0,0,0,0,Regular" style="Regular"/>
-        <FontColor blue="0" red="0" green="0"/>
+        <FontColor red="0" green="0" blue="0"/>
       </LayoutItem>
-      <LayoutItem type="65643" itemRotation="0" visibility="1" frameJoinStyle="miter" shapeType="1" id="" cornerRadiusMeasure="0,mm" zValue="4" referencePoint="0" size="63.0777,7.28818,mm" uuid="{6f2565b7-66ab-46f2-9239-cd540cbec21f}" positionLock="false" position="158.528,158.239,mm" positionOnPage="158.528,158.239,mm" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="false" outlineWidthM="0.3,mm" groupUuid="{b38ae58a-7c7c-422b-9fc1-31ab87915188}" templateUuid="{6f2565b7-66ab-46f2-9239-cd540cbec21f}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="false" positionOnPage="158.528,158.239,mm" size="63.0777,7.28818,mm" templateUuid="{6f2565b7-66ab-46f2-9239-cd540cbec21f}" visibility="1" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" excludeFromExports="0" position="158.528,158.239,mm" id="" itemRotation="0" type="65643" blendMode="0" uuid="{6f2565b7-66ab-46f2-9239-cd540cbec21f}" shapeType="1" zValue="4" referencePoint="0" groupUuid="{b38ae58a-7c7c-422b-9fc1-31ab87915188}" cornerRadiusMeasure="0,mm" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
-        <symbol clip_to_extent="1" type="fill" alpha="1" name="">
-          <layer enabled="1" class="GradientFill" pass="0" locked="0">
-            <prop k="angle" v="90"/>
-            <prop k="color" v="255,255,255,255"/>
-            <prop k="color1" v="43,131,186,255"/>
-            <prop k="color2" v="215,25,28,255"/>
-            <prop k="color_type" v="1"/>
-            <prop k="coordinate_mode" v="0"/>
-            <prop k="discrete" v="0"/>
-            <prop k="gradient_color2" v="255,255,255,255"/>
-            <prop k="offset" v="0,0"/>
-            <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
-            <prop k="offset_unit" v="MM"/>
-            <prop k="rampType" v="gradient"/>
-            <prop k="reference_point1" v="0.5,0"/>
-            <prop k="reference_point1_iscentroid" v="0"/>
-            <prop k="reference_point2" v="0.5,1"/>
-            <prop k="reference_point2_iscentroid" v="0"/>
-            <prop k="spread" v="0"/>
-            <prop k="stops" v="0.25;171,221,164,255:0.5;255,255,191,255:0.75;253,174,97,255"/>
-            <prop k="type" v="0"/>
+        <symbol clip_to_extent="1" name="" type="fill" alpha="1">
+          <layer locked="0" pass="0" class="GradientFill" enabled="1">
+            <prop v="90" k="angle"/>
+            <prop v="255,255,255,255" k="color"/>
+            <prop v="43,131,186,255" k="color1"/>
+            <prop v="215,25,28,255" k="color2"/>
+            <prop v="1" k="color_type"/>
+            <prop v="0" k="coordinate_mode"/>
+            <prop v="0" k="discrete"/>
+            <prop v="255,255,255,255" k="gradient_color2"/>
+            <prop v="0,0" k="offset"/>
+            <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+            <prop v="MM" k="offset_unit"/>
+            <prop v="gradient" k="rampType"/>
+            <prop v="0.5,0" k="reference_point1"/>
+            <prop v="0" k="reference_point1_iscentroid"/>
+            <prop v="0.5,1" k="reference_point2"/>
+            <prop v="0" k="reference_point2_iscentroid"/>
+            <prop v="0" k="spread"/>
+            <prop v="0.25;171,221,164,255:0.5;255,255,191,255:0.75;253,174,97,255" k="stops"/>
+            <prop v="0" k="type"/>
             <data_defined_properties>
               <Option type="Map">
-                <Option type="QString" value="" name="name"/>
+                <Option value="" name="name" type="QString"/>
                 <Option name="properties"/>
-                <Option type="QString" value="collection" name="type"/>
+                <Option value="collection" name="type" type="QString"/>
               </Option>
             </data_defined_properties>
           </layer>
         </symbol>
       </LayoutItem>
-      <LayoutItem zValue="4" itemRotation="0" segmentSizeMode="0" segmentMillimeters="12.4733" alignment="0" groupUuid="" labelBarSpace="3" size="37.6466,12.3,mm" background="false" id="" numMapUnitsPerScaleBarUnit="0.2" lineCapStyle="square" height="2" uuid="{1b100cd1-b23c-43e8-862d-fed3c876f93a}" minBarWidth="50" outlineWidth="0.3" unitLabel="km" maxBarWidth="150" positionLock="false" frameJoinStyle="miter" outlineWidthM="0.3,mm" numSegmentsLeft="0" numUnitsPerSegment="1.6" frame="false" unitType="km" numSegments="2" style="Single Box" boxContentSpace="1" positionOnPage="105.474,153.377,mm" lineJoinStyle="miter" type="65646" referencePoint="0" templateUuid="{1b100cd1-b23c-43e8-862d-fed3c876f93a}" visibility="1" opacity="1" position="105.474,153.377,mm" blendMode="0" excludeFromExports="0">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem outlineWidth="0.3" uuid="{1b100cd1-b23c-43e8-862d-fed3c876f93a}" alignment="0" excludeFromExports="0" itemRotation="0" numMapUnitsPerScaleBarUnit="0.2" numUnitsPerSegment="1.6" segmentMillimeters="12.4733" unitLabel="km" frameJoinStyle="miter" position="105.474,153.377,mm" lineCapStyle="square" size="37.6466,12.3,mm" unitType="km" numSegmentsLeft="0" positionLock="false" positionOnPage="105.474,153.377,mm" type="65646" numSegments="2" labelBarSpace="3" templateUuid="{1b100cd1-b23c-43e8-862d-fed3c876f93a}" minBarWidth="50" blendMode="0" referencePoint="0" segmentSizeMode="0" groupUuid="" frame="false" zValue="4" maxBarWidth="150" style="Single Box" background="false" boxContentSpace="1" visibility="1" lineJoinStyle="miter" height="2" outlineWidthM="0.3,mm" opacity="1" id="">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
         <scaleBarFont description="Century Gothic,11,-1,5,50,0,0,0,0,0,Regular" style="Regular"/>
-        <fillColor blue="0" alpha="255" red="0" green="0"/>
-        <fillColor2 blue="255" alpha="255" red="255" green="255"/>
-        <strokeColor blue="0" alpha="255" red="0" green="0"/>
-        <textColor blue="0" alpha="255" red="0" green="0"/>
+        <fillColor red="0" alpha="255" green="0" blue="0"/>
+        <fillColor2 red="255" alpha="255" green="255" blue="255"/>
+        <strokeColor red="0" alpha="255" green="0" blue="0"/>
+        <textColor red="0" alpha="255" green="0" blue="0"/>
       </LayoutItem>
-      <LayoutItem type="65639" itemRotation="0" visibility="1" frameJoinStyle="miter" id="" followPresetName="" zValue="1" referencePoint="0" size="297,210,mm" keepLayerSet="false" uuid="{f1d72c37-eb4a-49df-991e-670e6c480781}" positionLock="false" position="0,0,mm" positionOnPage="0,0,mm" followPreset="false" frame="false" blendMode="0" opacity="1" excludeFromExports="0" background="true" mapRotation="0" outlineWidthM="0.3,mm" drawCanvasItems="true" groupUuid="" templateUuid="{f1d72c37-eb4a-49df-991e-670e6c480781}">
-        <FrameColor blue="0" alpha="255" red="0" green="0"/>
-        <BackgroundColor blue="255" alpha="255" red="255" green="255"/>
+      <LayoutItem background="true" positionOnPage="0,0,mm" size="297,210,mm" keepLayerSet="false" templateUuid="{f1d72c37-eb4a-49df-991e-670e6c480781}" visibility="1" frame="false" outlineWidthM="0.3,mm" frameJoinStyle="miter" excludeFromExports="0" position="0,0,mm" id="" itemRotation="0" mapRotation="0" type="65639" followPreset="false" blendMode="0" uuid="{f1d72c37-eb4a-49df-991e-670e6c480781}" followPresetName="" zValue="1" referencePoint="0" groupUuid="" drawCanvasItems="true" positionLock="false" opacity="1">
+        <FrameColor red="0" alpha="255" green="0" blue="0"/>
+        <BackgroundColor red="255" alpha="255" green="255" blue="255"/>
         <LayoutObject>
           <dataDefinedProperties>
             <Option type="Map">
-              <Option type="QString" value="" name="name"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option type="QString" value="collection" name="type"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </dataDefinedProperties>
           <customproperties/>
         </LayoutObject>
-        <Extent ymax="345764.11815142317209393" ymin="214248.99707794445566833" xmin="102164.60992008954053745" xmax="288164.56686686660395935"/>
+        <Extent ymax="345764.11815142317209393" xmax="288164.56686686660395935" xmin="102164.60992008954053745" ymin="214248.99707794445566833"/>
         <LayerSet/>
         <AtlasMap atlasDriven="0" margin="0.10000000000000001" scalingMode="2"/>
       </LayoutItem>
       <customproperties>
-        <property key="atlasRasterFormat" value="png"/>
-        <property key="imageAntialias" value="true"/>
-        <property key="imageCropMarginBottom" value="0"/>
-        <property key="imageCropMarginLeft" value="0"/>
-        <property key="imageCropMarginRight" value="0"/>
-        <property key="imageCropMarginTop" value="0"/>
-        <property key="imageCropToContents" value="true"/>
+        <property value="png" key="atlasRasterFormat"/>
+        <property value="true" key="imageAntialias"/>
+        <property value="0" key="imageCropMarginBottom"/>
+        <property value="0" key="imageCropMarginLeft"/>
+        <property value="0" key="imageCropMarginRight"/>
+        <property value="0" key="imageCropMarginTop"/>
+        <property value="true" key="imageCropToContents"/>
       </customproperties>
-      <Atlas pageNameExpression="" hideCoverage="0" filenamePattern="'output_'||@atlas_featurenumber" enabled="0" coverageLayer="" filterFeatures="0" sortFeatures="0"/>
+      <Atlas hideCoverage="0" filenamePattern="'output_'||@atlas_featurenumber" pageNameExpression="" sortFeatures="0" enabled="0" filterFeatures="0" coverageLayer=""/>
     </Layout>
   </Layouts>
 </qgis>

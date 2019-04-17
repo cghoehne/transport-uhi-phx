@@ -108,14 +108,14 @@ w.min <- unique(osm$min.r.buf)  # list of unique min buffer widths based on onew
 b.min <- list() # create empty list for foreach
 osm.buf.min <- foreach(i = 1:length(w.min), .packages = c("sp","rgeos")) %dopar% {
   #b.min[[i]] <- buffer(osm[osm$min.r.buf == w.min[i], ], width = w.min[i])
-  b.min[[i]] <- gBuffer(osm[osm$min.r.buf == w.min[i], ], byid = F, width = w.min[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
+  b.min[[i]] <- gBuffer(osm[osm$min.r.buf == w.min[i], ], byid = T, width = w.min[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
 } # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
 
 w.max <- unique(osm$max.r.buf)  # list of unique min buffer widths based on oneway and estiamted roadway width
 b.max <- list() # create empty list for foreach
 osm.buf.max <- foreach(i = 1:length(w.max), .packages = c("sp","rgeos")) %dopar% {
   #b.max[[i]] <- buffer(osm[osm$max.r.buf == w.max[i], ], width = w.max[i])
-  b.max[[i]] <- gBuffer(osm[osm$max.r.buf == w.max[i], ], byid = F, width = w.max[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
+  b.max[[i]] <- gBuffer(osm[osm$max.r.buf == w.max[i], ], byid = T, width = w.max[i], capStyle = "ROUND") # round b/c end of roads are usually cul-de-sac
 } # buffer task could be seperated to two tasks by pave.type if we eventually want to estimate concrete vs. asphalt area, but for now assume all asphalt
 
 # bind the buffered osm data output
