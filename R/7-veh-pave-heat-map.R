@@ -42,36 +42,6 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
 # import data
 blkgrp <- shapefile(here("data/shapefiles/boundaries/phx-blkgrp-geom.shp")) # census blockgroup shapfile (clipped to Maricopa UZA)
 uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA buffered ~1mi
-parking <- fread(here("data/parking/phx-parking-blkgrp.csv")) # phoenix total parking data (aggregated to blockgroup id)
-parking.par <- readRDS(here("data/parking/phoenix-parking-parcel.rds")) # phoenix off-street parking data (raw by parcel)
-parking.pts <- shapefile(here("data/parking/phx-parcel-points.shp")) # points of center of APN of parcels
-
-# import raw parcel polygons
-parcels <- readRDS(here("data/outputs/temp/all_parcels_mag.rds"))
-
-# dissolve the parcel polygons by APN 
-parcels.d <- unionSpatialPolygons(parcels, parcels$APN)
-
-# get list of unique APNs
-APNs <- unique(parcels$APN)
-
-# rebind the APNs and create a SPDF of dissolved parcels
-parcels.a <- SpatialPolygonsDataFrame(Sr = parcels.d, data = data.frame(row.names = APNs, APNs))
-
-
-# simplify prop type var
-parking.par <- parking.par[PROPTYPE == "Non-residential Off-street Spaces", type := "com"][PROPTYPE == "Residential Off-street Spaces", type := "res"]
-
-# agg spaces to APN and keep type (first of uniques)
-parking.par.m <- parking.par[, .(spaces = sum(spaces, na.rm = T), type = first(type)), by = "APN"]
-
-# make parking points unique
-parking.pts.u <- parking.pts[which(!duplicated(parking.pts$APN)), ]
-
-# merge parking spaces totals to points by  APN
-parking.merged <- merge(parking.pts.u, parking.par.m, by = "APN")
-saveRDS(parking.merged, here("data/parking/phoenix-parking-parcel-points.rds"))
-
 
 # import most recent pavement model run data
 # define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)

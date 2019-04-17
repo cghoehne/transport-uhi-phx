@@ -39,11 +39,35 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
            verbose = F) 
 
 # IMPORT DATA
-#osm <- readOGR(here("data/osm/maricopa_county_osm_roads.shp"))
-osm <- shapefile(here("data/osm/maricopa_county_osm_roads.shp")) # import OSM data (maricopa county clipped raw road network data)
-#osm <- shapefile(here("data/outputs/temp/osm-test.shp")) # SMALL TEST NETWORK (NORTH TEMPE)
+#osm <- shapefile(here("data/osm/maricopa_county_osm_roads.shp")) # import OSM data (maricopa county clipped raw road network data)
+osm <- shapefile(here("data/outputs/temp/osm-test.shp")) # SMALL TEST NETWORK (NORTH TEMPE)
+parking <- readRDS(here("data/parking/phx-parking.rds")) # phoenix off-street parking space data by parcel centriod xy coords in EPSG:2223
 fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by roadway functional class (fclass)
 uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA buffered ~1mi
+
+# PARKING DATA FORMAT
+# create a SPDF from parking coords and data
+parking.pts <- SpatialPointsDataFrame(parking[,.(X,Y)], # coords from EPSG:2223
+                                      proj4string = crs(uza.buffer), # CRS EPSG:2223
+                                      data = parking[, .(APN, spaces, type)]) # other data
+
+# clip parking data to desired extent
+#parking.pts <- intersect(parking.pts, extent(osm))
+parking.pts <- intersect(parking.pts, uza.buffer)
+
+# calculate min and max parking area by property type and other assumptions (proj is in ft)
+
+# for max parking area in both commerical and residentail areas, 
+# assume both have 330 sq ft per space dedicated 
+# this is based on Shoup and others estiamtes - Phx parking assumed this too
+parking.pts$max.area <- parking.pts$spaces * 330
+
+# for minimum commerical parking: assume a max of 20% of commerical parking is in someway shaded
+parking.pts$min.area[parking.pts$type == "com"] <- parking.pts$spaces[parking.pts$type == "com"] * 330 * 0.8 
+
+# for minimum residential parking: assume a max of 40% of commerical parking is in someway shaded
+# this equates to approxiately 10 * 20 ft per residential space
+parking.pts$min.area[parking.pts$type == "res"] <- parking.pts$spaces[parking.pts$type == "res"] * 330 * 0.6  # ~20 * 10 ft per space visible
 
 
 # OSM DATA FORMAT
@@ -98,7 +122,7 @@ osm$tunnel <- NULL
 osm$oneway <- NULL
 
 # clean up space
-rm(list=setdiff(ls(), c("osm", "script.start")))
+rm(list=setdiff(ls(), c("osm", "script.start", "parking.pts")))
 gc()
 
 # calculate the number of cores
@@ -146,6 +170,8 @@ osm.max.s <- SpatialPolygonsDataFrame(Sr = osm.max, data = data.frame(row.names 
 # subract overlapping areas, removing lower tier road class 
 # NOT YET IMPLEMENTED
 
+
+# RASTERIZE DATA
 # create empty raster at desired extent, use osm data extent
 #res <- 164.042 # ~50 x 50 m   IDEAL
 #res <- 328.084 # ~100 x 100 m
@@ -162,20 +188,27 @@ osm.max.i <- raster::intersect(osm.max.s, r.p)
 osm.max.i$area <- gArea(osm.max.i, byid = T)
 osm.max.i$frac <- osm.max.i$area / (res * res) # divide by raster cell area
 
+# also convert total area of parking into fractional area of raster cell size
+parking.pts$min.frac <- parking.pts$min.area / (res * res) 
+parking.pts$max.frac <- parking.pts$max.area / (res * res) 
+
 # convert clipped spatial roads to centroids and data 
 osm.min.p <- gCentroid(osm.min.i, byid = T)
 osm.min.p <- SpatialPointsDataFrame(osm.min.p, osm.min.i@data)
 osm.max.p <- gCentroid(osm.max.i, byid = T)
 osm.max.p <- SpatialPointsDataFrame(osm.max.p, osm.max.i@data)
 
-# number of polygons features in SPDF
-features.min <- unique(osm.min.i$fclass.min)
-features.max <- unique(osm.max.i$fclass.max)
+# number of unique fclassess in roadway SPDF for parellel splitting
+features.min.r <- unique(osm.min.i$fclass.min)
+features.max.r <- unique(osm.max.i$fclass.max)
+
+# split total point features in parking data into parts for parellel splitting
+parts.p <- split(1:nrow(parking.pts[,]), cut(1:nrow(parking.pts[,]), my.cores))
 
 # clean up space
-rm(list=setdiff(ls(), c("my.cores", "script.start", "r", "features.min", "features.max"
+rm(list=setdiff(ls(), c("my.cores", "script.start", "r", "features.min.r", "features.max.r"
 #                        , "osm.max.i", "osm.min.i"
-                        , "osm.min.p", "osm.max.p"
+                        , "osm.min.p", "osm.max.p", "parts.p", "parking.pts"
                         )))
 gc()
 
@@ -185,38 +218,63 @@ registerDoParallel(cl) # register parallel backend
 clusterCall(cl, function(x) .libPaths(x), .libPaths())
 print(cl)
 
-# rasterize in parellel min/max fractional road network area by fclass and save (GETCOVER)
-#foreach(i = 1:length(features.min), .packages = c("raster", "here")) %dopar% {
-#  rasterize(osm.min.i[osm.min.i$fclass.min == features.min[i],], r, getCover = T, #field = "frac", fun = sum, background = 0,
-#            filename = here(paste0("data/outputs/temp/rasters/road-min-", features.min[i], "-gcv.tif")), 
+# rasterize in parellel min/max fractional road network area by fclass and save
+# based on rasterize getCover which requires 1/10 the raster resolution to be greater than the min roadway width
+# or this method will be very inaccurate (and it is slower than the point based alternative below)
+#foreach(i = 1:length(features.min.r), .packages = c("raster", "here")) %dopar% {
+#  rasterize(osm.min.i[osm.min.i$fclass.min == features.min.r[i],], r, getCover = T, #field = "frac", fun = sum, background = 0,
+#            filename = here(paste0("data/outputs/temp/rasters/road-min-", features.min.r[i], "-gcv.tif")), 
 #            overwrite = T)
 #}
-#foreach(i = 1:length(features.max), .packages = c("raster", "here")) %dopar% {
-#  rasterize(osm.max.i[osm.max.i$fclass.max == features.max[i],], r, getCover = T,
-#            filename = here(paste0("data/outputs/temp/rasters/road-max-", features.max[i], "-gcv.tif")), 
+#foreach(i = 1:length(features.max.r), .packages = c("raster", "here")) %dopar% {
+#  rasterize(osm.max.i[osm.max.i$fclass.max == features.max.r[i],], r, getCover = T,
+#            filename = here(paste0("data/outputs/temp/rasters/road-max-", features.max.r[i], "-gcv.tif")), 
 #            overwrite = T)
 #}
 
-# alt rasterize based on point data clipped by raster cells to ensure no loss of data from getCover
-foreach(i = 1:length(features.min), .packages = c("raster", "here")) %dopar% {
-  rasterize(osm.min.p[osm.min.p$fclass.min == features.min[i],], r, field = "frac", fun = "first", background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/road-min-", features.min[i], "-pts.tif")), 
+# rasterize in parellel min/max fractional road network area by fclass and save
+# based on roadway point summary data clipped by raster cells to ensure no loss of data from getCover
+foreach(i = 1:length(features.min.r), .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.min.p[osm.min.p$fclass.min == features.min.r[i],], r, field = "frac", fun = "first", background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-min-", features.min.r[i], "-pts.tif")), 
             overwrite = T)
 }
-foreach(i = 1:length(features.max), .packages = c("raster", "here")) %dopar% {
-  rasterize(osm.max.p[osm.max.p$fclass.max == features.max[i],], r, field = "frac", fun = "first", background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/road-max-", features.max[i], "-pts.tif")), 
+foreach(i = 1:length(features.max.r), .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.max.p[osm.max.p$fclass.max == features.max.r[i],], r, field = "frac", fun = "first", background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-max-", features.max.r[i], "-pts.tif")), 
             overwrite = T)
 }
+
+# rasterize in parellel min/max parking area based on parking point summary data 
+foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(parking.pts[parts.p[[i]],], r, field = "min.frac", fun = sum, background = 0, 
+            filename = here(paste0("data/outputs/temp/rasters/park-min-part-", i, ".tif")), 
+            overwrite = T)}
+foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(parking.pts[parts.p[[i]],], r, field = "max.frac", fun = sum, background = 0, 
+            filename = here(paste0("data/outputs/temp/rasters/park-max-part-", i, ".tif")), 
+            overwrite = T)}
 
 # stop cluster
 stopCluster(cl)
 
+# SUMMARIZE RASTER DATA
+
+# create list of parking raster parts from file
+r.park.min <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-min-part-", i, ".tif"))))
+r.park.max <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-max-part-", i, ".tif"))))
+
+# merge all raster parts using sum function (function shouldn't really matter here w/ no overlaps)
+r.park.min$fun <- sum
+r.park.max$fun <- sum
+r.park.min.m <- do.call(mosaic, r.park.min)
+r.park.max.m <- do.call(mosaic, r.park.max)
+
 # create raster stacks for min/max fractional area where each band is a different fclass
 #r.road.min.g <- stack(here(paste0("data/outputs/temp/rasters/road-min-", features.min, "-gcv.tif"))) # getCover option
 #r.road.max.g <- stack(here(paste0("data/outputs/temp/rasters/road-max-", features.max, "-gcv.tif"))) # getCover option
-r.road.min.p <- stack(here(paste0("data/outputs/temp/rasters/road-min-", features.min, "-pts.tif"))) # points options
-r.road.max.p <- stack(here(paste0("data/outputs/temp/rasters/road-max-", features.max, "-pts.tif"))) # points options
+r.road.min.p <- stack(here(paste0("data/outputs/temp/rasters/road-min-", features.min.r, "-pts.tif"))) # points options
+r.road.max.p <- stack(here(paste0("data/outputs/temp/rasters/road-max-", features.max.r, "-pts.tif"))) # points options
 
 # summarize the data into a single raster
 #r.road.min.sum.g <- stackApply(r.road.min.g, indices = c(1), fun = sum)
@@ -224,22 +282,27 @@ r.road.max.p <- stack(here(paste0("data/outputs/temp/rasters/road-max-", feature
 r.road.min.sum.p <- stackApply(r.road.min.p, indices = c(1), fun = sum)
 r.road.max.sum.p <- stackApply(r.road.max.p, indices = c(1), fun = sum)
 
-# if not fixing for intersection or overpass overlapping of roads, set max cell value to 1.0
+# make sure that if there are still overlapping of roads or abnormally high parking set max cell value to 1.0
 #values(r.road.min.sum.g) <- ifelse(values(r.road.min.sum.g) > 1.0, 1.0, values(r.road.min.sum.g))
 #values(r.road.max.sum.g) <- ifelse(values(r.road.max.sum.g) > 1.0, 1.0, values(r.road.max.sum.g))
-values(r.road.min.sum.p) <- ifelse(values(r.road.min.sum.p) > 1.0, 1.0, values(r.road.min.sum.p))
-values(r.road.max.sum.p) <- ifelse(values(r.road.max.sum.p) > 1.0, 1.0, values(r.road.max.sum.p))
+#values(r.road.min.sum.p) <- ifelse(values(r.road.min.sum.p) > 1.0, 1.0, values(r.road.min.sum.p))
+#values(r.road.max.sum.p) <- ifelse(values(r.road.max.sum.p) > 1.0, 1.0, values(r.road.max.sum.p))
+#values(r.park.min.m) <- ifelse(values(r.park.min.m) > 1.0, 1.0, values(r.park.min.m))
+#values(r.park.max.m) <- ifelse(values(r.park.max.m) > 1.0, 1.0, values(r.park.max.m))
 
-# create mean
+# create mean rasters
 #r.road.avg.sum.g <- stackApply(stack(r.road.min.sum.g, r.road.max.sum.g), indices = c(1), fun = mean)
 r.road.avg.sum.p <- stackApply(stack(r.road.min.sum.p, r.road.max.sum.p), indices = c(1), fun = mean)
+r.park.avg.sum <- stackApply(stack(r.park.min.m, r.park.max.m), indices = c(1), fun = mean)
 
+# parking + roads
+r.pave.avg.sum <- stackApply(stack(r.road.avg.sum.p, r.park.avg.sum), indices = c(1), fun = sum)
+#values(r.pave.avg.sum) <- ifelse(values(r.pave.avg.sum) > 1.0, 1.0, values(r.pave.avg.sum)) # can't have greater than 1
 
 # plots to check
-#plot(r.road.min.sum.g)
-#plot(r.road.max.sum.g)
-plot(r.road.min.sum.p)
-plot(r.road.max.sum.p)
+plot(r.road.avg.sum.p)
+plot(r.park.avg.sum)
+plot(r.pave.avg.sum) 
 
 # check error btwn methods
 #sum(values(r.road.avg.sum.g)) / ncell(r.road.avg.sum.g)
@@ -252,6 +315,9 @@ plot(r.road.max.sum.p)
 writeRaster(r.road.min.sum.p, here("data/outputs/rasters/road-min-pts.tif"), overwrite = T)
 writeRaster(r.road.avg.sum.p, here("data/outputs/rasters/road-avg-pts.tif"), overwrite = T)
 writeRaster(r.road.max.sum.p, here("data/outputs/rasters/road-max-pts.tif"), overwrite = T)
+
+writeRaster(r.park.avg.sum, here("data/outputs/rasters/park-avg-pts.tif"), overwrite = T)
+writeRaster(r.pave.avg.sum, here("data/outputs/rasters/pave-avg-pts.tif"), overwrite = T)
 
 #####
 
