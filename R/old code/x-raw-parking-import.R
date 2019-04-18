@@ -30,9 +30,9 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
 
 
 # import raw parking data
-parking <- fread(here("data/outputs/temp/parking/phx-parking-blkgrp.csv")) # phoenix total parking data (aggregated to blockgroup id)
 parking.par <- readRDS(here("data/outputs/temp/parking/phoenix-parking-parcel.rds")) # phoenix off-street parking data (raw by parcel)
 parking.pts <- shapefile(here("data/outputs/temp/parking/phx-parcel-points.shp")) # points of center of APN of parcels
+PUCs <- fread(here("data/outputs/temp/parking/PUC-codes.csv"))
 
 # get data from point data
 parking <- as.data.table(parking.pts@data)
@@ -41,16 +41,26 @@ parking <- as.data.table(parking.pts@data)
 parking <- merge(parking, parking.par, by = "APN")
 
 # aggregate to unique APNs average the coords and spaces if multiple records exists for same APN
+# multiple records exist because there either multi-year data or multi-parcel records
+# so we take the last example as it is more likely to be the recent data, but for most cases it shouldn't matter
 parking.a <- parking[, .(spaces = mean(spaces, na.rm = T),
+                         PUC = last(PUC),  
                          X = mean(xcoord, na.rm = T),
                          Y = mean(ycoord, na.rm = T),
-                         type = first(PROPTYPE)),
+                         type = last(PROPTYPE)),
                      by = "APN"]
 
-# shorten property type
+#test <- merge(parking.a[,.(sum.spaces = sum(spaces, na.rm = T)), by = "PUC"], PUCs, by = "PUC")
+#View(test)
+
+# shorten property type to likely pavement type
+# single and mulit family residential (non-apartments) assume concrete driveways
+# other (apartments, commerical, industrial, institutional, etc) = asphalt parking lot
+# single and multi famlily non-aprt res PUCs: 1 to 349
+# currently assumes condos have asphalt 
 parking.a[, type := as.character(type)]
-parking.a[type == "Non-residential Off-street Spaces", type := "com"]
-parking.a[type == "Residential Off-street Spaces", type := "res"]
+parking.a[, type := "asph"] # default all to asphalt lots
+parking.a[PUC %in% c(1:349), type := "conc"] # overwrite some concrete
 
 # check everything looks as expected
 table(parking.a$type)
