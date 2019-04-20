@@ -36,7 +36,7 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 ################################
 # DEFINE BATCH RUN ID and NAME #
 ################################
-batch.n <- 1 # choose index for batch run type
+batch.n <- 5 # choose index for batch run type
 
 batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
                          name = c("Asphalt Pavements", 
@@ -116,7 +116,7 @@ my.errors <- NULL
 run.log <- file(paste0(out.folder,"/run_log.txt"), open = "a")
 
 # BEGIN MODEL LOGIC
-for(run in 1:model.runs[,.N]){  # 
+for(run in c(19,25,26)){  # 1:model.runs[,.N]
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
@@ -196,7 +196,7 @@ for(run in 1:model.runs[,.N]){  #
              envir = .GlobalEnv) # store error msg
       cat(paste("stopped at run", run, "because too few weather obs"),
           file = run.log, append = T)
-      break} # break the run if there are fewer than 12 obs a day
+      next} # skip to next run if there are fewer than 12 obs a day
     
     # store layer dt
     layer.dt <- layer.profiles[[model.runs$layer.profile[run]]]
@@ -536,7 +536,7 @@ for(run in 1:model.runs[,.N]){  #
       } # end z loop that repeats only when times p=1 and p=2 haven't converged
       
       # if within this timestep, T.K at p+1 ended up non-finite due to an error or convergance issue, 
-      # break the loop (to prevent wasted time) and store error msgs
+      # stop and skip to next run (to prevent wasted time) and store error msgs
       if(any(!is.finite(pave.time[time.s == t.step[p+1], T.K]))){
         model.runs[run.n == run, broke.t := t.step[p]] # store time model stopped
         assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to non-finite temperatures detected")), envir = .GlobalEnv) # store error msg
@@ -559,6 +559,10 @@ for(run in 1:model.runs[,.N]){  #
         } 
 
     } # end time step p, go to time p+1
+    
+    # if there was issues causing early break, skip to next run
+    if(any(!is.finite(pave.time[time.s == t.step[p+1], T.K]))){next}
+    if(sum(pave.time[time.s == t.step[p], CFL_fail], na.rm = T) > 0){next}
     
     # end of run housekeeping
     pave.time[, T.degC := T.K - 273.15] # create temp in deg C from Kelvin
