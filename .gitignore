@@ -3,19 +3,15 @@
 .Rhistory
 .RData
 .Ruserdata
-
 # ignore .bat file until fixed
 *.bat
-
 # ignore temp files (starting w/ "~")
-~* 
-
+~*
 # ignore personal api tokens and email creds
 local-token.txt
 email.txt
-
-
-
 figures/1D-heat-model-runs/*
 figures/aster/*
 figures/old/*
+icarus-access.txt
+icarus-access-raw.txt

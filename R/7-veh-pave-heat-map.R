@@ -101,11 +101,23 @@ sum(blkgrp$min.park.area.sqf, na.rm = T) / sum(blkgrp$tot.area.sqf, na.rm = T)
 sum(blkgrp$max.park.area.sqf, na.rm = T) / sum(blkgrp$tot.area.sqf, na.rm = T)
 
 # SUMMARIZE MODEL SURFACE DATA
+# TO USE IN HEAT MAPS
 
 # calc flux vars (W/m2)
 all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
 all.surface.data[, ref.sol := albedo * SVF * solar]
 all.surface.data[, net.flux := -inc.sol + q.rad + q.cnv]
+
+all.surface.data[,.(mean.day.net.flux = mean(net.flux, na.rm = T),
+                   mean.day.out.flux = mean(q.rad + q.cnv)),
+                 by = "batch.name" ]
+
+all.surface.data[,.(mean.day.net.flux = mean(net.flux, na.rm = T),
+                    mean.day.out.flux = mean(q.rad + q.cnv)),
+                 by = c("batch.name","daytime")][order(-mean.day.out.flux)]
+
+
+
 
 # calculate total energy by average day in season by batch in MJ / m2 (1 MJ == 1E6 J = 1E6 W * s)
 delta.t <- 30

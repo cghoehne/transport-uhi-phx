@@ -1,0 +1,29 @@
+                        odbc: Connect to ODBC Compatible Databases
+                        (using the DBI Interface)
+OdbcConnection          Odbc Connection Methods
+OdbcDriver              Odbc Driver Methods
+OdbcResult              Odbc Result Methods
+dbConnect,OdbcDriver-method
+                        Connect to a ODBC compatible database
+dbListFields,OdbcConnection,character-method
+                        List field names of a remote table
+dbListTables,OdbcConnection-method
+                        List remote tables
+odbc                    Odbc driver
+odbc-tables             Convenience functions for reading/writing DBMS
+                        tables
+odbcConnectionActions   List the actions supported for the connection
+odbcConnectionIcon      Get an icon representing a connection.
+odbcDataType            Return the corresponding ODBC data type for an
+                        R object
+odbcListColumns         List columns in an object.
+odbcListDataSources     List Available Data Source Names
+odbcListDrivers         List Available ODBC Drivers
+odbcListObjectTypes     Return the object hierarchy supported by a
+                        connection.
+odbcListObjects         List objects in a connection.
+odbcPreviewObject       Preview the data in an object.
+odbcSetTransactionIsolationLevel
+                        Set the Transaction Isolation Level for a
+                        Connection
+test_roundtrip          Test round tripping a simple table
