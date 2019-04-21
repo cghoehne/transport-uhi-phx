@@ -36,7 +36,7 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 ################################
 # DEFINE BATCH RUN ID and NAME #
 ################################
-batch.n <- 5 # choose index for batch run type
+batch.n <- 1 # choose index for batch run type
 
 batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
                          name = c("Asphalt Pavements", 
@@ -75,7 +75,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
                #pave.length = c(200), # characteristic length of pavement in meters
-               SVF = c(0.5, 0.95), # sky view factor
+               SVF = c(0.95), # sky view factor  0.5, 
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
                n.days = c(3) # number of days to simulate 
@@ -116,7 +116,7 @@ my.errors <- NULL
 run.log <- file(paste0(out.folder,"/run_log.txt"), open = "a")
 
 # BEGIN MODEL LOGIC
-for(run in c(19,25,26)){  # 1:model.runs[,.N]
+for(run in 1:model.runs[,.N]){  # 
   tryCatch({  # catch and print errors, avoids stopping model runs 
     
     # SETUP FOR MODEL
