@@ -70,5 +70,20 @@ length(unique(parking$APN))
 length(parking.a$APN)
 length(unique(parking.a$APN))
 
+# list of non-unique APNs
+APN.dups <- as.data.table(table(parking$APN))[N > 1, V1]
+parking.raw.dups <- parking[APN %in% APN.dups,]
+
+# get lat lon
+parking.xy <- as.data.table(cbind(parking.pts$APN, coordinates(spTransform(parking.pts, CRS("+proj=longlat +datum=WGS84")))))
+setnames(parking.xy, "V1", "APN")
+setnames(parking.xy, "coords.x1", "lon")
+setnames(parking.xy, "coords.x2", "lat")
+
+# phoenix parcel centroids non-aggregated with conyr
+parking.xy.all <- unique(merge(parking[,.(APN,PUC,CONYR,SQFTa)], parking.xy, by = "APN", all.x = T))
+write.csv(parking.xy.all, here("data/outputs/temp/phx-parcel-xy-summary.csv"), row.names = F)
+write.csv(parking.xy.all[,.(APN,CONYR,lat,lon)], here("data/outputs/temp/phx-parcel-xy-yr.csv"), row.names = F)
+
 # save
 saveRDS(parking.a, here("data/parking/phx-parking.rds"))
