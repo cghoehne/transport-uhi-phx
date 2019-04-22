@@ -36,7 +36,7 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 ################################
 # DEFINE BATCH RUN ID and NAME #
 ################################
-batch.n <- 1 # choose index for batch run type
+batch.n <- 2 # choose index for batch run type
 
 batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
                          name = c("Asphalt Pavements", 
@@ -177,6 +177,17 @@ for(run in 1:model.runs[,.N]){  #
     # with good quality data (low percent of data falling outside expected range)
     my.stations <- stations[n.dewpt.day >= 24 & n.tempc.day >= 24 & p.flag <= 0.05 & max.gap.hrs < 2,] # n.solar.day >= 24 & 
     
+    # if there are no stations that satisfy the above constraints, skip run and store error msgs
+    if(my.stations[,.N] == 0){
+      assign("my.errors", c(my.errors, 
+                            paste("skipped run", run, "because too few weather obs \n")), 
+             envir = .GlobalEnv) # store error msg
+      cat(paste("skipped run", run, "because too few weather obs \n"),
+          file = run.log, append = T)
+      next} else {next} # skip to next run if there are fewer than 12 obs a day
+    
+    
+    
     # determine which of eligible stations are the closest to the validation site
     my.station <- my.stations[my.site.dist == min(my.site.dist, na.rm = T), station.name]
 
@@ -188,15 +199,6 @@ for(run in 1:model.runs[,.N]){  #
     model.runs[run.n == run, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
     my.sites[, station.name := my.station]
     my.sites[, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
-    
-    # if there are less than an avg of 12 weather obs per day, skip run and store error msgs
-    if(weather[,.N] < 12 * day.n){
-      assign("my.errors", c(my.errors, 
-                            paste("stopped at run", run, "because too few weather obs")), 
-             envir = .GlobalEnv) # store error msg
-      cat(paste("stopped at run", run, "because too few weather obs"),
-          file = run.log, append = T)
-      next} # skip to next run if there are fewer than 12 obs a day
     
     # store layer dt
     layer.dt <- layer.profiles[[model.runs$layer.profile[run]]]
@@ -539,7 +541,7 @@ for(run in 1:model.runs[,.N]){  #
       # stop and skip to next run (to prevent wasted time) and store error msgs
       if(any(!is.finite(pave.time[time.s == t.step[p+1], T.K]))){
         model.runs[run.n == run, broke.t := t.step[p]] # store time model stopped
-        assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to non-finite temperatures detected")), envir = .GlobalEnv) # store error msg
+        assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to non-finite temperatures detected \n")), envir = .GlobalEnv) # store error msg
         cat(paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],
                   "secs due to non-finite temperatures detected \n"))
         cat(paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],
@@ -551,9 +553,9 @@ for(run in 1:model.runs[,.N]){  #
       # if within this timestep, the CFL condition fails anywhere, break the loop (to prevent wasted time)
       if(sum(pave.time[time.s == t.step[p], CFL_fail], na.rm = T) > 0){
         model.runs[run.n == run, broke.t := t.step[p]] # store time model stopped
-        assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to CFL stability condition not satisfied")), envir = .GlobalEnv) # store error msg
+        assign("my.errors", c(my.errors, paste("stopped model run",run,"at", model.runs[run.n == run, broke.t],"secs due to CFL stability condition not satisfied \n")), envir = .GlobalEnv) # store error msg
         cat(paste("stopped model run", run,"at", model.runs[run.n == run, broke.t],
-                  "secs due to CFL stability condition not satisfied"),
+                  "secs due to CFL stability condition not satisfied \n"),
             file = run.log, append = T)
         break
         } 
