@@ -36,7 +36,7 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 ################################
 # DEFINE BATCH RUN ID and NAME #
 ################################
-batch.n <- 2 # choose index for batch run type
+batch.n <- 1 # choose index for batch run type
 
 batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
                          name = c("Asphalt Pavements", 
@@ -184,7 +184,7 @@ for(run in 1:model.runs[,.N]){  #
              envir = .GlobalEnv) # store error msg
       cat(paste("skipped run", run, "because too few weather obs \n"),
           file = run.log, append = T)
-      next} else {next} # skip to next run if there are fewer than 12 obs a day
+      next} # skip to next run if there are fewer than 12 obs a day
     
     
     
