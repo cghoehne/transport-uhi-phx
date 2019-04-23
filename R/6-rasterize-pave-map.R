@@ -152,16 +152,16 @@ osm.buf.mrg.min <- do.call(raster::bind, osm.buf.min) # bind list of spatial obj
 osm.buf.mrg.max <- do.call(raster::bind, osm.buf.max) # bind list of spatial objects into single spatial obj
 
 # dissolve the roadway buffers to polygons by fclass (roadway class) to eliminate overlaps by fclass
-osm.min <- unionSpatialPolygons(osm.buf.mrg.min, osm.buf.mrg.min$fclass)
-osm.max <- unionSpatialPolygons(osm.buf.mrg.max, osm.buf.mrg.max$fclass)
+#osm.min <- unionSpatialPolygons(osm.buf.mrg.min, osm.buf.mrg.min$fclass)
+#osm.max <- unionSpatialPolygons(osm.buf.mrg.max, osm.buf.mrg.max$fclass)
 
 # get list of fclass for min/max roads
-fclass.min <- unique(osm.buf.mrg.min$fclass)
-fclass.max <- unique(osm.buf.mrg.max$fclass)
+#fclass.min <- unique(osm.buf.mrg.min$fclass)
+#fclass.max <- unique(osm.buf.mrg.max$fclass)
 
 # rebind the fclass and create a SPDF
-osm.min.s <- SpatialPolygonsDataFrame(Sr = osm.min, data = data.frame(row.names = fclass.min, fclass.min))
-osm.max.s <- SpatialPolygonsDataFrame(Sr = osm.max, data = data.frame(row.names = fclass.max, fclass.max))
+#osm.min.sp <- SpatialPolygonsDataFrame(Sr = osm.min, data = data.frame(row.names = fclass.min, fclass.min))
+#osm.max.sp <- SpatialPolygonsDataFrame(Sr = osm.max, data = data.frame(row.names = fclass.max, fclass.max))
 
 # subract overlapping areas, removing lower tier road class 
 # NOT YET IMPLEMENTED
@@ -177,12 +177,12 @@ r <- raster(ext = extent(osm), crs = crs(osm), res = res) # create raster = ~10 
 
 # polygonize raster, clip roadway area by this polygon, calc road area and fractional road area for each feature
 r.p <- rasterToPolygons(r)
-osm.min.i <- raster::intersect(osm.min.s, r.p)
-osm.min.i$area <- gArea(osm.min.i, byid = T)
-osm.min.i$frac <- osm.min.i$area / (res * res) # divide by raster cell area
-osm.max.i <- raster::intersect(osm.max.s, r.p)
-osm.max.i$area <- gArea(osm.max.i, byid = T)
-osm.max.i$frac <- osm.max.i$area / (res * res) # divide by raster cell area
+#osm.min.i <- raster::intersect(osm.min.s, r.p)
+#osm.min.i$area <- gArea(osm.min.i, byid = T)
+#osm.min.i$frac <- osm.min.i$area / (res * res) # divide by raster cell area
+#osm.max.i <- raster::intersect(osm.max.s, r.p)
+#osm.max.i$area <- gArea(osm.max.i, byid = T)
+#osm.max.i$frac <- osm.max.i$area / (res * res) # divide by raster cell area
 
 # also convert total area of parking into fractional area of raster cell size
 #parking.pts$min.frac <- parking.pts$min.area / (res * res) 
@@ -228,14 +228,31 @@ park.buf.max <- do.call(raster::bind, park.buf.max.p) # bind list of spatial obj
 
 # convert to sf objects for quicker computing
 # sf::st_intersection is fastest for zonal intersections
+osm.min.s <- st_as_sf(osm.buf.mrg.min)
+osm.max.s <- st_as_sf(osm.buf.mrg.max)
+
 park.min.s <- st_as_sf(park.buf.min)
 park.max.s <- st_as_sf(park.buf.max)
+
 r.t <- st_as_sf(r.p)
 
 # split total point features in parking data into parts for parellel splitting
+parts.r.min <- split(1:nrow(osm.min.s[,]), cut(1:nrow(osm.min.s[,]), my.cores))
+parts.r.max <- split(1:nrow(osm.max.s[,]), cut(1:nrow(osm.max.s[,]), my.cores))
+
 parts.p.min <- split(1:nrow(park.min.s[,]), cut(1:nrow(park.min.s[,]), my.cores))
 parts.p.max <- split(1:nrow(park.max.s[,]), cut(1:nrow(park.max.s[,]), my.cores))
 
+# blank lists
+r.min <- list()
+r.max <- list()
+
+rm(list=setdiff(ls(), c("my.cores", "script.start", "r", "r.t", "res", "p.min", "p.max", "r.min", "r.max",
+                        "parts.r.min", "parts.r.max", "osm.min.s", "osm.max.s", "parts.p.min", "parts.p.max", "park.min.s", "park.max.s"
+)))
+gc()
+
+# INTERSECT POLYGONIZED RASTER w/ PARKING + ROAD DATA
 cl <- makeCluster(my.cores) # initiate cluster
 registerDoParallel(cl) # register parallel backend
 clusterCall(cl, function(x) .libPaths(x), .libPaths()) 
@@ -246,21 +263,38 @@ park.min.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
 park.max.i.p <- foreach(i = 1:my.cores, .packages = c("sp")) %dopar% {
   p.max[[i]] <- st_intersection(park.max.s[parts.p.max[[i]],], r.t)
 }
+osm.min.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
+  r.min[[i]] <- st_intersection(osm.min.s[parts.r.min[[i]],], r.t)
+}
+osm.max.i.p <- foreach(i = 1:my.cores, .packages = c("sp")) %dopar% {
+  r.max[[i]] <- st_intersection(osm.max.s[parts.r.max[[i]],], r.t)
+}
 
 # stop cluster
 stopCluster(cl)
 
 # bind the buffered parking data output
+osm.min.i <- do.call(rbind, osm.min.i.p) # bind list of spatial objects into single spatial obj
+osm.max.i <- do.call(rbind, osm.max.i.p) # bind list of spatial objects into single spatial obj
+
 park.min.i <- do.call(rbind, park.min.i.p) # bind list of spatial objects into single spatial obj
 park.max.i <- do.call(rbind, park.max.i.p) # bind list of spatial objects into single spatial obj
 
-# calc adjusted fractional area of parking in raster cell size
+# calc adjusted fractional area of parking/pavement in raster cell size
+osm.min.i$area <- st_area(osm.min.i)
+osm.min.i$frac <- osm.min.i$area / (res * res) # divide by raster cell area
+osm.max.i$area <- st_area(osm.max.i)
+osm.max.i$frac <- osm.max.i$area / (res * res) # divide by raster cell area
+
 park.min.i$area <- st_area(park.min.i)
 park.min.i$frac <- park.min.i$area / (res * res) # divide by raster cell area
 park.max.i$area <- st_area(park.max.i)
 park.max.i$frac <- park.max.i$area / (res * res) # divide by raster cell area
 
 # convert clipped spatial parking area to centroids and data 
+osm.min.c <- st_centroid(osm.min.i)
+osm.max.c <- st_centroid(osm.max.i)
+
 park.min.c <- st_centroid(park.min.i)
 park.max.c <- st_centroid(park.max.i)
 
@@ -268,26 +302,32 @@ park.max.c <- st_centroid(park.max.i)
 park.min.p <- as(park.min.c, "Spatial")
 park.max.p <- as(park.max.c, "Spatial")
 
-# split total point features in parking data into parts for parellel splitting
+osm.min.p <- as(osm.min.c, "Spatial")
+osm.max.p <- as(osm.max.c, "Spatial")
+
+# convert clipped spatial roads to centroids and data 
+#osm.min.p <- gCentroid(osm.min.i, byid = T)
+#osm.min.p <- SpatialPointsDataFrame(osm.min.p, osm.min.i@data)
+#osm.max.p <- gCentroid(osm.max.i, byid = T)
+#osm.max.p <- SpatialPointsDataFrame(osm.max.p, osm.max.i@data)
+
+# split total point features in pavement/parking data into parts for parellel splitting
+parts.min.r <- split(1:nrow(osm.min.p[,]), cut(1:nrow(osm.min.p[,]), my.cores))
+parts.max.r <- split(1:nrow(osm.max.p[,]), cut(1:nrow(osm.max.p[,]), my.cores))
+
 parts.min.p <- split(1:nrow(park.min.p[,]), cut(1:nrow(park.min.p[,]), my.cores))
 parts.max.p <- split(1:nrow(park.max.p[,]), cut(1:nrow(park.max.p[,]), my.cores))
 
-# convert clipped spatial roads to centroids and data 
-osm.min.p <- gCentroid(osm.min.i, byid = T)
-osm.min.p <- SpatialPointsDataFrame(osm.min.p, osm.min.i@data)
-osm.max.p <- gCentroid(osm.max.i, byid = T)
-osm.max.p <- SpatialPointsDataFrame(osm.max.p, osm.max.i@data)
-
 # number of unique fclassess in roadway SPDF for parellel splitting
-features.min.r <- unique(osm.min.i$fclass.min)
-features.max.r <- unique(osm.max.i$fclass.max)
+#features.min.r <- unique(osm.min.p$fclass.min)
+#features.max.r <- unique(osm.max.p$fclass.max)
 
 # create temporary output directory
 dir.create(here("data/outputs/temp/rasters"), showWarnings = F)
 
 # clean up space
 save.image(here("data/outputs/temp/rasterize-data-2.RData")) # first save for data backup
-rm(list=setdiff(ls(), c("my.cores", "script.start", "r", "features.min.r", "features.max.r"
+rm(list=setdiff(ls(), c("my.cores", "script.start", "r", "parts.min.r", "parts.max.r"
 #                        , "osm.max.i", "osm.min.i", "parking.pts",
                         , "osm.min.p", "osm.max.p", "parts.min.p", "parts.max.p", "park.min.p", "park.max.p"
                         )))
@@ -315,14 +355,14 @@ clusterCall(cl, function(x) .libPaths(x), .libPaths())
 
 # rasterize in parellel min/max fractional road network area by fclass and save
 # based on roadway point summary data clipped by raster cells to ensure no loss of data from getCover
-foreach(i = 1:length(features.min.r), .packages = c("raster", "here")) %dopar% {
-  rasterize(osm.min.p[osm.min.p$fclass.min == features.min.r[i],], r, field = "frac", fun = "first", background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/road-min-", features.min.r[i], "-pts.tif")), 
+foreach(i = 1:length(parts.min.r), .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.min.p[parts.min.r[[i]],], r, field = "frac", fun = "first", background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-min-part-", i, ".tif")), 
             overwrite = T)
 }
-foreach(i = 1:length(features.max.r), .packages = c("raster", "here")) %dopar% {
-  rasterize(osm.max.p[osm.max.p$fclass.max == features.max.r[i],], r, field = "frac", fun = "first", background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/road-max-", features.max.r[i], "-pts.tif")), 
+foreach(i = 1:length(parts.max.r), .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.max.p[parts.max.r[[i]],], r, field = "frac", fun = "first", background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-max-part-", i, ".tif")), 
             overwrite = T)
 }
 
@@ -354,23 +394,31 @@ stopCluster(cl)
 
 # SUMMARIZE RASTER DATA
 
-# create list of parking raster parts from file
+# create list of pavement/parking raster parts from file
+r.road.min.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-min-part-", i, ".tif"))))
+r.road.max.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-max-part-", i, ".tif"))))
+
 r.park.min.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-min-part-", i, ".tif"))))
 r.park.max.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-max-part-", i, ".tif"))))
 
 # merge all raster parts using sum function (function shouldn't really matter here w/ no overlaps)
+r.road.min.p$fun <- sum
+r.road.max.p$fun <- sum
+r.road.min <- do.call(mosaic, r.road.min.p)
+r.road.max <- do.call(mosaic, r.road.max.p)
+
 r.park.min.p$fun <- sum
 r.park.max.p$fun <- sum
 r.park.min <- do.call(mosaic, r.park.min.p)
 r.park.max <- do.call(mosaic, r.park.max.p)
 
 # create raster stacks for min/max fractional area where each band is a different fclass
-r.road.min.s <- stack(here(paste0("data/outputs/temp/rasters/road-min-", features.min.r, "-pts.tif"))) # points options
-r.road.max.s <- stack(here(paste0("data/outputs/temp/rasters/road-max-", features.max.r, "-pts.tif"))) # points options
+#r.road.min.s <- stack(here(paste0("data/outputs/temp/rasters/road-min-", features.min.r, ".tif"))) # points options
+#r.road.max.s <- stack(here(paste0("data/outputs/temp/rasters/road-max-", features.max.r, ".tif"))) # points options
 
 # summarize the data into a single raster
-r.road.min <- stackApply(r.road.min.s, indices = c(1), fun = sum)
-r.road.max <- stackApply(r.road.max.s, indices = c(1), fun = sum)
+#r.road.min <- stackApply(r.road.min.s, indices = c(1), fun = sum)
+#r.road.max <- stackApply(r.road.max.s, indices = c(1), fun = sum)
 
 # make sure that if there are still overlapping of roads or abnormally high parking set max cell value to 1.0
 values(r.road.min) <- ifelse(values(r.road.min) > 1.0, 1.0, values(r.road.min))
