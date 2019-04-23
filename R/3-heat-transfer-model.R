@@ -106,10 +106,10 @@ all.dates <- unique(do.call("c", mapply(function(x,y) seq(date(x) - days(y - 1),
 weather.raw <- weather.raw[date(date.time) %in% all.dates,]
 
 # import station metadata and calculate average number of observations of critical weather parameters
-stations <- unique(rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-station-data.rds")), readRDS))) # load corresonding years of station metadata
+stations.raw <- unique(rbindlist(lapply(here(paste0("data/mesowest/", my.years, "-meso-station-data.rds")), readRDS))) # load corresonding years of station metadata
 
 # merge latitude from station data for solar rad estimation
-weather.raw <- merge(weather.raw, stations[,.(station.name,lat,lon)], by = "station.name", all.x = T, allow.cartesian = T) 
+weather.raw <- merge(weather.raw, stations.raw[,.(station.name,lat,lon)], by = "station.name", all.x = T, allow.cartesian = T) 
 
 # create empty object and file to store error messages
 my.errors <- NULL
@@ -127,7 +127,7 @@ for(run in 1:model.runs[,.N]){  #
     cat(paste0("started run ", run, " at ", start.time, " (", round(difftime(start.time, script.start, units = "min"), ifelse(run == 1, 2, 0))," mins since start script) \n"), file = run.log, append = T)
     
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "stations",
+    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "stations.raw",
                             "weather.raw", "create.layer", "start.time", "my.errors", "my.sites", "out.folder", "run.log")))
     gc()
     t.start <- Sys.time() # start model run timestamp
@@ -139,12 +139,15 @@ for(run in 1:model.runs[,.N]){  #
     my.dates <- seq.Date(date(model.runs[run.n == run, end.day]) - days(day.n) + 1, date(model.runs[run.n == run, end.day]) + 1, "day")
     my.site <- my.sites[Location == model.runs$valid.site[run],]
     
-    # calculate earth surface distance in km between chosen validation site and available weather stations
-    stations[, my.site.dist := (GCdistance(my.site[, lat], my.site[, lon], stations$lat, stations$lon)) / 1000 ] # GCdistance reports in meters
-    
     # trim weather data to relevant dates for this run (just past end date.time)
     weather <- weather.raw[date.time >= min(my.dates) & date.time <= force_tz(max(my.dates) + hours(1), tz =  tz(weather.raw$date.time[1])) ,]
   
+    # trim station data to available stations during desired dates
+    stations <- stations.raw[station.name %in% weather$station.name,]
+    
+    # calculate earth surface distance in km between chosen validation site and available weather stations
+    stations[, my.site.dist := (GCdistance(my.site[, lat], my.site[, lon], stations$lat, stations$lon)) / 1000 ] # GCdistance reports in meters
+    
     # calculate mean and sd on rounded hour for quality control checks
     weather[, date.time.round := as.POSIXct(round.POSIXt(date.time, "hours"))]
     weather[, avg.hr.t := mean(temp.c, na.rm = T), by = "date.time.round"]
@@ -159,7 +162,7 @@ for(run in 1:model.runs[,.N]){  #
     weather[between(solar, avg.hr.s - sd.hr.s*2, avg.hr.t + sd.hr.t*2), qcflag2 := 0]
 
     # calculate the remaining obs per day for desired time period
-    for(s in 1:nrow(stations)){ 
+    for(s in 1:model.runs[,.N]){ 
       s.name <- stations[s, station.name]
       if(weather[station.name == s.name, .N] == 0){next}
       stations[s, n.solar.day := weather[station.name == s.name & !is.na(solar), .N] / day.n]
