@@ -52,7 +52,7 @@ parking.pts <- SpatialPointsDataFrame(parking[,.(X,Y)], # coords from EPSG:2223
                                       data = parking[, .(APN, spaces, type)]) # other data
 
 # clip parking data to desired extent
-parking.pts <- intersect(parking.pts, extent(osm))
+parking.pts <- intersect(parking.pts, extent(osm)) # FOR TEST NETWORK
 #parking.pts <- intersect(parking.pts, uza.buffer)
 
 # calculate min and max parking area by property type and other assumptions (proj is in ft)
@@ -63,11 +63,7 @@ parking.pts <- intersect(parking.pts, extent(osm))
 parking.pts$max.area <- parking.pts$spaces * 330
 
 # for minimum commerical parking: assume a max of 20% of commerical parking is in someway shaded
-parking.pts$min.area[parking.pts$type == "com"] <- parking.pts$spaces[parking.pts$type == "com"] * 330 * 0.8 
-
-# for minimum residential parking: assume a max of 40% of commerical parking is in someway shaded
-# this equates to approxiately 10 * 20 ft per residential space
-parking.pts$min.area[parking.pts$type == "res"] <- parking.pts$spaces[parking.pts$type == "res"] * 330 * 0.6  # ~20 * 10 ft per space visible
+parking.pts$min.area <- parking.pts$spaces * 330 * 0.80
 
 
 # OSM DATA FORMAT
@@ -194,8 +190,9 @@ osm.max.i$frac <- osm.max.i$area / (res * res) # divide by raster cell area
 
 # estiamte spatial extent of parking by buffering each point such that area of circle = parking area
 # therefore r = sqrt(parking area / pi)
-parking.pts$min.r <- sqrt(parking.pts$min.area / pi)
-parking.pts$max.r <- sqrt(parking.pts$max.area / pi)
+# because this is an approximation it is off by a slight amount, so we estimate the factor it is off by (1.016641x)
+parking.pts$min.r <- sqrt(parking.pts$min.area * 1.016641 / pi)
+parking.pts$max.r <- sqrt(parking.pts$max.area * 1.016641 / pi)
 
 # split total point features in parking data into parts for parellel splitting
 parts.p <- split(1:nrow(parking.pts[,]), cut(1:nrow(parking.pts[,]), my.cores))
@@ -225,31 +222,55 @@ stopCluster(cl)
 park.buf.min <- do.call(raster::bind, park.buf.min.p) # bind list of spatial objects into single spatial obj
 park.buf.max <- do.call(raster::bind, park.buf.max.p) # bind list of spatial objects into single spatial obj
 
-# dissolve the parking buffers to polygons type (residential/commerical) to eliminate overlaps and simplfy 
-park.min <- unionSpatialPolygons(park.buf.min, park.buf.min$type)
-park.max <- unionSpatialPolygons(park.buf.max, park.buf.max$type)
+# actual areas (use to check accuracy)
+#park.buf.min$min.area.act <- gArea(park.buf.min, byid = T)
+#park.buf.max$max.area.act <- gArea(park.buf.max, byid = T)
 
-# get list of fclass for min/max roads
-ptype.min <- unique(park.buf.min$type)
-ptype.max <- unique(park.buf.max$type)
+# convert to sf objects for quicker computing
+# sf::st_intersection is fastest for zonal intersections
+park.min.s <- st_as_sf(park.buf.min)
+park.max.s <- st_as_sf(park.buf.max)
+r.t <- st_as_sf(r.p)
 
-# rebind the fclass and create a SPDF
-park.min.s <- SpatialPolygonsDataFrame(Sr = park.min, data = data.frame(row.names = ptype.min, ptype.min))
-park.max.s <- SpatialPolygonsDataFrame(Sr = park.max, data = data.frame(row.names = ptype.max, ptype.max))
+# split total point features in parking data into parts for parellel splitting
+parts.p.min <- split(1:nrow(park.min.s[,]), cut(1:nrow(park.min.s[,]), my.cores))
+parts.p.max <- split(1:nrow(park.max.s[,]), cut(1:nrow(park.max.s[,]), my.cores))
 
-# intersect buffered parking data with raster and calc adjusted fractional area of raster cell size
-park.min.i <- raster::intersect(park.min.s, r.p)
-park.min.i$area <- gArea(park.min.i, byid = T)
+cl <- makeCluster(my.cores) # initiate cluster
+registerDoParallel(cl) # register parallel backend
+clusterCall(cl, function(x) .libPaths(x), .libPaths()) 
+
+park.min.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
+  p.min[[i]] <- st_intersection(park.min.s[parts.p.min[[i]],], r.t)
+}
+park.max.i.p <- foreach(i = 1:my.cores, .packages = c("sp")) %dopar% {
+  p.max[[i]] <- st_intersection(park.max.s[parts.p.max[[i]],], r.t)
+}
+
+# stop cluster
+stopCluster(cl)
+
+# bind the buffered parking data output
+park.min.i <- do.call(rbind, park.min.i.p) # bind list of spatial objects into single spatial obj
+park.max.i <- do.call(rbind, park.max.i.p) # bind list of spatial objects into single spatial obj
+
+# calc adjusted fractional area of parking in raster cell size
+park.min.i$area <- st_area(park.min.i)
 park.min.i$frac <- park.min.i$area / (res * res) # divide by raster cell area
-park.max.i <- raster::intersect(park.max.s, r.p)
-park.max.i$area <- gArea(park.max.i, byid = T)
+park.max.i$area <- st_area(park.max.i)
 park.max.i$frac <- park.max.i$area / (res * res) # divide by raster cell area
 
 # convert clipped spatial parking area to centroids and data 
-park.min.p <- gCentroid(park.min.i, byid = T)
-park.min.p <- SpatialPointsDataFrame(park.min.p, park.min.i@data)
-park.max.p <- gCentroid(park.max.i, byid = T)
-park.max.p <- SpatialPointsDataFrame(park.max.p, park.max.i@data)
+park.min.c <- st_centroid(park.min.i)
+park.max.c <- st_centroid(park.max.i)
+
+# convert to sp obj
+park.min.p <- as(park.min.c, "Spatial")
+park.max.p <- as(park.max.c, "Spatial")
+
+# split total point features in parking data into parts for parellel splitting
+parts.min.p <- split(1:nrow(park.min.p[,]), cut(1:nrow(park.min.p[,]), my.cores))
+parts.max.p <- split(1:nrow(park.max.p[,]), cut(1:nrow(park.max.p[,]), my.cores))
 
 # convert clipped spatial roads to centroids and data 
 osm.min.p <- gCentroid(osm.min.i, byid = T)
@@ -260,10 +281,6 @@ osm.max.p <- SpatialPointsDataFrame(osm.max.p, osm.max.i@data)
 # number of unique fclassess in roadway SPDF for parellel splitting
 features.min.r <- unique(osm.min.i$fclass.min)
 features.max.r <- unique(osm.max.i$fclass.max)
-
-# split total point features in parking data into parts for parellel splitting
-parts.min.p <- split(1:nrow(park.min.p[,]), cut(1:nrow(park.min.p[,]), my.cores))
-parts.max.p <- split(1:nrow(park.max.p[,]), cut(1:nrow(park.max.p[,]), my.cores))
 
 # create temporary output directory
 dir.create(here("data/outputs/temp/rasters"), showWarnings = F)
