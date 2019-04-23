@@ -52,18 +52,30 @@ parking.pts <- SpatialPointsDataFrame(parking[,.(X,Y)], # coords from EPSG:2223
                                       data = parking[, .(APN, spaces, type)]) # other data
 
 # clip parking data to desired extent
-parking.pts <- intersect(parking.pts, extent(osm)) # FOR TEST NETWORK
-#parking.pts <- intersect(parking.pts, uza.buffer)
+#parking.pts <- intersect(parking.pts, extent(osm))
+parking.pts <- intersect(parking.pts, uza.buffer)
 
 # calculate min and max parking area by property type and other assumptions (proj is in ft)
 
 # for max parking area in both commerical and residentail areas, 
 # assume both have 330 sq ft per space dedicated 
 # this is based on Shoup and others estiamtes - Phx parking assumed this too
-parking.pts$max.area <- parking.pts$spaces * 330
+parking.pts$raw.area <- parking.pts$spaces * 330
 
-# for minimum commerical parking: assume a max of 20% of commerical parking is in someway shaded
-parking.pts$min.area <- parking.pts$spaces * 330 * 0.80
+# store data in data.table to adjust
+parking.dt <- as.data.table(parking.pts@data)
+
+# adjust parking area such that as spaces per parcel are higher, there is higher amount shaded/covered/garaged
+# create function that scales with number of spaces non-linearly as desired
+min.shade.ratio <- function (x) {(100 - (2.17 * log(x + 1))) / 100}
+max.shade.ratio <- function (x) {(100 - (6.51 * log(x + 1))) / 100}
+
+# check log growth
+min.shade.ratio(c(0,10,100,1000,10000,100000)) # at 100,000 spaces, ~25% are not visisble to sky
+max.shade.ratio(c(0,10,100,1000,10000,100000)) # at 100,000 spaces, ~75% are not visisble to sky
+
+parking.pts$min.area <- parking.pts$raw.area * max.shade.ratio(parking.pts$spaces) # max shade for min area case
+parking.pts$max.area <- parking.pts$raw.area * min.shade.ratio(parking.pts$spaces) # min shade for max area case
 
 
 # OSM DATA FORMAT
