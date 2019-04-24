@@ -42,6 +42,8 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
 osm <- shapefile(here("data/osm/maricopa_county_osm_roads.shp")) # import OSM data (maricopa county clipped raw road network data)
 #osm <- shapefile(here("data/outputs/temp/osm-test.shp")) # SMALL TEST NETWORK (NORTH TEMPE)
 parking <- readRDS(here("data/parking/phx-parking.rds")) # phoenix off-street parking space data by parcel centriod xy coords in EPSG:2223
+traffic.net <- readRDS(here("data/outputs/network/icarus-network.rds")) # cleaned/simplified ICARUS traffic network to pair with traffic data
+#traffic <- fread() simulated traffic data for region from ICARUS model
 fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by roadway functional class (fclass)
 uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA buffered ~1mi
 

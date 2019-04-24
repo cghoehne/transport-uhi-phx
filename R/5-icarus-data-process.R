@@ -82,21 +82,51 @@ lines.c <- st_sfc(lines, crs = "+proj=tmerc +lat_0=31 +lon_0=-111.9166666666667 
 lines.sp <- as(lines.c, "Spatial")
 lines.spdf <- SpatialLinesDataFrame(lines.sp, data = links, match.ID = F)
 #lines.spdf.lite <- SpatialLinesDataFrame(lines.sp, data = links[,.(id,capacity)], match.ID = F)
-#crs(lines.spdf2) <- crs(uza.buffer)
+crs(lines.spdf) <- crs(uza.buffer) # make sure the prj4 strings actually match to avoid cropping issues (already same crs)
 
-# project and crop to uza buffer
-lines.spdf.c <- gIntersection(lines.spdf, uza.buffer)
+# CLIP NETWORK TO PHOENIX UZA (raw is full state of AZ)
+# convert to sf objects for quicker computing 
+# sf::st_intersection is fastest for zonal intersections
+lines.sf <- st_as_sf(lines.spdf)
+uza.sf <- st_as_sf(uza.buffer)
 
-# plot
-#plot(lines.sp)
-#points(points, col = "blue", pch = 20)
+# split total point features in parking data into parts for parellel splitting
+parts <- split(1:nrow(lines.sf[,]), cut(1:nrow(lines.sf[,]), my.cores))
+
+# blank lists
+my.list <- list()
+
+# calculate the number of cores
+my.cores <- parallel::detectCores() - 1 # store computers cores n-1 for headspace
+
+save.image(here("data/outputs/temp/network2.RData"))
+#load(here("data/outputs/temp/network2.RData"))
+rm(list=setdiff(ls(), c("my.cores", "lines.sf", "uza.sf", "my.list", "parts")))
+gc()
+
+# INTERSECT POLYGONIZED RASTER w/ PARKING + ROAD DATA
+while(exists("cl") == F){ # for some reason makeCluster has been failing on the first try   
+  cl <- makeCluster(my.cores, outfile = "") # so just while loop until it is sucsessful 
+}
+registerDoParallel(cl) # register parallel backend
+invisible(clusterCall(cl, function(x) .libPaths(x), .libPaths())) # supress printing 
+
+lines.sf.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
+  my.list[[i]] <- st_intersection(lines.sf[parts[[i]],], uza.sf)
+}
+
+# stop cluster
+stopCluster(cl)
+
+# bind the intersected network data output
+lines.sf.c <- do.call(rbind, lines.sf.p) # bind list of spatial objects into single spatial obj
+
+# convert to spatial df object
+lines.spdf.c <- as(lines.sf.c, "Spatial")
 
 # write out files
 shapefile(lines.spdf.c, here("data/outputs/network/icarus-network"), overwrite = T) # station points shapefile
 saveRDS(lines.spdf.c, here("data/outputs/network/icarus-network.rds"))
-
-save.image(here("data/outputs/temp/network2.RData"))
-#load(here("data/outputs/temp/network2.RData"))
 
 # source for method to make network
 #https://stackoverflow.com/questions/20531066/convert-begin-and-end-coordinates-into-spatial-lines-in-r
