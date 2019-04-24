@@ -39,8 +39,8 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
            verbose = F) 
 
 # IMPORT DATA
-#osm <- shapefile(here("data/osm/maricopa_county_osm_roads.shp")) # import OSM data (maricopa county clipped raw road network data)
-osm <- shapefile(here("data/outputs/temp/osm-test.shp")) # SMALL TEST NETWORK (NORTH TEMPE)
+osm <- shapefile(here("data/osm/maricopa_county_osm_roads.shp")) # import OSM data (maricopa county clipped raw road network data)
+#osm <- shapefile(here("data/outputs/temp/osm-test.shp")) # SMALL TEST NETWORK (NORTH TEMPE)
 parking <- readRDS(here("data/parking/phx-parking.rds")) # phoenix off-street parking space data by parcel centriod xy coords in EPSG:2223
 fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by roadway functional class (fclass)
 uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA buffered ~1mi
@@ -138,9 +138,11 @@ gc()
 my.cores <- parallel::detectCores() - 1 # store computers cores n-1 for headspace
 
 # initiate cluster after only all the necessary objects present in R environment
-cl <- makeCluster(my.cores)
+while(exists("cl") == F){ # for some reason makeCluster has been failing on the first try   
+  cl <- makeCluster(my.cores, outfile = "") # so just while loop until it is sucsessful 
+  }
 registerDoParallel(cl) # register parallel backend
-clusterCall(cl, function(x) .libPaths(x), .libPaths())
+invisible(clusterCall(cl, function(x) .libPaths(x), .libPaths())) # supress printing
 
 w.min <- unique(osm$min.r.buf)  # list of unique min buffer widths based on oneway and estiamted roadway width
 b.min <- list() # create empty list for foreach
@@ -181,11 +183,11 @@ osm.buf.mrg.max <- do.call(raster::bind, osm.buf.max) # bind list of spatial obj
 # RASTERIZE DATA
 # create empty raster at desired extent, use osm data extent
 #res <- 164.042 # ~50 x 50 m   IDEAL
-res <- 328.084 # ~100 x 100 m
+#res <- 328.084 # ~100 x 100 m
 #res <- 820.21  # ~250m x 250m
 #res <- 1640.42  # ~500m x 500m
-#res <- 3280.84 # ~1000 x 1000 m; full script run at this res is 202.68 min using 3 cores
-r <- raster(ext = extent(osm), crs = crs(osm), res = res) # create raster = ~10 x 10 m
+res <- 3280.84 # ~1000 x 1000 m; full script run at this res is #######
+r <- raster(ext = extent(osm), crs = crs(osm), res = res) 
 
 # polygonize raster, clip roadway area by this polygon, calc road area and fractional road area for each feature
 r.p <- rasterToPolygons(r)
@@ -212,9 +214,12 @@ parts.p <- split(1:nrow(parking.pts[,]), cut(1:nrow(parking.pts[,]), my.cores))
 # buffer each parking point to create min and max parking area circles to clip by raster area
 # this ensures that large parking lots are not concentrated into a single cell
 # then clip all parts by raster and convert clipped parts to individual centriods
-cl <- makeCluster(my.cores) # initiate cluster
+rm(cl)
+while(exists("cl") == F){ # for some reason makeCluster has been failing on the first try   
+  cl <- makeCluster(my.cores, outfile = "") # so just while loop until it is sucsessful 
+  } 
 registerDoParallel(cl) # register parallel backend
-clusterCall(cl, function(x) .libPaths(x), .libPaths()) 
+invisible(clusterCall(cl, function(x) .libPaths(x), .libPaths())) # supress printing 
 
 # blank lists
 p.min <- list()
@@ -265,9 +270,11 @@ rm(list=setdiff(ls(), c("my.cores", "script.start", "r", "r.t", "res", "p.min", 
 gc()
 
 # INTERSECT POLYGONIZED RASTER w/ PARKING + ROAD DATA
-cl <- makeCluster(my.cores) # initiate cluster
+while(exists("cl") == F){ # for some reason makeCluster has been failing on the first try   
+  cl <- makeCluster(my.cores, outfile = "") # so just while loop until it is sucsessful 
+  }
 registerDoParallel(cl) # register parallel backend
-clusterCall(cl, function(x) .libPaths(x), .libPaths()) 
+invisible(clusterCall(cl, function(x) .libPaths(x), .libPaths())) # supress printing 
 
 park.min.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
   p.min[[i]] <- st_intersection(park.min.s[parts.p.min[[i]],], r.t)
@@ -346,60 +353,39 @@ rm(list=setdiff(ls(), c("my.cores", "script.start", "r", "parts.min.r", "parts.m
 gc()
 
 # initiate cluster after only all the necessary objects present in R environment
-cl <- makeCluster(my.cores)
+while(exists("cl") == F){ # for some reason makeCluster has been failing on the first try
+  cl <- makeCluster(my.cores, outfile = "") # so just while loop until it is sucsessful
+}
 registerDoParallel(cl) # register parallel backend
-clusterCall(cl, function(x) .libPaths(x), .libPaths())
+invisible(clusterCall(cl, function(x) .libPaths(x), .libPaths())) # supress printing
 
-# ROADS
-# rasterize in parellel min/max fractional road network area by fclass and save
-# based on rasterize getCover which requires 1/10 the raster resolution to be greater than the min roadway width
-# or this method will be very inaccurate (and it is slower than the point based alternative below)
-#foreach(i = 1:length(features.min.r), .packages = c("raster", "here")) %dopar% {
-#  rasterize(osm.min.i[osm.min.i$fclass.min == features.min.r[i],], r, getCover = T, #field = "frac", fun = sum, background = 0,
-#            filename = here(paste0("data/outputs/temp/rasters/road-min-", features.min.r[i], "-gcv.tif")), 
-#            overwrite = T)
-#}
-#foreach(i = 1:length(features.max.r), .packages = c("raster", "here")) %dopar% {
-#  rasterize(osm.max.i[osm.max.i$fclass.max == features.max.r[i],], r, getCover = T,
-#            filename = here(paste0("data/outputs/temp/rasters/road-max-", features.max.r[i], "-gcv.tif")), 
-#            overwrite = T)
-#}
+# because these save the output, use invisible() to supress printed msgs of saved raster path
 
 # rasterize in parellel min/max fractional road network area by fclass and save
 # based on roadway point summary data clipped by raster cells to ensure no loss of data from getCover
-foreach(i = 1:length(parts.min.r), .packages = c("raster", "here")) %dopar% {
-  rasterize(osm.min.p[parts.min.r[[i]],], r, field = "frac", fun = "first", background = 0,
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.min.p[parts.min.r[[i]],], r, field = "frac", fun = sum, background = 0,
             filename = here(paste0("data/outputs/temp/rasters/road-min-part-", i, ".tif")), 
             overwrite = T)
-}
-foreach(i = 1:length(parts.max.r), .packages = c("raster", "here")) %dopar% {
-  rasterize(osm.max.p[parts.max.r[[i]],], r, field = "frac", fun = "first", background = 0,
+})
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.max.p[parts.max.r[[i]],], r, field = "frac", fun = sum, background = 0,
             filename = here(paste0("data/outputs/temp/rasters/road-max-part-", i, ".tif")), 
             overwrite = T)
-}
+})
 
 # PARKING 
-# rasterize min/max parking area based on parking point summary data (no adjustments)
-#foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-#  rasterize(parking.pts[parts.p[[i]],], r, field = "min.frac", fun = sum, background = 0, 
-#            filename = here(paste0("data/outputs/temp/rasters/park-min-part-", i, ".tif")), 
-#            overwrite = T)}
-#foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-#  rasterize(parking.pts[parts.p[[i]],], r, field = "max.frac", fun = sum, background = 0, 
-#            filename = here(paste0("data/outputs/temp/rasters/park-max-part-", i, ".tif")), 
-#            overwrite = T)}
-
 # rasterize min/max parking area based on buffered, raster clipped, and centrioded parking area data (adjusted)
-foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
   rasterize(park.min.p[parts.min.p[[i]],], r, field = "frac", fun = sum, background = 0,
             filename = here(paste0("data/outputs/temp/rasters/park-min-part-", i, ".tif")), 
             overwrite = T)
-}
-foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+})
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
   rasterize(park.max.p[parts.max.p[[i]],], r, field = "frac", fun = sum, background = 0,
             filename = here(paste0("data/outputs/temp/rasters/park-max-part-", i, ".tif")), 
             overwrite = T)
-}
+})
 
 # stop cluster
 stopCluster(cl)
