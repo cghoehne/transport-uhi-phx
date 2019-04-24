@@ -1,6 +1,11 @@
-#########################################################
-# get and clean XML network and plans from ICARUS model #
-########################################################
+###############################################################################
+# get the cleaned ICARUS network & construct spatially to link vehicle travel #
+###############################################################################
+
+# the ICARUS model uses MATSIM to simulated Maricopa County travel
+# the model uses a cleaned and slightly simplified OSM network for paths
+# we use this models travel data output + the cleaned network to estimate
+# spatio-temporal travel density and vehicle waste heat
 
 # clear space and allocate memory
 gc()
@@ -35,6 +40,9 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
            checkpointLocation = here(), # calls here package
            verbose = F) 
 
+# get UZA buffer for extent and crs (EPSG:2223)
+uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA buffered ~1mi
+
 # get XML data for network and plans
 network <- xmlToList(xmlParse(here("data/icarus/full_network.xml")))  # traffic network (nodes + links) from xml file
 
@@ -55,9 +63,9 @@ nodes <- nodes[, .(id = as.character(id),
 links[, c(1:3,9)] <- as.data.table(sapply(links[, c(1:3,9)], as.character))
 links[, c(4:8)] <- as.data.table(sapply(links[, c(4:8)], function (x) as.numeric(as.character(x))))
 
-# create spatial lines network from nodes and links
+# create spatial lines network from nodes and links (nodes x y are already in EPSG:2223 so use that)
 points <- SpatialPointsDataFrame(coords = nodes[, .(lon,lat)], data = nodes,
-                                 proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+                                 proj4string = crs(uza.buffer))
 # create list of simple feature geometries (linestrings)
 lines <- vector("list", links[,.N])
 for (i in 1:links[,.N]){
@@ -65,30 +73,27 @@ for (i in 1:links[,.N]){
                                               nodes[id == links[i, to], .(lon,lat)]))) # end coords
 }
 # create simple feature geometry list column
-lines.c <- st_sfc(lines, crs = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+lines.c <- st_sfc(lines, crs = "+proj=tmerc +lat_0=31 +lon_0=-111.9166666666667 +k=0.9999 +x_0=213360 +y_0=0 +datum=NAD83 +units=ft +no_defs +ellps=GRS80 +towgs84=0,0,0")
+#lines.c <- st_sfc(lines, crs = 2223)
+
+#"+proj=tmerc +lat_0=31 +lon_0=-111.9166666666667 +k=0.9999 +x_0=213360 +y_0=0 +datum=NAD83 +units=ft +no_defs +ellps=GRS80 +towgs84=0,0,0"
 
 # convert to `sp` object then SpatialLinesDataFrame
 lines.sp <- as(lines.c, "Spatial")
 lines.spdf <- SpatialLinesDataFrame(lines.sp, data = links, match.ID = F)
-lines.spdf.lite <- SpatialLinesDataFrame(lines.sp, data = links[,.(id,capacity)], match.ID = F)
+#lines.spdf.lite <- SpatialLinesDataFrame(lines.sp, data = links[,.(id,capacity)], match.ID = F)
+#crs(lines.spdf2) <- crs(uza.buffer)
 
 # project and crop to uza buffer
-# becuase the projection we want to use causes some infinite 
-# 
-uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA buffered ~1mi
-uza.wgs84 <- spTransform(uza.buffer, "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
-#lines.spdf.c <- intersect(lines.spdf, uza.wgs84) # FAILS
-lines.spdf.c <- gIntersection(lines.spdf, uza.wgs84)
-#sf::st_intersection(lines.spdf, uza.wgs84)
-lines.prj <- spTransform(lines.spdf.c, crs(uza.buffer))
+lines.spdf.c <- gIntersection(lines.spdf, uza.buffer)
 
 # plot
 #plot(lines.sp)
 #points(points, col = "blue", pch = 20)
 
-# write as shapefile
-shapefile(lines.prj, here("data/outputs/shapefiles/icarus-network"), overwrite = T) # station points shapefile
-#shapefile(lines.spdf.lite, here("data/outputs/shapefiles/icarus-network-lite"), overwrite = T) # station points shapefile
+# write out files
+shapefile(lines.spdf.c, here("data/outputs/network/icarus-network"), overwrite = T) # station points shapefile
+saveRDS(lines.spdf.c, here("data/outputs/network/icarus-network.rds"))
 
 save.image(here("data/outputs/temp/network2.RData"))
 #load(here("data/outputs/temp/network2.RData"))
@@ -99,20 +104,20 @@ save.image(here("data/outputs/temp/network2.RData"))
 
 ####################################
 # BACKUP READING TRAVEL DATA FROM XML
-plans <- xmlToList(xmlParse(here("data/icarus/TEST_matsim_plans_from_mag.xml"))) # plans (trips + activities) from xml file
+#plans <- xmlToList(xmlParse(here("data/icarus/TEST_matsim_plans_from_mag.xml"))) # plans (trips + activities) from xml file
 
 # get list of person ids
-per.id <- lapply(1:length(plans), function (x) unlist(plans[[x]][[".attrs"]][["id"]]))
+#per.id <- lapply(1:length(plans), function (x) unlist(plans[[x]][[".attrs"]][["id"]]))
 
 # get list of all trips by person
-trips.l <- lapply(1:length(plans), function (x) lapply(which(!(names(plans[[x]][["plan"]]) %in% c("act",".attrs")), arr.ind = T), 
-                                                       function (y) as.data.frame.list(plans[[x]][["plan"]][[y]])))
+#trips.l <- lapply(1:length(plans), function (x) lapply(which(!(names(plans[[x]][["plan"]]) %in% c("act",".attrs")), arr.ind = T), 
+#                                                       function (y) as.data.frame.list(plans[[x]][["plan"]][[y]])))
 # get list of all activies by person
-activ.l <- lapply(1:length(plans), function (x) lapply(which(!(names(plans[[x]][["plan"]]) %in% c("leg",".attrs")), arr.ind = T), 
-                                                       function (y) as.data.frame.list(plans[[x]][["plan"]][[y]])))
+#activ.l <- lapply(1:length(plans), function (x) lapply(which(!(names(plans[[x]][["plan"]]) %in% c("leg",".attrs")), arr.ind = T), 
+#                                                       function (y) as.data.frame.list(plans[[x]][["plan"]][[y]])))
 # bind all trips together and add person id            
-trips <- rbindlist(lapply(1:length(trips.l), function (x) cbind(rbindlist(trips.l[[x]]), pid = per.id[[x]])))
+#trips <- rbindlist(lapply(1:length(trips.l), function (x) cbind(rbindlist(trips.l[[x]]), pid = per.id[[x]])))
 
 # bind all activities together and add person id            
-activ <- rbindlist(lapply(1:length(activ.l), function (x) cbind(rbindlist(activ.l[[x]], fill = T), pid = per.id[[x]])), fill = T)
+#activ <- rbindlist(lapply(1:length(activ.l), function (x) cbind(rbindlist(activ.l[[x]], fill = T), pid = per.id[[x]])), fill = T)
 
