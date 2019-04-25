@@ -90,16 +90,16 @@ crs(lines.spdf) <- crs(uza.buffer) # make sure the prj4 strings actually match t
 lines.sf <- st_as_sf(lines.spdf)
 uza.sf <- st_as_sf(uza.buffer)
 
-# split total point features in parking data into parts for parellel splitting
-parts <- split(1:nrow(lines.sf[,]), cut(1:nrow(lines.sf[,]), my.cores))
-
 # blank lists
 my.list <- list()
 
 # calculate the number of cores
 my.cores <- parallel::detectCores() - 1 # store computers cores n-1 for headspace
 
-save.image(here("data/outputs/temp/network2.RData"))
+# split total point features in parking data into parts for parellel splitting
+parts <- split(1:nrow(lines.sf[,]), cut(1:nrow(lines.sf[,]), my.cores))
+
+save.image(here("data/outputs/temp/network3.RData"))
 #load(here("data/outputs/temp/network2.RData"))
 rm(list=setdiff(ls(), c("my.cores", "lines.sf", "uza.sf", "my.list", "parts")))
 gc()
