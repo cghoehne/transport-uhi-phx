@@ -90,16 +90,16 @@ crs(lines.spdf) <- crs(uza.buffer) # make sure the prj4 strings actually match t
 lines.sf <- st_as_sf(lines.spdf)
 uza.sf <- st_as_sf(uza.buffer)
 
-# split total point features in parking data into parts for parellel splitting
-parts <- split(1:nrow(lines.sf[,]), cut(1:nrow(lines.sf[,]), my.cores))
-
 # blank lists
 my.list <- list()
 
 # calculate the number of cores
 my.cores <- parallel::detectCores() - 1 # store computers cores n-1 for headspace
 
-save.image(here("data/outputs/temp/network2.RData"))
+# split total point features in parking data into parts for parellel splitting
+parts <- split(1:nrow(lines.sf[,]), cut(1:nrow(lines.sf[,]), my.cores))
+
+save.image(here("data/outputs/temp/network3.RData"))
 #load(here("data/outputs/temp/network2.RData"))
 rm(list=setdiff(ls(), c("my.cores", "lines.sf", "uza.sf", "my.list", "parts")))
 gc()
@@ -123,6 +123,14 @@ lines.sf.c <- do.call(rbind, lines.sf.p) # bind list of spatial objects into sin
 
 # convert to spatial df object
 lines.spdf.c <- as(lines.sf.c, "Spatial")
+
+# eliminate unneeded variables
+lines.spdf.c$from <- NULL # origin node
+lines.spdf.c$to <- NULL # dest node
+lines.spdf.c$length <- NULL # original link length
+lines.spdf.c$permlanes <- NULL
+lines.spdf.c$oneway <- NULL # unique(lines.spdf.c$oneway) == c(1)
+lines.spdf.c$modes <- NULL # currently all car
 
 # write out files
 shapefile(lines.spdf.c, here("data/outputs/network/icarus-network"), overwrite = T) # station points shapefile
