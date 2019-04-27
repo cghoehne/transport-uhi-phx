@@ -84,7 +84,7 @@ parking.pts <- SpatialPointsDataFrame(parking[,.(X,Y)], # coords from EPSG:2223
 rm(parking) # remove unused obj
 
 # clip parking data to desired extent
-parking.pts <- intersect(parking.pts, extent(my.buffer)) # SMALL or TEST network
+parking.pts <- intersect(parking.pts, extent(my.buffer))
 
 # calculate min and max parking area by property type and other assumptions (proj is in ft)
 
@@ -292,8 +292,19 @@ traffic.net <- readRDS(here("data/outputs/network/icarus-network.rds")) # cleane
 cars <- st_as_sf(traffic.net)
 rm(traffic.net)
 
-# add/define flow by link (daily average)
-cars$flow <- cars$capacity * 0.5
+# ICARUS traffic data has 101 cols where col 1 is link id and the rest are from 12am to 12am divided in 100 chunks
+# therefore every column from V2:V101 represents a 0.24 hour period
+# morning rush would be from: hour = 7.92 am to 8.88 am (6:54:12 am to 8:52:48 am); V34:V37
+# evening rush would be from: hour = 5.04 pm  to 6 pm (5:02:24 pm to 6:00:00 pm); V72:V75
+
+# merge summarized icarus flow data by link id
+iflow <- fread(here("data/icarus/full_flow.csv"))
+setnames(iflow, "V1", "id")
+cars.m <- merge(cars, iflow[, .(day.flow = sum(V2:V101),
+                                fl.8.9am = sum(V34:V37),
+                                fl.5.6pm = sum(V72:V75)),
+                            by = id], by = "id")
+rm(iflow, cars)
 
 # sf objects for quicker intersections
 osm.min.s <- st_as_sf(osm.buf.mrg.min)
@@ -366,7 +377,16 @@ park.max.i$area <- st_area(park.max.i)
 park.max.i$frac <- park.max.i$area / (res * res) # divide by raster cell area
 
 # for vehicle travel, calc VMT by trimmed link length * vehicles traversed
-cars.i$vmt <- st_length(cars.i)  * cars.i$flow
+cars.i$day.vmt <- st_length(cars.i)  * cars.i$day.flow
+cars.i$am.vmt <- st_length(cars.i)  * cars.i$fl.8.9am
+cars.i$pm.vmt <- st_length(cars.i)  * cars.i$fl.5.6am
+
+# import SVF data and convert to points from lat lon and transform to EPSG:2223
+svf <- readRDS(here("data/phoenix_SVF.rds")) # phoenix sky view factor data (via A. Middel)
+svf.pts <- SpatialPointsDataFrame(coords = svf[,.(lon,lat)], data = svf[, .(SVF)], 
+                                  proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+svf.pts <- spTransform(svf.pts, crs(my.crs))
+svf.pts <- intersect(svf.pts, extent(my.buffer))
 
 # convert clipped spatial parking area to centroids and data 
 osm.min.c <- st_centroid(osm.min.i)
@@ -389,7 +409,7 @@ cars.p <- as(cars.c, "Spatial")
 # removed unused objects
 rm(osm.min.c, osm.max.c, osm.min.i, osm.max.i, 
    park.min.i, park.max.i, park.min.c, park.max.c, 
-   cars.i, cars.c)
+   cars.i, cars.c, svf)
 
 # split total point features in pavement/parking data into parts for parellel splitting
 parts.min.r <- split(1:nrow(osm.min.p[,]), cut(1:nrow(osm.min.p[,]), my.cores))
@@ -399,6 +419,8 @@ parts.min.p <- split(1:nrow(park.min.p[,]), cut(1:nrow(park.min.p[,]), my.cores)
 parts.max.p <- split(1:nrow(park.max.p[,]), cut(1:nrow(park.max.p[,]), my.cores))
 
 parts.c <- split(1:nrow(cars.p[,]), cut(1:nrow(cars.p[,]), my.cores))
+
+parts.svf <- split(1:nrow(svf.pts[,]), cut(1:nrow(svf.pts[,]), my.cores))
 
 # create temporary output directory
 dir.create(here("data/outputs/temp/rasters"), showWarnings = F)
@@ -440,8 +462,16 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
 # CARS
 # rasterize VMT based on cleaned icarus clipped links with vehicle travel centrioded
 invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-  rasterize(cars.p[parts.c[[i]],], r, field = "vmt", fun = sum, background = 0,
+  rasterize(cars.p[parts.c[[i]],], r, field = "day.vmt", fun = sum, background = 0,
             filename = here(paste0("data/outputs/temp/rasters/cars-part-", i, ".tif")), 
+            overwrite = T)
+})
+
+# SVF
+# rasterize SVF point data into mean by pixel
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(svf.pts[parts.svf[[i]],], r, field = "SVF", fun = mean, background = NA,
+            filename = here(paste0("data/outputs/temp/rasters/svf-part-", i, ".tif")), 
             overwrite = T)
 })
 
