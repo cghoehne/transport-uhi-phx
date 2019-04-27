@@ -39,22 +39,25 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
            verbose = F) 
 
 # IMPORT DATA
-osm <- shapefile(here("data/osm/maricopa_county_osm_roads.shp")) # SMALL TEST NETWORK (NORTH TEMPE)
+osm <- shapefile(here("data/osm/maricopa_county_osm_roads.shp")) # raw OSM data for Maricopa County
 parking <- readRDS(here("data/parking/phx-parking.rds")) # phoenix off-street parking space data by parcel centriod xy coords in EPSG:2223
 fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by roadway functional class (fclass)
-my.extent <- st_as_sf(shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp"))) # Maricopa UZA (non-buffered) in EPSG:2223
+my.extent <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
 
 # define name of run
 #run.name <- "metro-phx"
-run.name <- "phx-dwntwn"
-#run.name <- "tempe"
+#run.name <- "phx-dwntwn"
+run.name <- "north-tempe"
 
 # alternatively, define 2 bounding coordinates for a different extent that is within the spatial extent of the available data
 # phx dwntwn: UL 33.487158, -112.122746; LR 33.419871, -112.018541
-# tempe
+# tempe: UL 33.465809, -111.987157; LR 33.378679, -111.877737
 my.crs <- crs(my.extent) # store desired CRS (EPSG:2223)
-if(run.name != "metro-phx"){
-  my.extent <- as(extent(spTransform(SpatialPoints(coords = data.table(lon = c(-112.122746,-112.018541), lat = c(33.487158,33.419871)),
+my.extent <- st_as_sf(my.extent) # store desired extent as sf obj
+if(run.name != "metro-phx"){ # if not doing the full region run, adjust the extent based on lat lon boundings
+  if(run.name == "phx-dwntwn"){my.coords <- data.table(lon = c(-112.122746,-112.018541), lat = c(33.487158,33.419871))}
+  if(run.name == "north-tempe"){my.coords <- data.table(lon = c(-111.987157,-111.877737), lat = c(33.465809,33.378679))}
+  my.extent <- as(extent(spTransform(SpatialPoints(coords = my.coords,
                                                    proj4string = crs("+proj=longlat +datum=WGS84")), my.crs)), "SpatialPolygons")
   proj4string(my.extent) <- crs(my.crs)
   my.extent <- st_as_sf(my.extent)
@@ -82,7 +85,6 @@ rm(parking) # remove unused obj
 
 # clip parking data to desired extent
 parking.pts <- intersect(parking.pts, extent(my.buffer)) # SMALL or TEST network
-#parking.pts <- intersect(parking.pts, my.buffer) # FULL NETWORK
 
 # calculate min and max parking area by property type and other assumptions (proj is in ft)
 
@@ -119,13 +121,7 @@ osm$layer <- NULL # irrelevant variable
 osm$maxspeed <- NULL # unused, most are 0 or missing so unuseable in this case
 osm$bridge <- NULL # unused
 
-# transform osm crs to EPSG:2223
-osm <- spTransform(osm, crs(my.crs))
-
-# clip osm data to my buffer for quicker computing
-osm.sf <- st_as_sf(osm)
-osm <- st_intersection(osm.sf, my.buffer)
-osm <- as(osm, "Spatial")
+osm.b <- osm
 
 # store osm data for quick calcs of new variables and rebind later
 osm.dt <- as.data.table(osm@data)
@@ -133,16 +129,6 @@ osm.dt <- as.data.table(osm@data)
 # merge fclass.info with osm data
 osm.dt <- merge(osm.dt, fclass.info, by = "fclass", all.x = T)
 rm(fclass.info) # remove unused obj
-
-# drop tunnels, and non pavement fclass
-osm.dt <- osm.dt[tunnel == "F" & min.2w.width.m > 0 
-                 & !(fclass %in% c("bridleway", "path", "track_grade3",
-                                   "track_grade4", "track_grade5", "unknown")),]
-
-# because the fclass of "service" roads is inconsistent but does often trace parking lots,
-# we ignore this in place of parking estimates which will be more consistent.
-# NOTE: it also traces alleyways consistently but there is no easy way to disentangle
-osm.dt <- osm.dt[fclass != "service",]
 
 # calc min/max road width based on 2way widths and 1way/2way ("B" == both, "T"/"F" True/False for driving in the opposite dir of linestring)
 osm.dt[oneway == "B", max.width := as.numeric(max.2w.width.m)]
@@ -154,6 +140,16 @@ osm.dt[oneway == "T" | oneway == "F", min.width := as.numeric(min.2w.width.m / 2
 osm.dt[, min.r.buf := min.width * 3.28084 * 0.5] # raduis = 0.5 * diameter
 osm.dt[, max.r.buf := max.width * 3.28084 * 0.5] # 3.28084 ft per meter
 
+# drop tunnels, and non pavement fclass
+osm.dt <- osm.dt[tunnel == "F" & min.2w.width.m > 0 
+                 & !(fclass %in% c("bridleway", "path", "track_grade3",
+                                   "track_grade4", "track_grade5", "unknown")),]
+
+# because the fclass of "service" roads is inconsistent but does often trace parking lots,
+# we ignore this in place of parking estimates which will be more consistent.
+# NOTE: it also traces alleyways consistently but there is no easy way to disentangle
+osm.dt <- osm.dt[fclass != "service",]
+
 # merge filtered data with min/max roadway widths to spatial osm data
 osm <- merge(osm, osm.dt[, .(osm_id, min.width, max.width, min.r.buf, max.r.buf)], by = "osm_id", all.x = F)
 rm(osm.dt) # remove unused obj
@@ -161,6 +157,14 @@ rm(osm.dt) # remove unused obj
 # remove tunnel and oneway as no longer needed
 osm$tunnel <- NULL
 osm$oneway <- NULL
+
+# transform osm crs to EPSG:2223
+osm <- spTransform(osm, crs(my.crs))
+
+# clip osm data to my buffer for quicker computing
+osm.sf <- st_as_sf(osm)
+osm <- st_intersection(osm.sf, my.buffer$geometry)
+osm <- as(osm, "Spatial")
 
 # store the number of cores
 my.cores <- parallel::detectCores() - 1 # n-1 for headspace
@@ -260,10 +264,10 @@ invisible(clusterCall(cl, function(x) .libPaths(x), .libPaths())) # supress prin
 
 # clip parking to actual extent to remove parking outside edges
 park.min.i.u.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
-  my.list[[i]] <- st_intersection(park.min.s[parts.p.min[[i]],], my.extent)
+  my.list[[i]] <- st_intersection(park.min.s[parts.p.min[[i]],], my.extent$geometry)
 }
 park.max.i.u.p <- foreach(i = 1:my.cores, .packages = c("sp")) %dopar% {
-  my.list[[i]] <- st_intersection(park.max.s[parts.p.max[[i]],], my.extent)
+  my.list[[i]] <- st_intersection(park.max.s[parts.p.max[[i]],], my.extent$geometry)
 }
 
 # stop cluster
