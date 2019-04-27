@@ -56,10 +56,10 @@ dir.create(out.folder, showWarnings = FALSE)
 layer.profiles <- readRDS(here(paste0("data/outputs/layer-profiles-", batches[batch.n, id],".rds"))) 
 
 # define validation site location IDs to pull weather data from the nearest weather site to corresponding layer profile
-if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B1", "B1") # BARE GROUND also B2 good
-} else if(batches[batch.n, id] == "C") {layer.sites <- c("C4", "C4", "C4") # CONCRETE also C1 good
-} else if(batches[batch.n, id] == "WA") {layer.sites <- c("C1", "C1", "C1") # WHITETOPPED ASPHALT also C4 good
-} else if(batches[batch.n, id] == "OC") {layer.sites <- c("A3", "A3", "A3") # ASPHALT OVERLAY CONCRETE also A6 good
+if(batches[batch.n, id] == "BG"){layer.sites <- c("B2", "B2", "B2") # BARE GROUND also B2 good
+} else if(batches[batch.n, id] == "C") {layer.sites <- c("C1", "C1", "C1") # CONCRETE also C1 good
+} else if(batches[batch.n, id] == "WA") {layer.sites <- c("C4", "C4", "C4") # WHITETOPPED ASPHALT also C4 good
+} else if(batches[batch.n, id] == "OC") {layer.sites <- c("A6", "A6", "A6") # ASPHALT OVERLAY CONCRETE also A6 good
 } else if(batches[batch.n, id] == "A") {layer.sites <- c("A6", "A6", "A6")} # ASPHALT also A3 good
 
 # load validation site data 
@@ -139,8 +139,9 @@ for(run in 1:model.runs[,.N]){  #
     my.dates <- seq.Date(date(model.runs[run.n == run, end.day]) - days(day.n) + 1, date(model.runs[run.n == run, end.day]) + 1, "day")
     my.site <- my.sites[Location == model.runs$valid.site[run],]
     
-    # trim weather data to relevant dates for this run (just past end date.time)
-    weather <- weather.raw[date.time >= min(my.dates) & date.time <= force_tz(max(my.dates) + hours(1), tz =  tz(weather.raw$date.time[1])) ,]
+    # trim weather data to relevant dates for this run (just before and past end date.time)
+    weather <- weather.raw[date.time >= force_tz(min(my.dates) - seconds(1), tz =  tz(weather.raw$date.time[1])) & 
+                           date.time <= force_tz(max(my.dates) + hours(1), tz =  tz(weather.raw$date.time[1])) ,]
   
     # trim station data to available stations during desired dates
     stations <- stations.raw[station.name %in% weather$station.name,]
@@ -162,19 +163,25 @@ for(run in 1:model.runs[,.N]){  #
     weather[between(solar, avg.hr.s - sd.hr.s*2, avg.hr.t + sd.hr.t*2), qcflag2 := 0]
 
     # calculate the remaining obs per day for desired time period
-    for(s in 1:model.runs[,.N]){ 
+    for(s in 1:stations[,.N]){ 
       s.name <- stations[s, station.name]
       if(weather[station.name == s.name, .N] == 0){next}
       stations[s, n.solar.day := weather[station.name == s.name & !is.na(solar), .N] / day.n]
       stations[s, n.dewpt.day := weather[station.name == s.name & !is.na(dewpt.c), .N] / day.n]
       stations[s, n.tempc.day := weather[station.name == s.name & !is.na(temp.c), .N] / day.n]
-      stations[s, max.gap.hrs := max(difftime(weather[station.name == s.name, date.time],
+      stations[s, max.gap.hrs := max(difftime(min(weather[station.name == s.name, date.time]), # difftime btwn min date and first obs 
+                                              force_tz(min(my.dates) + seconds(1), 
+                                                       tz =  tz(weather.raw$date.time[1])), units = "hours"),
+                                     difftime(max(weather[station.name == s.name, date.time]), # difftime btwn max date and last obs
+                                              force_tz(max(my.dates) + seconds(1), 
+                                                       tz =  tz(weather.raw$date.time[1])), units = "hours"),
+                                     difftime(weather[station.name == s.name, date.time], # difftimes btwn all other vars
                                               weather[station.name == s.name, shift(date.time)], 
                                               units = "hours"), na.rm = T)]
       stations[s, p.flag := weather[station.name == s.name & qcflag2 == 1, .N] 
                / (weather[station.name == s.name & !is.na(solar) & !is.na(temp.c), .N] + 1)]
     }
-    
+
     # filter to only stations with an average of one observation per hour during desired dates,
     # with no gap in observations greater than 2 hours, and
     # with good quality data (low percent of data falling outside expected range)
