@@ -27,6 +27,8 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
            checkpointLocation = here(), # calls here package
            verbose = F) 
 
+library(ggplot2, lib.loc = lib.path) # incase it fails to load first time (happens erroneously sometimes)
+
 # load windows fonts and store as string
 windowsFonts(Century=windowsFont("TT Century Gothic"))
 windowsFonts(Times=windowsFont("TT Times New Roman"))
@@ -67,7 +69,7 @@ for(f in 1:length(out.folders)){
   layer.profiles <- readRDS(paste0(out.folder,"/layer_profiles.rds"))
   
   # load validation site data 
-  valid.dates <- readRDS(here("data/aster/my-aster-data.rds")) # remote sensed temps at valiation sites on specified dates
+  valid.dates <- readRDS(here("data/outputs/aster/aster-data-my.rds")) # remote sensed temps at valiation sites on specified dates
   my.sites <- readRDS(paste0(out.folder,"/validation_sites.rds")) # other validation sites info 
   
   # create output directory for plots
@@ -184,10 +186,10 @@ for(f in 1:length(out.folders)){
         min.x.surf <- min(p.surf.data$date.time, na.rm = T)
         max.x.surf <- ceiling_date(max(p.surf.data[!is.na(T.degC), date.time]), unit = "hours")
         min.y.surf <- 0 # solar rad is always 0 at night
-        max.y.surf <- round(max(p.surf.data[, solar/10], na.rm = T), - 1) + 5
-        surf.col <- c("Modeled \nSurface Temperature" = "#0D1B1E", "Observed \nAir Temperature" = "#10316B", "Observed \nSolar Radiation" = "#BF1C3D")
-        surf.shp <- c("Modeled \nSurface Temperature" = 0, "Observed \nAir Temperature" = 5, "Observed \nSolar Radiation" = 2)
-        surf.siz <- c("Modeled \nSurface Temperature" = 1, "Observed \nAir Temperature" = 1, "Observed \nSolar Radiation" = 1)
+        max.y.surf <- round(max(p.surf.data[, insol/10], na.rm = T), - 1) + 5
+        surf.col <- c("Modeled \nSurface Temperature" = "#0D1B1E", "Observed \nAir Temperature" = "#10316B", "Estimated \nSolar Radiation" = "#BF1C3D")
+        surf.shp <- c("Modeled \nSurface Temperature" = 0, "Observed \nAir Temperature" = 5, "Estimated \nSolar Radiation" = 2)
+        surf.siz <- c("Modeled \nSurface Temperature" = 1, "Observed \nAir Temperature" = 1, "Estimated \nSolar Radiation" = 1)
         
         p.surf <- (ggplot(data = p.surf.data) 
                    
@@ -195,14 +197,14 @@ for(f in 1:length(out.folders)){
                    + geom_segment(aes(x = min.x.surf, y = min.y.surf, xend = max.x.surf, yend = min.y.surf))   # x border (x,y) (xend,yend)
                    + geom_segment(aes(x = min.x.surf, y = min.y.surf, xend = min.x.surf, yend = max.y.surf))  # y border (x,y) (xend,yend)
                    
-                   # Observederved air temperature
+                   # Observed air temperature
                    + geom_line(aes(y = air.temp.c, x = date.time, color = "Observed \nAir Temperature", size = "Observed \nAir Temperature"))
                    + geom_point(aes(y = air.temp.c, x = date.time, color = "Observed \nAir Temperature", shape = "Observed \nAir Temperature"), 
                                 data = p.surf.data[mins %in% c(0) & secs == 0,])
                    
-                   # Observederved solar radiation
-                   + geom_line(aes(y = solar/10, x = date.time, color = "Observed \nSolar Radiation", size = "Observed \nSolar Radiation"))
-                   + geom_point(aes(y = solar/10, x = date.time, color = "Observed \nSolar Radiation", shape = "Observed \nSolar Radiation"), 
+                   # Estimated solar radiation
+                   + geom_line(aes(y = insol/10, x = date.time, color = "Estimated \nSolar Radiation", size = "Estimated \nSolar Radiation"))
+                   + geom_point(aes(y = insol/10, x = date.time, color = "Estimated \nSolar Radiation", shape = "Estimated \nSolar Radiation"), 
                                 data = p.surf.data[mins %in% c(0) & secs == 0,])
                    
                    # modeled pavement surface temperature
@@ -213,9 +215,9 @@ for(f in 1:length(out.folders)){
                    # plot/axis titles & second axis for solar rad units
                    #+ ggtitle("Modeled Surface Pavement Temperature")
                    + labs(x = "Time of Day", y = "Temperature (deg C)")
-                   + scale_color_manual(name = "", values = surf.col, labels = c("Modeled \nSurface Temperature", "Observed \nAir Temperature", "Observed \nSolar Radiation"))
-                   + scale_shape_manual(name = "", values = surf.shp, labels = c("Modeled \nSurface Temperature", "Observed \nAir Temperature", "Observed \nSolar Radiation"))
-                   + scale_size_manual(name = "", values = surf.siz, labels = c("Modeled \nSurface Temperature", "Observed \nAir Temperature", "Observed \nSolar Radiation"))
+                   + scale_color_manual(name = "", values = surf.col, labels = c("Modeled \nSurface Temperature", "Observed \nAir Temperature", "Estimated \nSolar Radiation"))
+                   + scale_shape_manual(name = "", values = surf.shp, labels = c("Modeled \nSurface Temperature", "Observed \nAir Temperature", "Estimated \nSolar Radiation"))
+                   + scale_size_manual(name = "", values = surf.siz, labels = c("Modeled \nSurface Temperature", "Observed \nAir Temperature", "Estimated \nSolar Radiation"))
                    
                    # scales
                    + scale_x_datetime(expand = c(0,0), limits = c(min.x.surf, max.x.surf), date_breaks = "6 hours", date_labels = "%H")
@@ -377,8 +379,8 @@ for(f in 1:length(out.folders)){
         p.flux.data <- pave.time[node == 0] 
         albedo <- model.runs$albedo[run]
         SVF <- model.runs$SVF[run]
-        p.flux.data[, inc.sol := ((1 - albedo) * SVF * solar)]
-        p.flux.data[, ref.sol := albedo * SVF * solar]
+        p.flux.data[, inc.sol := ((1 - albedo) * SVF * insol)]
+        p.flux.data[, ref.sol := albedo * SVF * insol]
         p.flux.data <- melt(p.flux.data[, .(date.time, mins, secs, q.rad, q.cnv, ref.sol)], id.vars = c("date.time","mins","secs"), value.name = "flux")  # inc.sol
         #p.flux.data[, net.flux := inc.sol + q.rad + q.cnv]
         min.x.flux <- min(p.flux.data$date.time, na.rm = T)
