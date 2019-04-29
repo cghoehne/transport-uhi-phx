@@ -533,6 +533,9 @@ values(r.pave.min) <- ifelse(values(r.pave.min) > 1.0, 1.0, values(r.pave.min))
 values(r.pave.avg) <- ifelse(values(r.pave.avg) > 1.0, 1.0, values(r.pave.avg))
 values(r.pave.max) <- ifelse(values(r.pave.max) > 1.0, 1.0, values(r.pave.max)) 
 
+# make correct units of vmt by dividing result by 5280 (ft per mile)
+values(r.veh) <- values(r.veh) / 5280
+
 # plots to check
 plot(r.road.avg) # , rev(heat.colors(255))
 plot(r.park.avg)
