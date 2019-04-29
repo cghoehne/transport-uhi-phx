@@ -36,7 +36,7 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 ################################
 # DEFINE BATCH RUN ID and NAME #
 ################################
-batch.n <- 1 # choose index for batch run type
+batch.n <- 4 # choose index for batch run type
 
 batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
                          name = c("Asphalt Pavements", 
@@ -75,7 +75,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
                #pave.length = c(200), # characteristic length of pavement in meters
-               SVF = c(0.95), # sky view factor  0.5, 
+               SVF = c(1, 0.5), # sky view factor  0.5, 
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
                n.days = c(3) # number of days to simulate 
@@ -83,7 +83,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
 model.runs$run.n <- seq(from = 1, to = model.runs[,.N], by = 1) # create run number id
-model.runs[,`:=`(run.time = 0, RMSE = 0, CFL_fail = 0, broke.t = NA)] # create output model run summary variables
+model.runs[,`:=`(run.time = 0, RMSE = 0, CFL_fail = 0, broke.t = 0)] # create output model run summary variables
 model.runs[, ref := min(run.n), by = layer.profile] # create refrence model for each unique layer profile (defaults to first scenario of parameters)
 model.runs[, depth := rep(sapply(1:length(layer.profiles), function (x) sum(layer.profiles[[x]]$thickness)), each = model.runs[layer.profile == 1, .N])]
 model.runs[, batch.name := batches[batch.n, name]]
@@ -125,6 +125,9 @@ for(run in 1:model.runs[,.N]){  #
     start.time <- Sys.time()
     cat(paste0("started run ", run, " at ", start.time, " (", round(difftime(start.time, script.start, units = "min"), ifelse(run == 1, 2, 0))," mins since start script) \n"))
     cat(paste0("started run ", run, " at ", start.time, " (", round(difftime(start.time, script.start, units = "min"), ifelse(run == 1, 2, 0))," mins since start script) \n"), file = run.log, append = T)
+    
+    # set time run broke as NA
+    model.runs[run.n == run, broke.t := NA]
     
     # first clear up space for new run
     rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "stations.raw",
