@@ -533,8 +533,10 @@ values(r.pave.min) <- ifelse(values(r.pave.min) > 1.0, 1.0, values(r.pave.min))
 values(r.pave.avg) <- ifelse(values(r.pave.avg) > 1.0, 1.0, values(r.pave.avg))
 values(r.pave.max) <- ifelse(values(r.pave.max) > 1.0, 1.0, values(r.pave.max)) 
 
-# make correct units of vmt by dividing result by 5280 (ft per mile)
+# make correct units of vmt by dividing result by 5280 (ft per mile), and add log scale vmt
 values(r.veh) <- values(r.veh) / 5280
+r.veh.log <- r.veh
+values(r.veh.log) <- log(values(r.veh.log) + 1)
 
 # plots to check
 plot(r.road.avg) # , rev(heat.colors(255))
@@ -561,7 +563,8 @@ writeRaster(r.pave.avg, here(paste0("data/outputs/rasters/pave-avg-", run.name, 
 writeRaster(r.pave.max, here(paste0("data/outputs/rasters/pave-max-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
 
 # write out final total car vmt raster
-writeRaster(r.veh, here(paste0("data/outputs/rasters/veh-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
+writeRaster(r.veh, here(paste0("data/outputs/rasters/vmt-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
+writeRaster(r.veh.log, here(paste0("data/outputs/rasters/log-vmt-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
 
 # paste final runtime
 paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(),
