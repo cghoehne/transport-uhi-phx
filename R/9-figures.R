@@ -48,7 +48,7 @@ all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
 # filter out any unrealistic pavements
 #all.model.runs <- all.model.runs[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
-all.model.runs <- all.model.runs[!(run.n %in% c(40:42) & batch.id == "A")]
+#all.model.runs <- all.model.runs[!(run.n %in% c(40:42) & batch.id == "A")]
 
 # filter if necessary / as desired
 model.runs <- all.model.runs  #[p.err <= 0.35 & !is.na(p.err),] # remove poor performers or NAs if there are any 
@@ -181,7 +181,7 @@ all.surface.data[, net.flux := -inc.sol + q.rad + q.cnv]
 
 # filter out any unrealistic pavements
 #all.surface.data <- all.surface.data[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
-all.surface.data <- all.surface.data[!(run.n %in% c(40:42) & batch.id == "A")]
+#all.surface.data <- all.surface.data[!(run.n %in% c(40:42) & batch.id == "A")]
 
 # summarize data
 surface.data.a <- all.surface.data[, .(hrs, mins, secs,
