@@ -45,9 +45,9 @@ fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by 
 my.extent <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
 
 # define name of run
-#run.name <- "metro-phx"
+run.name <- "metro-phx"
 #run.name <- "phx-dwntwn"
-run.name <- "north-tempe"
+#run.name <- "north-tempe"
 
 # alternatively, define 2 bounding coordinates for a different extent that is within the spatial extent of the available data
 # phx dwntwn: UL 33.487158, -112.122746; LR 33.419871, -112.018541
@@ -65,9 +65,9 @@ if(run.name != "metro-phx"){ # if not doing the full region run, adjust the exte
 
 # define resolution 
 #res <- 164.042  #  ~50m x 50m
-res <- 328.084  # ~100m x 100m
+#res <- 328.084  # ~100m x 100m
 #res <- 820.21  # ~250m x 250m
-#res <- 1640.42 # ~500m x 500m
+res <- 1640.42 # ~500m x 500m
 #res <- 3280.84 # ~1000 x 1000 
 
 # define extent for rasterization by buffering desired extent by resolution
@@ -94,7 +94,7 @@ parking.pts <- intersect(parking.pts, extent(my.buffer))
 parking.pts$raw.area <- parking.pts$spaces * 330
 
 # store data in data.table to adjust
-parking.dt <- as.data.table(parking.pts@data)
+#parking.dt <- as.data.table(parking.pts@data)
 
 # adjust parking area such that as spaces per parcel are higher, there is higher amount shaded/covered/garaged
 # create function that scales with number of spaces non-linearly as desired
@@ -120,8 +120,6 @@ osm$ref <- NULL # irrelevant variable
 osm$layer <- NULL # irrelevant variable
 osm$maxspeed <- NULL # unused, most are 0 or missing so unuseable in this case
 osm$bridge <- NULL # unused
-
-osm.b <- osm
 
 # store osm data for quick calcs of new variables and rebind later
 osm.dt <- as.data.table(osm@data)
@@ -165,6 +163,7 @@ osm <- spTransform(osm, crs(my.crs))
 osm.sf <- st_as_sf(osm)
 osm <- st_intersection(osm.sf, my.buffer$geometry)
 osm <- as(osm, "Spatial")
+rm(osm.sf)
 
 # store the number of cores
 my.cores <- parallel::detectCores() - 1 # n-1 for headspace
@@ -176,6 +175,8 @@ my.list <- list()
 w.min <- unique(osm$min.r.buf) 
 w.max <- unique(osm$max.r.buf)  
 
+cat(paste0("Time: ", Sys.time(),  # script run time update
+           ".\nDuration: ", round(difftime(Sys.time(), script.start, units = "mins")), " mins."))
 gc() # initiate cluster after only all the necessary objects present in R environment
 while(exists("cl") == F){ # ensures the cluster is made even if fails on first try   
   cl <- makeCluster(my.cores, outfile = "")} # so just while loop until it is sucsessful 
@@ -192,7 +193,7 @@ osm.buf.max <- foreach(i = 1:length(w.max), .packages = c("sp","rgeos")) %dopar%
 
 # stop and remove cluster
 stopCluster(cl)
-rm(cl)
+rm(cl, osm)
 
 # bind the buffered osm data output
 osm.buf.mrg.min <- do.call(raster::bind, osm.buf.min) # bind list of spatial objects into single spatial obj
@@ -216,6 +217,8 @@ parts.p <- split(1:nrow(parking.pts[,]), cut(1:nrow(parking.pts[,]), my.cores))
 # then clip all parts by raster and convert clipped parts to individual centriods
 
 # BUFFER PARKING POINT DATA
+cat(paste0("Time: ", Sys.time(),  # script run time update
+           ".\nDuration: ", round(difftime(Sys.time(), script.start, units = "mins")), " mins."))
 gc() # initiate cluster after only all the necessary objects present in R environment
 while(exists("cl") == F){ # for some reason makeCluster has been failing on the first try   
   cl <- makeCluster(my.cores, outfile = "") # so just while loop until it is sucsessful 
@@ -256,6 +259,8 @@ parts.p.min <- split(1:nrow(park.min.s[,]), cut(1:nrow(park.min.s[,]), my.cores)
 parts.p.max <- split(1:nrow(park.max.s[,]), cut(1:nrow(park.max.s[,]), my.cores))
 
 # CLIP PARKING AREA DATA TO DESIRED (NON-BUFFERED) EXTENT
+cat(paste0("Time: ", Sys.time(),  # script run time update
+           ".\nDuration: ", round(difftime(Sys.time(), script.start, units = "mins")), " mins."))
 gc() # initiate cluster after only all the necessary objects present in R environment
 while(exists("cl") == F){ # ensures the cluster is made even if fails on first try   
   cl <- makeCluster(my.cores, outfile = "")} # so just while loop until it is sucsessful 
@@ -272,7 +277,7 @@ park.max.i.u.p <- foreach(i = 1:my.cores, .packages = c("sp")) %dopar% {
 
 # stop cluster
 stopCluster(cl)
-rm(cl, parts.p.min, parts.p.max, my.extent)
+rm(cl, park.max.s, park.min.s, parts.p.min, parts.p.max, my.extent)
 
 # bind the clipped-to-extent parking data output (in sf still)
 park.min.i.u <- do.call(rbind, park.min.i.u.p) # bind list of spatial objects into single spatial obj
@@ -289,7 +294,7 @@ r.t <- st_as_sf(r.p) # sf object for quicker intersections
 traffic.net <- readRDS(here("data/outputs/network/icarus-network.rds")) # cleaned/simplified ICARUS traffic network to pair with traffic data
 #traffic.net <- shapefile(here("data/outputs/temp/icarus-test.shp")) # TEST ICARUS NETWORK
 #traffic <- fread() simulated traffic data for region from ICARUS model
-cars <- st_as_sf(traffic.net)
+veh <- st_as_sf(traffic.net)
 rm(traffic.net)
 
 # ICARUS traffic data has 101 cols where col 1 is link id and the rest are from 12am to 12am divided in 100 chunks
@@ -300,28 +305,30 @@ rm(traffic.net)
 # merge summarized icarus flow data by link id
 iflow <- fread(here("data/icarus/full_flow.csv"))
 setnames(iflow, "V1", "id")
-cars.m <- merge(cars, iflow[, .(day.flow = sum(V2:V101),
+veh.m <- merge(veh, iflow[, .(day.flow = sum(V2:V101),
                                 fl.8.9am = sum(V34:V37),
                                 fl.5.6pm = sum(V72:V75)),
                             by = id], by = "id")
-rm(iflow, cars)
+rm(iflow, veh)
 
 # sf objects for quicker intersections
 osm.min.s <- st_as_sf(osm.buf.mrg.min)
 osm.max.s <- st_as_sf(osm.buf.mrg.max)
 rm(osm.buf.mrg.min, osm.buf.mrg.max)
 
-# split total osm, parking, and cars data into parts for parellel splitting
+# split total osm, parking, and veh data into parts for parellel splitting
 parts.r.min <- split(1:nrow(osm.min.s[,]), cut(1:nrow(osm.min.s[,]), my.cores))
 parts.r.max <- split(1:nrow(osm.max.s[,]), cut(1:nrow(osm.max.s[,]), my.cores))
 
 parts.p.min <- split(1:nrow(park.min.i.u[,]), cut(1:nrow(park.min.i.u[,]), my.cores))
 parts.p.max <- split(1:nrow(park.max.i.u[,]), cut(1:nrow(park.max.i.u[,]), my.cores))
 
-parts.c <- split(1:nrow(cars[,]), cut(1:nrow(cars[,]), my.cores))
+parts.c <- split(1:nrow(veh.m[,]), cut(1:nrow(veh.m[,]), my.cores))
 
 
 # INTERSECT POLYGONIZED RASTER w/ PARKING + ROAD DATA
+cat(paste0("Time: ", Sys.time(),  # script run time update
+           ".\nDuration: ", round(difftime(Sys.time(), script.start, units = "mins")), " mins."))
 gc() # initiate cluster after only all the necessary objects present in R environment
 while(exists("cl") == F){ # ensures the cluster is made even if fails on first try   
   cl <- makeCluster(my.cores, outfile = "")} # so just while loop until it is sucsessful 
@@ -345,8 +352,8 @@ osm.max.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
 }
 
 # vehicle travel links intersect with polygonized raster
-cars.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
-  my.list[[i]] <- st_intersection(cars[parts.c[[i]],], r.t)
+veh.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
+  my.list[[i]] <- st_intersection(veh.m[parts.c[[i]],], r.t)
 }
 
 # stop cluster
@@ -360,10 +367,10 @@ osm.max.i <- do.call(rbind, osm.max.i.p) # bind list of spatial objects into sin
 park.min.i <- do.call(rbind, park.min.i.p) # bind list of spatial objects into single spatial obj
 park.max.i <- do.call(rbind, park.max.i.p) # bind list of spatial objects into single spatial obj
 
-cars.i <- do.call(rbind, cars.i.p) # bind list of spatial objects into single spatial obj
+veh.i <- do.call(rbind, veh.i.p) # bind list of spatial objects into single spatial obj
 
 # remove unused objects
-rm(osm.min.i.p, osm.max.i.p, park.min.i.p, park.max.i.p, cars.i.p)
+rm(osm.min.i.p, osm.max.i.p, park.min.i.p, park.max.i.p, veh.i.p)
 
 # calc adjusted fractional area of parking/pavement in raster cell size
 osm.min.i$area <- st_area(osm.min.i)
@@ -377,9 +384,9 @@ park.max.i$area <- st_area(park.max.i)
 park.max.i$frac <- park.max.i$area / (res * res) # divide by raster cell area
 
 # for vehicle travel, calc VMT by trimmed link length * vehicles traversed
-cars.i$day.vmt <- st_length(cars.i)  * cars.i$day.flow
-cars.i$am.vmt <- st_length(cars.i)  * cars.i$fl.8.9am
-cars.i$pm.vmt <- st_length(cars.i)  * cars.i$fl.5.6am
+veh.i$day.vmt <- st_length(veh.i)  * veh.i$day.flow
+veh.i$am.vmt <- st_length(veh.i)  * veh.i$fl.8.9am
+veh.i$pm.vmt <- st_length(veh.i)  * veh.i$fl.5.6am
 
 # import SVF data and convert to points from lat lon and transform to EPSG:2223
 svf <- readRDS(here("data/phoenix_SVF.rds")) # phoenix sky view factor data (via A. Middel)
@@ -395,7 +402,7 @@ osm.max.c <- st_centroid(osm.max.i)
 park.min.c <- st_centroid(park.min.i)
 park.max.c <- st_centroid(park.max.i)
 
-cars.c <- st_centroid(cars.i)
+veh.c <- st_centroid(veh.i)
 
 # convert to sp obj
 park.min.p <- as(park.min.c, "Spatial")
@@ -404,12 +411,12 @@ park.max.p <- as(park.max.c, "Spatial")
 osm.min.p <- as(osm.min.c, "Spatial")
 osm.max.p <- as(osm.max.c, "Spatial")
 
-cars.p <- as(cars.c, "Spatial")
+veh.p <- as(veh.c, "Spatial")
 
 # removed unused objects
 rm(osm.min.c, osm.max.c, osm.min.i, osm.max.i, 
    park.min.i, park.max.i, park.min.c, park.max.c, 
-   cars.i, cars.c, svf)
+   veh.i, veh.c, svf)
 
 # split total point features in pavement/parking data into parts for parellel splitting
 parts.min.r <- split(1:nrow(osm.min.p[,]), cut(1:nrow(osm.min.p[,]), my.cores))
@@ -418,7 +425,7 @@ parts.max.r <- split(1:nrow(osm.max.p[,]), cut(1:nrow(osm.max.p[,]), my.cores))
 parts.min.p <- split(1:nrow(park.min.p[,]), cut(1:nrow(park.min.p[,]), my.cores))
 parts.max.p <- split(1:nrow(park.max.p[,]), cut(1:nrow(park.max.p[,]), my.cores))
 
-parts.c <- split(1:nrow(cars.p[,]), cut(1:nrow(cars.p[,]), my.cores))
+parts.c <- split(1:nrow(veh.p[,]), cut(1:nrow(veh.p[,]), my.cores))
 
 parts.svf <- split(1:nrow(svf.pts[,]), cut(1:nrow(svf.pts[,]), my.cores))
 
@@ -426,6 +433,8 @@ parts.svf <- split(1:nrow(svf.pts[,]), cut(1:nrow(svf.pts[,]), my.cores))
 dir.create(here("data/outputs/temp/rasters"), showWarnings = F)
 
 # CREATE FINAL RASTERS OF ROAD/PARK FRACTIONAL AREA AND DAILY VMT
+cat(paste0("Time: ", Sys.time(),  # script run time update
+           ".\nDuration: ", round(difftime(Sys.time(), script.start, units = "mins")), " mins."))
 gc() # initiate cluster after only all the necessary objects present in R environment
 while(exists("cl") == F){ # ensures the cluster is made even if fails on first try   
   cl <- makeCluster(my.cores, outfile = "")} # so just while loop until it is sucsessful 
@@ -459,11 +468,11 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
 })
 
 
-# CARS
+# VEHICLES
 # rasterize VMT based on cleaned icarus clipped links with vehicle travel centrioded
 invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-  rasterize(cars.p[parts.c[[i]],], r, field = "day.vmt", fun = sum, background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/cars-part-", i, ".tif")), 
+  rasterize(veh.p[parts.c[[i]],], r, field = "day.vmt", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/veh-part-", i, ".tif")), 
             overwrite = T)
 })
 
@@ -478,7 +487,7 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
 # stop cluster
 stopCluster(cl)
 rm(cl, osm.min.p, osm.max.p, parts.min.r, parts.max.r, 
-   park.min.p, park.max.p, parts.min.p, parts.max.p, cars.p, parts.c)
+   park.min.p, park.max.p, parts.min.p, parts.max.p, veh.p, parts.c)
 
 # SUMMARIZE RASTER DATA
 # create list of pavement/parking raster parts from file
@@ -488,7 +497,7 @@ r.road.max.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs
 r.park.min.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-min-part-", i, ".tif"))))
 r.park.max.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-max-part-", i, ".tif"))))
 
-r.cars.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/cars-part-", i, ".tif"))))
+r.veh.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/veh-part-", i, ".tif"))))
 
 # merge all raster parts using sum function (function shouldn't really matter here w/ no overlaps)
 r.road.min.p$fun <- sum
@@ -501,8 +510,8 @@ r.park.max.p$fun <- sum
 r.park.min <- do.call(mosaic, r.park.min.p)
 r.park.max <- do.call(mosaic, r.park.max.p)
 
-r.cars.p$fun <- sum
-r.cars <- do.call(mosaic, r.cars.p)
+r.veh.p$fun <- sum
+r.veh <- do.call(mosaic, r.veh.p)
 
 # make sure that if there are still overlapping of roads or abnormally high parking set max cell value to 1.0
 values(r.road.min) <- ifelse(values(r.road.min) > 1.0, 1.0, values(r.road.min))
@@ -524,11 +533,16 @@ values(r.pave.min) <- ifelse(values(r.pave.min) > 1.0, 1.0, values(r.pave.min))
 values(r.pave.avg) <- ifelse(values(r.pave.avg) > 1.0, 1.0, values(r.pave.avg))
 values(r.pave.max) <- ifelse(values(r.pave.max) > 1.0, 1.0, values(r.pave.max)) 
 
+# make correct units of vmt by dividing result by 5280 (ft per mile), and add log scale vmt
+values(r.veh) <- values(r.veh) / 5280
+r.veh.log <- r.veh
+values(r.veh.log) <- log(values(r.veh.log) + 1)
+
 # plots to check
 plot(r.road.avg) # , rev(heat.colors(255))
 plot(r.park.avg)
 plot(r.pave.avg) 
-plot(r.cars)
+plot(r.veh)
 
 # create output directory if doesn't exist
 dir.create(here("data/outputs/rasters"), showWarnings = F) 
@@ -549,7 +563,8 @@ writeRaster(r.pave.avg, here(paste0("data/outputs/rasters/pave-avg-", run.name, 
 writeRaster(r.pave.max, here(paste0("data/outputs/rasters/pave-max-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
 
 # write out final total car vmt raster
-writeRaster(r.cars, here(paste0("data/outputs/rasters/cars-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
+writeRaster(r.veh, here(paste0("data/outputs/rasters/vmt-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
+writeRaster(r.veh.log, here(paste0("data/outputs/rasters/log-vmt-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
 
 # paste final runtime
 paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(),
