@@ -499,6 +499,8 @@ r.park.max.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs
 
 r.veh.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/veh-part-", i, ".tif"))))
 
+r.svf.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/svf-part-", i, ".tif"))))
+
 # merge all raster parts using sum function (function shouldn't really matter here w/ no overlaps)
 r.road.min.p$fun <- sum
 r.road.max.p$fun <- sum
@@ -513,11 +515,15 @@ r.park.max <- do.call(mosaic, r.park.max.p)
 r.veh.p$fun <- sum
 r.veh <- do.call(mosaic, r.veh.p)
 
-# make sure that if there are still overlapping of roads or abnormally high parking set max cell value to 1.0
+r.svf.p$fun <- sum
+r.svf <- do.call(mosaic, r.svf.p)
+
+# make sure that if there are still overlapping of roads, abnormally high parking fractions, or high SVF set max cell value to 1.0
 values(r.road.min) <- ifelse(values(r.road.min) > 1.0, 1.0, values(r.road.min))
 values(r.road.max) <- ifelse(values(r.road.max) > 1.0, 1.0, values(r.road.max))
 values(r.park.min) <- ifelse(values(r.park.min) > 1.0, 1.0, values(r.park.min))
 values(r.park.max) <- ifelse(values(r.park.max) > 1.0, 1.0, values(r.park.max))
+values(r.svf) <- ifelse(values(r.svf) > 1.0, 1.0, values(r.svf)) # SVF can't be greater than 1.0
 
 # create mean rasters
 r.road.avg <- stackApply(stack(r.road.min, r.road.max), indices = c(1), fun = mean)
@@ -534,15 +540,17 @@ values(r.pave.avg) <- ifelse(values(r.pave.avg) > 1.0, 1.0, values(r.pave.avg))
 values(r.pave.max) <- ifelse(values(r.pave.max) > 1.0, 1.0, values(r.pave.max)) 
 
 # make correct units of vmt by dividing result by 5280 (ft per mile), and add log scale vmt
-values(r.veh) <- values(r.veh) / 5280
+values(r.veh) <- values(r.veh) / 5280 # * 1.60934 # for VKT (vehicle kilometers traveled)
 r.veh.log <- r.veh
-values(r.veh.log) <- log(values(r.veh.log) + 1)
+values(r.veh.log) <- log10(values(r.veh.log) + 1) # log base 10
 
 # plots to check
 plot(r.road.avg) # , rev(heat.colors(255))
 plot(r.park.avg)
 plot(r.pave.avg) 
-plot(r.veh)
+#plot(r.veh)
+plot(r.veh.log)
+plot(r.svf)
 
 # create output directory if doesn't exist
 dir.create(here("data/outputs/rasters"), showWarnings = F) 
