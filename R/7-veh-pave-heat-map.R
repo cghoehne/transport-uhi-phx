@@ -1,6 +1,6 @@
-######################
-## HEAT MAP FIGURE  ##
-######################
+#########################################
+## PREP STATS FOR RASTERIZE HEAT MAPS  ##
+#########################################
 
 # ** It is recommended to use Microsoft Open R (v3.5.1) for improved performance without compromsing compatibility **
 
@@ -21,15 +21,6 @@ if (!require("checkpoint")){
 
 # load all other dependant packages from the local repo
 .libPaths(paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1"))
-#lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1") # lib.loc = lib.path, 
-library(sp)
-library(sf)
-library(raster)
-library(rgdal)
-library(rgeos)
-library(maptools)
-library(gdalUtils)
-library(doParallel)
 library(data.table)
 library(here)
 
@@ -39,70 +30,67 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
            checkpointLocation = here(), # calls here package
            verbose = F) 
 
-# import data
-blkgrp <- shapefile(here("data/shapefiles/boundaries/phx-blkgrp-geom.shp")) # census blockgroup shapfile (clipped to Maricopa UZA)
-uza.buffer <- readRDS(here("data/outputs/temp/uza-buffer.rds")) # Maricopa UZA buffered ~1mi
-
+####
 # import most recent pavement model run data
 # define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
 folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
                         keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
 all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds")) # meta data by run
 all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds")) # surface temporal data by run
+unique(all.surface.data$pave.name)
+unique(all.surface.data$SVF)
 
-# ROAD AREA BY BLOCKGROUP
-# min road area by blockgroup
-blkgrp$min.road.area.sqf <- gArea(osm.block.min, byid = T)
-blkgrp$tot.area.sqf <- gArea(blkgrp, byid = T)
-blkgrp$min.road.pct <- blkgrp$min.road.area.sqf / blkgrp$tot.area.sqf 
+# define custom OSM roadway groupings
+highway <- list()
+highway$class <- c("motorway") 
+highway$a.pave.type <- c("Asphalt #5", "Asphalt Overlay on PCC #5")
+highway$c.pave.type <- c("Whitetopped Asphalt #5", "Portland Cement Concrete #5")
 
-# road area by raster cell (diff way)
+major <- list()
+major$class <-  c("primary", "trunk")
+major$a.pave.type <- c("Asphalt #4", "Asphalt Overlay on PCC #4")
+major$c.pave.type <- c("Whitetopped Asphalt #4", "Portland Cement Concrete #4")
 
-mean(blkgrp$min.road.pct)
-max(blkgrp$min.road.pct)
+minor <- list()
+minor$class  <-  c("secondary", "tertiary")
+minor$a.pave.type <- c("Asphalt #3", "Asphalt Overlay on PCC #3", "Asphalt #4", "Asphalt Overlay on PCC #4")
+minor$c.pave.type <- c("Whitetopped Asphalt #3", "Portland Cement Concrete #3", "Whitetopped Asphalt #4", "Portland Cement Concrete #4")
 
-# max road area by blockgroup
-blkgrp$max.road.area.sqf <- gArea(osm.block.max, byid = T)
-blkgrp$max.road.pct <- blkgrp$max.road.area.sqf / blkgrp$tot.area.sqf 
+local <- list()
+local$class  <-  c("residential", "service", "unclassified")
+local$a.pave.type <- c("Asphalt #3", "Asphalt Overlay on PCC #3")
+local$c.pave.type <- c("Whitetopped Asphalt #3", "Portland Cement Concrete #3")
 
-# min/mean/max total percent of area covered by roads
-sum(blkgrp$min.road.area.sqf) / sum(blkgrp$tot.area.sqf)
-(sum(blkgrp$min.road.area.sqf) + sum(blkgrp$max.road.area.sqf)) / 2 / sum(blkgrp$tot.area.sqf)
-sum(blkgrp$max.road.area.sqf) / sum(blkgrp$tot.area.sqf)
+com.park <- list()
+com.park$class  <- c("asph")
+com.park$a.pave.type <- c("Asphalt #3")
+com.park$c.pave.type <- c("Whitetopped Asphalt #3", "Portland Cement Concrete #3")
 
-# calcualte total and fractional area of each fclass grouping 
-hwy <- c("motorway") 
-maj <-  c("primary", "trunk")
-min <-  c("secondary", "tertiary")
-maj <-  c("residential", "service", "unclassified")
+res.park <- list()
+res.park$class  <- c("conc")
+res.park$a.pave.type <- c("Asphalt #3")
+res.park$c.pave.type <- c("Portland Cement Concrete #3")
 
-#  * 0.092903 m2 per ft2
-blkgrp$avg_hwy_area <- 0.1 * (blkgrp$min.road.area.sqf + blkgrp$max.road.area.sqf) / 2 * 0.092903
-blkgrp$avg_maj_area <- 0.2 * (blkgrp$min.road.area.sqf + blkgrp$max.road.area.sqf) / 2 * 0.092903
-blkgrp$avg_min_area <- 0.3 * (blkgrp$min.road.area.sqf + blkgrp$max.road.area.sqf) / 2 * 0.092903
-blkgrp$avg_col_area <- 0.4 * (blkgrp$min.road.area.sqf + blkgrp$max.road.area.sqf) / 2 * 0.092903
+unpaved <- list()
+unpaved$class  <- c("unpaved")
+unpaved$a.pave.type <- c("Bare Dry Soil #3", "Bare Dry Soil #4", "Bare Dry Soil #5")
+unpaved$c.pave.type <- c("Bare Dry Soil #3", "Bare Dry Soil #4", "Bare Dry Soil #5")
 
-#blkgrp$avg_hwy_frac <- blkgrp$avg_hwy_area / blkgrp$tot.area.sqf
-#blkgrp$avg_maj_frac <- blkgrp$avg_maj_area / blkgrp$tot.area.sqf
-#blkgrp$avg_min_frac <- blkgrp$avg_min_area / blkgrp$tot.area.sqf
-#blkgrp$avg_col_frac <- blkgrp$avg_col_area / blkgrp$tot.area.sqf
+fclass.meta <- list(highway, major, minor, local, com.park, res.park, unpaved)
+names(fclass.meta) <- c("highway", "major", "minor", "local", "com.park", "res.park", "unpaved")
 
-# PARKING AREA BY BLOCKGROUP
-# merge parking data to blkgrp shapefile
-blkgrp <- merge(blkgrp, parking[, .(fid, res.off, com.off)], by = "fid", duplicateGeoms = T)  # ignore on-street spaces for area calcs because part of roadway
+# assign MPGe and asphalt-to-concrete ratios by new OSM roadway groupings
+pave.veh.meta <- data.table(pave.class = c("highway", "major", "minor", "local", "com.park", "res.park", "unpaved"), 
+                            asph.min = c(0.9, rep(0.8, 3), 0.7, 0, 0),
+                            asph.max = c(rep(1, 5), 0, 0),
+                            MPGe.min = c(30, 20, 15, 15, NA, NA, NA),
+                            MPGe.max = c(50, 30, 25, 25, NA, NA, NA),
+                            SVF = rep(unique(all.surface.data$SVF)[1], 7))
+pave.veh.meta <- rbind(pave.veh.meta, pave.veh.meta)
+pave.veh.meta[8:14, SVF := unique(all.surface.data$SVF)[2]]
 
-# assumed upper and lower area allocated per space
-blkgrp$min.park.area.sqf <- (blkgrp$com.off * 250) + (blkgrp$res.off * 200)
-blkgrp$max.park.area.sqf <- (blkgrp$com.off * 331) + (blkgrp$res.off * 500)
 
-# min/mean/max total percent of area covered by roads
-sum(blkgrp$min.park.area.sqf, na.rm = T) / sum(blkgrp$tot.area.sqf, na.rm = T)
-(sum(blkgrp$min.park.area.sqf, na.rm = T) + sum(blkgrp$max.park.area.sqf, na.rm = T)) / 2 / sum(blkgrp$tot.area.sqf, na.rm = T)
-sum(blkgrp$max.park.area.sqf, na.rm = T) / sum(blkgrp$tot.area.sqf, na.rm = T)
-
-# SUMMARIZE MODEL SURFACE DATA
-# TO USE IN HEAT MAPS
-
+# SUMMARIZE PAVE MODEL SURFACE DATA TO ESTIMATE RELEASED HEAT
 # calc flux vars (W/m2)
 all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
 all.surface.data[, ref.sol := albedo * SVF * solar]
@@ -116,41 +104,125 @@ all.surface.data[,.(mean.day.net.flux = mean(net.flux, na.rm = T),
                     mean.day.out.flux = mean(q.rad + q.cnv)),
                  by = c("batch.name","daytime")][order(-mean.day.out.flux)]
 
+all.surface.data[,.(mean.net.flux = mean(net.flux, na.rm = T),
+                    mean.out.flux = mean(q.rad + q.cnv)),
+                 by = c("batch.name","hrs")][order(-mean.out.flux)]
 
+# CALCULATE MEAN DAILY RELEASED (OUT) SENSIBLE PAVEMENT HEAT ENERGY FACTORS (W/M^2)
+for(s in unique(all.surface.data$SVF)){
+  # highway
+  pave.veh.meta[SVF == s & pave.class == "highway", mean.day.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% highway$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% highway$c.pave.type, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "highway", mean.day.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% highway$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% highway$c.pave.type, mean(q.rad + q.cnv)]]
+  # major
+  pave.veh.meta[SVF == s & pave.class  == "major", mean.day.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% major$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% major$c.pave.type, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "major", mean.day.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% major$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% major$c.pave.type, mean(q.rad + q.cnv)]]
+  # minor
+  pave.veh.meta[SVF == s & pave.class  == "minor", mean.day.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% minor$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% minor$c.pave.type, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "minor", mean.day.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% minor$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% minor$c.pave.type, mean(q.rad + q.cnv)]]
+  # local
+  pave.veh.meta[SVF == s & pave.class  == "local", mean.day.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% local$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% local$c.pave.type, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "local", mean.day.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% local$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% local$c.pave.type, mean(q.rad + q.cnv)]]
+  # commerical parking lots
+  pave.veh.meta[SVF == s & pave.class  == "com.park", mean.day.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% com.park$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% com.park$c.pave.type, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "com.park", mean.day.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% com.park$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% com.park$c.pave.type, mean(q.rad + q.cnv)]]
+  # residential parking (driveways)
+  pave.veh.meta[SVF == s & pave.class  == "res.park", mean.day.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% res.park$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% res.park$c.pave.type, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "res.park", mean.day.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% res.park$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% res.park$c.pave.type, mean(q.rad + q.cnv)]]
+  # unpaved
+  pave.veh.meta[SVF == s & pave.class  == "unpaved", mean.day.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% unpaved$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% unpaved$c.pave.type, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "unpaved", mean.day.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% unpaved$a.pave.type, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% unpaved$c.pave.type, mean(q.rad + q.cnv)]]
+  
+  # CALCULATE 5PM DAILY RELEASED (OUT) SENSIBLE PAVEMENT HEAT ENERGY FACTORS (W/M^2)
+  # highway
+  pave.veh.meta[SVF == s & pave.class  == "highway", mean.5pm.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% highway$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% highway$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "highway", mean.5pm.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% highway$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% highway$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  # major
+  pave.veh.meta[SVF == s & pave.class  == "major", mean.5pm.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% major$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% major$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "major", mean.5pm.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% major$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% major$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  # minor
+  pave.veh.meta[SVF == s & pave.class  == "minor", mean.5pm.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% minor$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% minor$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "minor", mean.5pm.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% minor$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% minor$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  # local
+  pave.veh.meta[SVF == s & pave.class  == "local", mean.5pm.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% local$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% local$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "local", mean.5pm.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% local$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% local$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  # commerical parking lots
+  pave.veh.meta[SVF == s & pave.class  == "com.park", mean.5pm.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% com.park$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% com.park$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "com.park", mean.5pm.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% com.park$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% com.park$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  # residential parking (driveways)
+  pave.veh.meta[SVF == s & pave.class  == "res.park", mean.5pm.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% res.park$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% res.park$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "res.park", mean.5pm.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% res.park$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% res.park$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  # unpaved
+  pave.veh.meta[SVF == s & pave.class  == "unpaved", mean.5pm.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% unpaved$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% unpaved$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "unpaved", mean.5pm.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% unpaved$a.pave.type & hrs == 17, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% unpaved$c.pave.type & hrs == 17, mean(q.rad + q.cnv)]]
+  
+  # CALCULATE 8AM DAILY RELEASED (OUT) SENSIBLE PAVEMENT HEAT ENERGY FACTORS (W/M^2)
+  # highway
+  pave.veh.meta[SVF == s & pave.class  == "highway", mean.8am.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% highway$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% highway$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "highway", mean.8am.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% highway$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% highway$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  # major
+  pave.veh.meta[SVF == s & pave.class  == "major", mean.8am.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% major$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% major$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "major", mean.8am.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% major$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% major$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  # minor
+  pave.veh.meta[SVF == s & pave.class  == "minor", mean.8am.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% minor$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% minor$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "minor", mean.8am.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% minor$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% minor$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  # local
+  pave.veh.meta[SVF == s & pave.class  == "local", mean.8am.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% local$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% local$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "local", mean.8am.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% local$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% local$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  # commerical parking lots
+  pave.veh.meta[SVF == s & pave.class  == "com.park", mean.8am.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% com.park$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% com.park$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "com.park", mean.8am.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% com.park$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% com.park$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  # residential parking (driveways)
+  pave.veh.meta[SVF == s & pave.class  == "res.park", mean.8am.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% res.park$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% res.park$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "res.park", mean.8am.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% res.park$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% res.park$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  # unpaved
+  pave.veh.meta[SVF == s & pave.class  == "unpaved", mean.8am.out.flux.lwr := (asph.min * all.surface.data[SVF == s & pave.name %in% unpaved$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.min) * all.surface.data[SVF == s & pave.name %in% unpaved$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+  pave.veh.meta[SVF == s & pave.class  == "unpaved", mean.8am.out.flux.upr := (asph.max * all.surface.data[SVF == s & pave.name %in% unpaved$a.pave.type & hrs == 8, mean(q.rad + q.cnv)]) + 
+                  (1 - asph.max) * all.surface.data[SVF == s & pave.name %in% unpaved$c.pave.type & hrs == 8, mean(q.rad + q.cnv)]]
+}
 
+pave.veh.meta
 
-# calculate total energy by average day in season by batch in MJ / m2 (1 MJ == 1E6 J = 1E6 W * s)
-delta.t <- 30
-surface.data.a <- all.surface.data[, .(out.heat = delta.t * sum(q.rad + q.cnv) / 1E6,
-                                       inc.sol = delta.t * sum(inc.sol) / 1E6,
-                                       net.heat = delta.t * sum(net.flux) / 1E6,
-                                       ref.heat = delta.t * sum(ref.sol) / 1E6),
-                                   by = c("batch.name", "season")]  
-ground.heat <- surface.data.a[batch.name == "Bare Ground / Desert Soil", .(season,out.heat)]
-setnames(ground.heat, "out.heat", "out.ground.heat")
-surface.data.a <- merge(surface.data.a, ground.heat, by = "season")
-surface.data.a[, added.heat := out.heat - out.ground.heat] # MJ / m2
-
-# define roadway ratios to apply **TEMPORARY** WILL BE DEFINED LATER BY % AREA OF OSM BY FCLASS
-
-
-surface.data.a <- merge(surface.data.a, data.table(ratio = c(0.30, 0.00, 0.00, 0.70), 
-                                                   batch.name = unique(surface.data.a[, batch.name])),
-                        by = "batch.name")
-
-# temp avg day factor for all pave types
-avg.day.heat <- sum(surface.data.a[, .(day.heat = mean(added.heat * ratio)), by = "batch.name"][ ,day.heat])
-
-# average daily added heat (over undevelopedbare ground )
-# in GJ / day / blkgrp
-blkgrp$avg_hwy_day_heat <- blkgrp$avg_hwy_area * avg.day.heat / 1000
-blkgrp$avg_maj_day_heat <- blkgrp$avg_maj_area * avg.day.heat / 1000
-blkgrp$avg_min_day_heat <- blkgrp$avg_min_area * avg.day.heat / 1000
-blkgrp$avg_col_day_heat <- blkgrp$avg_col_area * avg.day.heat / 1000
-
-blkgrp$avg_day_heat_total <- blkgrp$avg_hwy_day_heat + blkgrp$avg_maj_day_heat + blkgrp$avg_min_day_heat + blkgrp$avg_col_day_heat
-blkgrp$hectares <- blkgrp$tot.area.sqf * 9.2903E-6
-blkgrp$avg_day_heat_GJha <- blkgrp$avg_day_heat_total / blkgrp$hectares
-
-# output data
-shapefile(blkgrp, here("data/outputs/osm-blkgrp-heat-working"), overwrite = T)
+# save output data
+saveRDS(fclass.meta, here("data/outputs/pavement-class-summary.rds"))
+saveRDS(pave.veh.meta, here("data/outputs/pavement-vehicle-heat-metadata.rds"))

@@ -70,6 +70,10 @@ if(run.name != "metro-phx"){ # if not doing the full region run, adjust the exte
 res <- 1640.42 # ~500m x 500m
 #res <- 3280.84 # ~1000 x 1000 
 
+# raster area in sq ft and sq meters
+r.area.ft2 <- res ^ 2
+r.area.m2 <- (res / 3.28084) ^ 2
+  
 # define extent for rasterization by buffering desired extent by resolution
 my.buffer <- st_buffer(my.extent, dist = res)
 
@@ -489,7 +493,11 @@ stopCluster(cl)
 rm(cl, osm.min.p, osm.max.p, parts.min.r, parts.max.r, 
    park.min.p, park.max.p, parts.min.p, parts.max.p, veh.p, parts.c)
 
-# SUMMARIZE RASTER DATA
+# SUMMARIZE RASTER DATA and CALCULATE HEAT FLUXES
+# load pavement and mpg summary data
+#fclass.meta <- readRDS(here("data/outputs/pavement-class-summary.rds"))
+pave.veh.meta <- readRDS(here("data/outputs/pavement-vehicle-heat-metadata.rds"))
+
 # create list of pavement/parking raster parts from file
 r.road.min.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-min-part-", i, ".tif"))))
 r.road.max.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-max-part-", i, ".tif"))))
