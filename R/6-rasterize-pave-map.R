@@ -566,6 +566,11 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
             filename = here(paste0("data/outputs/temp/rasters/veh-part-", i, ".tif")), 
             overwrite = T)
 })
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(veh.p[parts.c[[i]],], r, field = "fl.8.9am", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/veh-5pm-part-", i, ".tif")), 
+            overwrite = T)
+})
 
 # SVF
 # rasterize SVF point data into mean by pixel
@@ -604,6 +609,7 @@ r.park.max.p.asph <- lapply(1:my.cores, function (i) raster(here(paste0("data/ou
 r.park.max.p.conc <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-max-part-conc-", i, ".tif"))))
 
 r.veh.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/veh-part-", i, ".tif"))))
+r.veh.p.5pm <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/veh-5pm-part-", i, ".tif"))))
 
 r.svf.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/svf-part-", i, ".tif"))))
 
@@ -638,6 +644,9 @@ r.park.max.conc <- do.call(mosaic, r.park.max.p.conc)
 
 r.veh.p$fun <- sum
 r.veh <- do.call(mosaic, r.veh.p)
+
+r.veh.p.5pm$fun <- sum
+r.veh.5pm <- do.call(mosaic, r.veh.p.5pm)
 
 r.svf.p$fun <- mean
 r.svf <- do.call(mosaic, r.svf.p)
@@ -680,8 +689,15 @@ values(r.pave$max.pave) <- ifelse(values(r.pave$max.pave) > 1.0, 1.0, values(r.p
 
 # make correct units of vmt by dividing result by 5280 (ft per mile), and add log scale vmt
 values(r.veh) <- values(r.veh) / 5280  * 1.60934 # for VKT (vehicle kilometers traveled)
+values(r.veh.5pm) <- values(r.veh.5pm) / 5280  * 1.60934 # for VKT (vehicle kilometers traveled)
 r.veh.log <- r.veh
+r.veh.log.5pm <- r.veh.5pm
 values(r.veh.log) <- log10(values(r.veh.log) + 1) # log base 10
+values(r.veh.log.5pm) <- log10(values(r.veh.log.5pm) + 1) # log base 10
+
+###
+# HERE: ADD IN VEH TRAFFIC AT 5PM
+##
 
 # add vehicle and svf to master raster
 r.all <- stack(r.pave, r.veh, r.veh.log, r.svf)
@@ -836,13 +852,24 @@ r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.roads","min.day.flux.par
 names(r.all)[(nlayers(r.all)-2):nlayers(r.all)] <- c("total.min.day.flux", "total.avg.day.flux", "total.max.day.flux")
 
 #plot(r.all[[c("total.min.day.flux", "total.avg.day.flux", "total.avg.day.flux")]])
+# plots to check
+plot(r.all$avg.roads) # , rev(heat.colors(255))
+plot(r.all$avg.park)
+plot(r.all$avg.pave) 
+plot(r.all$log.VKT)
+plot(r.all$SVF)
 plot(r.all$total.avg.day.flux)
 plot(r.all[[c("avg.roads", "avg.park", "VKT", "total.avg.day.flux")]])
 plot(r.all[[c("min.day.flux.veh", "min.day.flux.park", "min.day.flux.roads", "total.min.day.flux")]])
 plot(r.all[[c("avg.day.flux.veh", "avg.day.flux.park", "avg.day.flux.roads", "total.avg.day.flux")]])
 plot(r.all[[c("max.day.flux.veh", "max.day.flux.park", "max.day.flux.roads", "total.max.day.flux")]])
 
-mean(values(r.all$total.avg.day.flux)) # mean W/m2 
+mean(values(r.all$total.avg.day.flux)) # total study region mean W/m2 
+mean(values(r.all$avg.day.flux.park)) # total study region mean W/m2 
+mean(values(r.all$avg.day.flux.roads)) # total study region mean W/m2 
+mean(values(r.all$avg.day.flux.veh)) # total study region mean W/m2 
+
+
 options(scipen = 999)
 quants <- lapply(1:length(names(r.all)), function(i) quantile(values(
   r.all[[i]]), c(0, 0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99, 1.0), na.rm = T))
@@ -854,7 +881,7 @@ quants
 dir.create(here("data/outputs/rasters"), showWarnings = F) 
 
 # write out final road sum rasters
-writeRaster(r.all, here(paste0("data/outputs/rasters/all-pave-veh-heat", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
+writeRaster(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
 
 # paste final runtime
 paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(),
