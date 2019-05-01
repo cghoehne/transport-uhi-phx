@@ -45,9 +45,9 @@ fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by 
 my.extent <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
 
 # define name of run
-run.name <- "metro-phx"
+#run.name <- "metro-phx"
 #run.name <- "phx-dwntwn"
-#run.name <- "north-tempe"
+run.name <- "north-tempe"
 
 # alternatively, define 2 bounding coordinates for a different extent that is within the spatial extent of the available data
 # phx dwntwn: UL 33.487158, -112.122746; LR 33.419871, -112.018541
@@ -66,8 +66,8 @@ if(run.name != "metro-phx"){ # if not doing the full region run, adjust the exte
 # define resolution 
 #res <- 164.042  #  ~50m x 50m
 #res <- 328.084  # ~100m x 100m
-#res <- 820.21  # ~250m x 250m
-res <- 1640.42 # ~500m x 500m
+res <- 820.21  # ~250m x 250m
+#res <- 1640.42 # ~500m x 500m
 #res <- 3280.84 # ~1000 x 1000 
 
 # raster area in sq ft and sq meters
@@ -422,16 +422,59 @@ rm(osm.min.c, osm.max.c, osm.min.i, osm.max.i,
    park.min.i, park.max.i, park.min.c, park.max.c, 
    veh.i, veh.c, svf)
 
-# split total point features in pavement/parking data into parts for parellel splitting
-parts.min.r <- split(1:nrow(osm.min.p[,]), cut(1:nrow(osm.min.p[,]), my.cores))
-parts.max.r <- split(1:nrow(osm.max.p[,]), cut(1:nrow(osm.max.p[,]), my.cores))
+# assign aggregated class names for assigning pavement heat model data
+fclass.meta <- readRDS(here("data/outputs/pavement-class-summary.rds"))
+for(f in 1:4){
+  osm.min.p$class[osm.min.p$fclass %in% fclass.meta[[f]]$class] <- names(fclass.meta)[f]
+  osm.max.p$class[osm.max.p$fclass %in% fclass.meta[[f]]$class] <- names(fclass.meta)[f]
+}
 
-parts.min.p <- split(1:nrow(park.min.p[,]), cut(1:nrow(park.min.p[,]), my.cores))
-parts.max.p <- split(1:nrow(park.max.p[,]), cut(1:nrow(park.max.p[,]), my.cores))
+# drop NA agg roadway classess (non-roadway)
+osm.min.p <- osm.min.p[!is.na(osm.min.p$class),]
+osm.max.p <- osm.max.p[!is.na(osm.max.p$class),]
+
+# split up so we can aggregate to raster layer for each sub class seperately 
+osm.min.p.local <- osm.min.p[osm.min.p$class == unique(osm.min.p$class)[1],]
+osm.min.p.minor <- osm.min.p[osm.min.p$class == unique(osm.min.p$class)[2],]
+osm.min.p.major <- osm.min.p[osm.min.p$class == unique(osm.min.p$class)[3],]
+osm.min.p.hiway <- osm.min.p[osm.min.p$class == unique(osm.min.p$class)[4],]
+
+osm.max.p.local <- osm.max.p[osm.max.p$class == unique(osm.max.p$class)[1],]
+osm.max.p.minor <- osm.max.p[osm.max.p$class == unique(osm.max.p$class)[2],]
+osm.max.p.major <- osm.max.p[osm.max.p$class == unique(osm.max.p$class)[3],]
+osm.max.p.hiway <- osm.max.p[osm.max.p$class == unique(osm.max.p$class)[4],]
+
+park.min.p.asph <- park.min.p[park.min.p$type == unique(park.min.p$type)[1],]
+park.min.p.conc <- park.min.p[park.min.p$type == unique(park.min.p$type)[2],]
+
+park.max.p.asph <- park.max.p[park.max.p$type == unique(park.max.p$type)[1],]
+park.max.p.conc <- park.max.p[park.max.p$type == unique(park.max.p$type)[2],]
+
+# split total point features in pavement/parking data into parts for parellel splitting
+parts.min.r.local <- split(1:nrow(osm.min.p.local[,]), cut(1:nrow(osm.min.p.local[,]), my.cores))
+parts.min.r.minor <- split(1:nrow(osm.min.p.minor[,]), cut(1:nrow(osm.min.p.minor[,]), my.cores))
+parts.min.r.major <- split(1:nrow(osm.min.p.major[,]), cut(1:nrow(osm.min.p.major[,]), my.cores))
+parts.min.r.hiway <- split(1:nrow(osm.min.p.hiway[,]), cut(1:nrow(osm.min.p.hiway[,]), my.cores))
+
+parts.max.r.local <- split(1:nrow(osm.max.p.local[,]), cut(1:nrow(osm.max.p.local[,]), my.cores))
+parts.max.r.minor <- split(1:nrow(osm.max.p.minor[,]), cut(1:nrow(osm.max.p.minor[,]), my.cores))
+parts.max.r.major <- split(1:nrow(osm.max.p.major[,]), cut(1:nrow(osm.max.p.major[,]), my.cores))
+parts.max.r.hiway <- split(1:nrow(osm.max.p.hiway[,]), cut(1:nrow(osm.max.p.hiway[,]), my.cores))
+
+parts.min.p.asph <- split(1:nrow(park.min.p.asph[,]), cut(1:nrow(park.min.p.asph[,]), my.cores))
+parts.min.p.conc <- split(1:nrow(park.min.p.conc[,]), cut(1:nrow(park.min.p.conc[,]), my.cores))
+
+parts.max.p.asph <- split(1:nrow(park.max.p.asph[,]), cut(1:nrow(park.max.p.asph[,]), my.cores))
+parts.max.p.conc <- split(1:nrow(park.max.p.conc[,]), cut(1:nrow(park.max.p.conc[,]), my.cores))
 
 parts.c <- split(1:nrow(veh.p[,]), cut(1:nrow(veh.p[,]), my.cores))
 
 parts.svf <- split(1:nrow(svf.pts[,]), cut(1:nrow(svf.pts[,]), my.cores))
+
+###
+# HERE: finish adding implementation of subclass rasterization for parking and pavement
+# by implementing additional rasterizations in parellel for each subclass
+##
 
 # create temporary output directory
 dir.create(here("data/outputs/temp/rasters"), showWarnings = F)
@@ -457,6 +500,7 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
             filename = here(paste0("data/outputs/temp/rasters/road-max-part-", i, ".tif")), 
             overwrite = T)
 })
+
 
 # PARKING 
 # rasterize min/max parking area based on buffered, raster clipped, and centrioded parking area data (adjusted)
@@ -495,7 +539,6 @@ rm(cl, osm.min.p, osm.max.p, parts.min.r, parts.max.r,
 
 # SUMMARIZE RASTER DATA and CALCULATE HEAT FLUXES
 # load pavement and mpg summary data
-#fclass.meta <- readRDS(here("data/outputs/pavement-class-summary.rds"))
 pave.veh.meta <- readRDS(here("data/outputs/pavement-vehicle-heat-metadata.rds"))
 
 # create list of pavement/parking raster parts from file
