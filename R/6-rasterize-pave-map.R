@@ -471,11 +471,6 @@ parts.c <- split(1:nrow(veh.p[,]), cut(1:nrow(veh.p[,]), my.cores))
 
 parts.svf <- split(1:nrow(svf.pts[,]), cut(1:nrow(svf.pts[,]), my.cores))
 
-###
-# HERE: finish adding implementation of subclass rasterization for parking and pavement
-# by implementing additional rasterizations in parellel for each subclass
-##
-
 # create temporary output directory
 dir.create(here("data/outputs/temp/rasters"), showWarnings = F)
 
@@ -490,28 +485,76 @@ invisible(clusterCall(cl, function(x) .libPaths(x), .libPaths())) # supress prin
 
 # rasterize in parellel min/max fractional road network area by fclass and save
 # based on roadway point summary data clipped by raster cells to ensure no loss of data from getCover
+
+# min osm by fclass
 invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-  rasterize(osm.min.p[parts.min.r[[i]],], r, field = "frac", fun = sum, background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/road-min-part-", i, ".tif")), 
+  rasterize(osm.min.p.local[parts.min.r.local[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-min-part-local-", i, ".tif")), 
             overwrite = T)
 })
 invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-  rasterize(osm.max.p[parts.max.r[[i]],], r, field = "frac", fun = sum, background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/road-max-part-", i, ".tif")), 
+  rasterize(osm.min.p.minor[parts.min.r.minor[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-min-part-minor-", i, ".tif")), 
+            overwrite = T)
+})
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.min.p.major[parts.min.r.major[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-min-part-major-", i, ".tif")), 
+            overwrite = T)
+})
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.min.p.hiway[parts.min.r.hiway[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-min-part-hiway-", i, ".tif")), 
+            overwrite = T)
+})
+
+# max osm by fclass
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.max.p.local[parts.max.r.local[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-max-part-local-", i, ".tif")), 
+            overwrite = T)
+})
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.max.p.minor[parts.max.r.minor[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-max-part-minor-", i, ".tif")), 
+            overwrite = T)
+})
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.max.p.major[parts.max.r.major[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-max-part-major-", i, ".tif")), 
+            overwrite = T)
+})
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(osm.max.p.hiway[parts.max.r.hiway[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/road-max-part-hiway-", i, ".tif")), 
             overwrite = T)
 })
 
 
 # PARKING 
 # rasterize min/max parking area based on buffered, raster clipped, and centrioded parking area data (adjusted)
+
+# min parking by type
 invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-  rasterize(park.min.p[parts.min.p[[i]],], r, field = "frac", fun = sum, background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/park-min-part-", i, ".tif")), 
+  rasterize(park.min.p.asph[parts.min.p.asph[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/park-min-part-asph-", i, ".tif")), 
             overwrite = T)
 })
 invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-  rasterize(park.max.p[parts.max.p[[i]],], r, field = "frac", fun = sum, background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/park-max-part-", i, ".tif")), 
+  rasterize(park.min.p.conc[parts.min.p.conc[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/park-min-part-conc-", i, ".tif")), 
+            overwrite = T)
+})
+
+# max parking by type
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(park.max.p.asph[parts.max.p.asph[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/park-max-part-asph-", i, ".tif")), 
+            overwrite = T)
+})
+invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+  rasterize(park.max.p.conc[parts.max.p.conc[[i]],], r, field = "frac", fun = sum, background = 0,
+            filename = here(paste0("data/outputs/temp/rasters/park-max-part-conc-", i, ".tif")), 
             overwrite = T)
 })
 
@@ -529,101 +572,289 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
 invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
   rasterize(svf.pts[parts.svf[[i]],], r, field = "SVF", fun = mean, background = NA,
             filename = here(paste0("data/outputs/temp/rasters/svf-part-", i, ".tif")), 
-            overwrite = T)
+            na.rm = T, overwrite = T)
 })
 
 # stop cluster
 stopCluster(cl)
-rm(cl, osm.min.p, osm.max.p, parts.min.r, parts.max.r, 
-   park.min.p, park.max.p, parts.min.p, parts.max.p, veh.p, parts.c)
+rm(cl, veh.m, osm.min.p, osm.max.p, parts.min.r, parts.max.r, 
+   park.min.p.asph, park.min.p.conc, park.max.p.asph, park.max.p.conc, 
+   parts.min.r.hiway, parts.min.r.local, parts.min.r.major, parts.min.r.minor, 
+   parts.max.r.hiway, parts.max.r.local, parts.max.r.major, parts.max.r.minor,
+   veh.p, parts.c)
+gc()
 
-# SUMMARIZE RASTER DATA and CALCULATE HEAT FLUXES
-# load pavement and mpg summary data
-pave.veh.meta <- readRDS(here("data/outputs/pavement-vehicle-heat-metadata.rds"))
+# SUMMARIZE RASTER DATA
 
 # create list of pavement/parking raster parts from file
-r.road.min.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-min-part-", i, ".tif"))))
-r.road.max.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-max-part-", i, ".tif"))))
+r.road.min.p.local <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-min-part-local-", i, ".tif"))))
+r.road.min.p.minor <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-min-part-minor-", i, ".tif"))))
+r.road.min.p.major <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-min-part-major-", i, ".tif"))))
+r.road.min.p.hiway <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-min-part-hiway-", i, ".tif"))))
 
-r.park.min.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-min-part-", i, ".tif"))))
-r.park.max.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-max-part-", i, ".tif"))))
+r.road.max.p.local <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-max-part-local-", i, ".tif"))))
+r.road.max.p.minor <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-max-part-minor-", i, ".tif"))))
+r.road.max.p.major <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-max-part-major-", i, ".tif"))))
+r.road.max.p.hiway <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/road-max-part-hiway-", i, ".tif"))))
+
+r.park.min.p.asph <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-min-part-asph-", i, ".tif"))))
+r.park.min.p.conc <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-min-part-conc-", i, ".tif"))))
+
+r.park.max.p.asph <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-max-part-asph-", i, ".tif"))))
+r.park.max.p.conc <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/park-max-part-conc-", i, ".tif"))))
 
 r.veh.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/veh-part-", i, ".tif"))))
 
 r.svf.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/svf-part-", i, ".tif"))))
 
 # merge all raster parts using sum function (function shouldn't really matter here w/ no overlaps)
-r.road.min.p$fun <- sum
-r.road.max.p$fun <- sum
-r.road.min <- do.call(mosaic, r.road.min.p)
-r.road.max <- do.call(mosaic, r.road.max.p)
+r.road.min.p.local$fun <- sum
+r.road.min.p.minor$fun <- sum
+r.road.min.p.major$fun <- sum
+r.road.min.p.hiway$fun <- sum
+r.road.min.local <- do.call(mosaic, r.road.min.p.local)
+r.road.min.minor <- do.call(mosaic, r.road.min.p.minor)
+r.road.min.major <- do.call(mosaic, r.road.min.p.major)
+r.road.min.hiway <- do.call(mosaic, r.road.min.p.hiway)
 
-r.park.min.p$fun <- sum
-r.park.max.p$fun <- sum
-r.park.min <- do.call(mosaic, r.park.min.p)
-r.park.max <- do.call(mosaic, r.park.max.p)
+r.road.max.p.local$fun <- sum
+r.road.max.p.minor$fun <- sum
+r.road.max.p.major$fun <- sum
+r.road.max.p.hiway$fun <- sum
+r.road.max.local <- do.call(mosaic, r.road.max.p.local)
+r.road.max.minor <- do.call(mosaic, r.road.max.p.minor)
+r.road.max.major <- do.call(mosaic, r.road.max.p.major)
+r.road.max.hiway <- do.call(mosaic, r.road.max.p.hiway)
+
+r.park.min.p.asph$fun <- sum
+r.park.min.p.conc$fun <- sum
+r.park.min.asph <- do.call(mosaic, r.park.min.p.asph)
+r.park.min.conc <- do.call(mosaic, r.park.min.p.conc)
+
+r.park.max.p.asph$fun <- sum
+r.park.max.p.conc$fun <- sum
+r.park.max.asph <- do.call(mosaic, r.park.max.p.asph)
+r.park.max.conc <- do.call(mosaic, r.park.max.p.conc)
 
 r.veh.p$fun <- sum
 r.veh <- do.call(mosaic, r.veh.p)
 
-r.svf.p$fun <- sum
+r.svf.p$fun <- mean
 r.svf <- do.call(mosaic, r.svf.p)
 
-# make sure that if there are still overlapping of roads, abnormally high parking fractions, or high SVF set max cell value to 1.0
-values(r.road.min) <- ifelse(values(r.road.min) > 1.0, 1.0, values(r.road.min))
-values(r.road.max) <- ifelse(values(r.road.max) > 1.0, 1.0, values(r.road.max))
-values(r.park.min) <- ifelse(values(r.park.min) > 1.0, 1.0, values(r.park.min))
-values(r.park.max) <- ifelse(values(r.park.max) > 1.0, 1.0, values(r.park.max))
-values(r.svf) <- ifelse(values(r.svf) > 1.0, 1.0, values(r.svf)) # SVF can't be greater than 1.0
+# because mean of empty numeric gives NaN. We will assume the mean of the region to replace these areas
+mean.svf <- mean(ifelse(is.nan(values(r.svf)) == T, NA, values(r.svf)), na.rm = T) # NaN to NA, then na.rm = T
+values(r.svf) <- ifelse(is.na(values(r.svf)) == T, mean.svf, values(r.svf))
 
-# create mean rasters
-r.road.avg <- stackApply(stack(r.road.min, r.road.max), indices = c(1), fun = mean)
-r.park.avg <- stackApply(stack(r.park.min, r.park.max), indices = c(1), fun = mean)
+# stack rasters such that each layer is a class for roads and parking, add total roads/parking fractions
+r.road.min <- stack(r.road.min.local, r.road.min.minor, r.road.min.major, r.road.min.hiway) # stack min roads fractions by class
+r.road.min <- stack(r.road.min, stackApply(r.road.min, indices = c(1), fun = sum)) # create all roads sum for min scenario
 
-# parking + roads
-r.pave.min <- stackApply(stack(r.road.min, r.park.min), indices = c(1), fun = sum)
-r.pave.avg <- stackApply(stack(r.road.avg, r.park.avg), indices = c(1), fun = sum)
-r.pave.max <- stackApply(stack(r.road.max, r.park.max), indices = c(1), fun = sum)
+r.road.max <- stack(r.road.max.local, r.road.max.minor, r.road.max.major, r.road.max.hiway) # stack max roads fractions by class
+r.road.max <- stack(r.road.max, stackApply(r.road.max, indices = c(1), fun = sum)) # create all roads sum for max scenario
 
-# make sure no sums greater than 1.0 coverage for parking + roads
-values(r.pave.min) <- ifelse(values(r.pave.min) > 1.0, 1.0, values(r.pave.min)) 
-values(r.pave.avg) <- ifelse(values(r.pave.avg) > 1.0, 1.0, values(r.pave.avg))
-values(r.pave.max) <- ifelse(values(r.pave.max) > 1.0, 1.0, values(r.pave.max)) 
+r.road <- stack(r.road.min, r.road.max) # combine min and max fractional areas into raster stack
+r.road <- stack(r.road, stackApply(r.road, indices = c(1:5,1:5), fun = mean)) # add the mean by fclass
+names(r.road) <- c("min.local", "min.minor", "min.major", "min.hiway", "min.roads", # names in order of bindings
+                       "max.local", "max.minor", "max.major", "max.hiway", "max.roads",
+                       "avg.local", "avg.minor", "avg.major", "avg.hiway", "avg.roads")
+
+r.park.min <- stack(r.park.min.asph, r.park.min.conc) # stack min parking fractions by class
+r.park.min <- stack(r.park.min, stackApply(r.park.min, indices = c(1), fun = sum)) # create all roads sum for min scenario
+
+r.park.max <- stack(r.park.max.asph, r.park.max.conc) # stack max parking fractions by class
+r.park.max <- stack(r.park.max, stackApply(r.park.max, indices = c(1), fun = sum)) # create all roads sum for max scenario
+
+r.park <- stack(r.park.min, r.park.max) # combine min and max fractional areas into raster stack
+r.park <- stack(r.park, stackApply(r.park, indices = c(1:3,1:3), fun = mean)) # add the mean by fclass
+names(r.park) <- c("min.com.park", "min.res.park", "min.park",
+                   "max.com.park", "max.res.park", "max.park",
+                   "avg.res.park", "avg.com.park", "avg.park")
+
+# pavement: parking + roads
+r.pave <- stack(r.road, r.park, stackApply(stack(r.road[[c("min.roads","max.roads","avg.roads")]],
+                                                 r.park[[c("min.park","max.park","avg.park")]]),
+                                           indices = c(1:3,1:3), fun = sum))
+names(r.pave)[25:27] <- c("min.pave", "max.pave", "avg.pave") # add names
+values(r.pave$max.pave) <- ifelse(values(r.pave$max.pave) > 1.0, 1.0, values(r.pave$max.pave)) # make sure no > 1.0 for max pave
 
 # make correct units of vmt by dividing result by 5280 (ft per mile), and add log scale vmt
-values(r.veh) <- values(r.veh) / 5280 # * 1.60934 # for VKT (vehicle kilometers traveled)
+values(r.veh) <- values(r.veh) / 5280  * 1.60934 # for VKT (vehicle kilometers traveled)
 r.veh.log <- r.veh
 values(r.veh.log) <- log10(values(r.veh.log) + 1) # log base 10
 
-# plots to check
-plot(r.road.avg) # , rev(heat.colors(255))
-plot(r.park.avg)
-plot(r.pave.avg) 
-#plot(r.veh)
-plot(r.veh.log)
-plot(r.svf)
+# add vehicle and svf to master raster
+r.all <- stack(r.pave, r.veh, r.veh.log, r.svf)
+names(r.all)[28:30] <- c("VKT", "log.VKT", "SVF")
+
+# CALCULATE HEAT FLUXES
+# load pavement and mpg summary data
+pave.veh.meta <- readRDS(here("data/outputs/pavement-vehicle-heat-metadata.rds"))
+
+# adjust SVF such that there is a floor SVF b/c heat model simplifies incoming radiation multiplying by SVF
+# so a 0 or very low SVF is impractical to use with this idealized model
+# therefore we assume that even under near 100% shading there is some diffuse and infared radiation that reaches the surface
+r.all$adj.SVF <- r.all$SVF
+values(r.all$adj.SVF) <- ifelse(values(r.all$adj.SVF) < 0.5, 0.5, values(r.all$adj.SVF))
+r.all$adj.SVF <- (2 * r.all$adj.SVF) - 1 # adjustment for 100% SVF and 50% SVF instead of 100/0  
+
+# fractional area * (heat flux for pavement class (W/m2) - unpaved scenario) = w/m2 from pave in raster cell
+# min roads heat flux
+r.all$min.day.flux.local <- (r.all$min.local 
+                             * (((pave.veh.meta[pave.class == "local" & SVF == 1.0, mean.day.out.flux.lwr] 
+                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "local" & SVF == 0.5, mean.day.out.flux.lwr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+r.all$min.day.flux.minor <- (r.all$min.minor 
+                             * (((pave.veh.meta[pave.class == "minor" & SVF == 1.0, mean.day.out.flux.lwr]
+                                 - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "minor" & SVF == 0.5, mean.day.out.flux.lwr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+r.all$min.day.flux.major <- (r.all$min.major 
+                             * (((pave.veh.meta[pave.class == "major" & SVF == 1.0, mean.day.out.flux.lwr]
+                                 - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "major" & SVF == 0.5, mean.day.out.flux.lwr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+r.all$min.day.flux.hiway <- (r.all$min.hiway 
+                             * (((pave.veh.meta[pave.class == "highway" & SVF == 1.0, mean.day.out.flux.lwr]
+                                 - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "highway" & SVF == 0.5, mean.day.out.flux.lwr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+
+r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.local", "min.day.flux.minor", "min.day.flux.major", "min.day.flux.hiway")]], 
+                                 indices = c(1), fun = sum))
+names(r.all[[nlayers(r.all)]]) <- "min.day.flux.roads"
+
+# max roads heat flux
+r.all$max.day.flux.local <- (r.all$max.local 
+                             * (((pave.veh.meta[pave.class == "local" & SVF == 1.0, mean.day.out.flux.upr]
+                                 - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "local" & SVF == 0.5, mean.day.out.flux.upr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
+r.all$max.day.flux.minor <- (r.all$max.minor 
+                             * (((pave.veh.meta[pave.class == "minor" & SVF == 1.0, mean.day.out.flux.upr]
+                                 - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "minor" & SVF == 0.5, mean.day.out.flux.upr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
+r.all$max.day.flux.major <- (r.all$max.major 
+                             * (((pave.veh.meta[pave.class == "major" & SVF == 1.0, mean.day.out.flux.upr]
+                                 - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "major" & SVF == 0.5, mean.day.out.flux.upr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr]) * (1 - r.all$adj.SVF))))
+r.all$max.day.flux.hiway <- (r.all$max.hiway 
+                             * (((pave.veh.meta[pave.class == "highway" & SVF == 1.0, mean.day.out.flux.upr]
+                                 - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "highway" & SVF == 0.5, mean.day.out.flux.upr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
+
+r.all <- stack(r.all, stackApply(r.all[[c("max.day.flux.local", "max.day.flux.minor", "max.day.flux.major", "max.day.flux.hiway")]], 
+                                 indices = c(1), fun = sum))
+names(r.all[[nlayers(r.all)]]) <- "max.day.flux.roads"
+
+# avg flux roads
+r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.roads", "max.day.flux.roads")]], indices = c(1), fun = mean))
+names(r.all[[nlayers(r.all)]]) <- "avg.day.flux.roads"
+
+# parking
+# min roads heat flux
+r.all$min.day.flux.com.park <- (r.all$min.com.park 
+                             * (((pave.veh.meta[pave.class == "com.park" & SVF == 1.0, mean.day.out.flux.lwr] 
+                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "com.park" & SVF == 0.5, mean.day.out.flux.lwr]
+                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+r.all$min.day.flux.res.park <- (r.all$min.res.park 
+                             * (((pave.veh.meta[pave.class == "res.park" & SVF == 1.0, mean.day.out.flux.lwr]
+                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "res.park" & SVF == 0.5, mean.day.out.flux.lwr]
+                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+
+r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.com.park", "min.day.flux.res.park")]], 
+                                 indices = c(1), fun = sum))
+names(r.all[[nlayers(r.all)]]) <- "min.day.flux.park"
+
+# max roads heat flux
+r.all$max.day.flux.com.park <- (r.all$max.com.park 
+                             * (((pave.veh.meta[pave.class == "com.park" & SVF == 1.0, mean.day.out.flux.upr]
+                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "com.park" & SVF == 0.5, mean.day.out.flux.upr]
+                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
+r.all$max.day.flux.res.park  <- (r.all$max.res.park 
+                             * (((pave.veh.meta[pave.class == "res.park" & SVF == 1.0, mean.day.out.flux.upr]
+                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
+                                + ((pave.veh.meta[pave.class == "res.park" & SVF == 0.5, mean.day.out.flux.upr]
+                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
+
+r.all <- stack(r.all, stackApply(r.all[[c("max.day.flux.com.park", "max.day.flux.res.park")]], 
+                                 indices = c(1), fun = sum))
+names(r.all[[nlayers(r.all)]]) <- "max.day.flux.park"
+
+# avg flux roads
+r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.park", "max.day.flux.park")]], indices = c(1), fun = mean))
+names(r.all[[nlayers(r.all)]]) <- "avg.day.flux.park"
+
+#plot(r.all[[c("min.day.flux.park", "max.day.flux.park")]])
+
+# vehicles
+# min roads heat flux
+# assume 9,500 Wh/liter
+# 1 MPG = 0.425144 km/liter or 1 gal/mi = 2.35215 liter/km
+# energy lost to waste heat assumed 0.30 to 0.80
+pave.veh.meta[,energy.min := (1/MPGe.min) * 2.35215 * 9500 * 0.30] # Wh/km (Watt-hours per kilometer)
+pave.veh.meta[,energy.max := (1/MPGe.max) * 2.35215 * 9500 * 0.80] # Wh/km (Watt-hours per kilometer)
+
+# heat flux from vehicles in a day = VKT (km) * energy rate (Wh/km) / hours (hrs) / cell resolution (m2) = W/m2
+# min veh flux/day
+r.all$min.day.flux.local.veh <- (r.all$VKT  * pave.veh.meta[pave.class == "local" & SVF == 1.0, energy.min] / 24 / ((res / 3.28084)^2))
+r.all$min.day.flux.minor.veh <- (r.all$VKT  * pave.veh.meta[pave.class == "minor" & SVF == 1.0, energy.min] / 24 / ((res / 3.28084)^2))
+r.all$min.day.flux.major.veh <- (r.all$VKT  * pave.veh.meta[pave.class == "major" & SVF == 1.0, energy.min] / 24 / ((res / 3.28084)^2))
+r.all$min.day.flux.hiway.veh <- (r.all$VKT  * pave.veh.meta[pave.class == "highway" & SVF == 1.0, energy.min] / 24 / ((res / 3.28084)^2))
+
+r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.local.veh", "min.day.flux.minor.veh", "min.day.flux.major.veh", "min.day.flux.hiway.veh")]], 
+                                 indices = c(1), fun = sum))
+names(r.all[[nlayers(r.all)]]) <- "min.day.flux.veh"
+
+# max veh flux/day
+r.all$max.day.flux.local.veh <- (r.all$VKT  * pave.veh.meta[pave.class == "local" & SVF == 1.0, energy.max] / 24 / ((res / 3.28084)^2))
+r.all$max.day.flux.minor.veh <- (r.all$VKT  * pave.veh.meta[pave.class == "minor" & SVF == 1.0, energy.max] / 24 / ((res / 3.28084)^2))
+r.all$max.day.flux.major.veh <- (r.all$VKT  * pave.veh.meta[pave.class == "major" & SVF == 1.0, energy.max] / 24 / ((res / 3.28084)^2))
+r.all$max.day.flux.hiway.veh <- (r.all$VKT  * pave.veh.meta[pave.class == "highway" & SVF == 1.0, energy.max] / 24 / ((res / 3.28084)^2))
+
+r.all <- stack(r.all, stackApply(r.all[[c("max.day.flux.local.veh", "max.day.flux.minor.veh", "max.day.flux.major.veh", "max.day.flux.hiway.veh")]], 
+                                 indices = c(1), fun = sum))
+names(r.all[[nlayers(r.all)]]) <- "max.day.flux.veh"
+
+# avg flux vehicles
+r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.veh", "max.day.flux.veh")]], indices = c(1), fun = mean))
+names(r.all[[nlayers(r.all)]]) <- "avg.day.flux.veh"
+#plot(r.all$avg.day.flux.veh)
+
+# min/avg/max total flux
+r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.roads","min.day.flux.park","min.day.flux.veh",
+                                          "avg.day.flux.roads","avg.day.flux.park","avg.day.flux.veh",
+                                          "max.day.flux.roads", "max.day.flux.park", "max.day.flux.veh")]], 
+                                 indices = c(1,1,1,2,2,2,3,3,3), fun = sum))
+names(r.all)[(nlayers(r.all)-2):nlayers(r.all)] <- c("total.min.day.flux", "total.avg.day.flux", "total.max.day.flux")
+
+#plot(r.all[[c("total.min.day.flux", "total.avg.day.flux", "total.avg.day.flux")]])
+plot(r.all$total.avg.day.flux)
+plot(r.all[[c("avg.roads", "avg.park", "VKT", "total.avg.day.flux")]])
+plot(r.all[[c("min.day.flux.veh", "min.day.flux.park", "min.day.flux.roads", "total.min.day.flux")]])
+plot(r.all[[c("avg.day.flux.veh", "avg.day.flux.park", "avg.day.flux.roads", "total.avg.day.flux")]])
+plot(r.all[[c("max.day.flux.veh", "max.day.flux.park", "max.day.flux.roads", "total.max.day.flux")]])
+
+mean(values(r.all$total.avg.day.flux)) # mean W/m2 
+options(scipen = 999)
+quants <- lapply(1:length(names(r.all)), function(i) quantile(values(
+  r.all[[i]]), c(0, 0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99, 1.0), na.rm = T))
+names(quants) <- names(r.all)
+
+quants
 
 # create output directory if doesn't exist
 dir.create(here("data/outputs/rasters"), showWarnings = F) 
 
 # write out final road sum rasters
-writeRaster(r.road.min, here(paste0("data/outputs/rasters/road-min-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-writeRaster(r.road.avg, here(paste0("data/outputs/rasters/road-avg-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-writeRaster(r.road.max, here(paste0("data/outputs/rasters/road-max-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-
-# write out final park sum rasters
-writeRaster(r.park.min, here(paste0("data/outputs/rasters/park-min-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-writeRaster(r.park.avg, here(paste0("data/outputs/rasters/park-avg-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-writeRaster(r.park.max, here(paste0("data/outputs/rasters/park-max-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-
-# write out final total pave sum rasters
-writeRaster(r.pave.min, here(paste0("data/outputs/rasters/pave-min-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-writeRaster(r.pave.avg, here(paste0("data/outputs/rasters/pave-avg-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-writeRaster(r.pave.max, here(paste0("data/outputs/rasters/pave-max-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-
-# write out final total car vmt raster
-writeRaster(r.veh, here(paste0("data/outputs/rasters/vmt-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-writeRaster(r.veh.log, here(paste0("data/outputs/rasters/log-vmt-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
+writeRaster(r.all, here(paste0("data/outputs/rasters/all-pave-veh-heat", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
 
 # paste final runtime
 paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(),
