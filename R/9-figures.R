@@ -1,7 +1,7 @@
 # clear space and allocate memory
 gc()
-memory.limit(size = 56000) 
-t.start <- Sys.time() # start script timestamp
+memory.limit(size = 50000) 
+options(scipen = 999) # prevent scientific notation when printing
 
 # first make sure checkpoint is installed locally
 # this is the only package that is ok to not use a 'checkpointed' (i.e. archived version of a package)
@@ -12,14 +12,23 @@ if (!require("checkpoint")){
 }
 
 # load all other dependant packages from the local repo
-lib.path <- paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
-library(zoo, lib.loc = lib.path)
-library(lubridate, lib.loc = lib.path)
-library(ggplot2, lib.loc = lib.path)
-library(grid, lib.loc = lib.path)
-library(gridExtra, lib.loc = lib.path)
-library(data.table, lib.loc = lib.path)
-library(here, lib.loc = lib.path)
+.libPaths(paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1"))
+library(zoo)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(sf)
+library(sp)
+library(raster)
+library(rgdal)
+library(rgeos)
+library(tmap)
+library(tmaptools)
+library(raster)
+library(data.table)
+library(here)
 
 # archive/update snapshot of packages at checkpoint date
 checkpoint("2019-01-01", # archive date for all used packages (besides checkpoint itself!)
@@ -27,7 +36,7 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
            checkpointLocation = here(), # calls here package
            verbose = F) 
 
-library(ggplot2, lib.loc = lib.path) # load again
+library(ggplot2) # load again
 
 # load windows fonts and store as string
 windowsFonts(Century=windowsFont("TT Century Gothic"))
@@ -355,5 +364,285 @@ p.flux.v <- (ggplot(data = all.veh.heat)
 # save plot
 ggsave(paste0(folder, "/figures/veh-heat-flux-diff.png"), p.flux.v, 
        device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
+
+####################
+# RASTER HEAT MAPS #
+####################
+
+# define name of run
+run.name <- "metro-phx"
+#run.name <- "phx-dwntwn"
+#run.name <- "north-tempe"
+
+# define resolution 
+#res <- 164.042  #  ~50m x 50m
+#res <- 328.084  # ~100m x 100m
+#res <- 820.21  # ~250m x 250m
+res <- 1640.42 # ~500m x 500m
+#res <- 3280.84 # ~1000 x 1000 
+
+# import master raster data
+r.all <- readRDS(here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.rds")))
+
+# import labels & borders 
+uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
+phx.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp"))
+
+# set 0 to NA to ignore in diveraging color palette
+values(r.all$avg.day.flux.veh) <- ifelse(values(r.all$avg.day.flux.veh) == 0, NA, values(r.all$avg.day.flux.veh))
+values(r.all$avg.day.flux.park) <- ifelse(values(r.all$avg.day.flux.park) == 0, NA, values(r.all$avg.day.flux.park))
+values(r.all$avg.day.flux.roads) <- ifelse(values(r.all$avg.day.flux.roads) == 0, NA, values(r.all$avg.day.flux.roads))
+values(r.all$total.avg.day.flux) <- ifelse(values(r.all$total.avg.day.flux) == 0, NA, values(r.all$total.avg.day.flux))
+
+#mc.hill <- brick("C:/Users/cghoehne/Dropbox (ASU)/Data and Tools/GIS/AZ Files/maricopa_hillshade/maricopa_hillshade.tif")
+#mc.hill <- crop(mc.hill, extent(r.all), snap="out")
+#saveRDS(mc.hill, here("data/maricopa-hillshade.rds"))
+mc.hill <- readRDS(here("data/maricopa-hillshade.rds")) # Maricopa County Hillashade EPSG 2223, cropped to extent of rasters
+
+# crop rasters to uza 
+r.veh.flux <- crop(r.all$avg.day.flux.veh, uza.border, snap = "out")
+r.park.flux <- crop(r.all$avg.day.flux.park, uza.border, snap = "out")
+r.road.flux <- crop(r.all$avg.day.flux.roads, uza.border, snap = "out")
+r.all.flux <- crop(r.all$total.avg.day.flux, uza.border, snap = "out")
+
+p.veh.flux <-   
+  #tm_shape(mc.hill.c) +
+  #tm_raster(palette = "-Greys", 
+  #          legend.show = F, 
+  #          alpha = 0.4) +
+  tm_shape(r.veh.flux) +
+  tm_raster(palette = rev(rainbow(255, end = 0.6)), #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
+            style="cont",
+            #breaks = c(1, seq(20, 200, 20)),
+            breaks = c(1, seq(20, 180, 20)),
+            #breaks = c(1, seq(5, 40, 5)),
+            #breaks = c(1, seq(5, 25, 5)),
+            legend.show = T,
+            title = "Heat Flux\n(W/m\u00B2)",
+            colorNA = NULL) + # white
+  tm_shape(uza.border) +
+  tm_borders(lwd = 0.2, 
+             lty = "solid",
+             col = "grey40",
+             alpha = 0.7) +
+  tm_scale_bar(position = c(0.25,0.0),
+               #breaks = c(0,5,10,15,20),
+               size = 0.80,
+               color.light = "grey85") +
+  tm_compass(north = 0, 
+             type = "4star", 
+             size = 2,
+             show.labels = 1, 
+             position = c(0.9,0.85)) +
+  #tm_shape(hways) +
+  #tm_lines(lwd = 1, col = "grey40") +
+  #tm_shape(lrt) +
+  #tm_lines(lwd = 1, col = "grey40") +
+  #tm_symbols(shape = 3, size = .4, col = "grey40", alpha = 1) +
+  tm_shape(phx.labels) +
+  tm_text("name", 
+          size = .5, 
+          fontfamily = my.font,
+          fontface = "bold.italic",
+          just = "center") +
+  #tm_shape(hist.loc) +
+  #tm_markers(shape = tmap_icons(file = paste0("Projects/Maricopa Parking/Figures/histograms/",map.yr,"_tot_space_hist.png"),
+  #                              just = c(1.2,1.2), 
+  #                              keep.asp = T, 
+  #                              width = 900, 
+  #                              height = 900), size = 16) +
+  tm_layout(fontfamily = my.font, 
+            fontface = "italic", 
+            bg.color = "grey95",
+            title.size = 1.5, 
+            title = c("(a) Vehicles"),
+            #title = c("(b) Parking Pavement"),
+            #title = c("(c) Roadway Pavement"),
+            #title = c("(d) Vehicles + Pavements"), 
+            #aes.palette = list(seq = "-Spectral"),
+            title.position = c(0.12,0.94),
+            legend.position = c(0.01,0.3),
+            outer.margins = 0,
+            frame = F,
+            legend.height = -0.6,
+            #legend.width = -0.06,
+            #legend.title.size = 1.5, 
+            legend.text.size = 1) +
+  tmap_options(max.raster = c(plot = 102951200, view = 102951200))
+
+p.park.flux <-   
+  #tm_shape(mc.hill.c) +
+  #tm_raster(palette = "-Greys", 
+  #          legend.show = F, 
+  #          alpha = 0.4) +
+  #tm_shape(r.all$total.avg.day.flux) +
+  tm_shape(r.park.flux) +
+  tm_raster(palette = rev(rainbow(255, end = 0.6)), #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
+            style="cont",
+            breaks = c(1, seq(5, 40, 5)),
+            legend.show = T,
+            title = "Heat Flux\n(W/m\u00B2)",
+            colorNA = NULL) + # white
+  tm_shape(uza.border) +
+  tm_borders(lwd = 0.2, 
+             lty = "solid",
+             col = "grey40",
+             alpha = 0.7) +
+  tm_scale_bar(position = c(0.25,0.0),
+               #breaks = c(0,5,10,15,20),
+               size = 0.80,
+               color.light = "grey85") +
+  tm_compass(north = 0, 
+             type = "4star", 
+             size = 2,
+             show.labels = 1, 
+             position = c(0.9,0.85)) +
+  tm_shape(phx.labels) +
+  tm_text("name", 
+          size = .5, 
+          fontfamily = my.font,
+          fontface = "bold.italic",
+          just = "center") +
+  #tm_shape(hist.loc) +
+  #tm_markers(shape = tmap_icons(file = paste0("Projects/Maricopa Parking/Figures/histograms/",map.yr,"_tot_space_hist.png"),
+  #                              just = c(1.2,1.2), 
+  #                              keep.asp = T, 
+  #                              width = 900, 
+  #                              height = 900), size = 16) +
+  tm_layout(fontfamily = my.font, 
+            fontface = "italic", 
+            bg.color = "grey95",
+            title.size = 1.5, 
+            title = c("(b) Parking Pavement"),
+            title.position = c(0.12,0.94),
+            legend.position = c(0.01,0.3),
+            outer.margins = 0,
+            frame = F,
+            legend.height = -0.6,
+            #legend.width = -0.06,
+            #legend.title.size = 1.5, 
+            legend.text.size = 1) +
+  tmap_options(max.raster = c(plot = 102951200, view = 102951200))
+
+p.road.flux <-   
+  #tm_shape(mc.hill.c) +
+  #tm_raster(palette = "-Greys", 
+  #          legend.show = F, 
+  #          alpha = 0.4) +
+  #tm_shape(r.all$total.avg.day.flux) +
+  tm_shape(r.road.flux) +
+  tm_raster(palette = rev(rainbow(255, end = 0.6)), #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
+            style="cont",
+            breaks = c(1, seq(5, 25, 5)),
+            legend.show = T,
+            title = "Heat Flux\n(W/m\u00B2)",
+            colorNA = NULL) + # white
+  tm_shape(uza.border) +
+  tm_borders(lwd = 0.2, 
+             lty = "solid",
+             col = "grey40",
+             alpha = 0.7) +
+  tm_scale_bar(position = c(0.25,0.0),
+               #breaks = c(0,5,10,15,20),
+               size = 0.80,
+               color.light = "grey85") +
+  tm_compass(north = 0, 
+             type = "4star", 
+             size = 2,
+             show.labels = 1, 
+             position = c(0.9,0.85)) +
+  tm_shape(phx.labels) +
+  tm_text("name", 
+          size = .5, 
+          fontfamily = my.font,
+          fontface = "bold.italic",
+          just = "center") +
+  #tm_shape(hist.loc) +
+  #tm_markers(shape = tmap_icons(file = paste0("Projects/Maricopa Parking/Figures/histograms/",map.yr,"_tot_space_hist.png"),
+  #                              just = c(1.2,1.2), 
+  #                              keep.asp = T, 
+  #                              width = 900, 
+  #                              height = 900), size = 16) +
+  tm_layout(fontfamily = my.font, 
+            fontface = "italic", 
+            bg.color = "grey95",
+            title.size = 1.5, 
+            title = c("(c) Roadway Pavement"),
+            title.position = c(0.12,0.94),
+            legend.position = c(0.01,0.3),
+            outer.margins = 0,
+            frame = F,
+            legend.height = -0.6,
+            #legend.width = -0.06,
+            #legend.title.size = 1.5, 
+            legend.text.size = 1) +
+  tmap_options(max.raster = c(plot = 102951200, view = 102951200))
+
+p.all.flux <-   
+  #tm_shape(mc.hill.c) +
+  #tm_raster(palette = "-Greys", 
+  #          legend.show = F, 
+  #          alpha = 0.4) +
+  #tm_shape(r.all$total.avg.day.flux) +
+  tm_shape(r.all.flux) +
+  tm_raster(palette = rev(rainbow(255, end = 0.6)), #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
+            style="cont",
+            breaks = c(1, seq(20, 200, 20)),
+            legend.show = T,
+            title = "Heat Flux\n(W/m\u00B2)",
+            colorNA = NULL) + # white
+  tm_shape(uza.border) +
+  tm_borders(lwd = 0.2, 
+             lty = "solid",
+             col = "grey40",
+             alpha = 0.7) +
+  tm_scale_bar(position = c(0.25,0.0),
+               #breaks = c(0,5,10,15,20),
+               size = 0.80,
+               color.light = "grey85") +
+  tm_compass(north = 0, 
+             type = "4star", 
+             size = 2,
+             show.labels = 1, 
+             position = c(0.9,0.85)) +
+  tm_shape(phx.labels) +
+  tm_text("name", 
+          size = .5, 
+          fontfamily = my.font,
+          fontface = "bold.italic",
+          just = "center") +
+  #tm_shape(hist.loc) +
+  #tm_markers(shape = tmap_icons(file = paste0("Projects/Maricopa Parking/Figures/histograms/",map.yr,"_tot_space_hist.png"),
+  #                              just = c(1.2,1.2), 
+  #                              keep.asp = T, 
+  #                              width = 900, 
+  #                              height = 900), size = 16) +
+  tm_layout(fontfamily = my.font, 
+            fontface = "italic", 
+            bg.color = "grey95",
+            title.size = 1.5, 
+            title = c("(d) Vehicles + Pavements"), 
+            title.position = c(0.12,0.94),
+            legend.position = c(0.01,0.3),
+            outer.margins = 0,
+            frame = F,
+            legend.height = -0.6,
+            #legend.width = -0.06,
+            #legend.title.size = 1.5, 
+            legend.text.size = 1) +
+  tmap_options(max.raster = c(plot = 102951200, view = 102951200))
+
+p.grid.flux <- tmap_arrange(p.veh.flux, p.park.flux, p.road.flux, p.all.flux,
+                            outer.margins = 0, inner.margins = 0)
+p.grid.flux
+
+tmap_save(p.grid.flux, filename = here("figures/mean-daily-heat-flux-4grid.png")) #width = 3509, height = 2482
+
+
+
+
+plot(r.all[[c("avg.day.flux.veh", "avg.day.flux.park", "avg.day.flux.roads", "total.avg.day.flux")]], 
+     main = c("Mean Daily Excess Heat Flux from Vehicles","Mean Daily Excess Heat Flux from Parking Pavement", 
+              "Mean Daily Excess Heat Flux from Roadway Pavement","Mean Daily Excess Heat Flux from Vehicles & Pavements"))
 
 

@@ -75,7 +75,7 @@
         <customproperties/>
       </layer-tree-layer>
     </layer-tree-group>
-    <layer-tree-group expanded="0" checked="Qt::Checked" name="Analysis Maps">
+    <layer-tree-group expanded="1" checked="Qt::Checked" name="Analysis Maps">
       <customproperties/>
       <layer-tree-layer expanded="1" checked="Qt::Checked" name="log-vmt-metro-phx-500m" id="log_vmt_metro_phx_500m_c4a0d22c_9a7c_42da_a8c8_0ae4b3f77b7f" providerKey="gdal" source="../data/outputs/rasters/log-vmt-metro-phx-500m.tif">
         <customproperties/>
@@ -156,10 +156,10 @@
   <mapcanvas name="theMapCanvas" annotationsVisible="1">
     <units>feet</units>
     <extent>
-      <xmin>555236.83896142954472452</xmin>
-      <ymin>766216.32833444478455931</ymin>
-      <xmax>836584.84873247856739908</xmax>
-      <ymax>1017400.8418017573421821</ymax>
+      <xmin>531988.85497878713067621</xmin>
+      <ymin>786087.32157649367582053</ymin>
+      <xmax>813336.86474983615335077</xmax>
+      <ymax>1037271.83504380553495139</ymax>
     </extent>
     <rotation>0</rotation>
     <destinationsrs>
@@ -266,7 +266,7 @@
         </filegroup>
       </legendlayer>
     </legendgroup>
-    <legendgroup checked="Qt::Checked" name="Analysis Maps" open="false">
+    <legendgroup checked="Qt::Checked" name="Analysis Maps" open="true">
       <legendlayer drawingOrder="-1" checked="Qt::Checked" name="log-vmt-metro-phx-500m" showFeatureCount="0" open="true">
         <filegroup open="true" hidden="false">
           <legendlayerfile isInOverview="0" layerid="log_vmt_metro_phx_500m_c4a0d22c_9a7c_42da_a8c8_0ae4b3f77b7f" visible="1"/>
@@ -6648,13 +6648,13 @@ def my_form_open(dialog, layer, feature):
     <PAL>
       <CandidatesPolygon type="int">30</CandidatesPolygon>
       <ShowingPartialsLabels type="bool">true</ShowingPartialsLabels>
-      <ShowingCandidates type="bool">false</ShowingCandidates>
       <SearchMethod type="int">0</SearchMethod>
+      <ShowingCandidates type="bool">false</ShowingCandidates>
       <CandidatesPoint type="int">16</CandidatesPoint>
       <CandidatesLine type="int">50</CandidatesLine>
       <DrawRectOnly type="bool">false</DrawRectOnly>
-      <DrawOutlineLabels type="bool">true</DrawOutlineLabels>
       <ShowingAllLabels type="bool">false</ShowingAllLabels>
+      <DrawOutlineLabels type="bool">true</DrawOutlineLabels>
     </PAL>
     <WMSRequestDefinedDataSources type="bool">false</WMSRequestDefinedDataSources>
     <WMSUseLayerIDs type="bool">false</WMSUseLayerIDs>

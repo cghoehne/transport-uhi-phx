@@ -3,6 +3,7 @@
 # clear space and allocate memory
 gc()
 memory.limit(size = 56000) 
+options(scipen = 999) # prevent scientific notation when printing
 
 # first make sure checkpoint is installed locally
 # this is the only package that is ok to not use a 'checkpointed' (i.e. archived version of a package)
