@@ -858,9 +858,12 @@ plot(r.all$log.VKT)
 plot(r.all$SVF)
 plot(r.all$total.avg.day.flux)
 plot(r.all[[c("avg.roads", "avg.park", "VKT", "total.avg.day.flux")]])
-plot(r.all[[c("min.day.flux.veh", "min.day.flux.park", "min.day.flux.roads", "total.min.day.flux")]])
-plot(r.all[[c("avg.day.flux.veh", "avg.day.flux.park", "avg.day.flux.roads", "total.avg.day.flux")]])
-plot(r.all[[c("max.day.flux.veh", "max.day.flux.park", "max.day.flux.roads", "total.max.day.flux")]])
+#plot(r.all[[c("min.day.flux.veh", "min.day.flux.park", "min.day.flux.roads", "total.min.day.flux")]])
+plot(r.all[[c("avg.day.flux.veh", "avg.day.flux.park", "avg.day.flux.roads", "total.avg.day.flux")]], 
+     main = c("Mean Daily Excess Heat Flux from Vehicles","Mean Daily Excess Heat Flux from Parking Pavement", 
+              "Mean Daily Excess Heat Flux from Roadway Pavement","Mean Daily Excess Heat Flux from Vehicles & Pavements"))
+     #xlab = rep("Westing Coordinate (ft)", 2), xlab = rep("Northing Coordinate (ft)", 2))
+#plot(r.all[[c("max.day.flux.veh", "max.day.flux.park", "max.day.flux.roads", "total.max.day.flux")]])
 
 mean(values(r.all$total.avg.day.flux)) # total study region mean W/m2 
 mean(values(r.all$avg.day.flux.park)) # total study region mean W/m2 
