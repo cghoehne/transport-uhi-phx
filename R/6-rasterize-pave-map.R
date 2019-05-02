@@ -883,6 +883,7 @@ dir.create(here("data/outputs/rasters"), showWarnings = F)
 
 # write out final road sum rasters
 writeRaster(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
+saveRDS(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.rds")))
 
 # paste final runtime
 paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(),
