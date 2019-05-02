@@ -45,9 +45,9 @@ fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by 
 my.extent <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
 
 # define name of run
-#run.name <- "metro-phx"
+run.name <- "metro-phx"
 #run.name <- "phx-dwntwn"
-run.name <- "north-tempe"
+#run.name <- "north-tempe"
 
 # alternatively, define 2 bounding coordinates for a different extent that is within the spatial extent of the available data
 # phx dwntwn: UL 33.487158, -112.122746; LR 33.419871, -112.018541
@@ -66,8 +66,8 @@ if(run.name != "metro-phx"){ # if not doing the full region run, adjust the exte
 # define resolution 
 #res <- 164.042  #  ~50m x 50m
 #res <- 328.084  # ~100m x 100m
-res <- 820.21  # ~250m x 250m
-#res <- 1640.42 # ~500m x 500m
+#res <- 820.21  # ~250m x 250m
+res <- 1640.42 # ~500m x 500m
 #res <- 3280.84 # ~1000 x 1000 
 
 # raster area in sq ft and sq meters
@@ -390,7 +390,7 @@ park.max.i$frac <- park.max.i$area / (res * res) # divide by raster cell area
 # for vehicle travel, calc VMT by trimmed link length * vehicles traversed
 veh.i$day.vmt <- st_length(veh.i)  * veh.i$day.flow
 veh.i$am.vmt <- st_length(veh.i)  * veh.i$fl.8.9am
-veh.i$pm.vmt <- st_length(veh.i)  * veh.i$fl.5.6am
+veh.i$pm.vmt <- st_length(veh.i)  * veh.i$fl.5.6pm
 
 # import SVF data and convert to points from lat lon and transform to EPSG:2223
 svf <- readRDS(here("data/phoenix_SVF.rds")) # phoenix sky view factor data (via A. Middel)
@@ -582,11 +582,9 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
 
 # stop cluster
 stopCluster(cl)
-rm(cl, veh.m, osm.min.p, osm.max.p, parts.min.r, parts.max.r, 
-   park.min.p.asph, park.min.p.conc, park.max.p.asph, park.max.p.conc, 
+rm(cl, veh.m, osm.min.p, osm.max.p, park.min.p.asph, park.min.p.conc, park.max.p.asph, park.max.p.conc, 
    parts.min.r.hiway, parts.min.r.local, parts.min.r.major, parts.min.r.minor, 
-   parts.max.r.hiway, parts.max.r.local, parts.max.r.major, parts.max.r.minor,
-   veh.p, parts.c)
+   parts.max.r.hiway, parts.max.r.local, parts.max.r.major, parts.max.r.minor, veh.p, parts.c)
 gc()
 
 # SUMMARIZE RASTER DATA
