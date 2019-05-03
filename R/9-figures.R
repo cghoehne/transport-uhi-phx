@@ -644,3 +644,5 @@ p.grid.flux <- tmap_arrange(p.road.flux, p.park.flux, p.veh.flux, p.all.flux,
 
 tmap_save(p.grid.flux, filename = here("figures/mean-daily-heat-flux-4grid.png")) #width = 3509, height = 2482
 
+# morning rush would be from: hour = 7.92 am to 8.88 am (6:54:12 am to 8:52:48 am); V34:V37
+# evening rush would be from: hour = 5.04 pm  to 6 pm (5:02:24 pm to 6:00:00 pm); V72:V75
