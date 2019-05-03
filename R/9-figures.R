@@ -405,18 +405,22 @@ r.park.flux <- crop(r.all$avg.day.flux.park, uza.border, snap = "out")
 r.road.flux <- crop(r.all$avg.day.flux.roads, uza.border, snap = "out")
 r.all.flux <- crop(r.all$total.avg.day.flux, uza.border, snap = "out")
 
-p.veh.flux <-   
+# define global tmap parameters
+my.asp <- 1.3
+my.palette <- rev(rainbow(255, end = 0.6)) # start = 0.5,
+title.p <- c(0.18, 0.97)
+
+# create individual plots 
+p.road.flux <-   
   #tm_shape(mc.hill.c) +
   #tm_raster(palette = "-Greys", 
   #          legend.show = F, 
   #          alpha = 0.4) +
-  tm_shape(r.veh.flux) +
-  tm_raster(palette = rev(rainbow(255, end = 0.6)), #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
+  #tm_shape(r.all$total.avg.day.flux) +
+  tm_shape(r.road.flux) +
+  tm_raster(palette = my.palette,
             style="cont",
-            #breaks = c(1, seq(20, 200, 20)),
-            breaks = c(1, seq(20, 180, 20)),
-            #breaks = c(1, seq(5, 40, 5)),
-            #breaks = c(1, seq(5, 25, 5)),
+            breaks = c(1, seq(5, 40, 5)),
             legend.show = T,
             title = "Heat Flux\n(W/m\u00B2)",
             colorNA = NULL) + # white
@@ -424,21 +428,16 @@ p.veh.flux <-
   tm_borders(lwd = 0.2, 
              lty = "solid",
              col = "grey40",
-             alpha = 0.7) +
-  tm_scale_bar(position = c(0.25,0.0),
-               #breaks = c(0,5,10,15,20),
-               size = 0.80,
-               color.light = "grey85") +
-  tm_compass(north = 0, 
-             type = "4star", 
-             size = 2,
-             show.labels = 1, 
-             position = c(0.9,0.85)) +
-  #tm_shape(hways) +
-  #tm_lines(lwd = 1, col = "grey40") +
-  #tm_shape(lrt) +
-  #tm_lines(lwd = 1, col = "grey40") +
-  #tm_symbols(shape = 3, size = .4, col = "grey40", alpha = 1) +
+             alpha = 0.2) +
+  #tm_scale_bar(position = c(0.2,0.10),
+  #             #breaks = c(0,5,10,15,20),
+  #             size = 1,
+  #             color.light = "grey85") +
+  #tm_compass(north = 0, 
+  #           type = "4star", 
+  #           size = 1.5,
+  #           show.labels = 1, 
+  #           position = c(0.9,0.85)) +
   tm_shape(phx.labels) +
   tm_text("name", 
           size = .5, 
@@ -454,17 +453,16 @@ p.veh.flux <-
   tm_layout(fontfamily = my.font, 
             fontface = "italic", 
             bg.color = "grey95",
-            title.size = 1.5, 
-            title = c("(a) Vehicles"),
-            #title = c("(b) Parking Pavement"),
-            #title = c("(c) Roadway Pavement"),
-            #title = c("(d) Vehicles + Pavements"), 
-            #aes.palette = list(seq = "-Spectral"),
-            title.position = c(0.12,0.94),
-            legend.position = c(0.01,0.3),
-            outer.margins = 0,
+            title.size = 1.1, 
+            title = c("(a) Roadway Pavement"),
+            title.position = title.p,
+            legend.position = c(0.014,0.35),
+            outer.margins = c(0, 0, 0, 0),
+            inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
             frame = F,
-            legend.height = -0.6,
+            #frame.lwd = 1,
+            asp = my.asp,
+            legend.height = -0.45,
             #legend.width = -0.06,
             #legend.title.size = 1.5, 
             legend.text.size = 1) +
@@ -477,7 +475,7 @@ p.park.flux <-
   #          alpha = 0.4) +
   #tm_shape(r.all$total.avg.day.flux) +
   tm_shape(r.park.flux) +
-  tm_raster(palette = rev(rainbow(255, end = 0.6)), #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
+  tm_raster(palette = my.palette, # start = 0.5,
             style="cont",
             breaks = c(1, seq(5, 40, 5)),
             legend.show = T,
@@ -488,15 +486,15 @@ p.park.flux <-
              lty = "solid",
              col = "grey40",
              alpha = 0.7) +
-  tm_scale_bar(position = c(0.25,0.0),
-               #breaks = c(0,5,10,15,20),
-               size = 0.80,
-               color.light = "grey85") +
+  #tm_scale_bar(position = c(0.2,0.10),
+  #             #breaks = c(0,5,10,15,20),
+  #             size = 0.60,
+  #             color.light = "grey85") +
   tm_compass(north = 0, 
              type = "4star", 
-             size = 2,
+             size = 1.5,
              show.labels = 1, 
-             position = c(0.9,0.85)) +
+             position = c(0.8,0.8)) +
   tm_shape(phx.labels) +
   tm_text("name", 
           size = .5, 
@@ -512,28 +510,30 @@ p.park.flux <-
   tm_layout(fontfamily = my.font, 
             fontface = "italic", 
             bg.color = "grey95",
-            title.size = 1.5, 
+            title.size = 1.1, 
             title = c("(b) Parking Pavement"),
-            title.position = c(0.12,0.94),
-            legend.position = c(0.01,0.3),
-            outer.margins = 0,
+            title.position = title.p,
+            legend.position = c(0.014,0.35),
+            outer.margins = c(0, 0, 0, 0),
+            inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
             frame = F,
-            legend.height = -0.6,
+            #frame.lwd = 1,
+            asp = my.asp,
+            legend.height = -0.45,
             #legend.width = -0.06,
             #legend.title.size = 1.5, 
             legend.text.size = 1) +
   tmap_options(max.raster = c(plot = 102951200, view = 102951200))
 
-p.road.flux <-   
+p.veh.flux <-   
   #tm_shape(mc.hill.c) +
   #tm_raster(palette = "-Greys", 
   #          legend.show = F, 
   #          alpha = 0.4) +
-  #tm_shape(r.all$total.avg.day.flux) +
-  tm_shape(r.road.flux) +
-  tm_raster(palette = rev(rainbow(255, end = 0.6)), #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
+  tm_shape(r.veh.flux) +
+  tm_raster(palette = my.palette, #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
             style="cont",
-            breaks = c(1, seq(5, 25, 5)),
+            breaks = c(1, seq(20, 200, 20)),
             legend.show = T,
             title = "Heat Flux\n(W/m\u00B2)",
             colorNA = NULL) + # white
@@ -542,15 +542,15 @@ p.road.flux <-
              lty = "solid",
              col = "grey40",
              alpha = 0.7) +
-  tm_scale_bar(position = c(0.25,0.0),
+  tm_scale_bar(position = c(0,0),
                #breaks = c(0,5,10,15,20),
-               size = 0.80,
+               size = 0.7,
                color.light = "grey85") +
-  tm_compass(north = 0, 
-             type = "4star", 
-             size = 2,
-             show.labels = 1, 
-             position = c(0.9,0.85)) +
+  #tm_compass(north = 0, 
+  #           type = "4star", 
+  #           size = 1.25,
+  #           show.labels = 1, 
+  #           position = c(0.9,0.85)) +
   tm_shape(phx.labels) +
   tm_text("name", 
           size = .5, 
@@ -566,13 +566,16 @@ p.road.flux <-
   tm_layout(fontfamily = my.font, 
             fontface = "italic", 
             bg.color = "grey95",
-            title.size = 1.5, 
-            title = c("(c) Roadway Pavement"),
-            title.position = c(0.12,0.94),
-            legend.position = c(0.01,0.3),
-            outer.margins = 0,
+            title.size = 1.1, 
+            title = c("(c) Vehicles"),
+            title.position = title.p,
+            legend.position = c(0.014,0.35),
+            outer.margins = c(0, 0, 0, 0),
+            inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
             frame = F,
-            legend.height = -0.6,
+            #frame.lwd = 1,
+            asp = my.asp,
+            legend.height = -0.45,
             #legend.width = -0.06,
             #legend.title.size = 1.5, 
             legend.text.size = 1) +
@@ -585,7 +588,7 @@ p.all.flux <-
   #          alpha = 0.4) +
   #tm_shape(r.all$total.avg.day.flux) +
   tm_shape(r.all.flux) +
-  tm_raster(palette = rev(rainbow(255, end = 0.6)), #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
+  tm_raster(palette = my.palette, #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
             style="cont",
             breaks = c(1, seq(20, 200, 20)),
             legend.show = T,
@@ -596,15 +599,15 @@ p.all.flux <-
              lty = "solid",
              col = "grey40",
              alpha = 0.7) +
-  tm_scale_bar(position = c(0.25,0.0),
-               #breaks = c(0,5,10,15,20),
-               size = 0.80,
-               color.light = "grey85") +
-  tm_compass(north = 0, 
-             type = "4star", 
-             size = 2,
-             show.labels = 1, 
-             position = c(0.9,0.85)) +
+  #tm_scale_bar(position = c(0.2,0.10),
+  #             #breaks = c(0,5,10,15,20),
+  #             size = 1,
+  #             color.light = "grey85") +
+  #tm_compass(north = 0, 
+  #           type = "4star", 
+  #           size = 1.5,
+  #           show.labels = 1, 
+  #           position = c(0.9,0.85)) +
   tm_shape(phx.labels) +
   tm_text("name", 
           size = .5, 
@@ -620,29 +623,24 @@ p.all.flux <-
   tm_layout(fontfamily = my.font, 
             fontface = "italic", 
             bg.color = "grey95",
-            title.size = 1.5, 
+            title.size = 1.1, 
             title = c("(d) Vehicles + Pavements"), 
-            title.position = c(0.12,0.94),
-            legend.position = c(0.01,0.3),
-            outer.margins = 0,
+            title.position = title.p,
+            legend.position = c(0.014,0.35),
+            outer.margins = c(0, 0, 0, 0),
+            inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
             frame = F,
-            legend.height = -0.6,
+            #frame.lwd = 1,
+            asp = my.asp,
+            legend.height = -0.45,
             #legend.width = -0.06,
             #legend.title.size = 1.5, 
             legend.text.size = 1) +
   tmap_options(max.raster = c(plot = 102951200, view = 102951200))
 
-p.grid.flux <- tmap_arrange(p.veh.flux, p.park.flux, p.road.flux, p.all.flux,
-                            outer.margins = 0, inner.margins = 0)
-p.grid.flux
+p.grid.flux <- tmap_arrange(p.road.flux, p.park.flux, p.veh.flux, p.all.flux,
+                            outer.margins = c(0,0,0,0), asp = NA)
+
 
 tmap_save(p.grid.flux, filename = here("figures/mean-daily-heat-flux-4grid.png")) #width = 3509, height = 2482
-
-
-
-
-plot(r.all[[c("avg.day.flux.veh", "avg.day.flux.park", "avg.day.flux.roads", "total.avg.day.flux")]], 
-     main = c("Mean Daily Excess Heat Flux from Vehicles","Mean Daily Excess Heat Flux from Parking Pavement", 
-              "Mean Daily Excess Heat Flux from Roadway Pavement","Mean Daily Excess Heat Flux from Vehicles & Pavements"))
-
 

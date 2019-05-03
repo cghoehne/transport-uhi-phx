@@ -45,8 +45,8 @@ fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by 
 my.extent <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
 
 # define name of run
-run.name <- "metro-phx"
-#run.name <- "phx-dwntwn"
+#run.name <- "metro-phx"
+run.name <- "phx-dwntwn"
 #run.name <- "north-tempe"
 
 # alternatively, define 2 bounding coordinates for a different extent that is within the spatial extent of the available data
@@ -66,8 +66,8 @@ if(run.name != "metro-phx"){ # if not doing the full region run, adjust the exte
 # define resolution 
 #res <- 164.042  #  ~50m x 50m
 #res <- 328.084  # ~100m x 100m
-#res <- 820.21  # ~250m x 250m
-res <- 1640.42 # ~500m x 500m
+res <- 820.21  # ~250m x 250m
+#res <- 1640.42 # ~500m x 500m
 #res <- 3280.84 # ~1000 x 1000 
 
 # raster area in sq ft and sq meters
@@ -296,24 +296,30 @@ r.t <- st_as_sf(r.p) # sf object for quicker intersections
 
 # load vehicle travel network and data and convert to sf
 traffic.net <- readRDS(here("data/outputs/network/icarus-network.rds")) # cleaned/simplified ICARUS traffic network to pair with traffic data
-#traffic.net <- shapefile(here("data/outputs/temp/icarus-test.shp")) # TEST ICARUS NETWORK
-#traffic <- fread() simulated traffic data for region from ICARUS model
 veh <- st_as_sf(traffic.net)
 rm(traffic.net)
+
+# calculate acutal link length and length reduction ratio to ensure accurate VKT estaimtes
+veh$adj.length <- st_length(veh)
+veh$adj.l.ratio <- veh$length / veh$adj.length 
 
 # ICARUS traffic data has 101 cols where col 1 is link id and the rest are from 12am to 12am divided in 100 chunks
 # therefore every column from V2:V101 represents a 0.24 hour period
 # morning rush would be from: hour = 7.92 am to 8.88 am (6:54:12 am to 8:52:48 am); V34:V37
 # evening rush would be from: hour = 5.04 pm  to 6 pm (5:02:24 pm to 6:00:00 pm); V72:V75
 
-# merge summarized icarus flow data by link id
+# merge icarus flow data by link id
 iflow <- fread(here("data/icarus/full_flow.csv"))
 setnames(iflow, "V1", "id")
-veh.m <- merge(veh, iflow[, .(day.flow = sum(V2:V101),
-                                fl.8.9am = sum(V34:V37),
-                                fl.5.6pm = sum(V72:V75)),
-                            by = id], by = "id")
-rm(iflow, veh)
+veh.m <- merge(veh, iflow, by = "id")
+
+# store named vector of flow variable names
+fl.names <- names(iflow[, 2:length(iflow)])
+#veh.m <- merge(veh, iflow[, .(day.flow = sum(V2:V101),
+#                                fl.8.9 = sum(V34:V37),
+#                                fl.17.18 = sum(V72:V75)),
+#                            by = id], by = "id")
+#rm(veh)
 
 # sf objects for quicker intersections
 osm.min.s <- st_as_sf(osm.buf.mrg.min)
@@ -388,6 +394,7 @@ park.max.i$area <- st_area(park.max.i)
 park.max.i$frac <- park.max.i$area / (res * res) # divide by raster cell area
 
 # for vehicle travel, calc VMT by trimmed link length * vehicles traversed
+
 veh.i$day.vmt <- st_length(veh.i)  * veh.i$day.flow
 veh.i$am.vmt <- st_length(veh.i)  * veh.i$fl.8.9am
 veh.i$pm.vmt <- st_length(veh.i)  * veh.i$fl.5.6pm
@@ -561,16 +568,15 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
 
 # VEHICLES
 # rasterize VMT based on cleaned icarus clipped links with vehicle travel centrioded
-invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-  rasterize(veh.p[parts.c[[i]],], r, field = "day.vmt", fun = sum, background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/veh-part-", i, ".tif")), 
-            overwrite = T)
-})
-invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-  rasterize(veh.p[parts.c[[i]],], r, field = "fl.8.9am", fun = sum, background = 0,
-            filename = here(paste0("data/outputs/temp/rasters/veh-5pm-part-", i, ".tif")), 
-            overwrite = T)
-})
+# loop through each timeslice during day and compute rasterization of flow for timeperiod
+for(j in 4:(length(iflow)+2)){ # length of unique timeperiods 
+  invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
+    rasterize(veh.p[parts.c[[i]],], r, field = j, fun = sum, background = 0, # first flow var starts at 4
+              filename = here(paste0("data/outputs/temp/rasters/flow-", fl.names[j-3], "-part-", i, ".tif")), 
+              overwrite = T)
+  })
+}
+
 
 # SVF
 # rasterize SVF point data into mean by pixel
@@ -608,6 +614,12 @@ r.park.max.p.conc <- lapply(1:my.cores, function (i) raster(here(paste0("data/ou
 
 r.veh.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/veh-part-", i, ".tif"))))
 r.veh.p.5pm <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/veh-5pm-part-", i, ".tif"))))
+
+for(j in 1:(length(iflow)-1)){
+  r.veh.p.h <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/flow-", fl.names[j], "-part-", i, ".tif"))))
+  assign(r.veh.p.h, paste0("r.veh.p.", j)) 
+}
+
 
 r.svf.p <- lapply(1:my.cores, function (i) raster(here(paste0("data/outputs/temp/rasters/svf-part-", i, ".tif"))))
 

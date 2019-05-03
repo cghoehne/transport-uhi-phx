@@ -127,7 +127,7 @@ lines.spdf.c <- as(lines.sf.c, "Spatial")
 # eliminate unneeded variables
 lines.spdf.c$from <- NULL # origin node
 lines.spdf.c$to <- NULL # dest node
-lines.spdf.c$length <- NULL # original link length
+#lines.spdf.c$length <- NULL # original link length
 lines.spdf.c$permlanes <- NULL
 lines.spdf.c$oneway <- NULL # unique(lines.spdf.c$oneway) == c(1)
 lines.spdf.c$modes <- NULL # currently all car
