@@ -45,8 +45,8 @@ fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by 
 my.extent <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
 
 # define name of run
-#run.name <- "metro-phx"
-run.name <- "phx-dwntwn"
+run.name <- "metro-phx"
+#run.name <- "phx-dwntwn"
 #run.name <- "north-tempe"
 
 # alternatively, define 2 bounding coordinates for a different extent that is within the spatial extent of the available data
@@ -424,7 +424,7 @@ veh.p <- as(veh.c, "Spatial")
 # removed unused objects
 rm(osm.min.c, osm.max.c, osm.min.i, osm.max.i, 
    park.min.i, park.max.i, park.min.c, park.max.c, 
-   veh.i, veh.c, svf)
+   veh.c, svf)
 
 # assign aggregated class names for assigning pavement heat model data
 fclass.meta <- readRDS(here("data/outputs/pavement-class-summary.rds"))
@@ -434,10 +434,10 @@ for(f in 1:4){
 }
 
 # same for vehicles based on capcity
-veh.p.local <- veh.p[veh.p$capacity <= 1000,]
-veh.p.minor <- veh.p[veh.p$capacity <= 2000,]
-veh.p.major <- veh.p[veh.p$capacity <= 3000,]
-veh.p.hiway <- veh.p[veh.p$capacity >= 8000,]
+veh.p.local <- veh.p[veh.p$capacity < 1000,]
+veh.p.minor <- veh.p[veh.p$capacity %in% c(1000:2000),]
+veh.p.major <- veh.p[veh.p$capacity %in% c(2001:7000),]
+veh.p.hiway <- veh.p[veh.p$capacity > 7000,]
 
 # drop NA agg roadway classess (non-roadway)
 osm.min.p <- osm.min.p[!is.na(osm.min.p$class),]
@@ -580,22 +580,22 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
 # this is done for each of the four major classes of road types
 for(j in 7:(length(iflow)+5)){ # length of unique timeperiods 
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.local[parts.c.local[[i]],], r, field = j, fun = sum, background = 0, # first flow var starts at 4
+    rasterize(veh.p.local[parts.c.local[[i]],], r, field = j, fun = sum, background = 0, 
               filename = here(paste0("data/outputs/temp/rasters/vkt-local-time-", j-6, "-part-", i, ".tif")), 
               overwrite = T)
   })
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.minor[parts.c.minor[[i]],], r, field = j, fun = sum, background = 0, # first flow var starts at 4
+    rasterize(veh.p.minor[parts.c.minor[[i]],], r, field = j, fun = sum, background = 0, 
               filename = here(paste0("data/outputs/temp/rasters/vkt-minor-time-", j-6, "-part-", i, ".tif")), 
               overwrite = T)
   })
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.major[parts.c.major[[i]],], r, field = j, fun = sum, background = 0, # first flow var starts at 4
+    rasterize(veh.p.major[parts.c.major[[i]],], r, field = j, fun = sum, background = 0,
               filename = here(paste0("data/outputs/temp/rasters/vkt-major-time-", j-6, "-part-", i, ".tif")), 
               overwrite = T)
   })
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.hiway[parts.c.hiway[[i]],], r, field = j, fun = sum, background = 0, # first flow var starts at 4
+    rasterize(veh.p.hiway[parts.c.hiway[[i]],], r, field = j, fun = sum, background = 0, 
               filename = here(paste0("data/outputs/temp/rasters/vkt-hiway-time-", j-6, "-part-", i, ".tif")), 
               overwrite = T)
   })
@@ -728,8 +728,8 @@ names(r.veh)[401:405] <- c("daily.vkt.local", "daily.vkt.minor", "daily.vkt.majo
 
 # make correct units of vkt by dividing result by 5280 (ft per mile) mult by 1.60934 km per mi
 for(i in 1:length(names(r.veh))){
-  values(r.veh[[i]]) <- values(r.veh[[i]]) / 5280  * 1.60934 # for VKT (vehicle kilometers traveled)
-  #values(r.veh.log) <- log10(values(r.veh.log) + 1) # log base 10 values
+  #values(r.veh[[i]]) <- values(r.veh[[i]]) / 5280  * 1.60934 # for VKT (vehicle kilometers traveled)
+#  #values(r.veh.log) <- log10(values(r.veh.log) + 1) # log base 10 values
 }
 
 #r.veh.log <- r.veh # log scale vkt
@@ -903,8 +903,8 @@ names(r.all[[nlayers(r.all)]]) <- "avg.day.flux.park"
 # assume 8800  Wh/liter (33.3 kWh/gal)
 # 1 MPG = 0.425144 km/liter or 1 gal/mi = 2.35215 liter/km
 # energy lost to waste heat assumed = 0.65 (65%)
-pave.veh.meta[,energy.min := (1 / MPGe.min) * 2.35215 * 8800 * 0.65] # Wh/km (Watt-hours per kilometer)
-pave.veh.meta[,energy.max := (1 / MPGe.max) * 2.35215 * 8800 * 0.65] # Wh/km (Watt-hours per kilometer)
+pave.veh.meta[, energy.min := (1 / MPGe.min) * 2.35215 * 8800 * 0.65] # Wh/km (Watt-hours per kilometer)
+pave.veh.meta[, energy.max := (1 / MPGe.max) * 2.35215 * 8800 * 0.65] # Wh/km (Watt-hours per kilometer)
 
 # heat flux from vehicles in a day = VKT (km) * energy rate (Wh/km) / hours (hrs) / cell resolution (m2) = W/m2
 # min veh flux/day
@@ -966,7 +966,7 @@ quants <- lapply(1:length(names(r.all)), function(i) quantile(values(
   r.all[[i]]), c(0, 0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99, 1.0), na.rm = T))
 names(quants) <- names(r.all)
 
-quants
+#quants
 
 # create output directory if doesn't exist
 dir.create(here("data/outputs/rasters"), showWarnings = F) 
@@ -975,8 +975,11 @@ dir.create(here("data/outputs/rasters"), showWarnings = F)
 writeRaster(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
 saveRDS(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.rds")))
 saveRDS(r.veh, here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.rds")))
+#shapefile(veh.p[,1:4], here("data/outputs/shapefiles/icarus-data-network-clipped"))
 
 # paste final runtime
 paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(),
        ". Model run length: ", round(difftime(Sys.time(), script.start, units = "mins"),2)," mins.")
+
+
 
