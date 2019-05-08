@@ -100,14 +100,16 @@ parking.pts$raw.area <- parking.pts$spaces * 330
 #parking.dt <- as.data.table(parking.pts@data)
 
 # adjust parking area such that as spaces per parcel are higher, there is higher amount shaded/covered/garaged
-# create function that scales with number of spaces non-linearly as desired
-min.shade.ratio <- function (x) {(100 - (2.17 * log(x + 1))) / 100}
-max.shade.ratio <- function (x) {(100 - (6.51 * log(x + 1))) / 100}
+# i.e. extreme high parking parcels have low SVF assumptions
+# create function that scales with number of spaces non-linearly 
+min.shade.ratio <- function (x) {ifelse(x > 1000, (-0.109 * log(x)) + 1.75, 1)}
+max.shade.ratio <- function (x) {ifelse(x > 1000, 8 * (x^(-0.301)), 1)}
 
 # check log growth
-min.shade.ratio(c(0,10,100,1000,10000,100000)) # at 100,000 spaces, ~25% are not visisble to sky
-max.shade.ratio(c(0,10,100,1000,10000,100000)) # at 100,000 spaces, ~75% are not visisble to sky
+min.shade.ratio(c(0,1000,10000,50000,100000)) # at 100,000 spaces, ~50% are not visisble to sky
+max.shade.ratio(c(0,1000,10000,50000,100000)) # at 100,000 spaces, ~75% are not visisble to sky
 
+# calculate parking SVF
 parking.pts$min.area <- parking.pts$raw.area * max.shade.ratio(parking.pts$spaces) # max shade for min area case
 parking.pts$max.area <- parking.pts$raw.area * min.shade.ratio(parking.pts$spaces) # min shade for max area case
 
