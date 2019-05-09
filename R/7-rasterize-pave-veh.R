@@ -8,7 +8,7 @@
 
 # clear space and allocate memory
 gc()
-memory.limit(size = 50000) 
+memory.limit(size = 30000) 
 script.start <- Sys.time() # start script timestamp
 
 # first make sure checkpoint is installed locally
@@ -163,7 +163,7 @@ osm <- st_intersection(osm.sf, my.buffer$geometry)
 osm <- as(osm, "Spatial")
 
 # store the number of cores
-my.cores <- parallel::detectCores() - 1 # n-1 for headspace
+my.cores <- parallel::detectCores() - 2 # n-1 for headspace
 
 # create empty list for foreach computations
 my.list <- list() 
@@ -744,27 +744,37 @@ values(r.svf) <- ifelse(is.na(values(r.svf)) == T, mean.svf, values(r.svf))
 # stack rasters such that each layer is a class for roads and parking, add total roads/parking fractions
 r.road.min <- stack(r.road.min.local, r.road.min.minor, r.road.min.major, r.road.min.hiway) # stack min roads fractions by class
 r.road.min <- stack(r.road.min, stackApply(r.road.min, indices = c(1), fun = sum)) # create all roads sum for min scenario
+values(r.road.min[[5]]) <- ifelse(values(r.road.min[[5]]) > 1.0, 1.0, values(r.road.min[[5]])) # make sure no > 1.0
 
 r.road.max <- stack(r.road.max.local, r.road.max.minor, r.road.max.major, r.road.max.hiway) # stack max roads fractions by class
 r.road.max <- stack(r.road.max, stackApply(r.road.max, indices = c(1), fun = sum)) # create all roads sum for max scenario
+values(r.road.max[[5]]) <- ifelse(values(r.road.max[[5]]) > 1.0, 1.0, values(r.road.max[[5]])) # make sure no > 1.0
 
 r.road <- stack(r.road.min, r.road.max) # combine min and max fractional areas into raster stack
 r.road <- stack(r.road, stackApply(r.road, indices = c(1:5,1:5), fun = mean)) # add the mean by fclass
 names(r.road) <- c("min.local.road", "min.minor.road", "min.major.road", "min.hiway.road", "min.all.roads", # names in order of bindings
                        "max.local.road", "max.minor.road", "max.major.road", "max.hiway.road", "max.all.roads",
                        "avg.local.road", "avg.minor.road", "avg.major.road", "avg.hiway.road", "avg.all.roads")
+values(r.road$avg.local.road) <- ifelse(values(r.road$avg.local.road) > 1.0, 1.0, values(r.road$avg.local.road)) # make sure no > 1.0
+values(r.road$avg.minor.road) <- ifelse(values(r.road$avg.minor.road) > 1.0, 1.0, values(r.road$avg.minor.road)) # make sure no > 1.0
+values(r.road$avg.major.road) <- ifelse(values(r.road$avg.major.road) > 1.0, 1.0, values(r.road$avg.major.road)) # make sure no > 1.0
+values(r.road$avg.hiway.road) <- ifelse(values(r.road$avg.hiway.road) > 1.0, 1.0, values(r.road$avg.hiway.road)) # make sure no > 1.0
 
 r.park.min <- stack(r.park.min.asph, r.park.min.conc) # stack min parking fractions by class
 r.park.min <- stack(r.park.min, stackApply(r.park.min, indices = c(1), fun = sum)) # create all roads sum for min scenario
+values(r.park.min[[3]]) <- ifelse(values(r.park.min[[3]]) > 1.0, 1.0, values(r.park.min[[3]])) # make sure no > 1.0
 
 r.park.max <- stack(r.park.max.asph, r.park.max.conc) # stack max parking fractions by class
 r.park.max <- stack(r.park.max, stackApply(r.park.max, indices = c(1), fun = sum)) # create all roads sum for max scenario
+values(r.park.max[[3]]) <- ifelse(values(r.park.max[[3]]) > 1.0, 1.0, values(r.park.max[[3]])) # make sure no > 1.0
 
 r.park <- stack(r.park.min, r.park.max) # combine min and max fractional areas into raster stack
 r.park <- stack(r.park, stackApply(r.park, indices = c(1:3,1:3), fun = mean)) # add the mean by fclass
 names(r.park) <- c("min.com.park", "min.res.park", "min.all.park",
                    "max.com.park", "max.res.park", "max.all.park",
                    "avg.res.park", "avg.com.park", "avg.all.park")
+values(r.park$avg.res.park) <- ifelse(values(r.park$avg.res.park) > 1.0, 1.0, values(r.park$avg.res.park)) # make sure no > 1.0
+values(r.park$avg.com.park) <- ifelse(values(r.park$avg.com.park) > 1.0, 1.0, values(r.park$avg.com.park)) # make sure no > 1.0
 
 # pavement: parking + roads
 r.pave <- stack(r.road, r.park, stackApply(stack(r.road[[c("min.all.roads","max.all.roads","avg.all.roads")]],
@@ -966,6 +976,7 @@ dir.create(here("data/outputs/rasters"), showWarnings = F)
 writeRaster(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
 saveRDS(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.rds")))
 saveRDS(r.veh, here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.rds")))
+save.image(here("data/outputs/temp/rasterize-6.RData"))
 #shapefile(veh.p[,1:4], here("data/outputs/shapefiles/icarus-data-network-clipped"))
 
 # paste final runtime
