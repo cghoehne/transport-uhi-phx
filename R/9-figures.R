@@ -306,8 +306,15 @@ r.all <- readRDS(here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.n
 mean(values(veh.heat$vkt.local.74))
 quantile(values(veh.heat$vkt.local.74))
 
-#values(r.all$avg.local.road) * ((res / 3.28084)^2) # area of local roads by cell local
+values(r.all$avg.local.road) * ((res / 3.28084)^2) # area (m2) of local roads by cell local
+test.min <- ifelse(values(r.all$min.hiway.road) == 0, 0, values(r.all$min.day.flux.hiway.veh) / values(r.all$min.hiway.road))
+quantile(test.min)
+test.max <- ifelse(values(r.all$max.hiway.road) == 0, 0, values(r.all$max.day.flux.hiway.veh) / values(r.all$max.hiway.road))
+quantile(test.max)
+test.avg <- (test.min + test.max) / 2
+quantile(test.avg)
 
+plot(r.all[[c("avg.all.roads", "avg.all.park", "daily.vkt", "total.avg.day.flux")]])
 
 #all.veh.heat <- rbind(cbind(veh.heat, "(a) Highway"), 
 #                      cbind(veh.heat, "(b) Arterial"),
