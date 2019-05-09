@@ -98,16 +98,20 @@ parking.pts$raw.area <- parking.pts$spaces * 330
 # adjust parking area such that as spaces per parcel are higher, there is higher amount shaded/covered/garaged
 # i.e. extreme high parking parcels have low SVF assumptions
 # create function that scales with number of spaces non-linearly 
-min.shade.ratio <- function (x) {ifelse(x > 1000, (-0.109 * log(x)) + 1.75, 1)}
-max.shade.ratio <- function (x) {ifelse(x > 1000, 8 * (x^(-0.301)), 1)}
+# see figures/parking-space-SVF.xlsx for details on function selection
+min.park.svf <- function (x) {ifelse(x > 100, 1.5874 * (x^(-0.1003)), 1)}
+max.park.svf <- function (x) {ifelse(x > 100, 3.5422 * (x^(-0.2746)), 1)}
+#min.park.svf <- function (x) {ifelse(x > 1000, 8 * (x^(-0.301)), 1)}
+#max.park.svf <- function (x) {ifelse(x > 1000, 32.075 * (x^(-0.5)), 1)}
+#max.park.svf <- function (x) {ifelse(x > 1000, (-0.109 * log(x)) + 1.75, 1)}
 
 # check log growth
-min.shade.ratio(c(0,1000,10000,50000,100000)) # at 100,000 spaces, ~50% are not visisble to sky
-max.shade.ratio(c(0,1000,10000,50000,100000)) # at 100,000 spaces, ~75% are not visisble to sky
+min.park.svf(c(0,1000,10000,50000,100000)) # at 100,000 spaces, ~50% are visisble to sky
+max.park.svf(c(0,1000,10000,50000,100000)) # at 100,000 spaces, ~15% are visisble to sky
 
 # calculate parking SVF
-parking.pts$min.area <- parking.pts$raw.area * max.shade.ratio(parking.pts$spaces) # max shade for min area case
-parking.pts$max.area <- parking.pts$raw.area * min.shade.ratio(parking.pts$spaces) # min shade for max area case
+parking.pts$min.area <- parking.pts$raw.area * max.park.svf(parking.pts$spaces) # max shade for min area case
+parking.pts$max.area <- parking.pts$raw.area * min.park.svf(parking.pts$spaces) # min shade for max area case
 
 # OSM DATA FORMAT
 # **Curently, OSM data in Phoenix does not have lane data. in light of this:
@@ -173,7 +177,7 @@ w.min <- unique(osm$min.r.buf)
 w.max <- unique(osm$max.r.buf)  
 
 save.image(here("data/outputs/temp/rasterize-1.RData")) # save progress in case error in parellelization
-rm(osm.sf, osm.dt, fclass.info, parking, min.shade.ratio, max.shade.ratio)
+rm(osm.sf, osm.dt, fclass.info, parking, min.park.svf, max.park.svf)
 gc() # initiate cluster after only all the necessary objects present in R environment
 cat(paste0("Time: ", Sys.time(),  # script run time update
            ".\nDuration: ", round(difftime(Sys.time(), script.start, units = "mins")), " mins."))
@@ -760,10 +764,14 @@ values(r.road$avg.minor.road) <- ifelse(values(r.road$avg.minor.road) > 1.0, 1.0
 values(r.road$avg.major.road) <- ifelse(values(r.road$avg.major.road) > 1.0, 1.0, values(r.road$avg.major.road)) # make sure no > 1.0
 values(r.road$avg.hiway.road) <- ifelse(values(r.road$avg.hiway.road) > 1.0, 1.0, values(r.road$avg.hiway.road)) # make sure no > 1.0
 
+values(r.park.min.asph) <- ifelse(values(r.park.min.asph) > 1.0, 1.0, values(r.park.min.asph)) # make sure no > 1.0
+values(r.park.min.conc) <- ifelse(values(r.park.min.conc) > 1.0, 1.0, values(r.park.min.conc)) # make sure no > 1.0
 r.park.min <- stack(r.park.min.asph, r.park.min.conc) # stack min parking fractions by class
 r.park.min <- stack(r.park.min, stackApply(r.park.min, indices = c(1), fun = sum)) # create all roads sum for min scenario
 values(r.park.min[[3]]) <- ifelse(values(r.park.min[[3]]) > 1.0, 1.0, values(r.park.min[[3]])) # make sure no > 1.0
 
+values(r.park.max.asph) <- ifelse(values(r.park.max.asph) > 1.0, 1.0, values(r.park.max.asph)) # make sure no > 1.0
+values(r.park.max.conc) <- ifelse(values(r.park.max.conc) > 1.0, 1.0, values(r.park.max.conc)) # make sure no > 1.0
 r.park.max <- stack(r.park.max.asph, r.park.max.conc) # stack max parking fractions by class
 r.park.max <- stack(r.park.max, stackApply(r.park.max, indices = c(1), fun = sum)) # create all roads sum for max scenario
 values(r.park.max[[3]]) <- ifelse(values(r.park.max[[3]]) > 1.0, 1.0, values(r.park.max[[3]])) # make sure no > 1.0
