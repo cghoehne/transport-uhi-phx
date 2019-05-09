@@ -65,8 +65,8 @@ if(run.name != "metro-phx"){ # if not doing the full region run, adjust the exte
 
 # define resolution 
 #res <- 164.042  #  ~50m x 50m
-#res <- 328.084  # ~100m x 100m
-res <- 820.21  # ~250m x 250m
+res <- 328.084  # ~100m x 100m
+#res <- 820.21  # ~250m x 250m
 #res <- 1640.42 # ~500m x 500m
 #res <- 3280.84 # ~1000 x 1000 
 
@@ -575,22 +575,22 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
 # this is done for each of the four major classes of road types
 for(j in 7:(length(iflow)+5)){ # length of unique timeperiods 
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.local[parts.c.local[[i]],], r, field = paste0("V", 7:(length(iflow)+5) - 5), fun = sum, background = 0, 
+    rasterize(veh.p.local[parts.c.local[[i]],], r, field = paste0("V", j - 5), fun = sum, background = 0, 
               filename = here(paste0("data/outputs/temp/rasters/vkt-local-time-", j-6, "-part-", i, ".tif")), # time 1 to 100
               overwrite = T)
   })
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.minor[parts.c.minor[[i]],], r, field = paste0("V", 7:(length(iflow)+5) - 5), fun = sum, background = 0, 
+    rasterize(veh.p.minor[parts.c.minor[[i]],], r, field = paste0("V", j - 5), fun = sum, background = 0, 
               filename = here(paste0("data/outputs/temp/rasters/vkt-minor-time-", j-6, "-part-", i, ".tif")), # time 1 to 100
               overwrite = T)
   })
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.major[parts.c.major[[i]],], r, field = paste0("V", 7:(length(iflow)+5) - 5), fun = sum, background = 0,
+    rasterize(veh.p.major[parts.c.major[[i]],], r, field = paste0("V", j - 5), fun = sum, background = 0,
               filename = here(paste0("data/outputs/temp/rasters/vkt-major-time-", j-6, "-part-", i, ".tif")),  # time 1 to 100
               overwrite = T)
   })
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.hiway[parts.c.hiway[[i]],], r, field = paste0("V", 7:(length(iflow)+5) - 5), fun = sum, background = 0, 
+    rasterize(veh.p.hiway[parts.c.hiway[[i]],], r, field = paste0("V", j - 5), fun = sum, background = 0, 
               filename = here(paste0("data/outputs/temp/rasters/vkt-hiway-time-", j-6, "-part-", i, ".tif")), # time 1 to 100
               overwrite = T)
   })
