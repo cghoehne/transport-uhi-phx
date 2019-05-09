@@ -55,16 +55,19 @@ setnames(iflow, "V1", "id")
 veh.m <- merge(veh, iflow, by = "id")
 rm(veh)
 
+# freespeed quantiles
+quantile(veh.m$freespeed)
+
 
 # look at specific link "593279-592712-633804-633723"
 # westbound 202 link, just west of 202 - 143, north of airport.
 my.id <- "593279-592712-633804-633723"
 
 # raw link length
-veh[veh$id == my.id,]$length
+veh.m[veh.m$id == my.id,]$length
 
 # adjustment factor
-veh[veh$id == my.id,]$adj.l.ratio
+veh.m[veh.m$id == my.id,]$adj.l.ratio
 
 # daily vehicle flow across link
 sum(iflow[id == my.id, V2:V101])
@@ -79,7 +82,7 @@ sum(sum(iflow[id == my.id, V72:V75]))
 # actual lanes: 5 (4 permenant through)
 # actual estiamted capacity: 20000 veh/hr/ln = 10,000 veh/hr
 # given capacity:
-veh[veh$id == my.id,]$capacity
+veh.m[veh.m$id == my.id,]$capacity
 
 # test res = 250m
 res <- 820.21  # ~250m x 250m
@@ -128,7 +131,7 @@ sum(iflow[id == my.id, V2:V101])
 sum(iflow[id == my.id, V2:V101]) / 56000
 
 v.m <- as.data.table(veh.m)
-lapply(v.m, class)
+#lapply(v.m, class)
 v.m[, adj.length := as.numeric(as.character(adj.length))]
 v.m[, adj.l.ratio := as.numeric(as.character(adj.l.ratio))]
 

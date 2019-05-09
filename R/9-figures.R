@@ -276,17 +276,44 @@ ggsave(paste0(folder, "/figures/heat-flux-diff",
                      format = "%Y%m%d_%H%M%S"),".png"), p.flux.a, 
        device = "png", scale = 1, width = 7, height = 4.5, dpi = 300, units = "in") 
 
-##############################
-# SAMPLE VEH WASTE HEAT PLOT #
-##############################
+###############################
+# VEH WASTE HEAT BY TIME PLOT #
+###############################
+#veh.heat <- fread(here("data/veh-waste-heat-sample.csv"))
 
-veh.heat <- fread(here("data/veh-waste-heat-sample.csv"))
+# define name of run
+#run.name <- "metro-phx"
+#run.name <- "phx-dwntwn"
+run.name <- "north-tempe"
 
-all.veh.heat <- rbind(cbind(veh.heat, "(a) Highway"), 
-                      cbind(veh.heat, "(b) Arterial"),
-                      cbind(veh.heat, "(c) Collector"),
-                      cbind(veh.heat, "(d) Local"))
-setnames(all.veh.heat, "V2", "id")
+# define resolution 
+#res <- 164.042  #  ~50m x 50m
+res <- 328.084  # ~100m x 100m
+#res <- 820.21  # ~250m x 250m
+#res <- 1640.42 # ~500m x 500m
+#res <- 3280.84 # ~1000 x 1000 
+
+# import veh hourly raster data
+veh.heat <- readRDS(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.rds")))
+
+# import daily avg raster data
+r.all <- readRDS(here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.rds")))
+
+# calculate mean veh heat flux over road area by class and time step
+# mean flux by layer
+#veh.agg <- 
+
+mean(values(veh.heat$vkt.local.74))
+quantile(values(veh.heat$vkt.local.74))
+
+#values(r.all$avg.local.road) * ((res / 3.28084)^2) # area of local roads by cell local
+
+
+#all.veh.heat <- rbind(cbind(veh.heat, "(a) Highway"), 
+#                      cbind(veh.heat, "(b) Arterial"),
+#                      cbind(veh.heat, "(c) Collector"),
+#                      cbind(veh.heat, "(d) Local"))
+#setnames(all.veh.heat, "V2", "id")
 
 # convert day fraction into date.time (will ignore date)
 all.veh.heat[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(day.frac * 24 * 60 * 60)]
@@ -368,21 +395,6 @@ ggsave(paste0(folder, "/figures/veh-heat-flux-diff.png"), p.flux.v,
 ####################
 # RASTER HEAT MAPS #
 ####################
-
-# define name of run
-run.name <- "metro-phx"
-#run.name <- "phx-dwntwn"
-#run.name <- "north-tempe"
-
-# define resolution 
-#res <- 164.042  #  ~50m x 50m
-#res <- 328.084  # ~100m x 100m
-#res <- 820.21  # ~250m x 250m
-res <- 1640.42 # ~500m x 500m
-#res <- 3280.84 # ~1000 x 1000 
-
-# import master raster data
-r.all <- readRDS(here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.rds")))
 
 # import labels & borders 
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
@@ -642,7 +654,6 @@ p.grid.flux <- tmap_arrange(p.road.flux, p.park.flux, p.veh.flux, p.all.flux,
                             outer.margins = c(0,0,0,0), asp = NA)
 
 
-tmap_save(p.grid.flux, filename = here("figures/mean-daily-heat-flux-4grid.png")) #width = 3509, height = 2482
-
+tmap_save(p.grid.flux, filename = here(paste0("figures/mean-daily-heat-flux-4grid-", run.name, "-", res / 3.28084, "m.png")))
 # morning rush would be from: hour = 7.92 am to 8.88 am (6:54:12 am to 8:52:48 am); V34:V37
 # evening rush would be from: hour = 5.04 pm  to 6 pm (5:02:24 pm to 6:00:00 pm); V72:V75

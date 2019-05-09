@@ -45,9 +45,9 @@ fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by 
 my.extent <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
 
 # define name of run
-run.name <- "metro-phx"
+#run.name <- "metro-phx"
 #run.name <- "phx-dwntwn"
-#run.name <- "north-tempe"
+run.name <- "north-tempe"
 
 # alternatively, define 2 bounding coordinates for a different extent that is within the spatial extent of the available data
 # phx dwntwn: UL 33.487158, -112.122746; LR 33.419871, -112.018541
@@ -389,7 +389,7 @@ park.max.i$frac <- park.max.i$area / (res * res) # divide by raster cell area
 # we use the trimmed length of the adjusted link times the adjustment ratio to 
 # approx the actual distance traveled on the trimmed link
 for(i in 7:(length(iflow)+5)){
-  veh.i[[i]] <- veh.i[[i]] * st_length(veh.i) * veh.i$adj.l.ratio
+  veh.i[[i]] <- veh.i[[i]] * as.numeric(st_length(veh.i)) * as.numeric(veh.i$adj.l.ratio)
 }
 
 # import SVF data and convert to points from lat lon and transform to EPSG:2223
@@ -474,6 +474,7 @@ parts.c.major <- split(1:nrow(veh.p.major[,]), cut(1:nrow(veh.p.major[,]), my.co
 parts.c.hiway <- split(1:nrow(veh.p.hiway[,]), cut(1:nrow(veh.p.hiway[,]), my.cores))
 
 parts.svf <- split(1:nrow(svf.pts[,]), cut(1:nrow(svf.pts[,]), my.cores))
+
 
 # create temporary output directory
 dir.create(here("data/outputs/temp/rasters"), showWarnings = F)
@@ -574,23 +575,23 @@ invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
 # this is done for each of the four major classes of road types
 for(j in 7:(length(iflow)+5)){ # length of unique timeperiods 
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.local[parts.c.local[[i]],], r, field = j, fun = sum, background = 0, 
-              filename = here(paste0("data/outputs/temp/rasters/vkt-local-time-", j-6, "-part-", i, ".tif")), 
+    rasterize(veh.p.local[parts.c.local[[i]],], r, field = paste0("V", 7:(length(iflow)+5) - 5), fun = sum, background = 0, 
+              filename = here(paste0("data/outputs/temp/rasters/vkt-local-time-", j-6, "-part-", i, ".tif")), # time 1 to 100
               overwrite = T)
   })
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.minor[parts.c.minor[[i]],], r, field = j, fun = sum, background = 0, 
-              filename = here(paste0("data/outputs/temp/rasters/vkt-minor-time-", j-6, "-part-", i, ".tif")), 
+    rasterize(veh.p.minor[parts.c.minor[[i]],], r, field = paste0("V", 7:(length(iflow)+5) - 5), fun = sum, background = 0, 
+              filename = here(paste0("data/outputs/temp/rasters/vkt-minor-time-", j-6, "-part-", i, ".tif")), # time 1 to 100
               overwrite = T)
   })
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.major[parts.c.major[[i]],], r, field = j, fun = sum, background = 0,
-              filename = here(paste0("data/outputs/temp/rasters/vkt-major-time-", j-6, "-part-", i, ".tif")), 
+    rasterize(veh.p.major[parts.c.major[[i]],], r, field = paste0("V", 7:(length(iflow)+5) - 5), fun = sum, background = 0,
+              filename = here(paste0("data/outputs/temp/rasters/vkt-major-time-", j-6, "-part-", i, ".tif")),  # time 1 to 100
               overwrite = T)
   })
   invisible(foreach(i = 1:my.cores, .packages = c("raster", "here")) %dopar% {
-    rasterize(veh.p.hiway[parts.c.hiway[[i]],], r, field = j, fun = sum, background = 0, 
-              filename = here(paste0("data/outputs/temp/rasters/vkt-hiway-time-", j-6, "-part-", i, ".tif")), 
+    rasterize(veh.p.hiway[parts.c.hiway[[i]],], r, field = paste0("V", 7:(length(iflow)+5) - 5), fun = sum, background = 0, 
+              filename = here(paste0("data/outputs/temp/rasters/vkt-hiway-time-", j-6, "-part-", i, ".tif")), # time 1 to 100
               overwrite = T)
   })
 }
