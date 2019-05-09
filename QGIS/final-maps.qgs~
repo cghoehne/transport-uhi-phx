@@ -29,7 +29,7 @@
       <layer-tree-layer expanded="1" checked="Qt::Checked" source="../data/outputs/shapefiles/icarus-network-flows-zero.shp" name="icarus-network-flows-zero" id="icarus_network_flows_zero_ba17280c_58a8_49ce_ab70_a54fa5497eb6" providerKey="ogr">
         <customproperties/>
       </layer-tree-layer>
-      <layer-tree-layer expanded="1" checked="Qt::Checked" source="../data/outputs/shapefiles/icarus-network-flows-10-or-less.shp" name="icarus-network-flows-10-or-less" id="icarus_network_flows_10_or_less_966d966c_d166_481c_a018_ac15ae296f7d" providerKey="ogr">
+      <layer-tree-layer expanded="1" checked="Qt::Unchecked" source="../data/outputs/shapefiles/icarus-network-flows-10-or-less.shp" name="icarus-network-flows-10-or-less" id="icarus_network_flows_10_or_less_966d966c_d166_481c_a018_ac15ae296f7d" providerKey="ogr">
         <customproperties/>
       </layer-tree-layer>
       <layer-tree-layer expanded="1" checked="Qt::Unchecked" source="../data/outputs/shapefiles/icarus-network-flows-less-100.shp" name="icarus-network-flows-less-100" id="icarus_network_flows_less_100_291acb53_01d7_456c_9cef_a06dc1522cad" providerKey="ogr">
@@ -191,10 +191,10 @@
   <mapcanvas annotationsVisible="1" name="theMapCanvas">
     <units>feet</units>
     <extent>
-      <xmin>557482.44780780572909862</xmin>
-      <ymin>887078.1027548280544579</ymin>
-      <xmax>698156.45269347925204784</xmax>
-      <ymax>1012670.35948872240260243</ymax>
+      <xmin>643574.25398430624045432</xmin>
+      <ymin>952505.25647788203787059</ymin>
+      <xmax>652366.37928966083563864</xmax>
+      <ymax>960354.77252375043462962</ymax>
     </extent>
     <rotation>0</rotation>
     <destinationsrs>
@@ -228,9 +228,9 @@
           <legendlayerfile layerid="icarus_network_flows_zero_ba17280c_58a8_49ce_ab70_a54fa5497eb6" visible="1" isInOverview="0"/>
         </filegroup>
       </legendlayer>
-      <legendlayer open="true" checked="Qt::Checked" name="icarus-network-flows-10-or-less" drawingOrder="-1" showFeatureCount="0">
+      <legendlayer open="true" checked="Qt::Unchecked" name="icarus-network-flows-10-or-less" drawingOrder="-1" showFeatureCount="0">
         <filegroup open="true" hidden="false">
-          <legendlayerfile layerid="icarus_network_flows_10_or_less_966d966c_d166_481c_a018_ac15ae296f7d" visible="1" isInOverview="0"/>
+          <legendlayerfile layerid="icarus_network_flows_10_or_less_966d966c_d166_481c_a018_ac15ae296f7d" visible="0" isInOverview="0"/>
         </filegroup>
       </legendlayer>
       <legendlayer open="true" checked="Qt::Unchecked" name="icarus-network-flows-less-100" drawingOrder="-1" showFeatureCount="0">
@@ -8779,8 +8779,8 @@ def my_form_open(dialog, layer, feature):
       <CandidatesPoint type="int">16</CandidatesPoint>
       <DrawRectOnly type="bool">false</DrawRectOnly>
       <ShowingAllLabels type="bool">false</ShowingAllLabels>
-      <ShowingCandidates type="bool">false</ShowingCandidates>
       <CandidatesPolygon type="int">30</CandidatesPolygon>
+      <ShowingCandidates type="bool">false</ShowingCandidates>
       <DrawOutlineLabels type="bool">true</DrawOutlineLabels>
       <CandidatesLine type="int">50</CandidatesLine>
     </PAL>

@@ -45,9 +45,9 @@ fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by 
 my.extent <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
 
 # define name of run
-#run.name <- "metro-phx"
+run.name <- "metro-phx"
 #run.name <- "phx-dwntwn"
-run.name <- "north-tempe"
+#run.name <- "north-tempe"
 
 # alternatively, define 2 bounding coordinates for a different extent that is within the spatial extent of the available data
 # phx dwntwn: UL 33.487158, -112.122746; LR 33.419871, -112.018541
@@ -65,14 +65,10 @@ if(run.name != "metro-phx"){ # if not doing the full region run, adjust the exte
 
 # define resolution 
 #res <- 164.042  #  ~50m x 50m
-res <- 328.084  # ~100m x 100m
-#res <- 820.21  # ~250m x 250m
+#res <- 328.084  # ~100m x 100m
+res <- 820.21  # ~250m x 250m
 #res <- 1640.42 # ~500m x 500m
 #res <- 3280.84 # ~1000 x 1000 
-
-# raster area in sq ft and sq meters
-r.area.ft2 <- res ^ 2
-r.area.m2 <- (res / 3.28084) ^ 2
   
 # define extent for rasterization by buffering desired extent by resolution
 my.buffer <- st_buffer(my.extent, dist = res)
@@ -484,7 +480,7 @@ save.image(here("data/outputs/temp/rasterize-5.RData")) # save progress in case 
 rm(osm.min.i.p, osm.max.i.p, park.min.i.p, park.max.i.p, veh.i.p,
    osm.min.c, osm.max.c, osm.min.i, osm.max.i, 
    park.min.i, park.max.i, park.min.c, park.max.c, 
-   veh.c, svf, park.min.p, park.max.p) # remove unused objects
+   veh.c, svf, park.min.p, park.max.p, veh.i) # remove unused objects
 gc() # initiate cluster after only all the necessary objects present in R environment
 cat(paste0("Time: ", Sys.time(),  # script run time update
            ".\nDuration: ", round(difftime(Sys.time(), script.start, units = "mins")), " mins."))
@@ -723,7 +719,7 @@ names(r.veh)[401:405] <- c("daily.vkt.local", "daily.vkt.minor", "daily.vkt.majo
 
 # make correct units of vkt by dividing result by 5280 (ft per mile) mult by 1.60934 km per mi
 for(i in 1:length(names(r.veh))){
-  #values(r.veh[[i]]) <- values(r.veh[[i]]) / 5280  * 1.60934 # for VKT (vehicle kilometers traveled)
+  values(r.veh[[i]]) <- values(r.veh[[i]]) / 5280  * 1.60934 # for VKT (vehicle kilometers traveled)
 #  #values(r.veh.log) <- log10(values(r.veh.log) + 1) # log base 10 values
 }
 
