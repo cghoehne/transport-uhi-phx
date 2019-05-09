@@ -293,6 +293,10 @@ res <- 328.084  # ~100m x 100m
 #res <- 1640.42 # ~500m x 500m
 #res <- 3280.84 # ~1000 x 1000 
 
+# raw veh data
+iflow <- fread(here("data/icarus/full_flow.csv"))
+setnames(iflow, "V1", "id")
+
 # import veh hourly raster data
 veh.heat <- readRDS(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.rds")))
 
@@ -306,13 +310,22 @@ r.all <- readRDS(here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.n
 mean(values(veh.heat$vkt.local.74))
 quantile(values(veh.heat$vkt.local.74))
 
-values(r.all$avg.local.road) * ((res / 3.28084)^2) # area (m2) of local roads by cell local
-test.min <- ifelse(values(r.all$min.hiway.road) == 0, 0, values(r.all$min.day.flux.hiway.veh) / values(r.all$min.hiway.road))
+# to prevent issues with extrememly high estaimtes of waste heat, force very small fractional areas to 0 (force less 5% to 0)
+#values(r.all$avg.local.road) * ((res / 3.28084)^2) # area (m2) of local roads by cell local
+vheat <- data.table("var" = c("local", "minor", "major", "highway"))
+vheat[, paste0("t",1:(length(iflow)-1)) := 0]
+
+for(i in 1:(length(iflow)-1)){
+  vheat[var == "local", ]
+}
+test.min <- ifelse(values(r.all$min.hiway.road) < 0.05, 0, values(r.all$min.day.flux.hiway.veh) / values(r.all$min.hiway.road))
 quantile(test.min)
-test.max <- ifelse(values(r.all$max.hiway.road) == 0, 0, values(r.all$max.day.flux.hiway.veh) / values(r.all$max.hiway.road))
+test.max <- ifelse(values(r.all$max.hiway.road) < 0.05, 0, values(r.all$max.day.flux.hiway.veh) / values(r.all$max.hiway.road))
 quantile(test.max)
 test.avg <- (test.min + test.max) / 2
 quantile(test.avg)
+
+ifelse(values(veh.heat[[i]]) < 0.05, 0, values(veh.heat[[i]]) / values(veh.heat[[i]]))
 
 plot(r.all[[c("avg.all.roads", "avg.all.park", "daily.vkt", "total.avg.day.flux")]])
 

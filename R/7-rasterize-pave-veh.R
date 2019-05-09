@@ -838,6 +838,8 @@ r.all <- stack(r.pave,
                r.svf)
 names(r.all)[41] <- c("SVF")
 
+r.veh.vkt <- r.veh # store vkt for backup
+
 # CALCULATE HEAT FLUXES
 # load pavement and mpg summary data
 pave.veh.meta <- readRDS(here("data/outputs/pavement-vehicle-heat-metadata.rds"))
@@ -950,8 +952,8 @@ names(r.all[[nlayers(r.all)]]) <- "avg.day.flux.park"
 # assume 8800  Wh/liter (33.3 kWh/gal)
 # 1 MPG = 0.425144 km/liter or 1 gal/mi = 2.35215 liter/km
 # energy lost to waste heat assumed = 0.65 (65%)
-pave.veh.meta[, energy.min := (1 / MPGe.min) * 2.35215 * 8800 * 0.65] # Wh/km (Watt-hours per kilometer)
-pave.veh.meta[, energy.max := (1 / MPGe.max) * 2.35215 * 8800 * 0.65] # Wh/km (Watt-hours per kilometer)
+pave.veh.meta[, energy.min := (1 / MPGe.max) * 2.35215 * 8800 * 0.65] # Wh/km (Watt-hours per kilometer)
+pave.veh.meta[, energy.max := (1 / MPGe.min) * 2.35215 * 8800 * 0.65] # Wh/km (Watt-hours per kilometer)
 
 # heat flux from vehicles in a day = VKT (km) * energy rate (Wh/km) / hours (hrs) / cell resolution (m2) = W/m2
 # min veh flux/day
@@ -986,6 +988,77 @@ r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.roads","min.day.flux.par
                                  indices = c(1,1,1,2,2,2,3,3,3), fun = sum))
 names(r.all)[(nlayers(r.all)-2):nlayers(r.all)] <- c("total.min.day.flux", "total.avg.day.flux", "total.max.day.flux")
 
+# also calc flux for vehicels by time step by class
+r.veh.min <- r.veh
+r.veh.max <- r.veh
+
+for(i in 1:100){ # LOCAL MIN
+  r.veh.min[[i]] <- (r.veh[[i]]  * pave.veh.meta[pave.class == "local" & SVF == 1.0, energy.min] / (24/100) / ((res / 3.28084)^2))
+  names(r.veh.min[[i]]) <- paste0("min.flux.veh.local.", i)
+}
+for(i in 1:100){ # LOCAL MAX
+  r.veh.max[[i]] <- (r.veh[[i]]  * pave.veh.meta[pave.class == "local" & SVF == 1.0, energy.max] / (24/100) / ((res / 3.28084)^2))
+  names(r.veh.max[[i]]) <- paste0("max.flux.veh.local.", i)
+}
+for(i in 101:200){ # MINOR MIN
+  r.veh.min[[i]] <- (r.veh[[i]]  * pave.veh.meta[pave.class == "minor" & SVF == 1.0, energy.min] / (24/100) / ((res / 3.28084)^2))
+  names(r.veh.min[[i]]) <- paste0("min.flux.veh.minor.", i)
+}
+for(i in 101:200){ # MINOR MAX
+  r.veh.max[[i]] <- (r.veh[[i]]  * pave.veh.meta[pave.class == "minor" & SVF == 1.0, energy.max] / (24/100) / ((res / 3.28084)^2))
+  names(r.veh.max[[i]]) <- paste0("max.flux.veh.minor.", i)
+}
+for(i in 201:300){ # MAJOR MIN
+  r.veh.min[[i]] <- (r.veh[[i]]  * pave.veh.meta[pave.class == "major" & SVF == 1.0, energy.min] / (24/100) / ((res / 3.28084)^2))
+  names(r.veh.min[[i]]) <- paste0("min.flux.veh.major.", i)
+}
+for(i in 201:300){ # MAJOR MAX
+  r.veh.max[[i]] <- (r.veh[[i]]  * pave.veh.meta[pave.class == "major" & SVF == 1.0, energy.max] / (24/100) / ((res / 3.28084)^2))
+  names(r.veh.max[[i]]) <- paste0("max.flux.veh.major.", i)
+}
+for(i in 301:400){ # HIGHWAY MIN
+  r.veh.min[[i]] <- (r.veh[[i]]  * pave.veh.meta[pave.class == "highway" & SVF == 1.0, energy.min] / (24/100) / ((res / 3.28084)^2))
+  names(r.veh.min[[i]]) <- paste0("min.flux.veh.hiway.", i)
+}
+for(i in 301:400){ # HIGHWAY MAX
+  r.veh.max[[i]] <- (r.veh[[i]]  * pave.veh.meta[pave.class == "highway" & SVF == 1.0, energy.max] / (24/100) / ((res / 3.28084)^2))
+  names(r.veh.max[[i]]) <- paste0("max.flux.veh.hiway.", i)
+}
+
+# avg flux by hour by class and for all roads
+r.veh.avg <- stackApply(stack(r.veh.min[[1:400]], r.veh.max[[1:400]]), indices = c(1:400,1:400), fun = mean)
+names(r.veh.avg) <- c(paste0("avg.flux.veh.local.",1:100), paste0("avg.flux.veh.minor.",1:100), 
+                      paste0("avg.flux.veh.major.",1:100), paste0("avg.flux.veh.hiway.",1:100))
+
+r.veh.min <- stack(r.veh.min[[1:400]], stackApply(r.veh.min[[1:400]], indices = rep(1:100, 4), fun = sum))
+names(r.veh.min)[401:500] <- paste0("min.flux.veh.all.",1:100)
+
+r.veh.max <- stack(r.veh.max[[1:400]], stackApply(r.veh.max[[1:400]], indices = rep(1:100, 4), fun = sum))
+names(r.veh.max)[401:500] <- paste0("max.flux.veh.all.",1:100)
+
+r.veh.all <- stack(r.veh.min, r.veh.max, r.veh.avg, stackApply(r.veh.avg, indices = rep(1:100, 4), fun = sum))
+names(r.veh.all)[1401:1500] <- paste0("avg.flux.veh.all.",1:100)
+
+# rush hrs
+# morning rush would be from: hour = 7.92 am to 8.88 am (7:54:12 am to 8:52:48 am); 34 to 37
+# evening rush would be from: hour = 5.04 pm  to 6 pm (5:02:24 pm to 6:00:00 pm); 72 to 75
+r.veh.all <- stack(r.veh.all, 
+                   stackApply(r.veh.all[[c("min.flux.veh.all.34","min.flux.veh.all.35","min.flux.veh.all.36","min.flux.veh.all.37")]], 
+                              indices = c(1), fun = sum),
+                   stackApply(r.veh.all[[c("max.flux.veh.all.34","max.flux.veh.all.35","max.flux.veh.all.36","max.flux.veh.all.37")]], 
+                              indices = c(1), fun = sum),
+                   stackApply(r.veh.all[[c("avg.flux.veh.all.34","avg.flux.veh.all.35","avg.flux.veh.all.36","avg.flux.veh.all.37")]], 
+                              indices = c(1), fun = sum),
+                   stackApply(r.veh.all[[c("min.flux.veh.all.72","min.flux.veh.all.73","min.flux.veh.all.74","min.flux.veh.all.75")]], 
+                              indices = c(1), fun = sum),
+                   stackApply(r.veh.all[[c("max.flux.veh.all.72","max.flux.veh.all.73","max.flux.veh.all.74","max.flux.veh.all.75")]], 
+                              indices = c(1), fun = sum),
+                   stackApply(r.veh.all[[c("avg.flux.veh.all.72","avg.flux.veh.all.73","avg.flux.veh.all.74","avg.flux.veh.all.75")]], 
+                              indices = c(1), fun = sum))
+names(r.veh.all)[1501:1506] <- c("min.flux.veh.all.8.9am", "max.flux.veh.all.8.9am", "avg.flux.veh.all.8.9am",
+                                 "min.flux.veh.all.5.6pm", "max.flux.veh.all.5.6pm", "avg.flux.veh.all.5.6pm")
+
+
 #plot(r.all[[c("total.min.day.flux", "total.avg.day.flux", "total.avg.day.flux")]])
 # plots to check
 plot(r.all$avg.all.roads) # , rev(heat.colors(255))
@@ -1001,7 +1074,8 @@ plot(r.all[[c("avg.day.flux.veh", "avg.day.flux.park", "avg.day.flux.roads", "to
               "Mean Daily Excess Heat Flux from Roadway Pavement","Mean Daily Excess Heat Flux from Vehicles & Pavements"))
      #xlab = rep("Westing Coordinate (ft)", 2), xlab = rep("Northing Coordinate (ft)", 2))
 #plot(r.all[[c("max.day.flux.veh", "max.day.flux.park", "max.day.flux.roads", "total.max.day.flux")]])
-
+plot(r.veh.all[[c("min.flux.veh.all.8.9am", "avg.flux.veh.all.8.9am", "max.flux.veh.all.8.9am",
+                  "min.flux.veh.all.5.6pm", "avg.flux.veh.all.5.6pm", "max.flux.veh.all.5.6pm")]])
 mean(values(r.all$total.avg.day.flux)) # total study region mean W/m2 
 mean(values(r.all$avg.day.flux.park)) # total study region mean W/m2 
 mean(values(r.all$avg.day.flux.roads)) # total study region mean W/m2 
@@ -1021,7 +1095,8 @@ dir.create(here("data/outputs/rasters"), showWarnings = F)
 # write out final rasters
 writeRaster(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
 saveRDS(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.rds")))
-saveRDS(r.veh, here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.rds")))
+saveRDS(r.veh.vkt, here(paste0("data/outputs/rasters/master-veh-time-vkt-", run.name, "-", res / 3.28084, "m.rds")))
+saveRDS(r.veh.all, here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.rds")))
 save.image(here("data/outputs/temp/rasterize-6.RData"))
 #shapefile(veh.p[,1:4], here("data/outputs/shapefiles/icarus-data-network-clipped"))
 
@@ -1029,3 +1104,4 @@ save.image(here("data/outputs/temp/rasterize-6.RData"))
 paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(),
        ". Model run length: ", round(difftime(Sys.time(), script.start, units = "mins"),2)," mins.")
 
+r.veh.avg
