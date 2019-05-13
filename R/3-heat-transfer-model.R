@@ -75,10 +75,10 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
                #pave.length = c(200), # characteristic length of pavement in meters
-               SVF = c(1, 0.5), # sky view factor  0.5, 
+               SVF = c(1, 0.1), # sky view factor  0.5, 
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
-               n.days = c(3) # number of days to simulate 
+               n.days = c(7) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
