@@ -8,7 +8,7 @@
 
 # clear space and allocate memory
 gc()
-memory.limit(size = 30000) 
+memory.limit(size = 50000) 
 script.start <- Sys.time() # start script timestamp
 
 # first make sure checkpoint is installed locally
@@ -45,8 +45,8 @@ fclass.info <- fread(here("data/osm_fclass_info.csv")) # additional OSM info by 
 my.extent <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
 
 # define name of run
-#run.name <- "metro-phx"
-run.name <- "phx-dwntwn"
+run.name <- "metro-phx"
+#run.name <- "phx-dwntwn"
 #run.name <- "north-tempe"
 
 # alternatively, define 2 bounding coordinates for a different extent that is within the spatial extent of the available data
@@ -344,6 +344,9 @@ parts.c <- split(1:nrow(veh.m[,]), cut(1:nrow(veh.m[,]), my.cores))
 
 # INTERSECT POLYGONIZED RASTER w/ PARKING + ROAD DATA
 save.image(here("data/outputs/temp/rasterize-4.RData")) # save progress in case error in parellelization
+saveRDS(park.max.i.u, here("data/outputs/temp/park-max-i-u.rds"))
+rm(park.max.i.u)
+gc()
 
 # initiate cluster after only all the necessary objects present in R environment
 cat(paste0("Time: ", Sys.time(),  # script run time update
@@ -357,9 +360,36 @@ invisible(clusterCall(cl, function(x) .libPaths(x), .libPaths())) # supress prin
 park.min.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
   my.list[[i]] <- st_intersection(park.min.i.u[parts.p.min[[i]],], r.t)
 }
+
+# stop cluster to save and clear space to prevent error in dropping workers
+stopCluster(cl)
+saveRDS(park.min.i.p, here("data/outputs/temp/park-min-i-p.rds"))
+rm(cl, park.min.i.u, parts.p.min, park.min.i.p)
+gc()
+
+park.max.i.u <- readRDS(here("data/outputs/temp/park-max-i-u.rds"))
+
+# active cluster again
+while(exists("cl") == F){ # ensures the cluster is made even if fails on first try   
+  cl <- makeCluster(my.cores, outfile = "")} # so just while loop until it is sucsessful 
+registerDoParallel(cl) # register parallel backend
+invisible(clusterCall(cl, function(x) .libPaths(x), .libPaths())) # supress printing
+
 park.max.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
   my.list[[i]] <- st_intersection(park.max.i.u[parts.p.max[[i]],], r.t)
 }
+
+# stop cluster to save and clear space to prevent error in dropping workers
+stopCluster(cl)
+saveRDS(park.max.i.p, here("data/outputs/temp/park-max-i-p.rds"))
+rm(cl, park.max.i.u, parts.p.max, park.max.i.p)
+gc()
+
+# active cluster again
+while(exists("cl") == F){ # ensures the cluster is made even if fails on first try   
+  cl <- makeCluster(my.cores, outfile = "")} # so just while loop until it is sucsessful 
+registerDoParallel(cl) # register parallel backend
+invisible(clusterCall(cl, function(x) .libPaths(x), .libPaths())) # supress printing
 
 # pave area intersect with polygonized raster
 osm.min.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
@@ -376,9 +406,11 @@ veh.i.p <- foreach(i = 1:my.cores, .packages = c("sf")) %dopar% {
 
 # stop cluster
 stopCluster(cl)
-rm(cl, parts.r.min, parts.r.max, parts.p.min, parts.p.max, parts.c, 
-   park.min.i.u, park.max.i.u, osm.min.s, osm.max.s, veh.m)
+rm(cl, parts.r.min, parts.r.max, parts.c, 
+   osm.min.s, osm.max.s, veh.m)
 gc()
+
+#save.image(here("data/outputs/temp/rasterize-4-2.rds"))
 
 # bind the buffered parking data output
 osm.min.i <- do.call(rbind, osm.min.i.p) # bind list of spatial objects into single spatial obj
@@ -386,6 +418,9 @@ osm.max.i <- do.call(rbind, osm.max.i.p) # bind list of spatial objects into sin
 rm(osm.min.i.p, osm.max.i.p)
 gc()
 
+# read back in data for parking because it is very large
+park.min.i.p <- readRDS(here("data/outputs/temp/park-min-i-p.rds"))
+park.max.i.p <- readRDS(here("data/outputs/temp/park-max-i-p.rds"))
 park.min.i <- do.call(rbind, park.min.i.p) # bind list of spatial objects into single spatial obj
 park.max.i <- do.call(rbind, park.max.i.p) # bind list of spatial objects into single spatial obj
 rm(park.min.i.p, park.max.i.p)
@@ -1103,5 +1138,3 @@ save.image(here("data/outputs/temp/rasterize-6.RData"))
 # paste final runtime
 paste0("R model run complete on ", Sys.info()[4]," at ", Sys.time(),
        ". Model run length: ", round(difftime(Sys.time(), script.start, units = "mins"),2)," mins.")
-
-r.veh.avg
