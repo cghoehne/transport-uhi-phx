@@ -7,6 +7,10 @@
 *.bat
 # ignore temp files (starting w/ "~")
 ~*
+*.tif.aux.xml
+*.aux.xml
+data/outputs/rasters/*.xml
+data/outputs/rasters/*.tif.aux.xml
 # ignore personal api tokens and email creds
 local-token.txt
 email.txt
