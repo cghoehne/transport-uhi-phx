@@ -282,14 +282,14 @@ ggsave(paste0(folder, "/figures/heat-flux-diff",
 #veh.heat <- fread(here("data/veh-waste-heat-sample.csv"))
 
 # define name of run
-#run.name <- "metro-phx"
+run.name <- "metro-phx"
 #run.name <- "phx-dwntwn"
-run.name <- "north-tempe"
+#run.name <- "north-tempe"
 
 # define resolution 
 #res <- 164.042  #  ~50m x 50m
-res <- 328.084  # ~100m x 100m
-#res <- 820.21  # ~250m x 250m
+#res <- 328.084  # ~100m x 100m
+res <- 820.21  # ~250m x 250m
 #res <- 1640.42 # ~500m x 500m
 #res <- 3280.84 # ~1000 x 1000 
 
@@ -421,10 +421,10 @@ uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp
 phx.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp"))
 
 # set 0 to NA to ignore in diveraging color palette
-values(r.all$avg.day.flux.veh) <- ifelse(values(r.all$avg.day.flux.veh) == 0, NA, values(r.all$avg.day.flux.veh))
-values(r.all$avg.day.flux.park) <- ifelse(values(r.all$avg.day.flux.park) == 0, NA, values(r.all$avg.day.flux.park))
-values(r.all$avg.day.flux.roads) <- ifelse(values(r.all$avg.day.flux.roads) == 0, NA, values(r.all$avg.day.flux.roads))
-values(r.all$total.avg.day.flux) <- ifelse(values(r.all$total.avg.day.flux) == 0, NA, values(r.all$total.avg.day.flux))
+values(r.all$avg.day.flux.veh) <- ifelse(values(r.all$avg.day.flux.veh) < 1, NA, values(r.all$avg.day.flux.veh))
+values(r.all$avg.day.flux.park) <- ifelse(values(r.all$avg.day.flux.park) < 1, NA, values(r.all$avg.day.flux.park))
+values(r.all$avg.day.flux.roads) <- ifelse(values(r.all$avg.day.flux.roads) < 1, NA, values(r.all$avg.day.flux.roads))
+values(r.all$total.avg.day.flux) <- ifelse(values(r.all$total.avg.day.flux) < 1, NA, values(r.all$total.avg.day.flux))
 
 #mc.hill <- brick("C:/Users/cghoehne/Dropbox (ASU)/Data and Tools/GIS/AZ Files/maricopa_hillshade/maricopa_hillshade.tif")
 #mc.hill <- crop(mc.hill, extent(r.all), snap="out")
@@ -444,15 +444,14 @@ title.p <- c(0.18, 0.97)
 
 # create individual plots 
 p.road.flux <-   
-  #tm_shape(mc.hill.c) +
-  #tm_raster(palette = "-Greys", 
-  #          legend.show = F, 
-  #          alpha = 0.4) +
-  #tm_shape(r.all$total.avg.day.flux) +
+  tm_shape(mc.hill) +
+  tm_raster(palette = "-Greys", 
+            legend.show = F, 
+            alpha = 0.4) +
   tm_shape(r.road.flux) +
   tm_raster(palette = my.palette,
             style="cont",
-            breaks = c(1, seq(5, 40, 5)),
+            breaks = c(1, seq(5, 45, 5)),
             legend.show = T,
             title = "Heat Flux\n(W/m\u00B2)",
             colorNA = NULL) + # white
@@ -501,15 +500,14 @@ p.road.flux <-
   tmap_options(max.raster = c(plot = 102951200, view = 102951200))
 
 p.park.flux <-   
-  #tm_shape(mc.hill.c) +
-  #tm_raster(palette = "-Greys", 
-  #          legend.show = F, 
-  #          alpha = 0.4) +
-  #tm_shape(r.all$total.avg.day.flux) +
+  tm_shape(mc.hill) +
+  tm_raster(palette = "-Greys", 
+            legend.show = F, 
+            alpha = 0.4) +
   tm_shape(r.park.flux) +
   tm_raster(palette = my.palette, # start = 0.5,
             style="cont",
-            breaks = c(1, seq(5, 40, 5)),
+            breaks = c(1, seq(5, 50, 5)),
             legend.show = T,
             title = "Heat Flux\n(W/m\u00B2)",
             colorNA = NULL) + # white
@@ -558,14 +556,14 @@ p.park.flux <-
   tmap_options(max.raster = c(plot = 102951200, view = 102951200))
 
 p.veh.flux <-   
-  #tm_shape(mc.hill.c) +
-  #tm_raster(palette = "-Greys", 
-  #          legend.show = F, 
-  #          alpha = 0.4) +
+  tm_shape(mc.hill) +
+  tm_raster(palette = "-Greys", 
+            legend.show = F, 
+            alpha = 0.4) +
   tm_shape(r.veh.flux) +
   tm_raster(palette = my.palette, #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
             style="cont",
-            breaks = c(1, seq(20, 200, 20)),
+            breaks = c(1, seq(2.5, 20, 2.5)),
             legend.show = T,
             title = "Heat Flux\n(W/m\u00B2)",
             colorNA = NULL) + # white
@@ -614,15 +612,14 @@ p.veh.flux <-
   tmap_options(max.raster = c(plot = 102951200, view = 102951200))
 
 p.all.flux <-   
-  #tm_shape(mc.hill.c) +
-  #tm_raster(palette = "-Greys", 
-  #          legend.show = F, 
-  #          alpha = 0.4) +
-  #tm_shape(r.all$total.avg.day.flux) +
+  tm_shape(mc.hill) +
+  tm_raster(palette = "-Greys", 
+            legend.show = F, 
+            alpha = 0.4) +
   tm_shape(r.all.flux) +
   tm_raster(palette = my.palette, #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
             style="cont",
-            breaks = c(1, seq(20, 200, 20)),
+            breaks = c(1, seq(10, 60, 10)),
             legend.show = T,
             title = "Heat Flux\n(W/m\u00B2)",
             colorNA = NULL) + # white
