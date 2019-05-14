@@ -46,31 +46,20 @@ my.font <- "Century"
 # create RMSE function
 RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))}
 
-# define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
-folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
-                        keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
-#folder[max(grep("run_metadata", rn)), rn] # alt
-#folder[grep("run_metadata", rn),][.N] # alt
+#######################################
+# MODELED VS OBSERVED VALIDATION PLOT #
+#######################################
 
-# IMPORT MODEL DATA
-all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
+# IMPORT VALIDATION MODEL DATA
+folder <- here("data/outputs/run_metadata_20190324_185458") # validation runs
+model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
 # filter out any unrealistic pavements
 #all.model.runs <- all.model.runs[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
 #all.model.runs <- all.model.runs[!(run.n %in% c(40:42) & batch.id == "A")]
 
-# filter if necessary / as desired
-model.runs <- all.model.runs  #[p.err <= 0.35 & !is.na(p.err),] # remove poor performers or NAs if there are any 
-
-# summary stats for paper
-model.runs[, RMSE(Modeled, Observed)]
-all.model.runs[, RMSE(Modeled, Observed)]
-model.runs[, mean(p.err, na.rm = T)]
-all.model.runs[, mean(p.err, na.rm = T)]
-
-############################
-# MODELED VS OBSERVED PLOT #
-############################
+# for validation only, drop unrealistic/bad predictors
+model.runs <- all.model.runs[p.err <= 0.35 & !is.na(p.err),] # remove poor performers or NAs if there are any 
 
 min.x <- 0  # round(min(valids[,.(T.degC, T.degC.sat)] - 5), - 1)  
 max.x <- round(max(model.runs[,.(Modeled,Observed)], na.rm = T) + 5, - 1)  #valids.long[, temp]
@@ -166,9 +155,13 @@ ggsave(paste0(folder, "/figures/modeled-observed",
        device = "png", scale = 1.5, width = 6, height = 5, dpi = 300, units = "in")
 
 
-##################
-# HEAT FLUX PLOT #
-##################
+#######################################
+# HEAT FLUX PLOT (NON-VALIDATION RUNS #
+#######################################
+
+# define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
+folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
+                        keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
 
 # import data
 all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
@@ -199,10 +192,10 @@ surface.data.a <- all.surface.data[, .(hrs, mins, secs,
                                        inc.sol = mean(inc.sol),
                                        net.flux = mean(net.flux),
                                        ref.sol = mean(ref.sol)),
-                                   by = c("time.s", "new.name", "season")]  
+                                   by = c("time.s", "new.name", "season", "SVF")]  
 
 # force date for date.time for easier manipulation in ggplot, will ignore date
-surface.data.a[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(time.s)] 
+surface.data.a[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(time.s) - days(6)] 
 
 # plot min/maxes
 min.x.flux <- min(surface.data.a$date.time, na.rm = T) 
@@ -215,6 +208,7 @@ min.y.flux <- ifelse(min.y.flux %% 20 == 0, min.y.flux, min.y.flux - 10)
 max.y.flux <- ifelse(max.y.flux %% 20 == 0, max.y.flux, max.y.flux + 10)
 
 # create different legend charateristics for plotting
+p.names <- unique(surface.data.a[, new.name])
 surface.data.a[, new.name.f := factor(new.name, levels = c(p.names[4], p.names[3], p.names[1], p.names[2]))]
 p.col <- c("#0C120C", "#0C120C", "#918D77", "#C1912A")  # order is HVA, LVA, C, BG
 p.shp <- c(1, 32, 2, 32)  # order is HVA, BG, LVA, C
@@ -271,6 +265,7 @@ p.flux.a <- (ggplot(data = surface.data.a[season %in% c("(a) Summer", "(b) Winte
 )
 
 # save plot
+dir.create(paste0(folder, "/figures/"), showWarnings = F)
 ggsave(paste0(folder, "/figures/heat-flux-diff", 
               format(strptime(Sys.time(), format = "%Y-%m-%d %H:%M:%S"),
                      format = "%Y%m%d_%H%M%S"),".png"), p.flux.a, 
@@ -307,25 +302,195 @@ r.all <- readRDS(here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.n
 # mean flux by layer
 #veh.agg <- 
 
-mean(values(veh.heat$vkt.local.74))
-quantile(values(veh.heat$vkt.local.74))
-
 # to prevent issues with extrememly high estaimtes of waste heat, force very small fractional areas to 0 (force less 5% to 0)
 #values(r.all$avg.local.road) * ((res / 3.28084)^2) # area (m2) of local roads by cell local
-vheat <- data.table("var" = c("local", "minor", "major", "highway"))
+vheat <- data.table("var" = c("local.min", "local.max", "minor.min", "minor.max", 
+                              "major.min", "major.max", "hiway.min", "hiway.max"))
 vheat[, paste0("t",1:(length(iflow)-1)) := 0]
 
-for(i in 1:(length(iflow)-1)){
-  vheat[var == "local", ]
-}
-test.min <- ifelse(values(r.all$min.hiway.road) < 0.05, 0, values(r.all$min.day.flux.hiway.veh) / values(r.all$min.hiway.road))
-quantile(test.min)
-test.max <- ifelse(values(r.all$max.hiway.road) < 0.05, 0, values(r.all$max.day.flux.hiway.veh) / values(r.all$max.hiway.road))
-quantile(test.max)
-test.avg <- (test.min + test.max) / 2
-quantile(test.avg)
+vheat <- data.table("time" = paste0("t",1:(length(iflow)-1)))
+vheat[, c("local.min", "local.max", "minor.min", "minor.max", 
+          "major.min", "major.max", "hiway.min", "hiway.max") := 0]
 
-ifelse(values(veh.heat[[i]]) < 0.05, 0, values(veh.heat[[i]]) / values(veh.heat[[i]]))
+# min/max flux by hour and road class is min veh flux in cell div by max fractional area road
+# median flux by hour and road class is as avg of min median and max median flux by cell
+
+for(i in 1:(length(iflow)-1)){
+  temp.min <- ifelse(values(r.all$max.local.road) < 0.05, NA, values(veh.heat[[i]]) / values(r.all$max.local.road))
+  temp.max <- ifelse(values(r.all$min.local.road) < 0.05, NA, values(veh.heat[[i+500]]) / values(r.all$min.local.road))
+  temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
+  temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
+  vheat[i, local.min := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
+  vheat[i, local.max := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
+  vheat[i, local.med := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+  
+  temp.min <- ifelse(values(r.all$max.minor.road) < 0.05, NA, values(veh.heat[[i+100]]) / values(r.all$max.minor.road))
+  temp.max <- ifelse(values(r.all$min.minor.road) < 0.05, NA, values(veh.heat[[i+600]]) / values(r.all$min.minor.road))
+  temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
+  temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
+  vheat[i, minor.min := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
+  vheat[i, minor.max := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
+  vheat[i, minor.med := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+  
+  temp.min <- ifelse(values(r.all$max.major.road) < 0.05, NA, values(veh.heat[[i+200]]) / values(r.all$max.major.road))
+  temp.max <- ifelse(values(r.all$min.major.road) < 0.05, NA, values(veh.heat[[i+700]]) / values(r.all$min.major.road))
+  temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
+  temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
+  vheat[i, major.min := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
+  vheat[i, major.max := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
+  vheat[i, major.med := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+  
+  temp.min <- ifelse(values(r.all$max.hiway.road) < 0.05, NA, values(veh.heat[[i+300]]) / values(r.all$max.hiway.road))
+  temp.max <- ifelse(values(r.all$min.hiway.road) < 0.05, NA, values(veh.heat[[i+800]]) / values(r.all$min.hiway.road))
+  temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
+  temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
+  vheat[i, hiway.min := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
+  vheat[i, hiway.max := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
+  vheat[i, hiway.med := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+
+}
+
+vheat[, local.avg := (local.min + local.max) / 2]
+vheat[, minor.avg := (minor.min + minor.max) / 2]
+vheat[, major.avg := (major.min + major.max) / 2]
+vheat[, hiway.avg := (hiway.min + hiway.max) / 2]
+
+# convert day fraction into date.time (will ignore date)
+vheat[, mins := round((.I - 0.5) * 24/100*60)]
+#vheat[, secs := (mins - floor(mins)) * 60]
+#vheat[, mins := floor(mins)]
+vheat[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + minutes(mins)]
+
+# do again but for pavements
+# to do this we first just calculate min/mean/median/max heat flux by class and duplilcate for every time period
+# then we adjust for time of day using summary model classifcation data
+pheat <- copy(vheat)
+
+temp.min <- ifelse(values(r.all$max.local.road) < 0.05, NA, values(r.all$min.day.flux.local) / values(r.all$max.local.road))
+temp.max <- ifelse(values(r.all$min.local.road) < 0.05, NA, values(r.all$max.day.flux.local) / values(r.all$min.local.road))
+temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
+temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
+pheat[, local.min := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
+pheat[, local.max := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
+pheat[, local.med := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+
+temp.min <- ifelse(values(r.all$max.minor.road) < 0.05, NA, values(r.all$min.day.flux.minor) / values(r.all$max.minor.road))
+temp.max <- ifelse(values(r.all$min.minor.road) < 0.05, NA, values(r.all$max.day.flux.minor) / values(r.all$min.minor.road))
+temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
+temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
+pheat[, minor.min := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
+pheat[, minor.max := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
+pheat[, minor.med := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+
+temp.min <- ifelse(values(r.all$max.major.road) < 0.05, NA, values(r.all$min.day.flux.major) / values(r.all$max.major.road))
+temp.max <- ifelse(values(r.all$min.major.road) < 0.05, NA, values(r.all$max.day.flux.major) / values(r.all$min.major.road))
+temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
+temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
+pheat[, major.min := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
+pheat[, major.max := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
+pheat[, major.med := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+
+temp.min <- ifelse(values(r.all$max.hiway.road) < 0.05, NA, values(r.all$min.day.flux.hiway) / values(r.all$max.hiway.road))
+temp.max <- ifelse(values(r.all$min.hiway.road) < 0.05, NA, values(r.all$max.day.flux.hiway) / values(r.all$min.hiway.road))
+temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
+temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
+pheat[, hiway.min := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
+pheat[, hiway.max := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
+pheat[, hiway.med := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+
+pheat[, local.avg := (local.min + local.max) / 2]
+pheat[, minor.avg := (minor.min + minor.max) / 2]
+pheat[, major.avg := (major.min + major.max) / 2]
+pheat[, hiway.avg := (hiway.min + hiway.max) / 2]
+
+
+#############
+# ADD TO RASERIZE SCRIPT TO USE TO CALC TIMESTEP PAVE-HEAT
+
+# define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
+folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
+                        keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
+
+# import data
+all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
+
+# flux comparisons by type
+all.surface.data[, mean(q.rad + q.cnv), by = c("pave.name", "batch.name", "albedo")][order(V1)]
+
+# new names
+all.surface.data[, new.name := batch.name]
+all.surface.data[batch.name == "Concrete Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
+all.surface.data[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
+all.surface.data[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Overlaid PCC Pavements"]
+
+# calc flux vars
+all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
+all.surface.data[, ref.sol := albedo * SVF * solar]
+all.surface.data[, net.flux := -inc.sol + q.rad + q.cnv]
+
+# summarize data
+surface.data.a <- all.surface.data[, .(hrs, mins, secs,
+                                       dt = time.s,
+                                       out.flux = mean(q.rad + q.cnv),
+                                       inc.sol = mean(inc.sol),
+                                       net.flux = mean(net.flux),
+                                       ref.sol = mean(ref.sol)),
+                                   by = c("time.s", "new.name", "season", "SVF")]  
+
+# force date for date.time for easier manipulation in ggplot, will ignore date
+surface.data.a[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(time.s) - days(2)] 
+
+# create list of date.times starting at static date to replicate division of time in travel data
+my.date.times <- as.POSIXct("2019-01-01 00:00:00 MST") + minutes(round((1:100 - 0.5) * 24/100*60))
+
+# filter heat model data to only time stamps in travel model output
+surface.data.a.f <- surface.data.a[date.time %in% my.date.times]
+
+# summarize data by type and time 
+surface.data.sum <-  surface.data.a.f[, .(min.out.flux = min(out.flux),
+                     mean.out.flux = mean(out.flux),
+                     med.out.flux = quantile(out.flux, 0.5),
+                     max.out.flux = max(out.flux)), by = c("new.name", "date.time", "SVF")]
+
+# merge bare ground data as columns for easy subraction to get added heat relative to ground
+surface.data.sum.m <- merge(surface.data.sum[new.name != "Bare Ground / Desert Soil",],
+                            surface.data.sum[new.name == "Bare Ground / Desert Soil",],
+                            suffixes = c("", ".b"), by = c("date.time", "SVF"))
+
+surface.data.sum.m[, min.add.flux := min.out.flux - min.out.flux.b]
+surface.data.sum.m[, mean.add.flux := mean.out.flux - mean.out.flux.b]
+surface.data.sum.m[, med.add.flux := med.out.flux - med.out.flux.b]
+surface.data.sum.m[, max.add.flux := max.out.flux - max.out.flux.b]
+
+
+########
+
+# expand pavement heat flux classification to include time of day estimates
+pave.veh.meta <- readRDS(here("data/outputs/pavement-vehicle-heat-metadata.rds"))
+
+for(i in 1:pheat[,.N]){
+  d.t <- pheat[i, date.time]
+  surface.data.sum.m[date.time == d.t,]
+  pheat[i, 2:16]
+  
+}
+
+
+plot(vheat$date.time, vheat$hiway.avg, type="l", col="black", ylab = "Mean Heat Flux (W/m2)", xlab = "Time of Day", ylim = c(0, 80))
+lines(vheat$date.time, vheat$major.avg, col="red")
+lines(vheat$date.time, vheat$minor.avg, col="blue")
+lines(vheat$date.time, vheat$local.avg, col="green")
+lines(surface.data.sum.m[new.name == "Asphalt Overlaid PCC Pavements", date.time], 
+      surface.data.sum.m[new.name == "Asphalt Overlaid PCC Pavements", mean.add.flux])
+lines(surface.data.sum.m[new.name == "Asphalt Pavements", date.time], 
+      surface.data.sum.m[new.name == "Asphalt Pavements", mean.add.flux])
+lines(surface.data.sum.m[new.name == "Concrete & Whitetopped Asphalt Pavements", date.time], 
+      surface.data.sum.m[new.name == "Concrete & Whitetopped Asphalt Pavements", mean.add.flux])
+
+plot(vheat$date.time, vheat$hiway.med, type="l", col="black", ylab = "Median Heat Flux (W/m2)", xlab = "Time of Day")
+lines(vheat$date.time, vheat$major.med, col="red")
+lines(vheat$date.time, vheat$minor.med, col="blue")
+lines(vheat$date.time, vheat$local.med, col="green")
 
 plot(r.all[[c("avg.all.roads", "avg.all.park", "daily.vkt", "total.avg.day.flux")]])
 
@@ -335,37 +500,26 @@ plot(r.all[[c("avg.all.roads", "avg.all.park", "daily.vkt", "total.avg.day.flux"
 #                      cbind(veh.heat, "(d) Local"))
 #setnames(all.veh.heat, "V2", "id")
 
-# convert day fraction into date.time (will ignore date)
-all.veh.heat[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(day.frac * 24 * 60 * 60)]
-
 # plot min/maxes
-min.x.veh <- min(all.veh.heat$date.time, na.rm = T) 
-max.x.veh <- ceiling_date(max(all.veh.heat[, date.time]), unit = "hours")
-min.y.veh <- round(min(all.veh.heat[, min.flux] - 5), - 1) # round down to nearest multiple of 10
-max.y.veh <- 240 #round(max(all.veh.heat[, max.flux] + 5), - 1) # round up to nearest multiple of 10
+min.x.veh <- floor_date(min(vheat[, date.time]), unit = "hours")
+max.x.veh <- ceiling_date(max(vheat[, date.time]), unit = "hours")
+min.y.veh <- round(min(unlist(vheat[, 2:13]) - 5), - 1) # round down to nearest multiple of 10
+max.y.veh <- round(max(unlist(vheat[, 2:13]) + 5), - 1) # round up to nearest multiple of 10
+
+vheat.m <- melt(vheat[, c(2:13,16)], id.vars = "date.time")
 
 # adjust y to by multiple of mult
-min.y.veh <- ifelse(min.y.veh %% 20 == 0, min.y.veh, min.y.veh - 10)
-max.y.veh <- ifelse(max.y.veh %% 20 == 0, max.y.veh, max.y.veh + 10)
+#min.y.veh <- ifelse(min.y.veh %% 20 == 0, min.y.veh, min.y.veh - 10)
+#max.y.veh <- ifelse(max.y.veh %% 20 == 0, max.y.veh, max.y.veh + 10)
 
 # create different legend charateristics for plotting
 v.names <- c("(a) Highway", "(b) Arterial", "(c) Collector", "(d) Local")
-all.veh.heat[, id := factor(id, levels = v.names)]
+vheat.m[, label := factor(label, levels = v.names)]
 v.col <- c("#220901", "#621708", "#941B0C", "#BC3908")  
 v.lty <- c("solid", "twodash","solid", "twodash")
 names(v.col) <- v.names
 names(v.lty) <- v.names
 
-# temp scale down magnitudes
-all.veh.heat[id == v.names[2], `:=`(min.flux = min.flux * 0.75, 
-                                    mean.flux = mean.flux * 0.75, 
-                                    max.flux = max.flux * 0.75)]
-all.veh.heat[id == v.names[3], `:=`(min.flux = min.flux * 0.5, 
-                                    mean.flux = mean.flux * 0.5, 
-                                    max.flux = max.flux * 0.5)]
-all.veh.heat[id == v.names[4], `:=`(min.flux = min.flux * 0.25, 
-                                    mean.flux = mean.flux * 0.25, 
-                                    max.flux = max.flux * 0.25)]
 
 # create plot
 p.flux.v <- (ggplot(data = all.veh.heat) 

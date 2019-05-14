@@ -464,7 +464,8 @@ for(f in 1:length(out.folders)){
 } 
 
 # filter surface pave data to only the 3rd (last day), as that is all we will need
-all.surface.data <- all.surface.data[time.s >= (60*60*24*2),]
+day.n <- unique(model.runs[run.n == run, n.days])[1] - 1
+all.surface.data <- all.surface.data[time.s >= (60*60*24*day.n),]
 
 # also filter out unneeded vars to reduce file size
 all.surface.data[, c("node", "layer", "depth.m", "k", "rho.c", "R.c", "k.up", "k.dn", "x.up",
