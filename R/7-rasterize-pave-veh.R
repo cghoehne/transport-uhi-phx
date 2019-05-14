@@ -883,31 +883,30 @@ pave.veh.meta <- readRDS(here("data/outputs/pavement-vehicle-heat-metadata.rds")
 # so a 0 or very low SVF is impractical to use with this idealized model
 # therefore we assume that even under near 100% shading there is some diffuse and infared radiation that reaches the surface
 r.all$adj.SVF <- r.all$SVF
-values(r.all$adj.SVF) <- ifelse(values(r.all$adj.SVF) < 0.5, 0.5, values(r.all$adj.SVF))
-r.all$adj.SVF <- (2 * r.all$adj.SVF) - 1 # adjustment for 100% SVF and 50% SVF instead of 100/0  
+values(r.all$adj.SVF) <- ifelse(values(r.all$adj.SVF) < 0.1, 0.1, values(r.all$adj.SVF))
 
 # fractional area * (heat flux for pavement class (W/m2) - unpaved scenario) = w/m2 from pave in raster cell
 # min roads heat flux
 r.all$min.day.flux.local <- (r.all$min.local.road
                              * (((pave.veh.meta[pave.class == "local" & SVF == 1.0, mean.day.out.flux.lwr] 
                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "local" & SVF == 0.5, mean.day.out.flux.lwr]
-                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "local" & SVF == 0.1, mean.day.out.flux.lwr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
 r.all$min.day.flux.minor <- (r.all$min.minor.road
                              * (((pave.veh.meta[pave.class == "minor" & SVF == 1.0, mean.day.out.flux.lwr]
                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "minor" & SVF == 0.5, mean.day.out.flux.lwr]
-                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "minor" & SVF == 0.1, mean.day.out.flux.lwr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
 r.all$min.day.flux.major <- (r.all$min.major.road
                              * (((pave.veh.meta[pave.class == "major" & SVF == 1.0, mean.day.out.flux.lwr]
                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "major" & SVF == 0.5, mean.day.out.flux.lwr]
-                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "major" & SVF == 0.1, mean.day.out.flux.lwr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
 r.all$min.day.flux.hiway <- (r.all$min.hiway.road
                              * (((pave.veh.meta[pave.class == "highway" & SVF == 1.0, mean.day.out.flux.lwr]
                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "highway" & SVF == 0.5, mean.day.out.flux.lwr]
-                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "highway" & SVF == 0.1, mean.day.out.flux.lwr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
 
 r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.local", "min.day.flux.minor", "min.day.flux.major", "min.day.flux.hiway")]], 
                                  indices = c(1), fun = sum))
@@ -917,23 +916,23 @@ names(r.all[[nlayers(r.all)]]) <- "min.day.flux.roads"
 r.all$max.day.flux.local <- (r.all$max.local.road
                              * (((pave.veh.meta[pave.class == "local" & SVF == 1.0, mean.day.out.flux.upr]
                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "local" & SVF == 0.5, mean.day.out.flux.upr]
-                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "local" & SVF == 0.1, mean.day.out.flux.upr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
 r.all$max.day.flux.minor <- (r.all$max.minor.road
                              * (((pave.veh.meta[pave.class == "minor" & SVF == 1.0, mean.day.out.flux.upr]
                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "minor" & SVF == 0.5, mean.day.out.flux.upr]
-                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "minor" & SVF == 0.1, mean.day.out.flux.upr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
 r.all$max.day.flux.major <- (r.all$max.major.road
                              * (((pave.veh.meta[pave.class == "major" & SVF == 1.0, mean.day.out.flux.upr]
                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "major" & SVF == 0.5, mean.day.out.flux.upr]
-                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr]) * (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "major" & SVF == 0.1, mean.day.out.flux.upr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.upr]) * (1 - r.all$adj.SVF))))
 r.all$max.day.flux.hiway <- (r.all$max.hiway.road
                              * (((pave.veh.meta[pave.class == "highway" & SVF == 1.0, mean.day.out.flux.upr]
                                  - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "highway" & SVF == 0.5, mean.day.out.flux.upr]
-                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "highway" & SVF == 0.1, mean.day.out.flux.upr]
+                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
 
 r.all <- stack(r.all, stackApply(r.all[[c("max.day.flux.local", "max.day.flux.minor", "max.day.flux.major", "max.day.flux.hiway")]], 
                                  indices = c(1), fun = sum))
@@ -948,13 +947,13 @@ names(r.all[[nlayers(r.all)]]) <- "avg.day.flux.roads"
 r.all$min.day.flux.com.park <- (r.all$min.com.park 
                              * (((pave.veh.meta[pave.class == "com.park" & SVF == 1.0, mean.day.out.flux.lwr] 
                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "com.park" & SVF == 0.5, mean.day.out.flux.lwr]
-                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "com.park" & SVF == 0.1, mean.day.out.flux.lwr]
+                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
 r.all$min.day.flux.res.park <- (r.all$min.res.park 
                              * (((pave.veh.meta[pave.class == "res.park" & SVF == 1.0, mean.day.out.flux.lwr]
                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.lwr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "res.park" & SVF == 0.5, mean.day.out.flux.lwr]
-                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "res.park" & SVF == 0.1, mean.day.out.flux.lwr]
+                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.lwr]) * (1 - r.all$adj.SVF))))
 
 r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.com.park", "min.day.flux.res.park")]], 
                                  indices = c(1), fun = sum))
@@ -964,13 +963,13 @@ names(r.all[[nlayers(r.all)]]) <- "min.day.flux.park"
 r.all$max.day.flux.com.park <- (r.all$max.com.park 
                              * (((pave.veh.meta[pave.class == "com.park" & SVF == 1.0, mean.day.out.flux.upr]
                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "com.park" & SVF == 0.5, mean.day.out.flux.upr]
-                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "com.park" & SVF == 0.1, mean.day.out.flux.upr]
+                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
 r.all$max.day.flux.res.park  <- (r.all$max.res.park 
                              * (((pave.veh.meta[pave.class == "res.park" & SVF == 1.0, mean.day.out.flux.upr]
                                   - pave.veh.meta[pave.class == "unpaved" & SVF == 1.0, mean.day.out.flux.upr]) * r.all$adj.SVF)
-                                + ((pave.veh.meta[pave.class == "res.park" & SVF == 0.5, mean.day.out.flux.upr]
-                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.5, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
+                                + ((pave.veh.meta[pave.class == "res.park" & SVF == 0.1, mean.day.out.flux.upr]
+                                    - pave.veh.meta[pave.class == "unpaved" & SVF == 0.1, mean.day.out.flux.upr])* (1 - r.all$adj.SVF))))
 
 r.all <- stack(r.all, stackApply(r.all[[c("max.day.flux.com.park", "max.day.flux.res.park")]], 
                                  indices = c(1), fun = sum))
@@ -1023,21 +1022,6 @@ r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.roads","min.day.flux.par
                                  indices = c(1,1,1,2,2,2,3,3,3), fun = sum))
 names(r.all)[(nlayers(r.all)-2):nlayers(r.all)] <- c("total.min.day.flux", "total.avg.day.flux", "total.max.day.flux")
 
-
-# FLUX FOR PAVEMENT AT VEHICLES BY TIME STEP OF DAY AND CLASS
-
-# import summarized pavement model data by time of day 
-surface.data.m <- readRDS(here("data/outputs/pavement-surface-summary.rds"))
-
-# unique list of date.times (defaulted to first of year)
-my.date.times <- unique(surface.data.m[, date.time])
-
-r.pave.t.min <- r.pave
-r.pave.t.max <- r.pave
-
-for(i in 1:length(my.date.times)){
-
-}
 
 # vehicle fluxes by time of day
 r.veh.min <- r.veh
