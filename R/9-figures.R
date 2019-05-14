@@ -410,6 +410,7 @@ pheat[, hiway.avg := (hiway.min + hiway.max) / 2]
 # define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
 folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
                         keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
+folder <- here("data/outputs/run_metadata_20190429_150045")
 
 # import data
 all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))

@@ -1023,7 +1023,23 @@ r.all <- stack(r.all, stackApply(r.all[[c("min.day.flux.roads","min.day.flux.par
                                  indices = c(1,1,1,2,2,2,3,3,3), fun = sum))
 names(r.all)[(nlayers(r.all)-2):nlayers(r.all)] <- c("total.min.day.flux", "total.avg.day.flux", "total.max.day.flux")
 
-# also calc flux for vehicels by time step by class
+
+# FLUX FOR PAVEMENT AT VEHICLES BY TIME STEP OF DAY AND CLASS
+
+# import summarized pavement model data by time of day 
+surface.data.m <- readRDS(here("data/outputs/pavement-surface-summary.rds"))
+
+# unique list of date.times (defaulted to first of year)
+my.date.times <- unique(surface.data.m[, date.time])
+
+r.pave.t.min <- r.pave
+r.pave.t.max <- r.pave
+
+for(i in 1:length(my.date.times)){
+
+}
+
+# vehicle fluxes by time of day
 r.veh.min <- r.veh
 r.veh.max <- r.veh
 
