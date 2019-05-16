@@ -365,33 +365,35 @@ pave.heat <- stack(pave.heat, stackApply(pave.heat, indices = rep(1:4, each = 2)
 names(pave.heat)[9:12] <- c("avg.day.flux.local", "avg.day.flux.minor", "avg.day.flux.major", "avg.day.flux.hiway")
 
 pave.heat.time <- veh.heat
+values(pave.heat.time) <- NA
+#pave.heat.time <- raster()
 
 for(i in 1:(length(unique(pheat.u[,date.time])))){
   d <- unique(pheat.u[,date.time])[i]
   
   # min/max local roadway flux for by times 
-  pave.heat.time[[i]] <- ((r.all$adj.SVF * pheat.u[date.time == d & pave.class == "local" & SVF == 1.0, min.out.flux]) +
-                                    ((1 - r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "local" & SVF == 0.1, min.out.flux])) * r.all$min.local.road
-  values(pave.heat.time[[i+500]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "local" & SVF == 1.0, max.out.flux]) +
-                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "local" & SVF == 0.1, max.out.flux])) * values(r.all$min.local.road)
+  pave.heat.time[[i]] <- ((r.all$adj.SVF * pheat.u[date.time == d & pave.class == "local" & SVF == 1.0, min.add.flux]) +
+                                    ((1 - r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "local" & SVF == 0.1, min.add.flux])) * r.all$min.local.road
+  values(pave.heat.time[[i+500]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "local" & SVF == 1.0, max.add.flux]) +
+                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "local" & SVF == 0.1, max.add.flux])) * values(r.all$max.local.road)
  
   # min/max minor roadway flux for by times 
-  values(pave.heat.time[[i+100]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "minor" & SVF == 1.0, min.out.flux]) +
-                                    ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "minor" & SVF == 0.1, min.out.flux])) * values(r.all$min.minor.road)
-  values(pave.heat.time[[i+600]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "minor" & SVF == 1.0, max.out.flux]) +
-                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "minor" & SVF == 0.1, max.out.flux])) * values(r.all$min.minor.road) 
+  values(pave.heat.time[[i+100]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "minor" & SVF == 1.0, min.add.flux]) +
+                                    ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "minor" & SVF == 0.1, min.add.flux])) * values(r.all$min.minor.road)
+  values(pave.heat.time[[i+600]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "minor" & SVF == 1.0, max.add.flux]) +
+                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "minor" & SVF == 0.1, max.add.flux])) * values(r.all$max.minor.road) 
   
   # min/max minor roadway flux for by times 
-  values(pave.heat.time[[i+200]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "major" & SVF == 1.0, min.out.flux]) +
-                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "major" & SVF == 0.1, min.out.flux])) * values(r.all$min.major.road)
-  values(pave.heat.time[[i+700]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "major" & SVF == 1.0, max.out.flux]) +
-                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "major" & SVF == 0.1, max.out.flux])) * values(r.all$min.major.road) 
+  values(pave.heat.time[[i+200]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "major" & SVF == 1.0, min.add.flux]) +
+                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "major" & SVF == 0.1, min.add.flux])) * values(r.all$min.major.road)
+  values(pave.heat.time[[i+700]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "major" & SVF == 1.0, max.add.flux]) +
+                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "major" & SVF == 0.1, max.add.flux])) * values(r.all$max.major.road) 
   
   # min/max minor roadway flux for by times 
-  values(pave.heat.time[[i+300]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "highway" & SVF == 1.0, min.out.flux]) +
-                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "highway" & SVF == 0.1, min.out.flux])) * values(r.all$min.hiway.road)
-  values(pave.heat.time[[i+800]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "highway" & SVF == 1.0, max.out.flux]) +
-                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "highway" & SVF == 0.1, max.out.flux])) * values(r.all$min.hiway.road) 
+  values(pave.heat.time[[i+300]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "highway" & SVF == 1.0, min.add.flux]) +
+                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "highway" & SVF == 0.1, min.add.flux])) * values(r.all$min.hiway.road)
+  values(pave.heat.time[[i+800]]) <- ((values(r.all$adj.SVF) * pheat.u[date.time == d & pave.class == "highway" & SVF == 1.0, max.add.flux]) +
+                                        ((1 - values(r.all$adj.SVF)) * pheat.u[date.time == d & pave.class == "highway" & SVF == 0.1, max.add.flux])) * values(r.all$max.hiway.road) 
 }
 
 # add min/max all roads by time
@@ -426,37 +428,37 @@ pheat <- as.data.table(expand.grid(pheat))
 # median flux by hour and road class is as avg of min median and max median flux by cell
 for(i in 1:(length(unique(pheat[,date.time])))){
   d <- unique(pheat[,date.time])[i]
-  temp.min <- ifelse(values(r.all$max.local.road) < min.road.frac, NA, values(pave.heat.time[[i]]) / values(r.all$max.local.road))
-  temp.max <- ifelse(values(r.all$min.local.road) < min.road.frac, NA, values(pave.heat.time[[i+500]]) / values(r.all$min.local.road))
-  temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
-  temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
-  pheat[date.time == d & pave.class == "local", min.add.flux := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
-  pheat[date.time == d & pave.class == "local", max.add.flux := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
-  pheat[date.time == d & pave.class == "local", med.add.flux := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+  temp.min.lr <- ifelse(values(r.all$max.local.road) < min.road.frac, NA, values(pave.heat.time[[i]]) / values(r.all$max.local.road))
+  temp.max.lr <- ifelse(values(r.all$min.local.road) < min.road.frac, NA, values(pave.heat.time[[i+500]]) / values(r.all$min.local.road))
+  temp.min.lr <- ifelse(is.infinite(temp.min.lr) == T, 0, temp.min.lr)
+  temp.max.lr <- ifelse(is.infinite(temp.max.lr) == T, 0, temp.max.lr)
+  pheat[date.time == d & pave.class == "local", min.add.flux := ifelse(sum(temp.min.lr, na.rm = T) == 0, 0, mean(temp.min.lr, na.rm = T))]
+  pheat[date.time == d & pave.class == "local", max.add.flux := ifelse(sum(temp.max.lr, na.rm = T) == 0, 0, mean(temp.max.lr, na.rm = T))]
+  pheat[date.time == d & pave.class == "local", med.add.flux := (quantile(temp.min.lr, 0.5, na.rm = T) + quantile(temp.max.lr, 0.5, na.rm = T)) / 2]
   
-  temp.min <- ifelse(values(r.all$max.minor.road) < min.road.frac, NA, values(pave.heat.time[[i+100]]) / values(r.all$max.minor.road))
-  temp.max <- ifelse(values(r.all$min.minor.road) < min.road.frac, NA, values(pave.heat.time[[i+600]]) / values(r.all$min.minor.road))
-  temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
-  temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
-  pheat[date.time == d & pave.class == "minor", min.add.flux := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
-  pheat[date.time == d & pave.class == "minor", max.add.flux := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
-  pheat[date.time == d & pave.class == "minor", med.add.flux := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+  temp.min.mnr <- ifelse(values(r.all$max.minor.road) < min.road.frac, NA, values(pave.heat.time[[i+100]]) / values(r.all$max.minor.road))
+  temp.max.mnr <- ifelse(values(r.all$min.minor.road) < min.road.frac, NA, values(pave.heat.time[[i+600]]) / values(r.all$min.minor.road))
+  temp.min.mnr <- ifelse(is.infinite(temp.min.mnr) == T, 0, temp.min.mnr)
+  temp.max.mnr <- ifelse(is.infinite(temp.max.mnr) == T, 0, temp.max.mnr)
+  pheat[date.time == d & pave.class == "minor", min.add.flux := ifelse(sum(temp.min.mnr, na.rm = T) == 0, 0, mean(temp.min.mnr, na.rm = T))]
+  pheat[date.time == d & pave.class == "minor", max.add.flux := ifelse(sum(temp.max.mnr, na.rm = T) == 0, 0, mean(temp.max.mnr, na.rm = T))]
+  pheat[date.time == d & pave.class == "minor", med.add.flux := (quantile(temp.min.mnr, 0.5, na.rm = T) + quantile(temp.max.mnr, 0.5, na.rm = T)) / 2]
   
-  temp.min <- ifelse(values(r.all$max.major.road) < min.road.frac, NA, values(pave.heat.time[[i+200]]) / values(r.all$max.major.road))
-  temp.max <- ifelse(values(r.all$min.major.road) < min.road.frac, NA, values(pave.heat.time[[i+700]]) / values(r.all$min.major.road))
-  temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
-  temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
-  pheat[date.time == d & pave.class == "major", min.add.flux := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
-  pheat[date.time == d & pave.class == "major", max.add.flux := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
+  temp.min.mjr <- ifelse(values(r.all$max.major.road) < min.road.frac, NA, values(pave.heat.time[[i+200]]) / values(r.all$max.major.road))
+  temp.max.mjr <- ifelse(values(r.all$min.major.road) < min.road.frac, NA, values(pave.heat.time[[i+700]]) / values(r.all$min.major.road))
+  temp.min.mjr <- ifelse(is.infinite(temp.min.mjr) == T, 0, temp.min.mjr)
+  temp.max.mjr <- ifelse(is.infinite(temp.max.mjr) == T, 0, temp.max.mjr)
+  pheat[date.time == d & pave.class == "major", min.add.flux := ifelse(sum(temp.min.mjr, na.rm = T) == 0, 0, mean(temp.min.mjr, na.rm = T))]
+  pheat[date.time == d & pave.class == "major", max.add.flux := ifelse(sum(temp.max.mjr, na.rm = T) == 0, 0, mean(temp.max.mjr, na.rm = T))]
   pheat[date.time == d & pave.class == "major", med.add.flux := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
   
-  temp.min <- ifelse(values(r.all$max.hiway.road) < min.road.frac, NA, values(pave.heat.time[[i+300]]) / values(r.all$max.hiway.road))
-  temp.max <- ifelse(values(r.all$min.hiway.road) < min.road.frac, NA, values(pave.heat.time[[i+800]]) / values(r.all$min.hiway.road))
-  temp.min <- ifelse(is.infinite(temp.min) == T, 0, temp.min)
-  temp.max <- ifelse(is.infinite(temp.max) == T, 0, temp.max)
-  pheat[date.time == d & pave.class == "highway", min.add.flux := ifelse(sum(temp.min, na.rm = T) == 0, 0, mean(temp.min, na.rm = T))]
-  pheat[date.time == d & pave.class == "highway", max.add.flux := ifelse(sum(temp.max, na.rm = T) == 0, 0, mean(temp.max, na.rm = T))]
-  pheat[date.time == d & pave.class == "highway", med.add.flux := (quantile(temp.min, 0.5, na.rm = T) + quantile(temp.max, 0.5, na.rm = T)) / 2]
+  temp.min.hr <- ifelse(values(r.all$max.hiway.road) < min.road.frac, NA, values(pave.heat.time[[i+300]]) / values(r.all$max.hiway.road))
+  temp.max.hr <- ifelse(values(r.all$min.hiway.road) < min.road.frac, NA, values(pave.heat.time[[i+800]]) / values(r.all$min.hiway.road))
+  temp.min.hr <- ifelse(is.infinite(temp.min.hr) == T, 0, temp.min.hr)
+  temp.max.hr <- ifelse(is.infinite(temp.max.hr) == T, 0, temp.max.hr)
+  pheat[date.time == d & pave.class == "highway", min.add.flux := ifelse(sum(temp.min.hr, na.rm = T) == 0, 0, mean(temp.min.hr, na.rm = T))]
+  pheat[date.time == d & pave.class == "highway", max.add.flux := ifelse(sum(temp.max.hr, na.rm = T) == 0, 0, mean(temp.max.hr, na.rm = T))]
+  pheat[date.time == d & pave.class == "highway", med.add.flux := (quantile(temp.min.hr, 0.5, na.rm = T) + quantile(temp.max.hr, 0.5, na.rm = T)) / 2]
   
 }
 
@@ -471,7 +473,7 @@ max(pheat.u$max.add.flux) # 162.0044
 max(values(pave.heat.time)) # = 221.3138
 
 # test plot
-plot(vheat[pave.class == "highway", date.time], vheat[pave.class == "highway", mean.add.flux], type="l", col="black", ylab = "Mean Heat Flux (W/m2)", xlab = "Time of Day", ylim = c(0, 320))
+plot(vheat[pave.class == "highway", date.time], vheat[pave.class == "highway", mean.add.flux], type="l", col="black", ylab = "Mean Heat Flux (W/m2)", xlab = "Time of Day", ylim = c(0, 200))
 lines(vheat[pave.class == "major", date.time], vheat[pave.class == "major", mean.add.flux], col="red")
 lines(vheat[pave.class == "minor", date.time], vheat[pave.class == "minor", mean.add.flux], col="blue")
 lines(vheat[pave.class == "local", date.time], vheat[pave.class == "local", mean.add.flux], col="green")
@@ -479,7 +481,11 @@ lines(pheat[pave.class == "highway", date.time], pheat[pave.class == "highway", 
 lines(pheat[pave.class == "major", date.time], pheat[pave.class == "major", mean.add.flux], col="red")
 lines(pheat[pave.class == "minor", date.time], pheat[pave.class == "minor", mean.add.flux], col="blue")
 lines(pheat[pave.class == "local", date.time], pheat[pave.class == "local", mean.add.flux], col="green")
-
+lines(pheat.u[pave.class == "highway" & SVF == 1, date.time], pheat.u[pave.class == "highway" & SVF == 1, mean.add.flux], col="black")
+lines(pheat.u[pave.class == "major" & SVF == 1, date.time], pheat.u[pave.class == "major" & SVF == 1, mean.add.flux], col="red")
+lines(pheat.u[pave.class == "minor" & SVF == 1, date.time], pheat.u[pave.class == "minor" & SVF == 1, mean.add.flux], col="blue")
+lines(pheat.u[pave.class == "local" & SVF == 1, date.time], pheat.u[pave.class == "local" & SVF == 1, mean.add.flux], col="green")
+plot(veh.heat$avg.flux.veh.all.81)
 plot(r.all[[c("avg.all.roads", "avg.all.park", "daily.vkt", "total.avg.day.flux")]])
 
 # plot min/maxes
