@@ -609,10 +609,10 @@ p.all.flux.new <- tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flu
           legend.show = T,
           title = "Heat Flux\n(W/m\u00B2)",
           colorNA = NULL) + # white
-  tm_shape(mc.hill) +
-  tm_raster(palette = "-Greys", 
-            legend.show = F, 
-            alpha = 0.1) +
+  #tm_shape(mc.hill) +
+  #tm_raster(palette = "-Greys", 
+  #          legend.show = F, 
+  #          alpha = 0.1) +
   #tm_shape(phx.labels) +
   #tm_text("name", 
   #        size = 0.5, 
@@ -630,10 +630,10 @@ p.all.flux.new <- tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flu
                breaks = c(0,10,20),
                size = 0.7) +
   tm_shape(maricopa.cnty) +
-  tm_borders(lwd = 0.4, 
+  tm_borders(lwd = 1, 
              lty = "solid",
              col = "black",
-             alpha = 1) +
+             alpha = 0.75) +
   tm_facets(free.scales.text.size = F) +
   #tm_shape(uza.border) +
   #tm_borders(lwd = 0.3, 
@@ -642,15 +642,16 @@ p.all.flux.new <- tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flu
   #           alpha = 0.4) +
   tm_layout(fontfamily = my.font, 
             #bg.color = "grey95",
-            legend.position = c("LEFT", "top"),
+            #legend.position = c("LEFT", "top"),
+            legend.position = c(0, 0.33),
             outer.margins = c(0, 0, 0, 0),
             inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
             between.margin = 0,
             frame = T,
             #frame.lwd = 1,
-            legend.title.size = 1.3,
-            legend.text.size = 1.3,
-            legend.height = -0.65,
+            legend.title.size = 1.25,
+            legend.text.size = 1,
+            legend.height = 0.65,
             panel.show = T,
             panel.labels = c("(a) Road Pavement","(b) Parking Pavement", 
                              "(c) Vehicles","(d) Pavements & Vehicles"),
@@ -659,7 +660,7 @@ p.all.flux.new <- tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flu
             #legend.outside = T)
             )
 p.all.flux.new
-tmap_save(p.all.flux.new, width = 5.5, units = "in", filename = here(paste0("figures/mean-daily-heat-flux-4grid-", run.name, "-", res / 3.28084, "m.png")))
+#tmap_save(p.all.flux.new, width = 5.5, units = "in", filename = here(paste0("figures/mean-daily-heat-flux-4grid-", run.name, "-", res / 3.28084, "m.png")))
 
 # create the inset map
 az.near.borders <- shapefile(here("data/shapefiles/boundaries/AZ-near-state-borders.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
@@ -676,30 +677,30 @@ proj4string(inset.extent) <- crs(phx.label)
 az.near.borders.c <- crop(az.near.borders, inset.extent)
 
 p.inset <- tm_shape(az.near.borders.c) +
-  tm_borders(lwd = 0.8, 
+  tm_borders(lwd = 1, 
              lty = "solid",
-             col = "black",
-             alpha = 0.5) +
+             col = "grey40",
+             alpha = 1) +
   tm_shape(phx.label) +
   tm_text("name", 
           size = 0.3, 
           fontfamily = my.font,
           fontface = "bold.italic",
-          ymod = 0.3,
+          ymod = 0.4,
           xmod = 0.3) +
-  tm_dots(size = 0.02) +
+  tm_dots(size = 0.01) +
   tm_shape(maricopa.cnty) +
-  tm_borders(lwd = 0.4, 
+  tm_borders(lwd = 0.7, 
              lty = "solid",
-             col = "black",
+             col = "grey40",
              alpha = 1) +
   tm_shape(uza.border) +
   tm_polygons(col = "grey40",
               lty = 0,
              alpha = 0.4) +
   tm_shape(my.extent) +
-  tm_borders(lwd = 1, 
-             lty = "dashed",
+  tm_borders(lwd = 0.75, 
+             lty = "dotted",
              col = "black",
              alpha = 1) +
   tm_layout(fontfamily = my.font,
@@ -709,11 +710,11 @@ p.inset <- tm_shape(az.near.borders.c) +
             inner.margins = c(0.05, 0, 0, 0)) # b, l, t, r)
 p.inset
 
-tmap_save(p.all.flux.new, insets_tm = list(p.inset,p.inset,p.inset,p.inset), dpi = 500, width = 5.5, units = "in", 
-          insets_vp = list(viewport(0.445, 0.37, width = 0.14, height = 0.14),
-                           viewport(0.94, 0.365, width = 0.14, height = 0.14),
-                           viewport(0.44, 0.865, width = 0.15, height = 0.15),
-                           viewport(0.94, 0.865, width = 0.15, height = 0.15)),
+tmap_save(p.all.flux.new, insets_tm = list(p.inset,p.inset,p.inset,p.inset), dpi = 1000, width = 5.5, units = "in", 
+          insets_vp = list(viewport(0.44, 0.365, width = 0.14, height = 0.14), # bottom left
+                           viewport(0.94, 0.365, width = 0.14, height = 0.14), # bottom right
+                           viewport(0.44, 0.865, width = 0.14, height = 0.14), # top left
+                           viewport(0.94, 0.865, width = 0.14, height = 0.14)), # top right
           filename = here(paste0("figures/mean-daily-heat-flux-4grid-", run.name, "-", res / 3.28084, "m.png")))
 
 # morning rush would be from: hour = 7.92 am to 8.88 am (6:54:12 am to 8:52:48 am); V34:V37
