@@ -5,7 +5,7 @@ options(scipen = 999) # prevent scientific notation when printing
 
 # first make sure checkpoint is installed locally
 # this is the only package that is ok to not use a 'checkpointed' (i.e. archived version of a package)
-# checkpoint does not archive itself and it should not create dependency issues
+# checkpoint does not archive itself and it should not create dependency issues+
 if (!require("checkpoint")){
   install.packages("checkpoint")
   library(checkpoint)
@@ -297,7 +297,9 @@ iflow <- fread(here("data/icarus/full_flow.csv"))
 setnames(iflow, "V1", "id")
 
 # import veh hourly raster data
-veh.heat <- readRDS(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.rds")))
+#veh.heat <- readRDS(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.rds")))
+veh.heat <- raster(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.tif")))
+names(veh.heat) <- readRDS(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m-names.rds")))
 
 # pavement summary data
 pheat.u <- readRDS(here("data/outputs/pavement-heat-time-metadata.rds"))
