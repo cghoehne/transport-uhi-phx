@@ -140,8 +140,8 @@ pave.time.meta <- as.data.table(expand.grid(pave.time))
 for(d in my.date.times){
   for(s in unique(all.surface.data$SVF)){
     pave.time.meta[SVF == s & date.time == d & pave.class == "highway", min.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "highway", asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$a.pave.type, min.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "highway", 1 - asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$c.pave.type, min.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "highway", asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$a.pave.type, min.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "highway", 1 - asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$c.pave.type, min.out.flux]))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "highway", mean.out.flux := 
                      (pave.veh.meta[SVF == s & pave.class == "highway", (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$a.pave.type, mean.out.flux])) +
                      (pave.veh.meta[SVF == s & pave.class == "highway", 1 - (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$c.pave.type, mean.out.flux]))]
@@ -149,12 +149,12 @@ for(d in my.date.times){
                      (pave.veh.meta[SVF == s & pave.class == "highway", (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$a.pave.type, med.out.flux], 0.5)) +
                      (pave.veh.meta[SVF == s & pave.class == "highway", 1 - (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$c.pave.type, med.out.flux], 0.5))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "highway", max.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "highway", asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$a.pave.type, max.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "highway", 1 - asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$c.pave.type, max.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "highway", asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$a.pave.type, max.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "highway", 1 - asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% highway$c.pave.type, max.out.flux]))]
     
     pave.time.meta[SVF == s & date.time == d & pave.class == "major", min.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "major", asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% major$a.pave.type, min.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "major", 1 - asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% major$c.pave.type, min.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "major", asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% major$a.pave.type, min.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "major", 1 - asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% major$c.pave.type, min.out.flux]))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "major", mean.out.flux := 
                      (pave.veh.meta[SVF == s & pave.class == "major", (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% major$a.pave.type, mean.out.flux])) +
                      (pave.veh.meta[SVF == s & pave.class == "major", 1 - (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% major$c.pave.type, mean.out.flux]))]
@@ -162,12 +162,12 @@ for(d in my.date.times){
                      (pave.veh.meta[SVF == s & pave.class == "major", (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% major$a.pave.type, med.out.flux], 0.5)) +
                      (pave.veh.meta[SVF == s & pave.class == "major", 1 - (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% major$c.pave.type, med.out.flux], 0.5))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "major", max.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "major", asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% major$a.pave.type, max.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "major", 1 - asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% major$c.pave.type, max.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "major", asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% major$a.pave.type, max.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "major", 1 - asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% major$c.pave.type, max.out.flux]))]
     
     pave.time.meta[SVF == s & date.time == d & pave.class == "minor", min.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "minor", asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$a.pave.type, min.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "minor", 1 - asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$c.pave.type, min.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "minor", asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$a.pave.type, min.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "minor", 1 - asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$c.pave.type, min.out.flux]))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "minor", mean.out.flux := 
                      (pave.veh.meta[SVF == s & pave.class == "minor", (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$a.pave.type, mean.out.flux])) +
                      (pave.veh.meta[SVF == s & pave.class == "minor", 1 - (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$c.pave.type, mean.out.flux]))]
@@ -175,12 +175,12 @@ for(d in my.date.times){
                      (pave.veh.meta[SVF == s & pave.class == "minor", (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$a.pave.type, med.out.flux], 0.5)) +
                      (pave.veh.meta[SVF == s & pave.class == "minor", 1 - (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$c.pave.type, med.out.flux], 0.5))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "minor", max.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "minor", asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$a.pave.type, max.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "minor", 1 - asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$c.pave.type, max.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "minor", asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$a.pave.type, max.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "minor", 1 - asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% minor$c.pave.type, max.out.flux]))]
     
     pave.time.meta[SVF == s & date.time == d & pave.class == "local", min.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "local", asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% local$a.pave.type, min.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "local", 1 - asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% local$c.pave.type, min.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "local", asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% local$a.pave.type, min.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "local", 1 - asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% local$c.pave.type, min.out.flux]))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "local", mean.out.flux := 
                      (pave.veh.meta[SVF == s & pave.class == "local", (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% local$a.pave.type, mean.out.flux])) +
                      (pave.veh.meta[SVF == s & pave.class == "local", 1 - (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% local$c.pave.type, mean.out.flux]))]
@@ -188,12 +188,12 @@ for(d in my.date.times){
                      (pave.veh.meta[SVF == s & pave.class == "local", (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% local$a.pave.type, med.out.flux], 0.5)) +
                      (pave.veh.meta[SVF == s & pave.class == "local", 1 - (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% local$c.pave.type, med.out.flux], 0.5))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "local", max.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "local", asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% local$a.pave.type, max.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "local", 1 - asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% local$c.pave.type, max.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "local", asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% local$a.pave.type, max.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "local", 1 - asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% local$c.pave.type, max.out.flux]))]
     
     pave.time.meta[SVF == s & date.time == d & pave.class == "com.park", min.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "com.park", asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$a.pave.type, min.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "com.park", 1 - asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$c.pave.type, min.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "com.park", asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$a.pave.type, min.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "com.park", 1 - asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$c.pave.type, min.out.flux]))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "com.park", mean.out.flux := 
                      (pave.veh.meta[SVF == s & pave.class == "com.park", (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$a.pave.type, mean.out.flux])) +
                      (pave.veh.meta[SVF == s & pave.class == "com.park", 1 - (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$c.pave.type, mean.out.flux]))]
@@ -201,12 +201,12 @@ for(d in my.date.times){
                      (pave.veh.meta[SVF == s & pave.class == "com.park", (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$a.pave.type, med.out.flux], 0.5)) +
                      (pave.veh.meta[SVF == s & pave.class == "com.park", 1 - (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$c.pave.type, med.out.flux], 0.5))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "com.park", max.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "com.park", asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$a.pave.type, max.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "com.park", 1 - asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$c.pave.type, max.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "com.park", asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$a.pave.type, max.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "com.park", 1 - asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% com.park$c.pave.type, max.out.flux]))]
     
     pave.time.meta[SVF == s & date.time == d & pave.class == "res.park", min.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "res.park", asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$a.pave.type, min.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "res.park", 1 - asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$c.pave.type, min.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "res.park", asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$a.pave.type, min.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "res.park", 1 - asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$c.pave.type, min.out.flux]))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "res.park", mean.out.flux := 
                      (pave.veh.meta[SVF == s & pave.class == "res.park", (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$a.pave.type, mean.out.flux])) +
                      (pave.veh.meta[SVF == s & pave.class == "res.park", 1 - (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$c.pave.type, mean.out.flux]))]
@@ -214,12 +214,12 @@ for(d in my.date.times){
                      (pave.veh.meta[SVF == s & pave.class == "res.park", (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$a.pave.type, med.out.flux], 0.5)) +
                      (pave.veh.meta[SVF == s & pave.class == "res.park", 1 - (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$c.pave.type, med.out.flux], 0.5))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "res.park", max.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "res.park", asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$a.pave.type, max.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "res.park", 1 - asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$c.pave.type, max.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "res.park", asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$a.pave.type, max.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "res.park", 1 - asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% res.park$c.pave.type, max.out.flux]))]
     
     pave.time.meta[SVF == s & date.time == d & pave.class == "unpaved", min.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "unpaved", asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$a.pave.type, min.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "unpaved", 1 - asph.min] * min(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$c.pave.type, min.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "unpaved", asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$a.pave.type, min.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "unpaved", 1 - asph.min] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$c.pave.type, min.out.flux]))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "unpaved", mean.out.flux := 
                      (pave.veh.meta[SVF == s & pave.class == "unpaved", (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$a.pave.type, mean.out.flux])) +
                      (pave.veh.meta[SVF == s & pave.class == "unpaved", 1 - (asph.min + asph.max)/2] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$c.pave.type, mean.out.flux]))]
@@ -227,14 +227,21 @@ for(d in my.date.times){
                      (pave.veh.meta[SVF == s & pave.class == "unpaved", (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$a.pave.type, med.out.flux], 0.5)) +
                      (pave.veh.meta[SVF == s & pave.class == "unpaved", 1 - (asph.min + asph.max)/2] * quantile(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$c.pave.type, med.out.flux], 0.5))]
     pave.time.meta[SVF == s & date.time == d & pave.class == "unpaved", max.out.flux := 
-                     (pave.veh.meta[SVF == s & pave.class == "unpaved", asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$a.pave.type, max.out.flux])) +
-                     (pave.veh.meta[SVF == s & pave.class == "unpaved", 1 - asph.max] * max(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$c.pave.type, max.out.flux]))]
+                     (pave.veh.meta[SVF == s & pave.class == "unpaved", asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$a.pave.type, max.out.flux])) +
+                     (pave.veh.meta[SVF == s & pave.class == "unpaved", 1 - asph.max] * mean(surface.data.m[SVF == s & date.time == d & pave.name %in% unpaved$c.pave.type, max.out.flux]))]
     }
 }
 
 pave.time.meta[SVF == 1.0 & pave.class == "highway", mean(min.out.flux)]
 pave.time.meta[SVF == 1.0 & pave.class == "highway", mean(mean.out.flux)]
 pave.time.meta[SVF == 1.0 & pave.class == "highway", mean(max.out.flux)]
+
+# because low SVF simulated pavements have very low but highly sensitive outgoing heat flux dependent on the obs weather conditions,
+# force the low SVF out.flux to a mean for all time periods to avoid noise in weather data
+pave.time.meta[SVF == 0.1, min.out.flux := mean(min.out.flux), by = "pave.class"]
+pave.time.meta[SVF == 0.1, mean.out.flux := mean(mean.out.flux), by = "pave.class"]
+pave.time.meta[SVF == 0.1, med.out.flux := mean(med.out.flux), by = "pave.class"]
+pave.time.meta[SVF == 0.1, max.out.flux := mean(max.out.flux), by = "pave.class"]
 
 # merge bare ground data as columns for easy subraction to get added heat relative to ground
 pave.time.meta.u <- merge(pave.time.meta,
@@ -267,19 +274,19 @@ lines(pave.time.meta[SVF == 1.0 & pave.class == "res.park", date.time],
 lines(pave.time.meta[SVF == 1.0 & pave.class == "unpaved", date.time], 
       pave.time.meta[SVF == 1.0 & pave.class == "unpaved", mean.out.flux], col="gray")
 
-plot(pave.time.meta.u[SVF == 1.0 & pave.class == "highway", date.time], 
-     pave.time.meta.u[SVF == 1.0 & pave.class == "highway", mean.add.flux], 
-     type="l", col="black", ylab = "Mean Heat Flux (W/m2)", xlab = "Time of Day") #, ylim = c(0, 80)
-lines(pave.time.meta.u[SVF == 1.0 & pave.class == "major", date.time], 
-      pave.time.meta.u[SVF == 1.0 & pave.class == "major", mean.add.flux], col="red")
-lines(pave.time.meta.u[SVF == 1.0 & pave.class == "minor", date.time], 
-      pave.time.meta.u[SVF == 1.0 & pave.class == "minor", mean.add.flux], col="orange")
-lines(pave.time.meta.u[SVF == 1.0 & pave.class == "local", date.time], 
-      pave.time.meta.u[SVF == 1.0 & pave.class == "local", mean.add.flux], col="yellow")
-lines(pave.time.meta.u[SVF == 1.0 & pave.class == "com.park", date.time], 
-      pave.time.meta.u[SVF == 1.0 & pave.class == "com.park", mean.add.flux], col="blue")
-lines(pave.time.meta.u[SVF == 1.0 & pave.class == "res.park", date.time], 
-      pave.time.meta.u[SVF == 1.0 & pave.class == "res.park", mean.add.flux], col="green")
+plot(pave.time.meta.u[SVF == 0.1 & pave.class == "highway", date.time], 
+     pave.time.meta.u[SVF == 0.1 & pave.class == "highway", mean.add.flux], 
+     type="l", col="black", ylab = "Mean Heat Flux (W/m2)", xlab = "Time of Day", ylim = c(0, 10)) #
+lines(pave.time.meta.u[SVF == 0.1 & pave.class == "major", date.time], 
+      pave.time.meta.u[SVF == 0.1 & pave.class == "major", mean.add.flux], col="red")
+lines(pave.time.meta.u[SVF == 0.1 & pave.class == "minor", date.time], 
+      pave.time.meta.u[SVF == 0.1 & pave.class == "minor", mean.add.flux], col="orange")
+lines(pave.time.meta.u[SVF == 0.1 & pave.class == "local", date.time], 
+      pave.time.meta.u[SVF == 0.1 & pave.class == "local", mean.add.flux], col="yellow")
+lines(pave.time.meta.u[SVF == 0.1 & pave.class == "com.park", date.time], 
+      pave.time.meta.u[SVF == 0.1 & pave.class == "com.park", mean.add.flux], col="blue")
+lines(pave.time.meta.u[SVF == 0.1 & pave.class == "res.park", date.time], 
+      pave.time.meta.u[SVF == 0.1 & pave.class == "res.park", mean.add.flux], col="green")
 
 
 # save output data
