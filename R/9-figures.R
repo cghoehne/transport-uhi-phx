@@ -424,6 +424,8 @@ pheat <- as.data.table(expand.grid(pheat))
 # calculate mean pave heat flux over road area by class and time step
 # follow same approach as vehicles for consistency
 
+pave.heat.time[[150]]
+
 # min/max flux by hour and road class is min veh flux in cell div by max fractional area road
 # median flux by hour and road class is as avg of min median and max median flux by cell
 for(i in 1:(length(unique(pheat[,date.time])))){
@@ -557,10 +559,14 @@ ggsave(paste0(folder, "/figures/veh-heat-flux-diff.png"), p.flux.v,
 ####################
 # RASTER HEAT MAPS #
 ####################
+plot(r.all[[c("avg.day.flux.roads","avg.day.flux.park", "avg.day.flux.veh", "total.avg.day.flux")]], 
+     main = c("(a) Road Pavement","(b) Parking Pavement", 
+              "(c) Vehicles","(d) Pavements & Vehicles"))
 
 # import labels & borders 
 uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
-phx.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels.shp"))
+phx.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels-raster.shp"))
+maricopa.cnty <- shapefile(here("data/shapefiles/boundaries/maricopa_county.shp"))
 
 # set 0 to NA to ignore in diveraging color palette
 values(r.all$avg.day.flux.veh) <- ifelse(values(r.all$avg.day.flux.veh) < 1, NA, values(r.all$avg.day.flux.veh))
@@ -579,240 +585,137 @@ r.park.flux <- crop(r.all$avg.day.flux.park, uza.border, snap = "out")
 r.road.flux <- crop(r.all$avg.day.flux.roads, uza.border, snap = "out")
 r.all.flux <- crop(r.all$total.avg.day.flux, uza.border, snap = "out")
 
-# define global tmap parameters
-my.asp <- 1.3
-my.palette <- rev(rainbow(255, end = 0.6)) # start = 0.5,
-title.p <- c(0.18, 0.97)
+# crop maricopa border to rasters extent
+maricopa.cnty.c <- crop(maricopa.cnty, r.all)
 
-# create individual plots 
-p.road.flux <-   
-  tm_shape(mc.hill) +
-  tm_raster(palette = "-Greys", 
-            legend.show = F, 
-            alpha = 0.4) +
-  tm_shape(r.road.flux) +
+my.palette <- rev(rainbow(255, end = 0.6)) # start = 0.5,  
+
+# custom heat
+my.palette <- colorRampPalette(c("#ffdbcb", "#fed0bd", "#fcbba1", "#fc9272", "#fb6a4a", "#ef3b2c", "#cb181d", "#67000d"), # "#ffe5d9", 
+                               bias = 1, 
+                               interpolate = "linear")(255)
+
+# custom spectral 
+my.palette <- colorRampPalette(c("#0076c1","#fff410","#d7191c"), #   
+                               bias = 1, 
+                               interpolate = "linear")(255)
+
+#p.all.flux.new <- tm_shape(r.all[[c("avg.day.flux.roads","avg.day.flux.park", "avg.day.flux.veh", "total.avg.day.flux")]]) +
+p.all.flux.new <- tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flux)) +
   tm_raster(palette = my.palette,
-            style="cont",
-            breaks = c(1, seq(5, 45, 5)),
-            legend.show = T,
-            title = "Heat Flux\n(W/m\u00B2)",
-            colorNA = NULL) + # white
-  tm_shape(uza.border) +
-  tm_borders(lwd = 0.2, 
-             lty = "solid",
-             col = "grey40",
-             alpha = 0.2) +
-  #tm_scale_bar(position = c(0.2,0.10),
-  #             #breaks = c(0,5,10,15,20),
-  #             size = 1,
-  #             color.light = "grey85") +
-  #tm_compass(north = 0, 
-  #           type = "4star", 
-  #           size = 1.5,
-  #           show.labels = 1, 
-  #           position = c(0.9,0.85)) +
-  tm_shape(phx.labels) +
-  tm_text("name", 
-          size = .5, 
-          fontfamily = my.font,
-          fontface = "bold.italic",
-          just = "center") +
-  #tm_shape(hist.loc) +
-  #tm_markers(shape = tmap_icons(file = paste0("Projects/Maricopa Parking/Figures/histograms/",map.yr,"_tot_space_hist.png"),
-  #                              just = c(1.2,1.2), 
-  #                              keep.asp = T, 
-  #                              width = 900, 
-  #                              height = 900), size = 16) +
-  tm_layout(fontfamily = my.font, 
-            fontface = "italic", 
-            bg.color = "grey95",
-            title.size = 1.1, 
-            title = c("(a) Roadway Pavement"),
-            title.position = title.p,
-            legend.position = c(0.014,0.35),
-            outer.margins = c(0, 0, 0, 0),
-            inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
-            frame = F,
-            #frame.lwd = 1,
-            asp = my.asp,
-            legend.height = -0.45,
-            #legend.width = -0.06,
-            #legend.title.size = 1.5, 
-            legend.text.size = 1) +
-  tmap_options(max.raster = c(plot = 102951200, view = 102951200))
-
-p.park.flux <-   
+          style="cont",
+          #breaks= list(c(1, seq(10, 40, 10)), c(1, seq(20, 60, 20)), c(1, seq(5, 15, 5)), c(1,seq(25, 75, 25))),
+          breaks= list(c(1, seq(15, 45, 15)), c(1, seq(20, 60, 20)), c(1, seq(5, 15, 5)), c(1,seq(25, 75, 25))),
+          legend.show = T,
+          title = "Heat Flux\n(W/m\u00B2)",
+          colorNA = NULL) + # white
   tm_shape(mc.hill) +
   tm_raster(palette = "-Greys", 
             legend.show = F, 
-            alpha = 0.4) +
-  tm_shape(r.park.flux) +
-  tm_raster(palette = my.palette, # start = 0.5,
-            style="cont",
-            breaks = c(1, seq(5, 50, 5)),
-            legend.show = T,
-            title = "Heat Flux\n(W/m\u00B2)",
-            colorNA = NULL) + # white
-  tm_shape(uza.border) +
-  tm_borders(lwd = 0.2, 
-             lty = "solid",
-             col = "grey40",
-             alpha = 0.7) +
-  #tm_scale_bar(position = c(0.2,0.10),
-  #             #breaks = c(0,5,10,15,20),
-  #             size = 0.60,
-  #             color.light = "grey85") +
+            alpha = 0.1) +
+  #tm_shape(phx.labels) +
+  #tm_text("name", 
+  #        size = 0.5, 
+  #        fontfamily = my.font,
+  #        fontface = "bold.italic",
+  #        alpha = 0.9,
+  #        just = "center") +
   tm_compass(north = 0, 
              type = "4star", 
-             size = 1.5,
+             size = 1.25,
              show.labels = 1, 
-             position = c(0.8,0.8)) +
-  tm_shape(phx.labels) +
-  tm_text("name", 
-          size = .5, 
-          fontfamily = my.font,
-          fontface = "bold.italic",
-          just = "center") +
-  #tm_shape(hist.loc) +
-  #tm_markers(shape = tmap_icons(file = paste0("Projects/Maricopa Parking/Figures/histograms/",map.yr,"_tot_space_hist.png"),
-  #                              just = c(1.2,1.2), 
-  #                              keep.asp = T, 
-  #                              width = 900, 
-  #                              height = 900), size = 16) +
-  tm_layout(fontfamily = my.font, 
-            fontface = "italic", 
-            bg.color = "grey95",
-            title.size = 1.1, 
-            title = c("(b) Parking Pavement"),
-            title.position = title.p,
-            legend.position = c(0.014,0.35),
-            outer.margins = c(0, 0, 0, 0),
-            inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
-            frame = F,
-            #frame.lwd = 1,
-            asp = my.asp,
-            legend.height = -0.45,
-            #legend.width = -0.06,
-            #legend.title.size = 1.5, 
-            legend.text.size = 1) +
-  tmap_options(max.raster = c(plot = 102951200, view = 102951200))
-
-p.veh.flux <-   
-  tm_shape(mc.hill) +
-  tm_raster(palette = "-Greys", 
-            legend.show = F, 
-            alpha = 0.4) +
-  tm_shape(r.veh.flux) +
-  tm_raster(palette = my.palette, #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
-            style="cont",
-            breaks = c(1, seq(2.5, 20, 2.5)),
-            legend.show = T,
-            title = "Heat Flux\n(W/m\u00B2)",
-            colorNA = NULL) + # white
-  tm_shape(uza.border) +
-  tm_borders(lwd = 0.2, 
+             color.dark = "#2a2a2a",
+             position = c(0,0.05)) +
+  tm_scale_bar(position = c(0.13,0),
+               breaks = c(0,10,20),
+               size = 0.7) +
+  tm_shape(maricopa.cnty) +
+  tm_borders(lwd = 0.4, 
              lty = "solid",
-             col = "grey40",
-             alpha = 0.7) +
-  tm_scale_bar(position = c(0,0),
-               #breaks = c(0,5,10,15,20),
-               size = 0.7,
-               color.light = "grey85") +
-  #tm_compass(north = 0, 
-  #           type = "4star", 
-  #           size = 1.25,
-  #           show.labels = 1, 
-  #           position = c(0.9,0.85)) +
-  tm_shape(phx.labels) +
-  tm_text("name", 
-          size = .5, 
-          fontfamily = my.font,
-          fontface = "bold.italic",
-          just = "center") +
-  #tm_shape(hist.loc) +
-  #tm_markers(shape = tmap_icons(file = paste0("Projects/Maricopa Parking/Figures/histograms/",map.yr,"_tot_space_hist.png"),
-  #                              just = c(1.2,1.2), 
-  #                              keep.asp = T, 
-  #                              width = 900, 
-  #                              height = 900), size = 16) +
+             col = "black",
+             alpha = 1) +
+  tm_facets(free.scales.text.size = F) +
+  #tm_shape(uza.border) +
+  #tm_borders(lwd = 0.3, 
+  #           lty = "solid",
+  #           col = "grey40",
+  #           alpha = 0.4) +
   tm_layout(fontfamily = my.font, 
-            fontface = "italic", 
-            bg.color = "grey95",
-            title.size = 1.1, 
-            title = c("(c) Vehicles"),
-            title.position = title.p,
-            legend.position = c(0.014,0.35),
+            #bg.color = "grey95",
+            legend.position = c("LEFT", "top"),
             outer.margins = c(0, 0, 0, 0),
             inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
-            frame = F,
+            between.margin = 0,
+            frame = T,
             #frame.lwd = 1,
-            asp = my.asp,
-            legend.height = -0.45,
-            #legend.width = -0.06,
-            #legend.title.size = 1.5, 
-            legend.text.size = 1) +
-  tmap_options(max.raster = c(plot = 102951200, view = 102951200))
+            legend.title.size = 1.3,
+            legend.text.size = 1.3,
+            legend.height = -0.65,
+            panel.show = T,
+            panel.labels = c("(a) Road Pavement","(b) Parking Pavement", 
+                             "(c) Vehicles","(d) Pavements & Vehicles"),
+            panel.label.size = 1.5
+            #panel.label.bg.color = "white",
+            #legend.outside = T)
+            )
+p.all.flux.new
+tmap_save(p.all.flux.new, width = 5.5, units = "in", filename = here(paste0("figures/mean-daily-heat-flux-4grid-", run.name, "-", res / 3.28084, "m.png")))
 
-p.all.flux <-   
-  tm_shape(mc.hill) +
-  tm_raster(palette = "-Greys", 
-            legend.show = F, 
-            alpha = 0.4) +
-  tm_shape(r.all.flux) +
-  tm_raster(palette = my.palette, #"YlOrRd", #"-Spectral", #rev(heat.colors(255))
-            style="cont",
-            breaks = c(1, seq(10, 60, 10)),
-            legend.show = T,
-            title = "Heat Flux\n(W/m\u00B2)",
-            colorNA = NULL) + # white
-  tm_shape(uza.border) +
-  tm_borders(lwd = 0.2, 
+# create the inset map
+az.near.borders <- shapefile(here("data/shapefiles/boundaries/AZ-near-state-borders.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
+my.extent <- shapefile(here("data/shapefiles/boundaries/map-extent.shp"))
+phx.label <- shapefile(here("data/shapefiles/other/phx_city_label_new.shp"))
+
+# define extent of inset
+#, - UL
+#, - LR
+my.coords <- data.table(lon = c(-115.436727,-108.508773), lat = c(37.512245,31.065606))
+inset.extent <- as(extent(spTransform(SpatialPoints(coords = my.coords,
+                                                 proj4string = crs("+proj=longlat +datum=WGS84")), crs(phx.label))), "SpatialPolygons")
+proj4string(inset.extent) <- crs(phx.label)
+az.near.borders.c <- crop(az.near.borders, inset.extent)
+
+p.inset <- tm_shape(az.near.borders.c) +
+  tm_borders(lwd = 0.8, 
              lty = "solid",
-             col = "grey40",
-             alpha = 0.7) +
-  #tm_scale_bar(position = c(0.2,0.10),
-  #             #breaks = c(0,5,10,15,20),
-  #             size = 1,
-  #             color.light = "grey85") +
-  #tm_compass(north = 0, 
-  #           type = "4star", 
-  #           size = 1.5,
-  #           show.labels = 1, 
-  #           position = c(0.9,0.85)) +
-  tm_shape(phx.labels) +
+             col = "black",
+             alpha = 0.5) +
+  tm_shape(phx.label) +
   tm_text("name", 
-          size = .5, 
+          size = 0.3, 
           fontfamily = my.font,
           fontface = "bold.italic",
-          just = "center") +
-  #tm_shape(hist.loc) +
-  #tm_markers(shape = tmap_icons(file = paste0("Projects/Maricopa Parking/Figures/histograms/",map.yr,"_tot_space_hist.png"),
-  #                              just = c(1.2,1.2), 
-  #                              keep.asp = T, 
-  #                              width = 900, 
-  #                              height = 900), size = 16) +
-  tm_layout(fontfamily = my.font, 
-            fontface = "italic", 
-            bg.color = "grey95",
-            title.size = 1.1, 
-            title = c("(d) Vehicles + Pavements"), 
-            title.position = title.p,
-            legend.position = c(0.014,0.35),
+          ymod = 0.3,
+          xmod = 0.3) +
+  tm_dots(size = 0.02) +
+  tm_shape(maricopa.cnty) +
+  tm_borders(lwd = 0.4, 
+             lty = "solid",
+             col = "black",
+             alpha = 1) +
+  tm_shape(uza.border) +
+  tm_polygons(col = "grey40",
+              lty = 0,
+             alpha = 0.4) +
+  tm_shape(my.extent) +
+  tm_borders(lwd = 1, 
+             lty = "dashed",
+             col = "black",
+             alpha = 1) +
+  tm_layout(fontfamily = my.font,
+            frame = T,
+            frame.lwd = 1,
             outer.margins = c(0, 0, 0, 0),
-            inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
-            frame = F,
-            #frame.lwd = 1,
-            asp = my.asp,
-            legend.height = -0.45,
-            #legend.width = -0.06,
-            #legend.title.size = 1.5, 
-            legend.text.size = 1) +
-  tmap_options(max.raster = c(plot = 102951200, view = 102951200))
+            inner.margins = c(0.05, 0, 0, 0)) # b, l, t, r)
+p.inset
 
-p.grid.flux <- tmap_arrange(p.road.flux, p.park.flux, p.veh.flux, p.all.flux,
-                            outer.margins = c(0,0,0,0), asp = NA)
+tmap_save(p.all.flux.new, insets_tm = list(p.inset,p.inset,p.inset,p.inset), dpi = 500, width = 5.5, units = "in", 
+          insets_vp = list(viewport(0.445, 0.37, width = 0.14, height = 0.14),
+                           viewport(0.94, 0.365, width = 0.14, height = 0.14),
+                           viewport(0.44, 0.865, width = 0.15, height = 0.15),
+                           viewport(0.94, 0.865, width = 0.15, height = 0.15)),
+          filename = here(paste0("figures/mean-daily-heat-flux-4grid-", run.name, "-", res / 3.28084, "m.png")))
 
-
-tmap_save(p.grid.flux, filename = here(paste0("figures/mean-daily-heat-flux-4grid-", run.name, "-", res / 3.28084, "m.png")))
 # morning rush would be from: hour = 7.92 am to 8.88 am (6:54:12 am to 8:52:48 am); V34:V37
 # evening rush would be from: hour = 5.04 pm  to 6 pm (5:02:24 pm to 6:00:00 pm); V72:V75
+
