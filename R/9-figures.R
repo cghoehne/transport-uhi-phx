@@ -298,14 +298,15 @@ setnames(iflow, "V1", "id")
 
 # import veh hourly raster data
 #veh.heat <- readRDS(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.rds")))
-veh.heat <- raster(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.tif")))
+veh.heat <- stack(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.tif")))
 names(veh.heat) <- readRDS(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m-names.rds")))
 
 # pavement summary data
 pheat.u <- readRDS(here("data/outputs/pavement-heat-time-metadata.rds"))
 
 # import daily avg raster data
-r.all <- readRDS(here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.rds")))
+r.all <- stack(here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.tif")))
+names(r.all) <- readRDS(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m-names.rds")))
 
 # calculate mean veh heat flux over road area by class and time step
 # to prevent issues with extrememly high estaimtes of waste heat, force very small fractional areas to 0 (force less 5% to 0)
@@ -597,9 +598,9 @@ values(r.all$avg.day.flux.roads) <- ifelse(values(r.all$avg.day.flux.roads) < 1,
 values(r.all$total.avg.day.flux) <- ifelse(values(r.all$total.avg.day.flux) < 1, NA, values(r.all$total.avg.day.flux))
 
 #mc.hill <- brick("C:/Users/cghoehne/Dropbox (ASU)/Data and Tools/GIS/AZ Files/maricopa_hillshade/maricopa_hillshade.tif")
-#mc.hill <- crop(mc.hill, extent(r.all), snap="out")
+mc.hill <- brick(here("data/maricopa_hillshade.tif"))
 #saveRDS(mc.hill, here("data/maricopa-hillshade.rds"))
-mc.hill <- readRDS(here("data/maricopa-hillshade.rds")) # Maricopa County Hillashade EPSG 2223, cropped to extent of rasters
+#mc.hill <- readRDS(here("data/maricopa-hillshade.rds")) # Maricopa County Hillashade EPSG 2223, cropped to extent of rasters
 
 # crop rasters to uza 
 r.veh.flux <- crop(r.all$avg.day.flux.veh, uza.border, snap = "out")
@@ -607,8 +608,9 @@ r.park.flux <- crop(r.all$avg.day.flux.park, uza.border, snap = "out")
 r.road.flux <- crop(r.all$avg.day.flux.roads, uza.border, snap = "out")
 r.all.flux <- crop(r.all$total.avg.day.flux, uza.border, snap = "out")
 
-# crop maricopa border to rasters extent
-maricopa.cnty.c <- crop(maricopa.cnty, r.all)
+# crop maricopa hillshade rasters extent
+mc.hill <- crop(mc.hill, maricopa.cnty, snap="out")
+mc.hill <- crop(mc.hill, extent(r.all.flux), snap="out")
 
 my.palette <- rev(rainbow(255, end = 0.6)) # start = 0.5,  
 
@@ -622,8 +624,28 @@ my.palette <- colorRampPalette(c("#0076c1","#fff410","#d7191c"), #
                                bias = 1, 
                                interpolate = "linear")(255)
 
+# import data for inset maps
+az.near.borders <- shapefile(here("data/shapefiles/boundaries/AZ-near-state-borders.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
+my.extent <- shapefile(here("data/shapefiles/boundaries/map-extent.shp"))
+phx.label <- shapefile(here("data/shapefiles/other/phx_city_label_new.shp"))
+
+# define extent of inset
+my.coords <- data.table(lon = c(-115.436727,-108.508773), lat = c(37.512245,31.065606))
+inset.extent <- as(extent(spTransform(SpatialPoints(coords = my.coords,
+                                                    proj4string = crs("+proj=longlat +datum=WGS84")), crs(phx.label))), "SpatialPolygons")
+proj4string(inset.extent) <- crs(phx.label)
+az.near.borders.c <- crop(az.near.borders, inset.extent)
+
+rm(r.all)
+gc()
+
 #p.all.flux.new <- tm_shape(r.all[[c("avg.day.flux.roads","avg.day.flux.park", "avg.day.flux.veh", "total.avg.day.flux")]]) +
-p.all.flux.new <- tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flux)) +
+p.all.flux.new <-   
+  tm_shape(mc.hill$maricopa_hillshade) +
+  tm_raster(palette = "-Greys", 
+            legend.show = F, 
+            alpha = 0.1) +
+  tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flux)) +
   tm_raster(palette = my.palette,
           style="cont",
           #breaks= list(c(1, seq(10, 40, 10)), c(1, seq(20, 60, 20)), c(1, seq(5, 15, 5)), c(1,seq(25, 75, 25))),
@@ -631,10 +653,6 @@ p.all.flux.new <- tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flu
           legend.show = T,
           title = "Heat Flux\n(W/m\u00B2)",
           colorNA = NULL) + # white
-  #tm_shape(mc.hill) +
-  #tm_raster(palette = "-Greys", 
-  #          legend.show = F, 
-  #          alpha = 0.1) +
   #tm_shape(phx.labels) +
   #tm_text("name", 
   #        size = 0.5, 
@@ -656,6 +674,7 @@ p.all.flux.new <- tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flu
              lty = "solid",
              col = "black",
              alpha = 0.75) +
+  tm_fill(alpha = 0) +
   tm_facets(free.scales.text.size = F) +
   #tm_shape(uza.border) +
   #tm_borders(lwd = 0.3, 
@@ -670,7 +689,7 @@ p.all.flux.new <- tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flu
             inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
             between.margin = 0,
             frame = T,
-            #frame.lwd = 1,
+            #frame.lwgd = 1,
             legend.title.size = 1.25,
             legend.text.size = 1,
             legend.height = 0.65,
@@ -680,25 +699,16 @@ p.all.flux.new <- tm_shape(stack(r.road.flux, r.park.flux, r.veh.flux, r.all.flu
             panel.label.size = 1.5
             #panel.label.bg.color = "white",
             #legend.outside = T)
-            )
-p.all.flux.new
+            ) +
+  tmap_options(max.raster = c(plot = 367000200, view = 367000200))
+
+#p.all.flux.new
 #tmap_save(p.all.flux.new, width = 5.5, units = "in", filename = here(paste0("figures/mean-daily-heat-flux-4grid-", run.name, "-", res / 3.28084, "m.png")))
 
+
 # create the inset map
-az.near.borders <- shapefile(here("data/shapefiles/boundaries/AZ-near-state-borders.shp")) # Maricopa UZA (non-buffered) in EPSG:2223
-my.extent <- shapefile(here("data/shapefiles/boundaries/map-extent.shp"))
-phx.label <- shapefile(here("data/shapefiles/other/phx_city_label_new.shp"))
-
-# define extent of inset
-#, - UL
-#, - LR
-my.coords <- data.table(lon = c(-115.436727,-108.508773), lat = c(37.512245,31.065606))
-inset.extent <- as(extent(spTransform(SpatialPoints(coords = my.coords,
-                                                 proj4string = crs("+proj=longlat +datum=WGS84")), crs(phx.label))), "SpatialPolygons")
-proj4string(inset.extent) <- crs(phx.label)
-az.near.borders.c <- crop(az.near.borders, inset.extent)
-
-p.inset <- tm_shape(az.near.borders.c) +
+p.inset <-  
+  tm_shape(az.near.borders.c) +
   tm_borders(lwd = 1, 
              lty = "solid",
              col = "grey40",
@@ -730,7 +740,7 @@ p.inset <- tm_shape(az.near.borders.c) +
             frame.lwd = 1,
             outer.margins = c(0, 0, 0, 0),
             inner.margins = c(0.05, 0, 0, 0)) # b, l, t, r)
-p.inset
+#p.inset
 
 tmap_save(p.all.flux.new, insets_tm = list(p.inset,p.inset,p.inset,p.inset), dpi = 1000, width = 5.5, units = "in", 
           insets_vp = list(viewport(0.44, 0.365, width = 0.14, height = 0.14), # bottom left
