@@ -164,6 +164,10 @@ ggsave(paste0(folder, "/figures/modeled-observed",
 folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
                         keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
 
+# force to static date for date.time for easier manipulation in ggplot, will ignore date
+# NOTE: all summarized surface data is filtered previously to only last day of data
+surface.data.a[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + hours(hrs) + minutes(mins) + seconds(secs)] 
+
 # import data
 all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
 
@@ -174,6 +178,7 @@ all.surface.data[, mean(q.rad + q.cnv), by = c("pave.name", "batch.name", "albed
 all.surface.data[, new.name := batch.name]
 all.surface.data[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete Pavements"]
 all.surface.data[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Pavements"]
+all.surface.data[batch.name == "Bare Ground / Desert Soil", new.name := "Bare Ground (Desert Soil)"]
 
 #all.surface.data[batch.name == "Concrete Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
 #all.surface.data[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
@@ -184,22 +189,14 @@ all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
 all.surface.data[, ref.sol := albedo * SVF * solar]
 all.surface.data[, net.flux := -inc.sol + q.rad + q.cnv]
 
-# filter out any unrealistic pavements
-#all.surface.data <- all.surface.data[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
-#all.surface.data <- all.surface.data[!(run.n %in% c(40:42) & batch.id == "A")]
-
-# summarize data
-surface.data.a <- all.surface.data[, .(hrs, mins, secs,
-                                       dt = time.s,
-                                       out.flux = mean(q.rad + q.cnv),
+# aggregate for plotting
+surface.data.a <- all.surface.data[, .(out.flux = mean(q.rad + q.cnv),
                                        inc.sol = mean(inc.sol),
                                        net.flux = mean(net.flux),
                                        ref.sol = mean(ref.sol)),
-                                   by = c("time.s", "new.name", "season", "SVF")]  
+                                   by = c("date.time", "new.name", "season", "SVF")]  
 surface.data.a <- surface.data.a[SVF == 1.0,]
 
-# force date for date.time for easier manipulation in ggplot, will ignore date
-surface.data.a[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(time.s) - days(6)] 
 
 # plot min/maxes
 min.x.flux <- min(surface.data.a$date.time, na.rm = T) 
@@ -275,6 +272,54 @@ ggsave(paste0(folder, "/figures/heat-flux-diff",
               format(strptime(Sys.time(), format = "%Y-%m-%d %H:%M:%S"),
                      format = "%Y%m%d_%H%M%S"),".png"), p.flux.a, 
        device = "png", scale = 1, width = 7, height = 4.5, dpi = 300, units = "in") 
+
+p.flux.a2 <- (ggplot(data = surface.data.a)   #
+             
+             # custom border
+             + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = max.x.flux, yend = min.y.flux))   # x border (x,y) (xend,yend)
+             + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = min.x.flux, yend = max.y.flux))  # y border (x,y) (xend,yend)
+             
+             # line + point based on named factor of flux
+             + geom_line(aes(y = out.flux, x = date.time, color = pave.name, linetype = pave.name), size = 1)
+             #+ geom_point(aes(y = out.flux, x = date.time, color = new.name.f), size = 2, data = surface.data.a[mins %in% c(0) & secs == 0,])
+             
+             # plot/axis titles & second axis for solar rad units
+             + labs(x = "Time of Day", y = bquote('Mean Outgoing Heat Flux ('*W/m^2*')'))
+             #+ scale_color_manual(name = "", values = p.col, guide = guide_legend(reverse = F))
+             #+ scale_linetype_manual(name = "", values = p.lty, guide = guide_legend(reverse = F))
+             #+ scale_shape_manual(name = "", values = p.shp)
+             #+ facet_wrap(~pave.name)
+             
+             # scales
+             + scale_x_datetime(expand = c(0,0), limits = c(min.x.flux, max.x.flux), date_breaks = "3 hours", date_labels = "%H") #
+             + scale_y_continuous(expand = c(0,0), limits = c(min.y.flux, max.y.flux), breaks = seq(min.y.flux, max.y.flux, 40))
+             #+ guides(col = guide_legend(ncol = 2)) # two rows in legend
+             
+             # theme and formatting
+             + theme_minimal()
+             + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
+                     axis.text = element_text(colour = "black"),
+                     plot.margin = margin(t = 5, r = 10, b = 85, l = 10, unit = "pt"),
+                     panel.spacing.x = unit(7, "mm"),
+                     panel.spacing.y = unit(4, "mm"),
+                     axis.text.x = element_text(vjust = -1),
+                     axis.title.x = element_text(margin = margin(t = 12, r = 0, b = 0, l = 0)),
+                     axis.ticks = element_line(color = "grey80", size = 0.28),
+                     axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+                     strip.text.x = element_text(size = 12, hjust = 0, vjust = 1, face = "bold"),
+                     legend.position = c(0.525, -0.4),
+                     legend.key.width = unit(30, "mm"),
+                     legend.text = element_text(size = 10),
+                     legend.spacing.y = unit(1, "mm"),
+                     legend.direction ="vertical")
+)
+
+surface.data.r <- surface.data.a[, out.flux.r := rollapplyr(out.flux, 1:.N, mean), by = "pave.name"]
+
+plot(surface.data.a[pave.name == "Asphalt #3", date.time], surface.data.a[pave.name == "Asphalt #3", out.flux], type = "l", ylim = c(0, 450))
+lines(surface.data.a[pave.name == "Asphalt #4", date.time], surface.data.a[pave.name == "Asphalt #4", out.flux])
+lines(surface.data.a[pave.name == "Asphalt #5", date.time], surface.data.a[pave.name == "Asphalt #5", out.flux])
+
 
 ###############################
 # VEH WASTE HEAT BY TIME PLOT #
@@ -495,6 +540,7 @@ for(i in 1:(length(unique(pheat[,date.time])))){
   pheat[date.time == d & pave.class == "highway", mean.add.flux := ifelse(sum(temp.avg.hr, na.rm = T) == 0, 0, mean(temp.avg.hr, na.rm = T))]
 }
 
+save.image(here("data/outputs/temp/figures-2.RData"))
 ######################################
 # VEH + HEAT FLUX BY TIME OF DAY FIG #
 ######################################

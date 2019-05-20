@@ -463,13 +463,14 @@ for(f in 1:length(out.folders)){
   
 } 
 
-# filter surface pave data to only the 3rd (last day), as that is all we will need
-day.n <- unique(model.runs[run.n == run, n.days])[1] - 1
-all.surface.data <- all.surface.data[time.s >= (60*60*24*day.n),]
+# filter surface pave data to only the last day, as that is all we will need fpr analysis
+saveRDS(all.surface.data, here("data/outputs/temp/all-surface-data-raw.rds"))
+all.surface.data[, date.time.trim := max(date.time) - days(1), by = "run.n"]
+all.surface.data[, date.time >= date.time.trim]
 
 # also filter out unneeded vars to reduce file size
 all.surface.data[, c("node", "layer", "depth.m", "k", "rho.c", "R.c", "k.up", "k.dn", "x.up",
-                     "x.dn", "CFL", "CFL_fail", "end.day") := NULL]
+                     "x.dn", "CFL", "CFL_fail", "end.day", "date.time.trim") := NULL]
 
 # create summaries of error bu variables to identify best/worst 
 RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))} # RMSE function

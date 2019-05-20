@@ -212,7 +212,7 @@ gc()
 
 # estiamte spatial extent of parking by buffering each point such that area of circle = parking area
 # therefore r = sqrt(parking area / pi)
-# because this is an approximation it is off by a slight amount, so we estimate the factor it is off by (1.016641x)
+# because this is an approximation of a circel it is off by a slight amount, so we estimate the factor it is off by (1.016641x)
 parking.pts$min.r <- sqrt(parking.pts$min.area * 1.016641 / pi)
 parking.pts$max.r <- sqrt(parking.pts$max.area * 1.016641 / pi)
 
