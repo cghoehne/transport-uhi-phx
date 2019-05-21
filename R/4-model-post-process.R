@@ -55,7 +55,7 @@ getSeason <- function(DATES) {
 out.folders <- as.data.table(file.info(list.dirs(here("data/outputs/1D-heat-model-runs/"), 
                                                 recursive = F)), keep.rownames = T)[(.N-4):(.N), rn]
 # create summary plots for each run?
-should.plot <- "yes" # "yes" or "no"
+should.plot <- "no" # "yes" or "no"
 
 # loop through each folder of simulation runs
 # and then loop through each run loading simulated pavement temperature data
@@ -466,7 +466,7 @@ for(f in 1:length(out.folders)){
 # filter surface pave data to only the last day, as that is all we will need fpr analysis
 saveRDS(all.surface.data, here("data/outputs/temp/all-surface-data-raw.rds"))
 all.surface.data[, date.time.trim := max(date.time) - days(1), by = "run.n"]
-all.surface.data[, date.time >= date.time.trim]
+all.surface.data <- all.surface.data[date.time >= date.time.trim,]
 
 # also filter out unneeded vars to reduce file size
 all.surface.data[, c("node", "layer", "depth.m", "k", "rho.c", "R.c", "k.up", "k.dn", "x.up",
