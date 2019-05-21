@@ -56,8 +56,9 @@ all.surface.data[batch.name == "Concrete Pavements", new.name := "Concrete & Whi
 all.surface.data[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
 all.surface.data[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Overlaid PCC Pavements"]
 
-# force date for date.time for easier manipulation in ggplot, will ignore date
-all.surface.data[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + seconds(time.s) - days(6)] 
+# force to static date for date.time for easier manipulation in ggplot, will ignore date
+# NOTE: all summarized surface data is filtered previously to only last day of data
+all.surface.data[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + hours(hrs) + minutes(mins) + seconds(secs)] 
 
 # create list of date.times starting at static date to replicate division of time in travel data
 my.date.times <- as.POSIXct("2019-01-01 00:00:00 MST") + minutes(round((1:100 - 0.5) * 24/100*60))
