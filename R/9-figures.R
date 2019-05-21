@@ -502,7 +502,7 @@ for(i in 1:(length(unique(pheat[,date.time])))){
   pheat[date.time == d & pave.class == "highway", mean.add.flux := ifelse(sum(temp.avg.hr, na.rm = T) == 0, 0, mean(temp.avg.hr, na.rm = T))]
 }
 
-save.image(here("data/outputs/temp/figures-2.RData"))
+save.image(here("data/outputs/figures-2.RData"))
 ######################################
 # VEH + HEAT FLUX BY TIME OF DAY FIG #
 ######################################

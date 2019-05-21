@@ -1129,8 +1129,8 @@ dir.create(here("data/outputs/rasters"), showWarnings = F)
 
 # write out final rasters
 writeRaster(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
-writeRaster(r.veh.all, here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.tif")))
-writeRaster(r.veh.vkt, here(paste0("data/outputs/rasters/master-veh-time-vkt-", run.name, "-", res / 3.28084, "m.tif")))
+writeRaster(r.veh.all, here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
+writeRaster(r.veh.vkt, here(paste0("data/outputs/rasters/master-veh-time-vkt-", run.name, "-", res / 3.28084, "m.tif")), overwrite = T)
 saveRDS(r.all, here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.rds")))
 saveRDS(r.veh.vkt, here(paste0("data/outputs/rasters/master-veh-time-vkt-", run.name, "-", res / 3.28084, "m.rds")))
 saveRDS(r.veh.all, here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.rds")))
