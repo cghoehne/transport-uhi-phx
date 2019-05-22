@@ -33,7 +33,11 @@ folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F
 all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
 # filter out any unrealistic pavements
-all.model.runs <- all.model.runs[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
+#all.model.runs <- all.model.runs[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
+
+# unique dates
+length(unique(all.model.runs[, end.day])) # total n
+sort(unique(all.model.runs[, end.day])) # sorted
 
 
 # min, avg, max of temps at nearest node to 1.0 meter depth for all runs
@@ -62,9 +66,6 @@ weather.raw[, .(mean.temp.c = mean(temp.c, na.rm = T)), by = hour(date.time)][or
 # PAVEMENT SURFACE
 all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
 
-# filter out any unrealistic pavements
-all.surface.data <- all.surface.data[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
-
 # add daytime factor
 all.surface.data[, daytime := factor(ifelse(hour(date.time) %in% c(7:18), "Day", "Night"), 
                                      levels = c("Day","Night"))]
@@ -74,10 +75,11 @@ all.surface.data[, daytime := factor(ifelse(hour(date.time) %in% c(7:18), "Day",
 # min/max temp linear regression to variables of interest
 # define interest vars
 i.vars <- c("pave.thick", "L1.albedo", "L1.emissivity", "mean.k", "mean.c", "mean.rho")
-a.vars <- c("pave.name", i.vars)
+a.vars <- c("batch.name", "run.n", i.vars)
+s.vars <- c("pave.name", "batch.name", "run.n", "date.time", "albedo", "SVF", "daytime", "season","q.rad", "q.cnv", "T.degC")
 lm.results <- data.table("var" = i.vars)
-lm.data <- merge(all.surface.data, all.model.runs[, ..a.vars], by = c("pave.name"), allow.cartesian = T)
-lm.data <- lm.data[batch.id != "BG",] # exlude bare ground for analysis of pavement properties only
+lm.data <- merge(all.surface.data[, ..s.vars], all.model.runs[, ..a.vars], by = c("batch.name", "run.n"), allow.cartesian = T)
+lm.data <- lm.data[batch.name != "Bare Ground / Desert Soil",] # exlude bare ground for analysis of pavement properties only
 
 for(i.var in i.vars){
   i.var.id <- c("pave.name", i.var)
@@ -121,77 +123,24 @@ all.surface.data[, min(q.rad, na.rm = T), by = c("daytime")][order(V1)]
 # which max out.flux
 all.surface.data[,max(q.rad), by = c("pave.name", "batch.name", "albedo")][order(V1)]
 
-###################
-# NHTS 2017 stats #
-###################
 
-# ALL DATA IS PRE-FILTERED TO PHOENIX METRO (HH_CBSA == "38060",
-# Phoenix-Mesa-Scottsdale, AZ Metropolitan Statistical Area)
-# for full data set see: https://nhts.ornl.gov/
-per.phx <- readRDS(here("data/nhts/per-phx.rds")) # person file
-veh.phx <- readRDS(here("data/nhts/veh-phx.rds")) # vehicle file
-trip.phx <- readRDS(here("data/nhts/trip-phx.rds")) # trip file
-hh.phx <- readRDS(here("data/nhts/hh-phx.rds")) # household file
+# define name of run
+run.name <- "metro-phx"
+#run.name <- "phx-dwntwn"
+#run.name <- "north-tempe"
 
-# auto modes in TRPTRANS
-modes <- c(3,4,5,6) # car, SUV, van, & pickup truck
+# define resolution 
+#res <- 164.042  #  ~50m x 50m
+#res <- 328.084  # ~100m x 100m
+res <- 820.21  # ~250m x 250m
+#res <- 1640.42 # ~500m x 500m
+#res <- 3280.84 # ~1000 x 1000 
 
-#trip$WTTRDFIN  # trip weights
-#per$WTPERFIN # person weights 
+# import veh hourly raster data
+veh.heat <- stack(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m.tif")))
 
-# filter to PHX MSA 
-trip.phx.auto <- trip.phx[TRPTRANS %in% modes,] # auto only trips
+# import daily avg raster data
+r.all <- stack(here(paste0("data/outputs/rasters/master-pave-veh-heat-", run.name, "-", res / 3.28084, "m.tif")))
+names(r.all) <- readRDS(here(paste0("data/outputs/rasters/master-veh-time-heat-", run.name, "-", res / 3.28084, "m-names.rds")))
 
-# percent of annual hours autos are utilized in phoenix metro
-x <- sum(trip.phx.auto$TRVLCMIN) / (nrow(trip.phx.auto) * 24 * 60) # unweighted
-w <- sum(trip.phx.auto$TRVLCMIN * trip.phx.auto$WTTRDFIN) / sum(trip.phx.auto$WTTRDFIN * 24 * 60) # weighted
-
-paste("Cars are used ", prettyNum((x * 100), scientific = FALSE, digits = 3),"% of the day in the Phoenix metro (unweighted, 2017 NHTS)")
-paste("Cars are used ", prettyNum((w * 100), scientific = FALSE, digits = 3),"% of the day in the Phoenix metro (weighted, 2017 NHTS)")
-
-# avg travel time
-sum(trip.phx.auto$TRVLCMIN) / nrow(trip.phx.auto) # unweighted travel time
-sum(trip.phx.auto$TRVLCMIN * trip.phx.auto$WTTRDFIN) / sum(trip.phx.auto$WTTRDFIN) # weighted travel time
-
-# avg travel dist
-sum(trip.phx.auto$TRPMILES) / nrow(trip.phx.auto) # unweighted travel dist
-sum(trip.phx.auto$TRPMILES * trip.phx.auto$WTTRDFIN) / sum(trip.phx.auto$WTTRDFIN) # weighted travel dist
-
-# avg yearly travel dist all vehs by person
-sum(per.phx$YEARMILE) / nrow(per.phx) # unweighted travel dist
-sum(per.phx$YEARMILE * per.phx$WTPERFIN) / sum(per.phx$WTPERFIN) # weighted travel dist
-
-
-# CURRENTLY DOESN'T PULL UNTIL AFTER 10AM ??
-# create dataframe to count every trip occurring at every minute of day
-time.counts <- as.data.frame(cbind(format(seq.POSIXt(as.POSIXct(Sys.Date()), as.POSIXct(Sys.Date()+1), by = "1 min"),"%H%M", tz="GMT"), vector(mode="numeric", length=1441)))
-time.counts <- time.counts[-c(1441),]
-time.counts$V1 <- as.character(time.counts$V1)
-time.counts$V2 <- as.numeric(time.counts$V2)
-colnames(time.counts)[1] <- "time"
-colnames(time.counts)[2] <- "counts"
-time.counts$counts <- 0
-time.counts$weighted_counts <- 0
-
-# iterate through list of trips and determine if the trip is occuring during a specific minute of day, if so count it and weighted value
-for(a in 1:nrow(time.counts)){
-  for(b in 1:nrow(trip.phx.auto)){
-    if( (trip.phx.auto$STRTTIME[b] <= time.counts$time[a]) & (time.counts$time[a] <= trip.phx.auto$ENDTIME[b]) ){
-      time.counts$counts[a] <- time.counts$counts[a] + 1  
-      time.counts$weighted_counts[a] <- time.counts$weighted_counts[a] + trip.phx.auto$WTTRDFIN[b]
-    }
-  }
-}
-
-time.counts$time <- format(strptime(time.counts$time, format="%H%M"), format="%H:%M")
-time.counts$weighted_counts_n <- time.counts$weighted_counts / sum(time.counts$weighted_counts) * sum(time.counts$counts)
-
-
-# VEHICLE ANALYSIS
-
-# weighted vehicles per household in Phoenix metro 
-sum(veh.phx$HHVEHCNT * veh.phx$WTHHFIN) / sum(veh.phx$WTHHFIN)
-
-# weighted number of vehicles in Phoenix metro
-sum(veh.phx$HHVEHCNT * veh.phx$WTHHFIN)
-
+aheat <- readRDS(here("data/outputs/all-heat-time-summarized.rds"))

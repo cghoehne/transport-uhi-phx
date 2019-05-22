@@ -254,6 +254,70 @@ p.flux.a <- (ggplot(data = surface.data.a[season %in% c("(a) Summer", "(b) Winte
              + theme_minimal()
              + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
                      axis.text = element_text(colour = "black"),
+                     plot.margin = margin(t = 2, r = 8, b = 70, l = 2, unit = "pt"),
+                     panel.spacing.x = unit(7, "mm"),
+                     panel.spacing.y = unit(4, "mm"),
+                     axis.text.x = element_text(vjust = -1),
+                     axis.title.x = element_text(margin = margin(t = 12, r = 0, b = 0, l = 0)),
+                     axis.ticks = element_line(color = "grey80", size = 0.28),
+                     axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+                     strip.text.x = element_text(size = 13, hjust = 0.5, vjust = 1), #face = "bold"
+                     legend.position = c(0.525, -0.35),
+                     legend.key.width = unit(30, "mm"),
+                     legend.text = element_text(size = 10),
+                     legend.spacing.y = unit(1, "mm"),
+                     legend.direction ="vertical")
+)
+
+# save plot
+dir.create(paste0(folder, "/figures/"), showWarnings = F)
+#ggsave(paste0(folder, "/figures/heat-flux-diff", 
+#              format(strptime(Sys.time(), format = "%Y-%m-%d %H:%M:%S"),
+#                     format = "%Y%m%d_%H%M%S"),".png"), p.flux.a, 
+#       device = "png", scale = 1, width = 7, height = 4.5, dpi = 300, units = "in") 
+ggsave("figures/heat-flux-diff.png", p.flux.a, 
+       device = "png", scale = 1, width = 6, height = 4.5, dpi = 300, units = "in") 
+
+####################################
+# same plot but by pave.name
+# aggregate for plotting
+surface.data.b <- all.surface.data[, .(new.name = new.name,
+                                       out.flux = mean(q.rad + q.cnv),
+                                       inc.sol = mean(inc.sol),
+                                       net.flux = mean(net.flux),
+                                       ref.sol = mean(ref.sol)),
+                                   by = c("date.time", "pave.name", "SVF")]  
+surface.data.b <- surface.data.b[SVF == 1.0,]
+b.names <- unique(surface.data.b[, pave.name])
+surface.data.b[, pave.name.f := factor(pave.name, levels = b.names)]
+
+# create plot
+p.flux.b <- (ggplot(data = surface.data.b)   #
+             
+             # custom border
+             + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = max.x.flux, yend = min.y.flux))   # x border (x,y) (xend,yend)
+             + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = min.x.flux, yend = max.y.flux))  # y border (x,y) (xend,yend)
+             
+             # line + point based on named factor of flux
+             + geom_line(aes(y = out.flux, x = date.time, color = pave.name.f, linetype = pave.name.f), size = 1)
+             #+ geom_point(aes(y = out.flux, x = date.time, color = new.name.f), size = 2, data = surface.data.a[mins %in% c(0) & secs == 0,])
+             
+             # plot/axis titles & second axis for solar rad units
+             + labs(x = "Time of Day", y = bquote('Mean Outgoing Heat Flux ('*W/m^2*')'))
+             #+ scale_color_manual(name = "", values = p.col, guide = guide_legend(reverse = F))
+             #+ scale_linetype_manual(name = "", values = p.lty, guide = guide_legend(reverse = F))
+             #+ scale_shape_manual(name = "", values = p.shp)
+             + facet_wrap(~new.name)
+             
+             # scales
+             + scale_x_datetime(expand = c(0,0), limits = c(min.x.flux, max.x.flux), date_breaks = "3 hours", date_labels = "%H") #
+             + scale_y_continuous(expand = c(0,0), limits = c(min.y.flux, max.y.flux), breaks = seq(min.y.flux, max.y.flux, 40))
+             #+ guides(col = guide_legend(ncol = 2)) # two rows in legend
+             
+             # theme and formatting
+             + theme_minimal()
+             + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
+                     axis.text = element_text(colour = "black"),
                      plot.margin = margin(t = 5, r = 10, b = 85, l = 10, unit = "pt"),
                      panel.spacing.x = unit(7, "mm"),
                      panel.spacing.y = unit(4, "mm"),
@@ -268,19 +332,7 @@ p.flux.a <- (ggplot(data = surface.data.a[season %in% c("(a) Summer", "(b) Winte
                      legend.spacing.y = unit(1, "mm"),
                      legend.direction ="vertical")
 )
-
-# save plot
-dir.create(paste0(folder, "/figures/"), showWarnings = F)
-#ggsave(paste0(folder, "/figures/heat-flux-diff", 
-#              format(strptime(Sys.time(), format = "%Y-%m-%d %H:%M:%S"),
-#                     format = "%Y%m%d_%H%M%S"),".png"), p.flux.a, 
-#       device = "png", scale = 1, width = 7, height = 4.5, dpi = 300, units = "in") 
-ggsave("figures/heat-flux-diff",p.flux.a, 
-       device = "png", scale = 1, width = 6, height = 4.5, dpi = 300, units = "in") 
-
-plot(surface.data.a[pave.name == "Asphalt #3", date.time], surface.data.a[pave.name == "Asphalt #3", out.flux], type = "l", ylim = c(0, 450))
-lines(surface.data.a[pave.name == "Asphalt #4", date.time], surface.data.a[pave.name == "Asphalt #4", out.flux])
-lines(surface.data.a[pave.name == "Asphalt #5", date.time], surface.data.a[pave.name == "Asphalt #5", out.flux])
+#p.flux.b
 
 
 ###############################
@@ -502,7 +554,7 @@ for(i in 1:(length(unique(pheat[,date.time])))){
   pheat[date.time == d & pave.class == "highway", mean.add.flux := ifelse(sum(temp.avg.hr, na.rm = T) == 0, 0, mean(temp.avg.hr, na.rm = T))]
 }
 
-save.image(here("data/outputs/figures-2.RData"))
+save.image(here("data/outputs/temp/figures-2.RData"))
 ######################################
 # VEH + HEAT FLUX BY TIME OF DAY FIG #
 ######################################
@@ -527,27 +579,47 @@ plot(r.all[[c("avg.all.roads", "avg.all.park", "daily.vkt", "total.avg.day.flux"
 
 # combine vehicle and pavement heat diurnal summaries
 #vheat[, label := paste0(pave.class)]
-vheat[, label := "Vehicles"]
-pheat[, label := "Pavements"]
+vheat[, type := "Vehicles"]
+pheat[, type := "Pavements"]
 aheat <- rbind(pheat, vheat)
 
 # plot min/maxes
 min.x.veh <- floor_date(min(aheat[, date.time]), unit = "hours")
 max.x.veh <- ceiling_date(max(aheat[, date.time]), unit = "hours")
 min.y.veh <- 0 #round(min(unlist(vheat[, 2:13]) - 5), - 1) # round down to nearest multiple of 10
-max.y.veh <- round(max(unlist(aheat[, 2:13]) + 5), - 1) # round up to nearest multiple of 10
+#max.y.veh <- round(max(unlist(aheat[, 3:6]) + 5), - 1) # round up to nearest multiple of 10
+max.y.veh <- round(max(aheat[, mean.add.flux] + 5), - 1) # round up to nearest multiple of 10
 
-aheat.m <- melt(aheat[, c(3:6)], id.vars = "date.time")
+#aheat.m <- melt(aheat[, c(3:6)], id.vars = "date.time")
+
+# rename major/minor roadway class to arterial/collector
+aheat[, class := str_to_title(pave.class)] # capitilze first
+aheat[class == "Major", class := "Arterial"]
+aheat[class == "Minor", class := "Collector"]
+aheat[, class.type := paste(type, "-", class)]
 
 # create different legend charateristics for plotting
 #aheat[, label := factor(label, levels = v.names)]
-aheat[, label := str_to_title(pave.class)]
 c.names <- c("Highway", "Arterial", "Collector", "Local")
-c.type <- c("Pavements", "Pavements")
-v.col <- c("#220901", "#621708", "#941B0C", "#BC3908")  
-v.lty <- c("solid", "twodash","solid", "twodash")
-names(v.col) <- c.names
-names(v.lty) <- c.names
+t.names <- c("Pavements", "Vehicles")
+c.col <- c("#C60013", "#DD3E00", "#00599E", "#52006D")  
+t.lty <- c("solid", "twodash")
+names(c.col) <- c.names
+names(t.lty) <- t.names
+
+ct.names <- unique(aheat$class.type)
+ct.col <- rep(c.col, 2)
+ct.lty <- rep(t.lty, each = 4)
+names(ct.col) <- ct.names
+names(ct.lty) <- ct.names
+
+# factorize for ggplot
+aheat[, class.f := factor(class, levels = c.names)]
+aheat[, type.f := factor(type, levels = t.names)]
+aheat[, class.type.f := factor(class.type, levels = ct.names)]
+
+#c(ct.names[1], ct.names[5], ct.names[2], ct.names[6], 
+#  ct.names[3], ct.names[7], ct.names[4], ct.names[8])
 
 
 # create plot
@@ -558,43 +630,46 @@ p.flux.a <- (ggplot(data = aheat)
              + geom_segment(aes(x = min.x.veh, y = min.y.veh, xend = min.x.veh, yend = max.y.veh))  # y border (x,y) (xend,yend)
              
              # line + point based on named factor of flux
-             + geom_ribbon(aes(ymin = min.flux, ymax = max.flux, x = date.time),fill = "grey50")
-             + geom_line(aes(y = mean.flux, x = date.time, color = id, linetype = id), size = 1)
+             #+ geom_ribbon(aes(ymin = min.add.flux, ymax = max.add.flux, x = date.time), fill = "grey10")
+             + geom_line(aes(y = mean.add.flux, x = date.time, color = class.type.f, linetype = class.type.f), size = 1)
              
              # plot/axis titles & second axis for solar rad units
              + labs(x = "Time of Day", y = bquote('Mean Added Heat Flux ('*W/m^2*')'))
-             + scale_color_manual(name = "", values = v.col) # , guide = guide_legend(reverse = T)
-             + scale_linetype_manual(name = "", values = v.lty) # , guide = guide_legend(reverse = T)
-             + facet_wrap(~id)
+             + scale_color_manual(name = "", values = ct.col)  # Type - Roadway Class
+             + scale_linetype_manual(name = "", values = ct.lty) # Type - Roadway Class
+             #+ facet_wrap(~class.f)
              
              # scales
              + scale_x_datetime(expand = c(0,0), limits = c(min.x.veh, max.x.veh), date_breaks = "3 hours", date_labels = "%H") #
-             + scale_y_continuous(expand = c(0,0), limits = c(min.y.veh, max.y.veh), breaks = seq(min.y.veh, max.y.veh, 40))
-             #+ guides(col = guide_legend(ncol = 2)) # two rows in legend
+             + scale_y_continuous(expand = c(0,0), limits = c(min.y.veh, max.y.veh), breaks = seq(min.y.veh, max.y.veh, 20))
+             + guides(color = guide_legend(nrow = 4)) # two rows in legend
              
              # theme and formatting
              + theme_minimal()
              + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
                      axis.text = element_text(colour = "black"),
-                     plot.margin = margin(t = 5, r = 10, b = 15, l = 10, unit = "pt"), #b = 85
-                     panel.spacing.x = unit(7, "mm"),
-                     panel.spacing.y = unit(4, "mm"),
+                     plot.margin = margin(t = 5, r = 8, b = 90, l = 2, unit = "pt"), #b = 85
+                     #panel.spacing.x = unit(7, "mm"),
+                     #panel.spacing.y = unit(4, "mm"),
                      axis.text.x = element_text(vjust = -1),
                      axis.title.x = element_text(margin = margin(t = 12, r = 0, b = 0, l = 0)),
                      axis.ticks = element_line(color = "grey50", size = 0.28),
                      axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
-                     strip.text.x = element_text(size = 12, hjust = 0, vjust = 1), #face = "bold"
-                     legend.position = "none", #c(0.525, -0.255),
+                     #strip.text.x = element_text(size = 12, hjust = 0, vjust = 1), #face = "bold"
+                     legend.position = c(0.5, -0.25),
                      legend.key.width = unit(30, "mm"),
                      legend.text = element_text(size = 10),
                      legend.spacing.y = unit(1, "mm"),
-                     legend.direction ="vertical")
+                     legend.direction ="vertical",
+                     legend.background = element_blank())
 )
 
 # save plot
 ggsave(paste0(folder, "/figures/add-veh-pave-heat-flux.png"), p.flux.a, 
        device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
-
+ggsave("figures/add-veh-pave-heat-flux.png", p.flux.a, 
+       device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
+saveRDS(aheat, here("data/outputs/all-heat-time-summarized.rds"))
 ####################
 # RASTER HEAT MAPS #
 ####################
@@ -607,7 +682,7 @@ uza.border <- shapefile(here("data/shapefiles/boundaries/maricopa_county_uza.shp
 phx.labels <- shapefile(here("data/shapefiles/other/phx_metro_labels-raster.shp"))
 maricopa.cnty <- shapefile(here("data/shapefiles/boundaries/maricopa_county.shp"))
 
-# set 0 to NA to ignore in diveraging color palette
+# set <1 to NA to ignore in diveraging color palette
 values(r.all$avg.day.flux.veh) <- ifelse(values(r.all$avg.day.flux.veh) < 1, NA, values(r.all$avg.day.flux.veh))
 values(r.all$avg.day.flux.park) <- ifelse(values(r.all$avg.day.flux.park) < 1, NA, values(r.all$avg.day.flux.park))
 values(r.all$avg.day.flux.roads) <- ifelse(values(r.all$avg.day.flux.roads) < 1, NA, values(r.all$avg.day.flux.roads))
@@ -651,9 +726,6 @@ inset.extent <- as(extent(spTransform(SpatialPoints(coords = my.coords,
                                                     proj4string = crs("+proj=longlat +datum=WGS84")), crs(phx.label))), "SpatialPolygons")
 proj4string(inset.extent) <- crs(phx.label)
 az.near.borders.c <- crop(az.near.borders, inset.extent)
-
-rm(r.all)
-gc()
 
 #p.all.flux.new <- tm_shape(r.all[[c("avg.day.flux.roads","avg.day.flux.park", "avg.day.flux.veh", "total.avg.day.flux")]]) +
 p.all.flux.new <-   
@@ -769,4 +841,95 @@ tmap_save(p.all.flux.new, insets_tm = list(p.inset,p.inset,p.inset,p.inset), dpi
 
 # morning rush would be from: hour = 7.92 am to 8.88 am (6:54:12 am to 8:52:48 am); V34:V37
 # evening rush would be from: hour = 5.04 pm  to 6 pm (5:02:24 pm to 6:00:00 pm); V72:V75
+
+
+# ROAD FRACTION 4GRID PLOT
+
+# crop rasters to uza
+r.loc.min <- stackApply(stack(r.all$avg.local.road, r.all$avg.minor.road), fun = sum, indices = c(1))
+r.loc.min <- crop(r.loc.min, uza.border, snap = "out")
+r.maj.hig <- stackApply(stack(r.all$avg.major.road, r.all$avg.hiway.road), fun = sum, indices = c(1))
+r.maj.hig <- crop(r.maj.hig, uza.border, snap = "out")
+r.park <- crop(r.all$avg.all.park, uza.border, snap = "out")
+r.pave <- crop(r.all$avg.pave, uza.border, snap = "out")
+
+# set 0 to NA to ignore in diveraging color palette
+values(r.loc.min) <- ifelse(values(r.loc.min) == 0, NA, values(r.loc.min))
+values(r.maj.hig) <- ifelse(values(r.maj.hig) == 0, NA, values(r.maj.hig))
+values(r.park) <- ifelse(values(r.park) == 0, NA, values(r.park))
+values(r.pave) <- ifelse(values(r.pave) == 0, NA, values(r.pave))
+
+p.pave.frac <-   
+  #tm_shape(mc.hill$maricopa_hillshade) +
+  #tm_raster(palette = "-Greys", 
+  #          legend.show = F, 
+  #          alpha = 0.1) +
+  tm_shape(stack(r.loc.min, r.maj.hig, r.park, r.pave)) + #
+  tm_raster(palette = my.palette,
+            style="cont",
+            #breaks= list(seq(0, 0.5, 0.10), seq(0, 0.75, 0.15), seq(0, 1, 0.20), seq(0, 1, 0.20)),
+            legend.show = T,
+            title = "Coverage Factor",
+            colorNA = NULL) + # white
+  #tm_shape(phx.labels) +
+  #tm_text("name", 
+  #        size = 0.5, 
+  #        fontfamily = my.font,
+  #        fontface = "bold.italic",
+  #        alpha = 0.9,
+  #        just = "center") +
+  tm_compass(north = 0, 
+             type = "4star", 
+             size = 1.25,
+             show.labels = 1, 
+             color.dark = "#2a2a2a",
+             position = c(0,0.05)) +
+  tm_scale_bar(position = c(0.13,0),
+               breaks = c(0,10,20),
+               size = 0.7) +
+  tm_shape(maricopa.cnty) +
+  tm_borders(lwd = 1, 
+             lty = "solid",
+             col = "black",
+             alpha = 0.75) +
+  tm_fill(alpha = 0) +
+  tm_facets(free.scales.text.size = F) +
+  #tm_shape(uza.border) +
+  #tm_borders(lwd = 0.3, 
+  #           lty = "solid",
+  #           col = "grey40",
+  #           alpha = 0.4) +
+  tm_layout(fontfamily = my.font, 
+            #bg.color = "grey95",
+            #legend.position = c("LEFT", "top"),
+            legend.position = c(0, 0.33),
+            outer.margins = c(0, 0, 0, 0),
+            inner.margins = c(0.01, 0.01, 0.01, 0.01), # b, l, t, r
+            between.margin = 0,
+            #panel.label.fontface = 2,
+            frame = T,
+            #frame.lwgd = 1,
+            legend.title.size = 1.25,
+            legend.text.size = 1,
+            legend.height = 0.65,
+            panel.show = T,
+            panel.labels = c("(a) Local + Collector Pavements","(b) Arterial + Highway Pavements", 
+                             "(c) Parking Pavement","(d) All Pavements"),
+            panel.label.size = 1.1,
+            panel.label.height = 1.7,
+            panel.label.bg.color = "#E0E0E0"
+            #legend.outside = T)
+  ) +
+  tmap_options(max.raster = c(plot = 367000200, view = 367000200))
+
+#p.all.flux.new
+#tmap_save(p.all.flux.new, width = 5.5, units = "in", filename = here(paste0("figures/mean-daily-heat-flux-4grid-", run.name, "-", res / 3.28084, "m.png")))
+
+
+tmap_save(p.pave.frac, insets_tm = list(p.inset,p.inset,p.inset,p.inset), dpi = 1000, width = 5.875, units = "in", 
+          insets_vp = list(viewport(0.44, 0.365, width = 0.14, height = 0.14), # bottom left
+                           viewport(0.94, 0.365, width = 0.14, height = 0.14), # bottom right
+                           viewport(0.44, 0.865, width = 0.14, height = 0.14), # top left
+                           viewport(0.94, 0.865, width = 0.14, height = 0.14)), # top right
+          filename = here(paste0("figures/pave-coverage-4grid-", run.name, "-", res / 3.28084, "m.png")))
 
