@@ -58,7 +58,7 @@ all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 all.model.runs[, RMSE(Modeled, Observed), by = pave.name][order(V1)]
 all.model.runs[, mean(p.err), by = pave.name][order(V1)]
 
-# for validation only, drop unrealistic/bad predictors
+# for validation only, drop unrealistic/bad predictors and high volume pavements as they are not representative
 model.names <- sort(unique(all.model.runs$pave.name))
 model.runs <- all.model.runs[p.err <= 0.30 & is.finite(p.err) & RMSE(Modeled, Observed) <= 10,] # remove poor performers or NAs if there are any 
 model.runs <- model.runs[!(pave.name %in% model.names[7:12])]
@@ -239,7 +239,7 @@ p.flux.a <- (ggplot(data = surface.data.a[season %in% c("(a) Summer", "(b) Winte
              #+ geom_point(aes(y = out.flux, x = date.time, color = new.name.f), size = 2, data = surface.data.a[mins %in% c(0) & secs == 0,])
 
              # plot/axis titles & second axis for solar rad units
-             + labs(x = "Time of Day", y = bquote('Mean Outgoing Heat Flux ('*W/m^2*')'))
+             + labs(x = "Time of Day", y = bquote('Mean Outgoing Sensible Heat Flux ('*W/m^2*')'))
              + scale_color_manual(name = "", values = p.col, guide = guide_legend(reverse = F))
              + scale_linetype_manual(name = "", values = p.lty, guide = guide_legend(reverse = F))
              #+ scale_shape_manual(name = "", values = p.shp)
@@ -260,7 +260,7 @@ p.flux.a <- (ggplot(data = surface.data.a[season %in% c("(a) Summer", "(b) Winte
                      axis.text.x = element_text(vjust = -1),
                      axis.title.x = element_text(margin = margin(t = 12, r = 0, b = 0, l = 0)),
                      axis.ticks = element_line(color = "grey80", size = 0.28),
-                     axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+                     axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0), size = 10.5),
                      strip.text.x = element_text(size = 13, hjust = 0.5, vjust = 1), #face = "bold"
                      legend.position = c(0.525, -0.35),
                      legend.key.width = unit(30, "mm"),
@@ -270,7 +270,7 @@ p.flux.a <- (ggplot(data = surface.data.a[season %in% c("(a) Summer", "(b) Winte
 )
 
 # save plot
-dir.create(paste0(folder, "/figures/"), showWarnings = F)
+#dir.create(paste0(folder, "/figures/"), showWarnings = F)
 #ggsave(paste0(folder, "/figures/heat-flux-diff", 
 #              format(strptime(Sys.time(), format = "%Y-%m-%d %H:%M:%S"),
 #                     format = "%Y%m%d_%H%M%S"),".png"), p.flux.a, 
@@ -287,12 +287,13 @@ surface.data.b <- all.surface.data[, .(new.name = new.name,
                                        net.flux = mean(net.flux),
                                        ref.sol = mean(ref.sol)),
                                    by = c("date.time", "pave.name", "SVF")]  
-surface.data.b <- surface.data.b[SVF == 1.0,]
+surface.data.b <- unique(surface.data.b[SVF == 1.0,])
 b.names <- unique(surface.data.b[, pave.name])
+surface.data.b[, group := substr(pave.name, 0, nchar(pave.name) - 3)]
 surface.data.b[, pave.name.f := factor(pave.name, levels = b.names)]
 
 # create plot
-p.flux.b <- (ggplot(data = surface.data.b)   #
+p.flux.b <- (ggplot(data = surface.data.b[group != "Bare Dry Soil",])   #
              
              # custom border
              + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = max.x.flux, yend = min.y.flux))   # x border (x,y) (xend,yend)
@@ -307,18 +308,18 @@ p.flux.b <- (ggplot(data = surface.data.b)   #
              #+ scale_color_manual(name = "", values = p.col, guide = guide_legend(reverse = F))
              #+ scale_linetype_manual(name = "", values = p.lty, guide = guide_legend(reverse = F))
              #+ scale_shape_manual(name = "", values = p.shp)
-             + facet_wrap(~new.name)
+             + facet_wrap(~group)
              
              # scales
              + scale_x_datetime(expand = c(0,0), limits = c(min.x.flux, max.x.flux), date_breaks = "3 hours", date_labels = "%H") #
              + scale_y_continuous(expand = c(0,0), limits = c(min.y.flux, max.y.flux), breaks = seq(min.y.flux, max.y.flux, 40))
-             #+ guides(col = guide_legend(ncol = 2)) # two rows in legend
+             + guides(col = guide_legend(nrow = 3, ncol = 5)) # two rows in legend
              
              # theme and formatting
              + theme_minimal()
              + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
                      axis.text = element_text(colour = "black"),
-                     plot.margin = margin(t = 5, r = 10, b = 85, l = 10, unit = "pt"),
+                     plot.margin = margin(t = 5, r = 10, b = 150, l = 10, unit = "pt"),
                      panel.spacing.x = unit(7, "mm"),
                      panel.spacing.y = unit(4, "mm"),
                      axis.text.x = element_text(vjust = -1),
@@ -326,13 +327,13 @@ p.flux.b <- (ggplot(data = surface.data.b)   #
                      axis.ticks = element_line(color = "grey80", size = 0.28),
                      axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
                      strip.text.x = element_text(size = 13, hjust = 0.5, vjust = 1), #face = "bold"
-                     legend.position = c(0.525, -0.4),
+                     legend.position = c(0.525, -0.2),
                      legend.key.width = unit(30, "mm"),
                      legend.text = element_text(size = 10),
                      legend.spacing.y = unit(1, "mm"),
                      legend.direction ="vertical")
 )
-#p.flux.b
+p.flux.b
 
 
 ###############################
@@ -634,7 +635,7 @@ p.flux.a <- (ggplot(data = aheat)
              + geom_line(aes(y = mean.add.flux, x = date.time, color = class.type.f, linetype = class.type.f), size = 1)
              
              # plot/axis titles & second axis for solar rad units
-             + labs(x = "Time of Day", y = bquote('Mean Added Heat Flux ('*W/m^2*')'))
+             + labs(x = "Time of Day", y = bquote('Mean Anthropogenic Sensible Heat Flux ('*W/m^2*')'))
              + scale_color_manual(name = "", values = ct.col)  # Type - Roadway Class
              + scale_linetype_manual(name = "", values = ct.lty) # Type - Roadway Class
              #+ facet_wrap(~class.f)
