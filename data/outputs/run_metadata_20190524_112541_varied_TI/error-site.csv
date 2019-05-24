@@ -1,0 +1,5 @@
+"valid.site","batch.name","RMSE","MAPE"
+"C4","Whitetopped Asphalt Pavements",13.7673866872962,0.461734454410129
+"C1","Concrete Pavements",14.0320312464943,0.423490025539459
+"A6","Asphalt Pavements",17.1737505866182,0.506849278240983
+"A6","Asphalt Overlays on PCC Pavements",17.2653355369551,0.512776851687181

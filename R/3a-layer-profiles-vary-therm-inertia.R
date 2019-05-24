@@ -143,8 +143,8 @@ names(layer.profiles.wa) <- c(#"Whitetopped Asphalt #1",
 layer.profiles.oc <- list(
   data.table( # asphalt overlay on PCC (high thermal inertia)
     layer = c("surface", "PCC", "base", "subgrade"),
-    thickness = c(0.125, 0.15, 0.2, 1.025), # layer thickness (m)
-    k = c(2.2, 2.2, 2.74, 1.8), # layer thermal conductivity (W/(m*degK)) 
+    thickness = c(0.13, 0.15, 0.2, 1.02), # layer thickness (m)
+    k = c(2.2, 2.2, 3.0, 1.8), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2500, 2400, 2400, 2000), # layer density (kg/m3)
     c = c(1400, 1000, 800, 1900), # layer specific heat (J/(kg*degK)
     albedo = c(0.15, NA, NA, NA), # surface albedo (dimensionless)
@@ -153,7 +153,7 @@ layer.profiles.oc <- list(
   ),
   data.table( # asphalt overlay on PCC (low thermal inertia)
     layer = c("surface", "PCC", "base", "subgrade"),
-    thickness = c(0.125, 0.15, 0.2, 1.025), # layer thickness (m)
+    thickness = c(0.13, 0.15, 0.2, 1.02), # layer thickness (m)
     k = c(1.2, 1.2, 1.5, 1.0), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2200, 2100, 2400, 1500), # layer density (kg/m3)
     c = c(850, 800, 800, 1100), # layer specific heat (J/(kg*degK)
