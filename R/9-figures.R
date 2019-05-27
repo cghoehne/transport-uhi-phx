@@ -164,7 +164,9 @@ ggsave("figures/modeled-observed.png", my.plot.f,
 #######################################
 
 # import data
-all.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds")) 
+bg.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))[batch.name == "Bare Ground / Desert Soil",]
+pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds")) # surface temporal data by run for pavements
+all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
 
 # force to static date for date.time for easier manipulation in ggplot, will ignore date
 # NOTE: all summarized surface data is filtered previously to only last day of data
@@ -207,8 +209,8 @@ max.y.flux <- ifelse(max.y.flux %% 20 == 0, max.y.flux, max.y.flux + 10)
 
 # create different legend charateristics for plotting
 p.names <- unique(surface.data.a[, new.name])
-surface.data.a[, new.name.f := factor(new.name, levels = p.names)]
-#surface.data.a[, new.name.f := factor(new.name, levels = c(p.names[4], p.names[1], p.names[3], p.names[2], p.names[5]))]
+#surface.data.a[, new.name.f := factor(new.name, levels = p.names)]
+surface.data.a[, new.name.f := factor(new.name, levels = c(p.names[2], p.names[3], p.names[1]))]
 p.col <- c("#0C120C", "#918D77", "#C1912A")  
 #p.col <- c("#0C120C", "#0C120C", "#918D77", "#918D77", "#C1912A") 
 p.lty <- c("solid",  "longdash", "twodash") 
@@ -276,9 +278,8 @@ ggsave("figures/heat-flux-diff.png", p.flux.a,
 # sensitivity of thermal intertia of pavements 
 
 # import runs for thermal variying thermal inertia
-folder <- here("data/outputs/run_metadata_20190524_112541_varied_TI")
-all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
-all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
+all.surface.data <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/all_pave_surface_data.rds"))
+all.model.runs <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/stats_all_model_runs.rds"))
 
 # calc the thermal inertia values for layers
 all.model.runs[, L1.TI := sqrt(L1.k * L1.rho * L1.c)]   # UNITS: (W/(m*degK)) * (kg/m3) * (J/(kg*degK) = J/(m2*degK*(s^0.5))
@@ -642,9 +643,9 @@ for(i in 1:(length(unique(pheat[,date.time])))){
 }
 
 save.image(here("data/outputs/temp/figures-2.RData"))
+
 ######################################
-# VEH + HEAT FLUX BY TIME OF DAY FIG #
-######################################
+
 max(pheat$max.add.flux) # = 473.9721
 max(pheat.u$max.add.flux) # 162.0044
 max(values(pave.heat.time)) # = 221.3138
@@ -664,53 +665,99 @@ lines(pheat.u[pave.class == "minor" & SVF == 1, date.time], pheat.u[pave.class =
 lines(pheat.u[pave.class == "local" & SVF == 1, date.time], pheat.u[pave.class == "local" & SVF == 1, mean.add.flux], col="green")
 plot(r.all[[c("avg.all.roads", "avg.all.park", "daily.vkt", "total.avg.day.flux")]])
 
+######################################
+# VEH + HEAT FLUX BY TIME OF DAY FIG #
+######################################
+
+# import data
+#bg.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))[batch.name == "Bare Ground / Desert Soil",]
+#pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds")) # surface temporal data by run for pavements
+#all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
+
+#all.surface.data.7d <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))
+#all.surface.data.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds"))
+#all.surface.data.TI <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/all_pave_surface_data.rds"))
+#all.surface.data <- rbind(all.surface.data.7d, all.surface.data.th, all.surface.data.TI)
+
+all.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))
+
+# force to static date for date.time for easier manipulation in ggplot, will ignore date
+# NOTE: all summarized surface data is filtered previously to only last day of data
+all.surface.data[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + hours(hrs) + minutes(mins) + seconds(secs)] 
+
+# flux comparisons by type
+all.surface.data[, mean(q.rad + q.cnv), by = c("pave.name", "batch.name", "albedo")][order(V1)]
+
+# calc flux vars
+all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
+all.surface.data[, ref.sol := albedo * SVF * solar]
+all.surface.data[, net.flux := -inc.sol + q.rad + q.cnv]
+
+# aggregate for plotting
+surface.data.c <- all.surface.data[, .(out.flux = mean(q.rad + q.cnv),
+                                       inc.sol = mean(inc.sol),
+                                       net.flux = mean(net.flux),
+                                       ref.sol = mean(ref.sol)),
+                                   by = c("date.time", "batch.name", "SVF")]  
+surface.data.c <- surface.data.c[SVF == 1.0]
+
+# new names
+surface.data.c[, new.name := batch.name]
+surface.data.c[batch.name == "Asphalt Pavements", new.name := "Asphalt Surface"]
+surface.data.c[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Surface"]
+surface.data.c[batch.name == "Concrete Pavements", new.name := "Concrete Surface"]
+surface.data.c[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete Surface"]
+surface.data.c[batch.name == "Bare Ground / Desert Soil", new.name := "Bare Ground (Desert Soil)"]
+
+surface.data.c <- surface.data.c[, .(out.flux = mean(out.flux)),
+                                   by = c("date.time", "new.name")]  
+
+# merge bare ground data as columns for easy subraction to get added heat relative to ground
+surface.data.add <- merge(surface.data.c[new.name != "Bare Ground (Desert Soil)",],
+                          surface.data.c[new.name == "Bare Ground (Desert Soil)",],
+                          suffixes = c("", ".u"), by = c("date.time"))
+surface.data.add[, mean.add.flux := out.flux - out.flux.u]
+
+
+
 # combine vehicle and pavement heat diurnal summaries
 #vheat[, label := paste0(pave.class)]
 vheat[, type := "Vehicles"]
-pheat[, type := "Pavements"]
-aheat <- rbind(pheat, vheat)
 
 # plot min/maxes
-min.x.veh <- floor_date(min(aheat[, date.time]), unit = "hours")
-max.x.veh <- ceiling_date(max(aheat[, date.time]), unit = "hours")
+min.x.veh <- floor_date(min(surface.data.add[, date.time]), unit = "hours")
+max.x.veh <- ceiling_date(max(surface.data.add[, date.time]), unit = "hours")
 min.y.veh <- 0 #round(min(unlist(vheat[, 2:13]) - 5), - 1) # round down to nearest multiple of 10
 #max.y.veh <- round(max(unlist(aheat[, 3:6]) + 5), - 1) # round up to nearest multiple of 10
-max.y.veh <- round(max(aheat[, mean.add.flux] + 5), - 1) # round up to nearest multiple of 10
-
-#aheat.m <- melt(aheat[, c(3:6)], id.vars = "date.time")
+max.y.veh <- round(max(surface.data.add[, mean.add.flux] + 5), - 1) # round up to nearest multiple of 10
 
 # rename major/minor roadway class to arterial/collector
-aheat[, class := str_to_title(pave.class)] # capitilze first
-aheat[class == "Major", class := "Arterial"]
-aheat[class == "Minor", class := "Collector"]
-aheat[, class.type := paste(type, "-", class)]
+vheat[, class := str_to_title(pave.class)] # capitilze first
+vheat[class == "Major", class := "Arterial"]
+vheat[class == "Minor", class := "Collector"]
+vheat[, class.type := paste(type, "-", class, "Road")]
+
+surface.data.add[, class.type := paste("Pavements -", new.name)]
+
+p.v.add <- rbind(surface.data.add[, .(date.time, mean.add.flux, class.type)],
+                 vheat[, .(date.time, mean.add.flux, class.type)])
 
 # create different legend charateristics for plotting
 #aheat[, label := factor(label, levels = v.names)]
-c.names <- c("Highway", "Arterial", "Collector", "Local")
-t.names <- c("Pavements", "Vehicles")
-c.col <- c("#C60013", "#DD3E00", "#00599E", "#52006D")  
-t.lty <- c("solid", "twodash")
-names(c.col) <- c.names
-names(t.lty) <- t.names
-
-ct.names <- unique(aheat$class.type)
-ct.col <- rep(c.col, 2)
-ct.lty <- rep(t.lty, each = 4)
-names(ct.col) <- ct.names
-names(ct.lty) <- ct.names
+pv.names <- unique(p.v.add[, class.type])
+pv.names <- c(pv.names[1:2], " ", "  ", pv.names[3:6]) # add blank factor level to customize legend
+pv.col <- c("#0C120C", "#918D77", "white","white", "#C60013", "#00599E", "#DD3E00", "#52006D")  
+pv.lty <- c("solid", "twodash", "blank", "blank", "solid", "solid", "longdash", "longdash")
+names(pv.col) <- pv.names
+names(pv.lty) <- pv.names
 
 # factorize for ggplot
-aheat[, class.f := factor(class, levels = c.names)]
-aheat[, type.f := factor(type, levels = t.names)]
-aheat[, class.type.f := factor(class.type, levels = ct.names)]
+p.v.add[, class.type.f := factor(class.type, levels = pv.names)]
 
-#c(ct.names[1], ct.names[5], ct.names[2], ct.names[6], 
-#  ct.names[3], ct.names[7], ct.names[4], ct.names[8])
-
+p.v.add <- p.v.add[class.type != "Pavements = Asphalt Surface" & date.time != min(date.time),]
 
 # create plot
-p.flux.a <- (ggplot(data = aheat) 
+p.flux.c <- (ggplot(data = p.v.add) 
              
              # custom border
              + geom_segment(aes(x = min.x.veh, y = min.y.veh, xend = max.x.veh, yend = min.y.veh))   # x border (x,y) (xend,yend)
@@ -718,18 +765,18 @@ p.flux.a <- (ggplot(data = aheat)
              
              # line + point based on named factor of flux
              #+ geom_ribbon(aes(ymin = min.add.flux, ymax = max.add.flux, x = date.time), fill = "grey10")
-             + geom_line(aes(y = mean.add.flux, x = date.time, color = class.type.f, linetype = class.type.f), size = 1)
-             
+             + geom_line(aes(y = mean.add.flux, x = date.time, color = class.type.f, linetype = class.type.f), size = 1) #
+
              # plot/axis titles & second axis for solar rad units
              + labs(x = "Time of Day", y = bquote('Mean Anthropogenic Sensible Heat Flux ('*W/m^2*')'))
-             + scale_color_manual(name = "", values = ct.col)  # Type - Roadway Class
-             + scale_linetype_manual(name = "", values = ct.lty) # Type - Roadway Class
+             + scale_color_manual(name = "", values = pv.col, drop = F)  # Type - Roadway Class
+             + scale_linetype_manual(name = "", values = pv.lty, drop = F) # Type - Roadway Class
              #+ facet_wrap(~class.f)
              
              # scales
              + scale_x_datetime(expand = c(0,0), limits = c(min.x.veh, max.x.veh), date_breaks = "3 hours", date_labels = "%H") #
              + scale_y_continuous(expand = c(0,0), limits = c(min.y.veh, max.y.veh), breaks = seq(min.y.veh, max.y.veh, 20))
-             + guides(color = guide_legend(nrow = 4)) # two rows in legend
+             + guides(color = guide_legend(nrow = 4, ncol = 2)) # two rows in legend
              
              # theme and formatting
              + theme_minimal()
@@ -752,11 +799,11 @@ p.flux.a <- (ggplot(data = aheat)
 )
 
 # save plot
-ggsave(paste0(folder, "/figures/add-veh-pave-heat-flux.png"), p.flux.a, 
+ggsave("figures/add-veh-pave-heat-flux.png", p.flux.c, 
        device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
-ggsave("figures/add-veh-pave-heat-flux.png", p.flux.a, 
-       device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
-saveRDS(aheat, here("data/outputs/all-heat-time-summarized.rds"))
+saveRDS(vheat, here("data/outputs/veh-heat-time-summarized.rds"))
+
+
 ####################
 # RASTER HEAT MAPS #
 ####################
@@ -925,9 +972,6 @@ tmap_save(p.all.flux.new, insets_tm = list(p.inset,p.inset,p.inset,p.inset), dpi
                            viewport(0.44, 0.865, width = 0.14, height = 0.14), # top left
                            viewport(0.94, 0.865, width = 0.14, height = 0.14)), # top right
           filename = here(paste0("figures/mean-daily-heat-flux-4grid-", run.name, "-", res / 3.28084, "m.png")))
-
-# morning rush would be from: hour = 7.92 am to 8.88 am (6:54:12 am to 8:52:48 am); V34:V37
-# evening rush would be from: hour = 5.04 pm  to 6 pm (5:02:24 pm to 6:00:00 pm); V72:V75
 
 
 # ROAD FRACTION 4GRID PLOT
