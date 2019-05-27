@@ -163,12 +163,8 @@ ggsave("figures/modeled-observed.png", my.plot.f,
 # HEAT FLUX PLOT (NON-VALIDATION RUNS #
 #######################################
 
-# define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
-folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
-                        keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
-
 # import data
-all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
+all.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds")) 
 
 # force to static date for date.time for easier manipulation in ggplot, will ignore date
 # NOTE: all summarized surface data is filtered previously to only last day of data
@@ -179,13 +175,11 @@ all.surface.data[, mean(q.rad + q.cnv), by = c("pave.name", "batch.name", "albed
 
 # new names
 all.surface.data[, new.name := batch.name]
-all.surface.data[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete Pavements"]
-all.surface.data[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Pavements"]
+all.surface.data[batch.name == "Asphalt Pavements", new.name := "Asphalt Surface Course"]
+all.surface.data[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Surface Course"]
+all.surface.data[batch.name == "Concrete Pavements", new.name := "Concrete Surface Course"]
+all.surface.data[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete Surface Course"]
 all.surface.data[batch.name == "Bare Ground / Desert Soil", new.name := "Bare Ground (Desert Soil)"]
-
-#all.surface.data[batch.name == "Concrete Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
-#all.surface.data[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
-#all.surface.data[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Overlaid PCC Pavements"]
 
 # calc flux vars
 all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
@@ -279,61 +273,153 @@ ggsave("figures/heat-flux-diff.png", p.flux.a,
        device = "png", scale = 1, width = 6, height = 4.5, dpi = 300, units = "in") 
 
 ####################################
-# same plot but by pave.name
-# aggregate for plotting
-surface.data.b <- all.surface.data[, .(new.name = new.name,
+# sensitivity of thermal intertia of pavements 
+
+# import runs for thermal variying thermal inertia
+folder <- here("data/outputs/run_metadata_20190524_112541_varied_TI")
+all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
+all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
+
+# calc the thermal inertia values for layers
+all.model.runs[, L1.TI := sqrt(L1.k * L1.rho * L1.c)]   # UNITS: (W/(m*degK)) * (kg/m3) * (J/(kg*degK) = J/(m2*degK*(s^0.5))
+all.model.runs[, L2.TI := sqrt(L2.k * L2.rho * L2.c)]   # UNITS: (W/(m*degK)) * (kg/m3) * (J/(kg*degK) = J/(m2*degK*(s^0.5))
+#all.model.runs[, L3.TI := sqrt(L3.k * L3.rho * L3.c)]   # UNITS: (W/(m*degK)) * (kg/m3) * (J/(kg*degK) = J/(m2*degK*(s^0.5))
+#all.model.runs[, L4.TI := sqrt(L4.k * L4.rho * L4.c)]   # UNITS: (W/(m*degK)) * (kg/m3) * (J/(kg*degK) = J/(m2*degK*(s^0.5))
+
+# add thermal inertia values for 1st and 2nd layer to surface data
+all.surface.data <- merge(all.surface.data, unique(all.model.runs[, .(L1.TI, L2.TI), by = pave.name]), by = "pave.name")
+
+# force to static date for date.time for easier manipulation in ggplot, will ignore date
+# NOTE: all summarized surface data is filtered previously to only last day of data
+all.surface.data[, date.time := as.POSIXct("2019-01-01 00:00:00 MST") + hours(hrs) + minutes(mins) + seconds(secs)] 
+
+# flux comparisons by type
+all.surface.data[, mean(q.rad + q.cnv), by = c("pave.name", "batch.name", "albedo")][order(V1)]
+
+# calc flux vars
+all.surface.data[, inc.sol := ((1 - albedo) * SVF * solar)]
+all.surface.data[, ref.sol := albedo * SVF * solar]
+all.surface.data[, net.flux := -inc.sol + q.rad + q.cnv]
+
+surface.data.b <- all.surface.data[, .(batch.name = batch.name,
+                                       L1.TI = signif(mean(L1.TI, na.rm = T), 3), 
+                                       L2.TI = signif(mean(L2.TI, na.rm = T), 3),
                                        out.flux = mean(q.rad + q.cnv),
                                        inc.sol = mean(inc.sol),
                                        net.flux = mean(net.flux),
                                        ref.sol = mean(ref.sol)),
                                    by = c("date.time", "pave.name", "SVF")]  
 surface.data.b <- unique(surface.data.b[SVF == 1.0,])
-b.names <- unique(surface.data.b[, pave.name])
-surface.data.b[, group := substr(pave.name, 0, nchar(pave.name) - 3)]
-surface.data.b[, pave.name.f := factor(pave.name, levels = b.names)]
+
+# new batch names as factor
+surface.data.b[batch.name == "Asphalt Pavements", batch.name := "(a) Asphalt Only"]
+surface.data.b[batch.name == "Asphalt Overlays on PCC Pavements", batch.name := "(b) Asphalt Overlays on PCC "]
+surface.data.b[batch.name == "Concrete Pavements", batch.name := "(c) Concrete Only"]
+surface.data.b[batch.name == "Whitetopped Asphalt Pavements", batch.name := "(d) Whitetopped Asphalt"]
+b.names <- unique(surface.data.b[,batch.name])
+surface.data.b[, batch.name.f := factor(batch.name, levels = c(b.names[1], b.names[4], b.names[2], b.names[3]))]
+
+# thermal inertia factor
+surface.data.b[, group := substr(pave.name, nchar(pave.name) - 6, nchar(pave.name))]
+
+# thermal inertia label as character formatted
+surface.data.b[, L1.TI := as.character(L1.TI)]
+surface.data.b[, L2.TI := as.character(L2.TI)]
+surface.data.b[group == "High TI", L1.TI := paste("L1 TI (High) =", format(L1.TI, nsmall = 0))]
+surface.data.b[group == "High TI", L2.TI := paste("L2 TI (High) =", format(L2.TI, nsmall = 0))]
+surface.data.b[group == " Low TI", L1.TI := paste("L1 TI (Low) =", format(L1.TI, nsmall = 0))]
+surface.data.b[group == " Low TI", L2.TI := paste("L2 TI (Low) =", format(L2.TI, nsmall = 0))]
+
+surface.data.b[group == "High TI", group := "High Thermal Inertia"]
+surface.data.b[group == " Low TI", group := "Low Thermal Inertia"]
+
+
+# create different legend charateristics for plotting
+p.group <- unique(surface.data.b[, group])
+surface.data.b[, group.f := factor(group, levels = p.group)]
+p.col <- c("#10316B", "#BF1C3D")  
+p.lty <- c("twodash", "solid") 
+names(p.col) <- levels(surface.data.b[,group.f])
+names(p.lty) <- levels(surface.data.b[,group.f])
+
+# plot min/maxes
+min.x.flux <- min(surface.data.b$date.time, na.rm = T) 
+max.x.flux <- ceiling_date(max(surface.data.b[, date.time]), unit = "hours")
+min.y.flux <- 0 #round(min(surface.data.b[, out.flux] - 5), - 1) # round down to nearest multiple of 10
+max.y.flux <- round(max(surface.data.b[, out.flux] + 5), - 1) # round up to nearest multiple of 10
+
+# adjust y to by multiple of mult
+min.y.flux <- ifelse(min.y.flux %% 20 == 0, min.y.flux, min.y.flux - 10)
+max.y.flux <- ifelse(max.y.flux %% 20 == 0, max.y.flux, max.y.flux + 10)
+
+# create text labels of TI
+TI.lab <- data.table(yH1 = max.y.flux /  6,
+                     yH2 = max.y.flux /  12,
+                     xH1 = as.POSIXct("2019-01-01 05:30:00 MST"), #  "2019-01-01 04:45:00 MST"
+                     xH2 = as.POSIXct("2019-01-01 05:30:00 MST"),
+                     yL1 = max.y.flux /  6,
+                     yL2 = max.y.flux /  12,
+                     xL1 = as.POSIXct("2019-01-01 18:30:00 MST"),
+                     xL2 = as.POSIXct("2019-01-01 18:30:00 MST"),
+                     HL1 = unique(surface.data.b[group == "High Thermal Inertia", L1.TI, by = batch.name.f])[,L1.TI],
+                     HL2 = unique(surface.data.b[group == "High Thermal Inertia", L2.TI, by = batch.name.f])[,L2.TI],
+                     LL1 = unique(surface.data.b[group == "Low Thermal Inertia", L1.TI, by = batch.name.f])[,L1.TI],
+                     LL2 = unique(surface.data.b[group == "Low Thermal Inertia", L2.TI, by = batch.name.f])[,L2.TI],
+                     batch.name.f = b.names)
 
 # create plot
-p.flux.b <- (ggplot(data = surface.data.b[group != "Bare Dry Soil",])   #
+p.flux.b <- (ggplot(data = surface.data.b)
              
              # custom border
              + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = max.x.flux, yend = min.y.flux))   # x border (x,y) (xend,yend)
              + geom_segment(aes(x = min.x.flux, y = min.y.flux, xend = min.x.flux, yend = max.y.flux))  # y border (x,y) (xend,yend)
              
              # line + point based on named factor of flux
-             + geom_line(aes(y = out.flux, x = date.time, color = pave.name.f, linetype = pave.name.f), size = 1)
+             + geom_line(aes(y = out.flux, x = date.time, color = group.f, linetype = group.f), size = 1)
              #+ geom_point(aes(y = out.flux, x = date.time, color = new.name.f), size = 2, data = surface.data.a[mins %in% c(0) & secs == 0,])
+             
+             # thermal inertia labels
+             + geom_text(data = TI.lab, aes(y = yH1, x = xH1, label = HL1), family = my.font, size = 2.5, color = "#10316B")
+             + geom_text(data = TI.lab, aes(y = yH2, x = xH2, label = HL2), family = my.font, size = 2.5, color = "#10316B")
+             + geom_text(data = TI.lab, aes(y = yL1, x = xL1, label = LL1), family = my.font, size = 2.5, color = "#BF1C3D")
+             + geom_text(data = TI.lab, aes(y = yL2, x = xL2, label = LL2), family = my.font, size = 2.5, color = "#BF1C3D")
+             
+             # units label for inertia values
+             #+ geom_text(aes(y = 80, x = as.POSIXct("2019-01-01 12:00:00")), label = expression(paste(J, m^{-2}, K^{-1}, s^{0.5})), family = my.font, size = 2.5, color = "#10316B")
              
              # plot/axis titles & second axis for solar rad units
              + labs(x = "Time of Day", y = bquote('Mean Outgoing Heat Flux ('*W/m^2*')'))
-             #+ scale_color_manual(name = "", values = p.col, guide = guide_legend(reverse = F))
-             #+ scale_linetype_manual(name = "", values = p.lty, guide = guide_legend(reverse = F))
+             + scale_color_manual(name = "", values = p.col, guide = guide_legend(reverse = F))
+             + scale_linetype_manual(name = "", values = p.lty, guide = guide_legend(reverse = F))
              #+ scale_shape_manual(name = "", values = p.shp)
-             + facet_wrap(~group)
+             + facet_wrap(~batch.name.f)
              
              # scales
              + scale_x_datetime(expand = c(0,0), limits = c(min.x.flux, max.x.flux), date_breaks = "3 hours", date_labels = "%H") #
              + scale_y_continuous(expand = c(0,0), limits = c(min.y.flux, max.y.flux), breaks = seq(min.y.flux, max.y.flux, 40))
-             + guides(col = guide_legend(nrow = 3, ncol = 5)) # two rows in legend
              
              # theme and formatting
              + theme_minimal()
              + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
                      axis.text = element_text(colour = "black"),
-                     plot.margin = margin(t = 5, r = 10, b = 150, l = 10, unit = "pt"),
+                     plot.margin = margin(t = 5, r = 10, b = 50, l = 10, unit = "pt"),
                      panel.spacing.x = unit(7, "mm"),
                      panel.spacing.y = unit(4, "mm"),
                      axis.text.x = element_text(vjust = -1),
                      axis.title.x = element_text(margin = margin(t = 12, r = 0, b = 0, l = 0)),
                      axis.ticks = element_line(color = "grey80", size = 0.28),
                      axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
-                     strip.text.x = element_text(size = 13, hjust = 0.5, vjust = 1), #face = "bold"
-                     legend.position = c(0.525, -0.2),
+                     strip.text.x = element_text(size = 11, hjust = 0.5, vjust = 1), #face = "bold"
+                     legend.position = c(0.525, -0.17),
                      legend.key.width = unit(30, "mm"),
                      legend.text = element_text(size = 10),
                      legend.spacing.y = unit(1, "mm"),
                      legend.direction ="vertical")
 )
 p.flux.b
+
+ggsave("figures/heat-flux-diff-thermal-inertia.png", p.flux.b, 
+       device = "png", scale = 1, width = 6, height = 6, dpi = 300, units = "in") 
 
 
 ###############################
