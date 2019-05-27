@@ -37,8 +37,9 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
 # define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
 folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
                         keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
-#folder <- here("data/outputs/run_metadata_20190429_150045")
-all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds")) # surface temporal data by run
+bg.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))[batch.name == "Bare Ground / Desert Soil",]
+pave.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds")) # surface temporal data by run for pavements
+all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
 unique(all.surface.data$pave.name)
 unique(all.surface.data$SVF)
 
@@ -50,11 +51,8 @@ all.surface.data[, ref.sol := albedo * SVF * solar]
 all.surface.data[, net.flux := q.rad + q.cnv - inc.sol]
 all.surface.data[, out.flux := q.rad + q.cnv]
 
-# new names
-all.surface.data[, new.name := batch.name]
-all.surface.data[batch.name == "Concrete Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
-all.surface.data[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete & Whitetopped Asphalt Pavements"]
-all.surface.data[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Overlaid PCC Pavements"]
+# fix 125 AO pavement name to actual modeled
+all.surface.data[pave.name == "Asphalt Overlay on PCC 125+150mm", pave.name := "Asphalt Overlay on PCC 130+150mm"]
 
 # force to static date for date.time for easier manipulation in ggplot, will ignore date
 # NOTE: all summarized surface data is filtered previously to only last day of data
@@ -85,33 +83,33 @@ surface.data.m <-  surface.data.f[, .(min.out.flux = min(out.flux),
 # define custom OSM roadway groupings
 highway <- list()
 highway$class <- c("motorway") 
-highway$a.pave.type <- c("Asphalt #5", "Asphalt Overlay on PCC #5")
-highway$c.pave.type <- c("Whitetopped Asphalt #5", "Portland Cement Concrete #5")
+highway$a.pave.type <- c("Asphalt 200mm", "Asphalt Overlay on PCC 150+200mm")
+highway$c.pave.type <- c("Whitetopped Asphalt 150+200mm", "Portland Cement Concrete 300mm")
 
 major <- list()
 major$class <-  c("primary", "trunk")
-major$a.pave.type <- c("Asphalt #4", "Asphalt Overlay on PCC #4")
-major$c.pave.type <- c("Whitetopped Asphalt #4", "Portland Cement Concrete #4")
+major$a.pave.type <- c("Asphalt 140mm", "Asphalt Overlay on PCC 130+150mm")
+major$c.pave.type <- c("Whitetopped Asphalt 100+140mm", "Portland Cement Concrete 200mm")
 
 minor <- list()
 minor$class  <-  c("secondary", "tertiary")
-minor$a.pave.type <- c("Asphalt #3", "Asphalt Overlay on PCC #3", "Asphalt #4", "Asphalt Overlay on PCC #4")
-minor$c.pave.type <- c("Whitetopped Asphalt #3", "Portland Cement Concrete #3", "Whitetopped Asphalt #4", "Portland Cement Concrete #4")
+minor$a.pave.type <- c("Asphalt 140mm", "Asphalt Overlay on PCC 100+100mm")
+minor$c.pave.type <- c("Whitetopped Asphalt 80+80mm", "Portland Cement Concrete 100mm", "Portland Cement Concrete 200mm")
 
 local <- list()
 local$class  <-  c("residential", "service", "unclassified")
-local$a.pave.type <- c("Asphalt #3", "Asphalt Overlay on PCC #3")
-local$c.pave.type <- c("Whitetopped Asphalt #3", "Portland Cement Concrete #3")
+local$a.pave.type <- c("Asphalt 80mm")
+local$c.pave.type <- c("Whitetopped Asphalt 80+80mm", "Portland Cement Concrete 100mm")
 
 com.park <- list()
 com.park$class  <- c("asph")
-com.park$a.pave.type <- c("Asphalt #3")
-com.park$c.pave.type <- c("Whitetopped Asphalt #3", "Portland Cement Concrete #3")
+com.park$a.pave.type <- c("Asphalt 80mm")
+com.park$c.pave.type <- c("Whitetopped Asphalt 80+80mm", "Portland Cement Concrete 100mm", "Portland Cement Concrete 200mm")
 
 res.park <- list()
 res.park$class  <- c("conc")
-res.park$a.pave.type <- c("Asphalt #3")
-res.park$c.pave.type <- c("Portland Cement Concrete #3")
+res.park$a.pave.type <- c("Asphalt 80mm")
+res.park$c.pave.type <- c("Portland Cement Concrete 100mm", "Portland Cement Concrete 200mm")
 
 unpaved <- list()
 unpaved$class  <- c("unpaved")
