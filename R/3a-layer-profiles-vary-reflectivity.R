@@ -191,7 +191,7 @@ names(layer.profiles.wa) <- c(#"Whitetopped Asphalt #1",
 layer.profiles.oc <- list(
   data.table( # asphalt overlay on PCC (med heat)
     layer = c("surface", "PCC", "base", "subgrade"),
-    thickness = c(0.1, 0.1, 0.1, 1.06), # layer thickness (m)
+    thickness = c(0.13, 0.15, 0.2, 1.02), # layer thickness (m)
     k = c(1.7, 1.7, 1.80, 1.4), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2350, 2250, 2400, 1850), # layer density (kg/m3)
     c = c(950, 900, 800, 1500), # layer specific heat (J/(kg*degK)
@@ -201,7 +201,7 @@ layer.profiles.oc <- list(
   ),
   data.table( # asphalt overlay on PCC (med-low heat)
     layer = c("surface", "PCC", "base", "subgrade"),
-    thickness = c(0.125, 0.15, 0.2, 1.025), # layer thickness (m)
+    thickness = c(0.13, 0.15, 0.2, 1.02), # layer thickness (m)
     k = c(1.7, 1.7, 1.80, 1.4), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2350, 2250, 2400, 1850), # layer density (kg/m3)
     c = c(950, 900, 800, 1500), # layer specific heat (J/(kg*degK)
@@ -211,7 +211,7 @@ layer.profiles.oc <- list(
   ),
   data.table( # asphalt overlay on PCC (low heat)
     layer = c("surface", "PCC", "base", "subgrade"),
-    thickness = c(0.150, 0.20, 0.3, 0.85), # layer thickness (m)
+    thickness = c(0.13, 0.15, 0.2, 1.02), # layer thickness (m)
     k = c(1.7, 1.7, 1.80, 1.4), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2350, 2250, 2400, 1850), # layer density (kg/m3)
     c = c(950, 900, 800, 1500), # layer specific heat (J/(kg*degK)
@@ -224,9 +224,9 @@ layer.profiles.oc <- list(
 # define layer profile names 
 names(layer.profiles.oc) <- c(#"Asphalt Overlay on PCC #1",
                               #"Asphalt Overlay on PCC #2",
-                              "Asphalt Overlay on PCC 100+100mm",
-                              "Asphalt Overlay on PCC 125+150mm",
-                              "Asphalt Overlay on PCC 150+200mm") 
+                              "Asphalt Overlay on PCC Low A",
+                              "Asphalt Overlay on PCC Med A",
+                              "Asphalt Overlay on PCC High A") 
 
 
 # SAVE
