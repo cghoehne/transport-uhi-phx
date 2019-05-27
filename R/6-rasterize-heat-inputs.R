@@ -34,11 +34,8 @@ checkpoint("2019-01-01", # Sys.Date() - 1  this calls the MRAN snapshot from yes
 
 ####
 # import most recent pavement model run data
-# define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
-folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
-                        keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
 bg.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))[batch.name == "Bare Ground / Desert Soil",]
-pave.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds")) # surface temporal data by run for pavements
+pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds")) # surface temporal data by run for pavements
 all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
 unique(all.surface.data$pave.name)
 unique(all.surface.data$SVF)
