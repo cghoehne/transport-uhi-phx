@@ -39,13 +39,12 @@ RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))}
 # define folder for data reterival (automaticlly take most recent folder with "run_metadata" in it)
 folder <- as.data.table(file.info(list.dirs(here("data/outputs/"), recursive = F)), 
                         keep.rownames = T)[grep("run_metadata", rn),][order(ctime)][.N, rn]
+
 # MODEL METADATA
-
 all.valid.model.runs <- readRDS(here("data/outputs/run_metadata_20190324_185458/stats_all_model_runs.rds"))
-all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
-
-# filter out any unrealistic pavements
-#all.model.runs <- all.model.runs[!(pave.name %in% c("Portland Cement Concrete #5","Whitetopped Asphalt #5")),]
+all.model.runs.7d <- readRDS(here("data/outputs/run_metadata_20190520_171637/stats_all_model_runs.rds"))
+all.model.runs.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/stats_all_model_runs.rds"))
+all.model.runs.TI <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/stats_all_model_runs.rds"))
 
 # unique dates
 length(unique(all.model.runs[, end.day])) # total n
@@ -86,10 +85,35 @@ all.model.runs[, .(min.T_1.0m = min(min.T_1.0m, na.rm = T),
 
 # PAVEMENT SURFACE
 all.surface.data <- readRDS(paste0(folder, "/all_pave_surface_data.rds"))
+all.surface.data.7d <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))
+all.surface.data.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds"))
+all.surface.data.TI <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/all_pave_surface_data.rds"))
 
 # add daytime factor
 all.surface.data[, daytime := factor(ifelse(hour(date.time) %in% c(7:18), "Day", "Night"), 
                                      levels = c("Day","Night"))]
+
+# max day reduced heat flux by for high/low thermal inertia pavements by type
+all.surface.data.TI.a <- all.surface.data.TI[, .(batch.name = batch.name,
+                                                 pave.name = pave.name,
+                                                 out.flux = mean(q.rad + q.cnv)),
+                                             by = c("date.time", "pave.name", "SVF")]  
+all.surface.data.TI.a <- unique(all.surface.data.TI.a[SVF == 1.0,])
+
+all.surface.data.TI.a[, max(out.flux), by = pave.name]
+all.surface.data.TI.a[, min(out.flux), by = pave.name]
+
+# differences in outgoing flux by thickness/pave type
+all.surface.data.th.a <- all.surface.data.th[, .(batch.name = batch.name,
+                                                 pave.name = pave.name,
+                                                 out.flux = mean(q.rad + q.cnv)),
+                                             by = c("date.time", "pave.name", "SVF")]  
+all.surface.data.th.a <- unique(all.surface.data.th.a[SVF == 1.0,])
+
+all.surface.data.th.a[, max(out.flux), by = pave.name]
+all.surface.data.th.a[, min(out.flux), by = pave.name]
+
+
 
 # calc pavement thickness (exlude subbase/subgrade)
 
