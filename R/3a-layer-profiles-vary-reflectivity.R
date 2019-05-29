@@ -192,7 +192,7 @@ layer.profiles.oc <- list(
   data.table( # asphalt overlay on PCC (med heat)
     layer = c("surface", "PCC", "base", "subgrade"),
     thickness = c(0.13, 0.15, 0.2, 1.02), # layer thickness (m)
-    k = c(1.7, 1.7, 1.80, 1.4), # layer thermal conductivity (W/(m*degK)) 
+    k = c(1.7, 1.7, 2.25, 1.4), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2350, 2250, 2400, 1850), # layer density (kg/m3)
     c = c(950, 900, 800, 1500), # layer specific heat (J/(kg*degK)
     albedo = c(0.1, NA, NA, NA), # surface albedo (dimensionless)
@@ -202,7 +202,7 @@ layer.profiles.oc <- list(
   data.table( # asphalt overlay on PCC (med-low heat)
     layer = c("surface", "PCC", "base", "subgrade"),
     thickness = c(0.13, 0.15, 0.2, 1.02), # layer thickness (m)
-    k = c(1.7, 1.7, 1.80, 1.4), # layer thermal conductivity (W/(m*degK)) 
+    k = c(1.7, 1.7, 2.25, 1.4), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2350, 2250, 2400, 1850), # layer density (kg/m3)
     c = c(950, 900, 800, 1500), # layer specific heat (J/(kg*degK)
     albedo = c(0.15, NA, NA, NA), # surface albedo (dimensionless)
@@ -212,7 +212,7 @@ layer.profiles.oc <- list(
   data.table( # asphalt overlay on PCC (low heat)
     layer = c("surface", "PCC", "base", "subgrade"),
     thickness = c(0.13, 0.15, 0.2, 1.02), # layer thickness (m)
-    k = c(1.7, 1.7, 1.80, 1.4), # layer thermal conductivity (W/(m*degK)) 
+    k = c(1.7, 1.7, 2.25, 1.4), # layer thermal conductivity (W/(m*degK)) 
     rho = c(2350, 2250, 2400, 1850), # layer density (kg/m3)
     c = c(950, 900, 800, 1500), # layer specific heat (J/(kg*degK)
     albedo = c(0.2, NA, NA, NA), # surface albedo (dimensionless)

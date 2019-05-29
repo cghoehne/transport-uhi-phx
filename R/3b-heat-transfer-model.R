@@ -37,6 +37,7 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # DEFINE BATCH RUN ID and NAME #
 ################################
 batch.n <- 1 # choose index for batch run type
+meas.sol <- "yes" # use measured solar radiation or estimated? "yes" or "no"
 
 batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
                          name = c("Asphalt Pavements", 
@@ -60,7 +61,7 @@ if(batches[batch.n, id] == "BG"){layer.sites <- c("B2", "B2", "B2") # BARE GROUN
 } else if(batches[batch.n, id] == "C") {layer.sites <- c("C1", "C1", "C1") # CONCRETE also C1 good
 } else if(batches[batch.n, id] == "WA") {layer.sites <- c("C4", "C4", "C4") # WHITETOPPED ASPHALT also C4 good
 } else if(batches[batch.n, id] == "OC") {layer.sites <- c("A6", "A6", "A6") # ASPHALT OVERLAY CONCRETE also A6 good
-} else if(batches[batch.n, id] == "A") {layer.sites <- c("A6", "A6", "A6")} # ASPHALT also A3 good
+} else if(batches[batch.n, id] == "A") {layer.sites <- c("A5", "A5", "A5")} # ASPHALT also A3 good
 
 # load validation site data 
 valid.dates <- readRDS(here("data/outputs/aster/aster-data-my.rds")) # remote sensed temps at valiation sites on specified dates
@@ -75,10 +76,10 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
                #pave.length = c(200), # characteristic length of pavement in meters
-               SVF = c(1, 0.1), # sky view factor  0.5, 
+               SVF = c(0.95), # sky view factor  0.5, 
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
-               n.days = c(3) # number of days to simulate 
+               n.days = c(7) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
@@ -188,7 +189,11 @@ for(run in 1:model.runs[,.N]){  #
     # filter to only stations with an average of one observation per hour during desired dates,
     # with no gap in observations greater than 2 hours, and
     # with good quality data (low percent of data falling outside expected range)
-    my.stations <- stations[n.dewpt.day >= 24 & n.tempc.day >= 24 & p.flag <= 0.05 & max.gap.hrs < 2,] # n.solar.day >= 24 & 
+    if(meas.sol == "yes"){
+      my.stations <- stations[n.solar.day >= 24 & n.dewpt.day >= 24 & n.tempc.day >= 24 & p.flag <= 0.05 & max.gap.hrs < 2,] #  
+    } else {
+      my.stations <- stations[n.dewpt.day >= 24 & n.tempc.day >= 24 & p.flag <= 0.05 & max.gap.hrs < 2,]
+    }
     
     # if there are no stations that satisfy the above constraints, skip run and store error msgs
     if(my.stations[,.N] == 0){
@@ -198,8 +203,6 @@ for(run in 1:model.runs[,.N]){  #
       cat(paste("skipped run", run, "because too few weather obs \n"),
           file = run.log, append = T)
       next} # skip to next run if there are fewer than 12 obs a day
-    
-    
     
     # determine which of eligible stations are the closest to the validation site
     my.station <- my.stations[my.site.dist == min(my.site.dist, na.rm = T), station.name]
@@ -345,8 +348,12 @@ for(run in 1:model.runs[,.N]){  #
     sol.est <- insolation(zenith = zen, jd = jday, height = elev, visibility = 15, RH = rh, tempK = pave.time[node == 0, T.inf], O3 = 0.00275, alphag = albedo)
     
     # add insolation to pave.time data
-    pave.time[node == 0, insol := (sol.est[,1] + sol.est[,2])]
-
+    if(meas.sol == "yes"){
+      pave.time[node == 0, insol := solar] # use measured solar radiation
+    } else {
+      pave.time[node == 0, insol := (sol.est[,1] + sol.est[,2])] # use estimated solar radiation
+    }
+    
     # add k and rho.c
     pave.time <- merge(pave.time, layer.dt[,.(layer,k,rho.c)], by = "layer", all.x = T, allow.cartesian = T) 
     
