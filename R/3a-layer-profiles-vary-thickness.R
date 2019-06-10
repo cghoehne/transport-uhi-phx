@@ -55,9 +55,9 @@ layer.profiles.bg <- list(
 # define layer profile names 
 names(layer.profiles.bg) <- c(#"Bare Dry Soil #1",
                               #"Bare Dry Soil #2",
-                              "Bare Dry Soil #3",
-                              "Bare Dry Soil #4",
-                              "Bare Dry Soil #5") 
+                              "Bare Dry Soil #1",
+                              "Bare Dry Soil #2",
+                              "Bare Dry Soil #3") 
 
 # CONCRETE
 

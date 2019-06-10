@@ -1,0 +1,80 @@
+---
+title: "Pavement Profiles"
+author: "C.G. Hoehne"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+
+# default to knitr option of code printing
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(root.dir = getwd())
+
+# load fonts for use figures
+#extrafont::loadfonts(device = "win") 
+
+if (!require("checkpoint")){
+  install.packages("checkpoint")
+  library(checkpoint, quietly = T)
+}
+
+# load all other dependant packages from the local repo
+lib.path <- paste0(substr(getwd(), 0, nchar(getwd()) - 2),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1")
+library(data.table, lib.loc = lib.path, quietly = T)
+library(xtable, lib.loc = lib.path, quietly = T)
+#library(knitr, lib.loc = lib.path, quietly = T)
+library(tinytex, lib.loc = lib.path, quietly = T)
+library(here, lib.loc = lib.path, quietly = T)
+
+# archive/update snapshot of packages at checkpoint date
+checkpoint("2019-01-01", # archive date for all used packages (besides checkpoint itself!)
+           R.version = "3.5.1", # will only work if using the same version of R
+           checkpointLocation = here(), # calls here package
+           verbose = F) 
+
+# store loaded packages and thier version in a data.frame
+#package.info <- data.frame("Package" = list.of.packages, "Version" = unlist(lapply(list.of.packages, function (x) as.character(packageVersion(x)))))
+
+# load windows fonts and store as string
+windowsFonts(Century=windowsFont("TT Century Gothic"))
+windowsFonts(Times=windowsFont("TT Times New Roman"))
+#my.font <- "Century"
+my.font <- "Times"
+
+layer.profiles.bg <- readRDS(here("data/outputs/layer-profiles-BG.rds"))
+layer.profiles.c <- readRDS(here("data/outputs/layer-profiles-C.rds"))
+layer.profiles.a <- readRDS(here("data/outputs/layer-profiles-A.rds"))
+layer.profiles.wa <- readRDS(here("data/outputs/layer-profiles-WA.rds"))
+layer.profiles.oc <- readRDS(here("data/outputs/layer-profiles-OC.rds"))
+
+```
+
+
+
+Bare Ground Profiles
+
+```{r table1, echo = FALSE, results = 'asis'}
+bg.table <- rbindlist(lapply(layer.profiles.bg, function(x) x[, R.c.top := NULL]), idcol = "profile")
+knitr::kable(bg.table)
+
+```
+
+
+Asphalt Surfaced Pavement Profiles
+
+```{r table2, echo = FALSE, results = 'asis'}
+a.table <- rbindlist(lapply(c(layer.profiles.a, layer.profiles.oc), function(x) x[, R.c.top := NULL]), idcol = "profile")
+knitr::kable(a.table)
+
+```
+
+Concrete Surfaced Pavement Profiles
+
+```{r table3, echo = FALSE, results = 'asis'}
+c.table <- rbindlist(lapply(c(layer.profiles.c, layer.profiles.wa), function(x) x[, R.c.top := NULL]), idcol = "profile")
+knitr::kable(c.table)
+
+```
+
