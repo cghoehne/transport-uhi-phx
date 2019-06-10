@@ -1,4 +1,4 @@
-vheat <- readRDS(here("data/outputs/veh-heat-time-summarized.rds"))
+
 
 vheat[, mean(mean.add.flux), by = class.type]
 vheat[, max(max.add.flux), by = class.type]
@@ -15,6 +15,10 @@ pheat[, max(mean.add.flux), by = pave.class]
 
 pheat[, max(max.add.flux), by = pave.class]
 
+vheat[, mean(mean.add.flux), by = pave.class]
+vheat[, max(mean.add.flux), by = pave.class]
+
+vheat[, max(max.add.flux), by = pave.class]
 
 # import runs for thermal variying thermal inertia
 all.surface.data <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/all_pave_surface_data.rds"))
@@ -50,3 +54,8 @@ surface.data.ti[out.flux == surface.data.ti[, max(out.flux), by = pave.name][2, 
 
 surface.data.ti[out.flux == surface.data.ti[, max(out.flux), by = pave.name][5, V1], date.time]
 surface.data.ti[out.flux == surface.data.ti[, max(out.flux), by = pave.name][6, V1], date.time]
+
+
+
+
+

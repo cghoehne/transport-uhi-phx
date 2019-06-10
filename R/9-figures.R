@@ -179,9 +179,16 @@ ggsave("figures/modeled-observed.png", my.plot.f,
 #######################################
 
 # import data
-bg.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))[batch.name == "Bare Ground / Desert Soil",]
-pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds")) # surface temporal data by run for pavements
-all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
+#bg.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))[batch.name == "Bare Ground / Desert Soil",]
+#pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds")) # surface temporal data by run for pavements
+#all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
+
+all.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds")) # old 7 day runs (will replace)
+#all.surface.data.7d <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds")) # old 7 day runs (will replace)
+#all.surface.data.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds"))
+#all.surface.data.ti <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/all_pave_surface_data.rds"))
+#all.surface.data.al <- readRDS(here("data/outputs/run_metadata_20190526_182759_varied_albedo/all_pave_surface_data.rds"))
+#all.surface.data <- rbind(all.surface.data.th, all.surface.data.ti, all.surface.data.al, all.surface.data.7d)
 
 # force to static date for date.time for easier manipulation in ggplot, will ignore date
 # NOTE: all summarized surface data is filtered previously to only last day of data
@@ -225,7 +232,7 @@ max.y.flux <- ifelse(max.y.flux %% 20 == 0, max.y.flux, max.y.flux + 10)
 # create different legend charateristics for plotting
 p.names <- unique(surface.data.a[, new.name])
 #surface.data.a[, new.name.f := factor(new.name, levels = p.names)]
-surface.data.a[, new.name.f := factor(new.name, levels = c(p.names[2], p.names[3], p.names[1]))]
+surface.data.a[, new.name.f := factor(new.name, levels = c(p.names[1], p.names[2], p.names[3]))]
 p.col <- c("#0C120C", "#918D77", "#C1912A")  
 #p.col <- c("#0C120C", "#0C120C", "#918D77", "#918D77", "#C1912A") 
 p.lty <- c("solid",  "longdash", "twodash") 
@@ -684,6 +691,12 @@ plot(r.all[[c("avg.all.roads", "avg.all.park", "daily.vkt", "total.avg.day.flux"
 # VEH + HEAT FLUX BY TIME OF DAY FIG #
 ######################################
 
+# add plot label type to aggregated vehicle and pavement
+vheat[, type := "Vehicles"]
+pheat.a <- pheat[, .(mean.add.flux = mean(mean.add.flux)),
+                 by = c("date.time")]
+pheat.a[, class.type := "Average Phoenix Roadway"]
+
 # import data
 #bg.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))[batch.name == "Bare Ground / Desert Soil",]
 #pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds")) # surface temporal data by run for pavements
@@ -733,11 +746,8 @@ surface.data.add <- merge(surface.data.c[new.name != "Bare Ground (Desert Soil)"
                           suffixes = c("", ".u"), by = c("date.time"))
 surface.data.add[, mean.add.flux := out.flux - out.flux.u]
 
-
-
 # combine vehicle and pavement heat diurnal summaries
 #vheat[, label := paste0(pave.class)]
-vheat[, type := "Vehicles"]
 
 # plot min/maxes
 min.x.veh <- floor_date(min(surface.data.add[, date.time]), unit = "hours")
@@ -752,24 +762,25 @@ vheat[class == "Major", class := "Arterial"]
 vheat[class == "Minor", class := "Collector"]
 vheat[, class.type := paste(type, "-", class, "Road")]
 
-surface.data.add[, class.type := paste("Pavements -", new.name)]
+surface.data.add[, class.type := paste("Unshaded", new.name)]
 
 p.v.add <- rbind(surface.data.add[, .(date.time, mean.add.flux, class.type)],
-                 vheat[, .(date.time, mean.add.flux, class.type)])
+                 vheat[, .(date.time, mean.add.flux, class.type)],
+                 pheat.a[, .(date.time, mean.add.flux, class.type)])
 
 # create different legend charateristics for plotting
 #aheat[, label := factor(label, levels = v.names)]
 pv.names <- unique(p.v.add[, class.type])
-pv.names <- c(pv.names[1:2], " ", "  ", pv.names[3:6]) # add blank factor level to customize legend
-pv.col <- c("#0C120C", "#918D77", "white","white", "#C60013", "#00599E", "#DD3E00", "#52006D")  
-pv.lty <- c("solid", "twodash", "blank", "blank", "solid", "solid", "longdash", "longdash")
+pv.names <- c(pv.names[1], pv.names[7], pv.names[2], "  ", pv.names[3:6]) # add blank factor level to customize legend
+pv.col <- c("#0C120C", "#0C120C", "#918D77", "white", "#C60013", "#00599E", "#DD3E00", "#52006D")  
+pv.lty <- c("solid", "twodash", "twodash", "blank", "solid", "solid", "longdash", "longdash")
 names(pv.col) <- pv.names
 names(pv.lty) <- pv.names
 
 # factorize for ggplot
 p.v.add[, class.type.f := factor(class.type, levels = pv.names)]
 
-p.v.add <- p.v.add[class.type != "Pavements = Asphalt Surface" & date.time != min(date.time),]
+#p.v.add <- p.v.add[class.type != "Pavements - Asphalt Surface" & date.time != min(date.time),]
 
 # create plot
 p.flux.c <- (ggplot(data = p.v.add) 
