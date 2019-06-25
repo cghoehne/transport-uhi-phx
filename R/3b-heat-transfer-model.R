@@ -80,7 +80,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                SVF = c(1.0, 0.1), # sky view factor 
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
-               n.days = c(7) # number of days to simulate 
+               n.days = c(5) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles

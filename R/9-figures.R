@@ -52,7 +52,7 @@ RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))}
 #######################################
 
 # IMPORT VALIDATION MODEL DATA
-folder <- here("data/outputs/run_metadata_20190610_113813") # validation runs
+folder <- here("data/outputs/run_metadata_20190611_105020") # validation runs
 all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
 all.model.runs[, RMSE(Modeled, Observed), by = pave.name][order(V1)]
@@ -183,12 +183,14 @@ ggsave("figures/modeled-observed.png", my.plot.f,
 #pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds")) # surface temporal data by run for pavements
 #all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
 
-all.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds")) # old 7 day runs (will replace)
+all.surface.data <- readRDS(here("data/outputs/run_metadata_20190625_110129/all_pave_surface_data.rds"))
 #all.surface.data.7d <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds")) # old 7 day runs (will replace)
 #all.surface.data.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds"))
 #all.surface.data.ti <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/all_pave_surface_data.rds"))
 #all.surface.data.al <- readRDS(here("data/outputs/run_metadata_20190526_182759_varied_albedo/all_pave_surface_data.rds"))
 #all.surface.data <- rbind(all.surface.data.th, all.surface.data.ti, all.surface.data.al, all.surface.data.7d)
+
+all.surface.data <- all.surface.data[!(pave.name %in% c("Bare Dry Soil #1"))]
 
 # force to static date for date.time for easier manipulation in ggplot, will ignore date
 # NOTE: all summarized surface data is filtered previously to only last day of data
@@ -699,15 +701,12 @@ pheat.a[, class.type := "Average Phoenix Roadway"]
 
 # import data
 #bg.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))[batch.name == "Bare Ground / Desert Soil",]
-#pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds")) # surface temporal data by run for pavements
+#pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190625_110129/all_pave_surface_data.rds")) # surface temporal data by run for pavements
 #all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
 
-#all.surface.data.7d <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))
-#all.surface.data.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds"))
-#all.surface.data.TI <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/all_pave_surface_data.rds"))
-#all.surface.data <- rbind(all.surface.data.7d, all.surface.data.th, all.surface.data.TI)
+all.surface.data <- readRDS(here("data/outputs/run_metadata_20190625_110129/all_pave_surface_data.rds"))
 
-all.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))
+all.surface.data <- all.surface.data[!(pave.name %in% c("Bare Dry Soil #1"))]
 
 # force to static date for date.time for easier manipulation in ggplot, will ignore date
 # NOTE: all summarized surface data is filtered previously to only last day of data
@@ -771,8 +770,8 @@ p.v.add <- rbind(surface.data.add[, .(date.time, mean.add.flux, class.type)],
 # create different legend charateristics for plotting
 #aheat[, label := factor(label, levels = v.names)]
 pv.names <- unique(p.v.add[, class.type])
-pv.names <- c(pv.names[1], pv.names[7], pv.names[2], "  ", pv.names[3:6]) # add blank factor level to customize legend
-pv.col <- c("#0C120C", "#0C120C", "#918D77", "white", "#C60013", "#00599E", "#DD3E00", "#52006D")  
+pv.names <- c(pv.names[2], pv.names[7], pv.names[1], "  ", pv.names[3:6]) # add blank factor level to customize legend
+pv.col <- c("#0C120C", "#2d2d2d", "#918D77", "white", "#C60013", "#00599E", "#DD3E00", "#52006D")  
 pv.lty <- c("solid", "twodash", "twodash", "blank", "solid", "solid", "longdash", "longdash")
 names(pv.col) <- pv.names
 names(pv.lty) <- pv.names
