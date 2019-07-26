@@ -45,9 +45,12 @@ all.model.runs.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_var
 all.model.runs.ti <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/stats_all_model_runs.rds"))
 all.model.runs.al <- readRDS(here("data/outputs/run_metadata_20190526_182759_varied_albedo/stats_all_model_runs.rds"))
 
-# unique dates
-length(unique(all.model.runs[, end.day])) # total n
-sort(unique(all.model.runs[, end.day])) # sorted
+# combine all together
+all.model.runs <- rbind(all.model.runs.th, all.model.runs.ti, all.model.runs.al, all.model.runs.7d, fill = T)
+
+# unique dates validation
+length(unique(all.valid.model.runs[, end.day])) # total n
+sort(unique(all.valid.model.runs[, end.day])) # sorted
 
 # all validation model runs RMSE
 # for validation only, drop unrealistic/bad predictors and high volume pavements as they are not representative
@@ -57,10 +60,22 @@ valid.model.runs <- valid.model.runs[!(pave.name %in% valid.model.names[7:12])]
 valid.model.runs[, RMSE(Modeled, Observed)]
 valid.model.runs[, mean(p.err, na.rm = T)]
 
-valid.model.runs[, mean(albedo), by = pave.name]
 
-# combine all together
-all.model.runs <- rbind(all.model.runs.th, all.model.runs.ti, all.model.runs.al, all.model.runs.7d, fill = T)
+valid.model.runs[, .(mean.err = mean(p.err),
+                     mean.rmse = RMSE(Modeled, Observed)),
+                 by = season]
+
+valid.model.runs[, .(mean.err = mean(p.err),
+                     mean.rmse = RMSE(Modeled, Observed)),
+                 by = daytime]
+
+valid.model.runs[, .(mean.err = mean(p.err),
+                     mean.rmse = RMSE(Modeled, Observed)),
+                 by = pave.name][order(mean.rmse)]
+
+
+
+valid.model.runs[pave.name == "Low Stress PCC #1 (0.35 albedo)",]
 
 # min, avg, max of temps at nearest node to 1.0 meter depth for all runs
 all.model.runs[, .(min.T_1.0m = min(min.T_1.0m, na.rm = T),
@@ -138,30 +153,40 @@ all.sums <- unique(all.surface.data.7d[, .(batch.name = batch.name,
                                                                                               avg.out.flux = mean(out.flux),
                                                                                               min.out.flux = min(out.flux)), by = c("new.name")]
 # min difference btwn asphalt and bare ground all season
-all.sums[new.name == "Asphalt Surface Course", max(min.out.flux)] - 
-  all.sums[new.name == "Bare Ground (Desert Soil)", min(min.out.flux)]
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", min.out.flux] - 
+  all.sums[new.name == "Bare Ground (Desert Soil)", min.out.flux], 2), " W/m2")
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", min.out.flux] /
+                all.sums[new.name == "Bare Ground (Desert Soil)", min.out.flux] * 100, 3), "%")
 
 # avg difference btwn asphalt and bare ground all season
-all.sums[new.name == "Asphalt Surface Course", max(avg.out.flux)] - 
-  all.sums[new.name == "Bare Ground (Desert Soil)", min(avg.out.flux)]
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", avg.out.flux] - 
+  all.sums[new.name == "Bare Ground (Desert Soil)", avg.out.flux], 2), " W/m2")
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", avg.out.flux] / 
+  all.sums[new.name == "Bare Ground (Desert Soil)", avg.out.flux] * 100, 3), "%")
 
 # max difference btwn asphalt and bare ground all season
-all.sums[new.name == "Asphalt Surface Course", max(max.out.flux)] - 
-  all.sums[new.name == "Bare Ground (Desert Soil)", min(max.out.flux)]
-
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", max.out.flux] - 
+  all.sums[new.name == "Bare Ground (Desert Soil)", max.out.flux], 3), " W/m2")
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", max.out.flux] / 
+                all.sums[new.name == "Bare Ground (Desert Soil)", max.out.flux] * 100, 3), "%")
 
 # min difference btwn concrete and bare ground all season
-all.sums[new.name == "Asphalt Surface Course", max(min.out.flux)] - 
-  all.sums[new.name == "Concrete Surface Course", min(min.out.flux)]
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", max(min.out.flux)] - 
+  all.sums[new.name == "Concrete Surface Course", min(min.out.flux)], 2), " W/m2")
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", max(min.out.flux)] / 
+                all.sums[new.name == "Concrete Surface Course", min(min.out.flux)], 3), "%")
 
 # avg difference btwn concrete and bare ground all season
-all.sums[new.name == "Asphalt Surface Course", max(avg.out.flux)] - 
-  all.sums[new.name == "Concrete Surface Course", min(avg.out.flux)]
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", max(avg.out.flux)] - 
+  all.sums[new.name == "Concrete Surface Course", min(avg.out.flux)], 2), " W/m2")
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", max(avg.out.flux)] /
+                all.sums[new.name == "Concrete Surface Course", min(avg.out.flux)], 3), "%")
 
 # max difference btwn concrete and bare ground all season
-all.sums[new.name == "Asphalt Surface Course", max(max.out.flux)] - 
-  all.sums[new.name == "Concrete Surface Course", min(max.out.flux)]
-
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", max(max.out.flux)] - 
+  all.sums[new.name == "Concrete Surface Course", min(max.out.flux)], 2), " W/m2")
+paste0(signif(all.sums[new.name == "Asphalt Surface Course", max(avg.out.flux)] / 
+                all.sums[new.name == "Concrete Surface Course", min(avg.out.flux)], 3), "%")
 
 # differences in outgoing flux by batch type for 7 day sims
 # seaonal differences
@@ -186,11 +211,15 @@ season.sums[season == "Winter" & new.name == "Asphalt Surface Course", max(avg.o
   season.sums[season == "Winter" & new.name == "Bare Ground (Desert Soil)", min(avg.out.flux)]
 
 # max difference btwn asphalt and bare ground in summer/winter
-season.sums[season == "Summer" & new.name == "Asphalt Surface Course", max(max.out.flux)] - 
-  season.sums[season == "Summer" & new.name == "Bare Ground (Desert Soil)", min(max.out.flux)]
-season.sums[season == "Winter" & new.name == "Asphalt Surface Course", max(max.out.flux)] - 
-  season.sums[season == "Winter" & new.name == "Bare Ground (Desert Soil)", min(max.out.flux)]
+paste0(signif(season.sums[season == "Summer" & new.name == "Asphalt Surface Course", max.out.flux] - 
+                season.sums[season == "Summer" & new.name == "Bare Ground (Desert Soil)", max.out.flux], 3), " W/m2")
+paste0(signif(season.sums[season == "Summer" & new.name == "Asphalt Surface Course", max.out.flux] / 
+                season.sums[season == "Summer" & new.name == "Bare Ground (Desert Soil)", max.out.flux] * 100, 3), "%")
 
+paste0(signif(season.sums[season == "Winter" & new.name == "Asphalt Surface Course", max(max.out.flux)] - 
+                season.sums[season == "Winter" & new.name == "Bare Ground (Desert Soil)", max.out.flux], 3), " W/m2")
+paste0(signif(season.sums[season == "Winter" & new.name == "Asphalt Surface Course", max(max.out.flux)] / 
+                season.sums[season == "Winter" & new.name == "Bare Ground (Desert Soil)", max.out.flux] * 100, 3), "%")
 
 # min difference btwn concrete and bare ground in summer/winter
 season.sums[season == "Summer" & new.name == "Concrete Surface Course", max(min.out.flux)] - 
@@ -205,16 +234,28 @@ season.sums[season == "Winter" & new.name == "Concrete Surface Course", max(avg.
   season.sums[season == "Winter" & new.name == "Bare Ground (Desert Soil)", min(avg.out.flux)]
 
 # max difference btwn asphalt and bare ground in summer/winter
-season.sums[season == "Summer" & new.name == "Concrete Surface Course", max(max.out.flux)] - 
-  season.sums[season == "Summer" & new.name == "Bare Ground (Desert Soil)", min(max.out.flux)]
-season.sums[season == "Winter" & new.name == "Concrete Surface Course", max(max.out.flux)] - 
-  season.sums[season == "Winter" & new.name == "Bare Ground (Desert Soil)", min(max.out.flux)]
+paste0(signif(season.sums[season == "Summer" & new.name == "Concrete Surface Course", max(max.out.flux)] - 
+                season.sums[season == "Summer" & new.name == "Bare Ground (Desert Soil)", min(max.out.flux)], 3), " W/m2")
+paste0(signif(season.sums[season == "Summer" & new.name == "Concrete Surface Course", max(max.out.flux)] /
+                season.sums[season == "Summer" & new.name == "Bare Ground (Desert Soil)", min(max.out.flux)] * 100, 3), "%")
+
+paste0(signif(season.sums[season == "Winter" & new.name == "Concrete Surface Course", max(max.out.flux)] - 
+                season.sums[season == "Winter" & new.name == "Bare Ground (Desert Soil)", min(max.out.flux)], 3), " W/m2")
+paste0(signif(season.sums[season == "Winter" & new.name == "Concrete Surface Course", max(max.out.flux)] /
+                season.sums[season == "Winter" & new.name == "Bare Ground (Desert Soil)", min(max.out.flux)] * 100, 3), "%")
 
 #######
 
 
 # min/max temp linear regression to variables of interest
-# define interest vars
+# define interest data and vars
+
+#all.surface.data <- all.surface.data.al
+#all.model.runs <- all.model.runs.al
+
+all.surface.data <- all.surface.data.ti
+all.model.runs <- all.model.runs.ti
+
 i.vars <- c("pave.thick", "L1.albedo", "L1.emissivity", "L1.k", "L1.rho", "L1.c", "mean.k", "mean.c", "mean.rho")
 a.vars <- c("batch.name", "run.n", i.vars)
 s.vars <- c("pave.name", "batch.name", "run.n", "date.time", "albedo", "SVF", "daytime", "season","q.rad", "q.cnv", "T.degC")
@@ -222,40 +263,58 @@ lm.data <- merge(all.surface.data[, ..s.vars], all.model.runs[, ..a.vars],
                  by = c("batch.name", "run.n"), allow.cartesian = T)[batch.name != "Bare Ground / Desert Soil",][SVF == 1,] 
 lm.data[, L1.TI := sqrt(L1.k * L1.rho * L1.c)] 
 i.vars <- c(i.vars, "L1.TI")
-lm.results <- data.table("var" = i.vars)
+lm.results.Q <- data.table("var" = i.vars)
+lm.results.T <- data.table("var" = i.vars)
 # exlude bare ground for analysis of pavement properties only, also exlcude SVF unless regressing against
 
 for(i.var in i.vars){
   i.var.id <- c("pave.name", i.var)
   # min/max surface temp by variable of interest
-  #max.min.t <- lm.data[, .(max.surf.t = max(T.degC, na.rm = T),
-  #                                  min.surf.t = min(T.degC, na.rm = T)), 
-  #                              by = i.var.id]
+  max.min.t <- lm.data[, .(max.surf.t = max(T.degC, na.rm = T),
+                                    min.surf.t = min(T.degC, na.rm = T)), 
+                                by = i.var.id]
   # max/min heat flux
   max.min.q <- lm.data[, .(max.surf.q = max(q.rad + q.cnv, na.rm = T),
                            min.surf.q = min(q.rad + q.cnv, na.rm = T)), 
                        by = i.var.id]
+  
+  # if there is no unique variables for the x, skip
+  if(nrow(unique(max.min.q[,2])) == 1){next} 
+  
   # models
-  #lm.min <- lm(paste("min.surf.t ~", i.var), max.min.t)
-  #lm.max <- lm(paste("max.surf.t ~", i.var), max.min.t)
+  lm.min.T <- lm(paste("min.surf.t ~", i.var), max.min.t)
+  lm.max.T <- lm(paste("max.surf.t ~", i.var), max.min.t)
   
-  lm.min <- lm(paste("min.surf.q ~", i.var), max.min.q)
-  lm.max <- lm(paste("max.surf.q ~", i.var), max.min.q)
+  lm.min.Q <- lm(paste("min.surf.q ~", i.var), max.min.q)
+  lm.max.Q <- lm(paste("max.surf.q ~", i.var), max.min.q)
   
-  lm.results[var == i.var, min.var.lwr := signif(confint(lm.min, level = 0.95)[2,1], 2)]
-  lm.results[var == i.var, min.var.coef := signif(lm.min$coefficients[2], 2)]
-  lm.results[var == i.var, min.var.upr := signif(confint(lm.min, level = 0.95)[2,2], 2)]
-  lm.results[var == i.var, min.R.sq := signif(summary(lm.min)$r.squared, 2)]
-  lm.results[var == i.var, min.p.coef := signif(summary(lm.min)$coefficients[2,4], 2)]
+  lm.results.Q[var == i.var, min.var.lwr := signif(confint(lm.min.Q, level = 0.95)[2,1], 2)]
+  lm.results.Q[var == i.var, min.var.coef := signif(lm.min.Q$coefficients[2], 2)]
+  lm.results.Q[var == i.var, min.var.upr := signif(confint(lm.min.Q, level = 0.95)[2,2], 2)]
+  lm.results.Q[var == i.var, min.R.sq := signif(summary(lm.min.Q)$r.squared, 2)]
+  lm.results.Q[var == i.var, min.p.coef := signif(summary(lm.min.Q)$coefficients[2,4], 2)]
   
-  lm.results[var == i.var, max.var.lwr := signif(confint(lm.max, level = 0.95)[2,1], 2)]
-  lm.results[var == i.var, max.var.coef := signif(lm.max$coefficients[2], 2)]
-  lm.results[var == i.var, max.var.upr := signif(confint(lm.max, level = 0.95)[2,2], 2)]
-  lm.results[var == i.var, max.R.sq := signif(summary(lm.max)$r.squared, 2)]
-  lm.results[var == i.var, max.p.coef := signif(summary(lm.max)$coefficients[2,4], 2)]
+  lm.results.Q[var == i.var, max.var.lwr := signif(confint(lm.max.Q, level = 0.95)[2,1], 2)]
+  lm.results.Q[var == i.var, max.var.coef := signif(lm.max.Q$coefficients[2], 2)]
+  lm.results.Q[var == i.var, max.var.upr := signif(confint(lm.max.Q, level = 0.95)[2,2], 2)]
+  lm.results.Q[var == i.var, max.R.sq := signif(summary(lm.max.Q)$r.squared, 2)]
+  lm.results.Q[var == i.var, max.p.coef := signif(summary(lm.max.Q)$coefficients[2,4], 2)]
+  
+  lm.results.T[var == i.var, min.var.lwr := signif(confint(lm.min.T, level = 0.95)[2,1], 2)]
+  lm.results.T[var == i.var, min.var.coef := signif(lm.min.T$coefficients[2], 2)]
+  lm.results.T[var == i.var, min.var.upr := signif(confint(lm.min.T, level = 0.95)[2,2], 2)]
+  lm.results.T[var == i.var, min.R.sq := signif(summary(lm.min.T)$r.squared, 2)]
+  lm.results.T[var == i.var, min.p.coef := signif(summary(lm.min.T)$coefficients[2,4], 2)]
+  
+  lm.results.T[var == i.var, max.var.lwr := signif(confint(lm.max.T, level = 0.95)[2,1], 2)]
+  lm.results.T[var == i.var, max.var.coef := signif(lm.max.T$coefficients[2], 2)]
+  lm.results.T[var == i.var, max.var.upr := signif(confint(lm.max.T, level = 0.95)[2,2], 2)]
+  lm.results.T[var == i.var, max.R.sq := signif(summary(lm.max.T)$r.squared, 2)]
+  lm.results.T[var == i.var, max.p.coef := signif(summary(lm.max.T)$coefficients[2,4], 2)]
 }
 
-lm.results
+lm.results.Q
+lm.results.T
 
 # flux comparisons by type
 all.surface.data[, .(mean.out.flux = mean(q.rad + q.cnv)), by = c("pave.name", "batch.name", "albedo")][order(mean.out.flux)]
@@ -328,7 +387,7 @@ names(r.all) <- readRDS(here(paste0("data/outputs/rasters/master-veh-time-heat-"
 
 aheat <- readRDS(here("data/outputs/all-heat-time-summarized.rds"))
 vheat <- readRDS(here("data/outputs/veh-heat-time-summarized.rds"))
-
+pheat <- aheat[type == "Pavements"]
 plot(aheat[class.type.f == "Vehicles - Highway", date.time], aheat[class.type.f == "Vehicles - Highway", mean.add.flux], type="l", col="black", ylab = "Mean Heat Flux (W/m2)", xlab = "Time of Day", ylim = c(0, 200))
 lines(aheat[class.type.f == "Pavements - Highway", date.time], aheat[class.type.f == "Pavements - Highway", mean.add.flux], col="red")
 lines(aheat[class.type.f == "Pavements - Arterial", date.time], aheat[class.type.f == "Pavements - Arterial", mean.add.flux], col="red")
@@ -398,10 +457,6 @@ tot.veh.flx / (tot.road.flx + tot.park.flx + tot.veh.flx) * 100
   
 
 
-
-
-
-
 ###################
 # RUSH HOUR STATS #
 ###################
@@ -419,8 +474,11 @@ tot.veh.pm / (tot.veh.am + tot.pave.pm)
 
 veh.am <- ifelse(values(r.all$avg.all.roads) < 0.01 | values(r.all$daily.vkt) < 1, NA, values(veh.heat$avg.flux.veh.all.8.9am))
 
-# max possible percent of veh flux to to roadway
+# max possible veh flux and percent of veh + roadway
+max(veh.am, na.rm = T)
 max(veh.am, na.rm = T) / (max(veh.am, na.rm = T) + pheat[hour(date.time) %in% c(8), mean(mean.add.flux)])
+
+max(pheat[, mean.add.flux])
 
 ###################################
 # SENSITIVITY / UNCERTAINTY STATS #
