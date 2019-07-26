@@ -52,16 +52,23 @@ RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))}
 #######################################
 
 # IMPORT VALIDATION MODEL DATA
-folder <- here("data/outputs/run_metadata_20190324_185458") # validation runs
+folder <- here("data/outputs/run_metadata_20190611_105020") # validation runs
 all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
 all.model.runs[, RMSE(Modeled, Observed), by = pave.name][order(V1)]
 all.model.runs[, mean(p.err), by = pave.name][order(V1)]
 
+all.model.runs[, RMSE(Modeled, Observed), by = pave.name][order(V1)]
+all.model.runs[, mean(p.err), by = c("pave.name", "day.sea")][order(V1)]
+
+all.model.runs[, RMSE(Modeled, Observed), by = day.sea][order(V1)]
+
+
+
 # for validation only, drop unrealistic/bad predictors and high volume pavements as they are not representative
 model.names <- sort(unique(all.model.runs$pave.name))
-model.runs <- all.model.runs[p.err <= 0.30 & is.finite(p.err) & RMSE(Modeled, Observed) <= 10,] # remove poor performers or NAs if there are any 
-model.runs <- model.runs[!(pave.name %in% model.names[7:12])]
+model.runs <- all.model.runs#[p.err <= 0.30 & is.finite(p.err) & RMSE(Modeled, Observed) <= 10,] # remove poor performers or NAs if there are any 
+#model.runs <- model.runs[!(pave.name %in% model.names[7:12])]
 
 
 min.x <- 0  # round(min(valids[,.(T.degC, T.degC.sat)] - 5), - 1)  
@@ -81,10 +88,18 @@ names(m.o.col) <- m.o.names
 
 # create new names 
 model.runs[, new.name := pave.name]
-model.runs[pave.name %in% model.names[1:6], new.name := "Bare Ground (Desert Soil)"]
-model.runs[pave.name %in%  model.names[c(16:21)], new.name := "Asphalt Pavements"] # 
-model.runs[pave.name %in% model.names[13:15], new.name := "Concrete Pavements"]
-model.runs[pave.name %in% model.names[22:27], new.name := "Composite Concrete/Asphalt Pavements"]
+
+#model.runs[pave.name %in% model.names[7:9], new.name := "Bare Ground (Desert Soil)"]
+#model.runs[pave.name %in% model.names[1:3], new.name := "Asphalt Pavements"] 
+#model.runs[pave.name %in% model.names[10:12], new.name := "Concrete Pavements"]
+#model.runs[pave.name %in% model.names[c(4:6,13:15)], new.name := "Composite Concrete/Asphalt Pavements"]
+
+model.runs[grepl("bare", pave.name, ignore.case = T) == T, new.name := "Bare Ground (Desert Soil)"]
+model.runs[grepl("asphalt", pave.name, ignore.case = T) == T, new.name := "Asphalt Pavements"]
+model.runs[grepl("concrete", pave.name, ignore.case = T) == T, new.name := "Concrete Pavements"]
+model.runs[grepl("whitetop", pave.name, ignore.case = T) == T |
+           grepl("overlay", pave.name, ignore.case = T) == T, new.name := "Composite Concrete/Asphalt Pavements"]
+
 
 # create new ordered titles with a:d for facet titles
 p.names <- unique(model.runs[, new.name])
@@ -168,12 +183,14 @@ ggsave("figures/modeled-observed.png", my.plot.f,
 #pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds")) # surface temporal data by run for pavements
 #all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
 
-all.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds")) # old 7 day runs (will replace)
+all.surface.data <- readRDS(here("data/outputs/run_metadata_20190625_110129/all_pave_surface_data.rds"))
 #all.surface.data.7d <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds")) # old 7 day runs (will replace)
 #all.surface.data.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds"))
 #all.surface.data.ti <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/all_pave_surface_data.rds"))
 #all.surface.data.al <- readRDS(here("data/outputs/run_metadata_20190526_182759_varied_albedo/all_pave_surface_data.rds"))
 #all.surface.data <- rbind(all.surface.data.th, all.surface.data.ti, all.surface.data.al, all.surface.data.7d)
+
+all.surface.data <- all.surface.data[!(pave.name %in% c("Bare Dry Soil #1"))]
 
 # force to static date for date.time for easier manipulation in ggplot, will ignore date
 # NOTE: all summarized surface data is filtered previously to only last day of data
@@ -778,15 +795,12 @@ pheat.a[, class.type := "Average Phoenix Roadway"]
 
 # import data
 #bg.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))[batch.name == "Bare Ground / Desert Soil",]
-#pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds")) # surface temporal data by run for pavements
+#pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190625_110129/all_pave_surface_data.rds")) # surface temporal data by run for pavements
 #all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
 
-#all.surface.data.7d <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))
-#all.surface.data.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds"))
-#all.surface.data.TI <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/all_pave_surface_data.rds"))
-#all.surface.data <- rbind(all.surface.data.7d, all.surface.data.th, all.surface.data.TI)
+all.surface.data <- readRDS(here("data/outputs/run_metadata_20190625_110129/all_pave_surface_data.rds"))
 
-all.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))
+all.surface.data <- all.surface.data[!(pave.name %in% c("Bare Dry Soil #1"))]
 
 # force to static date for date.time for easier manipulation in ggplot, will ignore date
 # NOTE: all summarized surface data is filtered previously to only last day of data
@@ -850,8 +864,8 @@ p.v.add <- rbind(surface.data.add[, .(date.time, mean.add.flux, class.type)],
 # create different legend charateristics for plotting
 #aheat[, label := factor(label, levels = v.names)]
 pv.names <- unique(p.v.add[, class.type])
-pv.names <- c(pv.names[1], pv.names[7], pv.names[2], "  ", pv.names[3:6]) # add blank factor level to customize legend
-pv.col <- c("#0C120C", "#0C120C", "#918D77", "white", "#C60013", "#00599E", "#DD3E00", "#52006D")  
+pv.names <- c(pv.names[2], pv.names[7], pv.names[1], "  ", pv.names[3:6]) # add blank factor level to customize legend
+pv.col <- c("#0C120C", "#2d2d2d", "#918D77", "white", "#C60013", "#00599E", "#DD3E00", "#52006D")  
 pv.lty <- c("solid", "twodash", "twodash", "blank", "solid", "solid", "longdash", "longdash")
 names(pv.col) <- pv.names
 names(pv.lty) <- pv.names
