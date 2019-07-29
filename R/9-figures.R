@@ -15,6 +15,7 @@ if (!require("checkpoint")){
 .libPaths(paste0(getwd(),"/.checkpoint/2019-01-01/lib/x86_64-w64-mingw32/3.5.1"))
 library(zoo)
 library(lubridate)
+library(dplyr)
 library(ggplot2)
 library(grid)
 library(gridExtra)
@@ -761,6 +762,7 @@ for(i in 1:(length(unique(pheat[,date.time])))){
 }
 
 save.image(here("data/outputs/temp/figures-2.RData"))
+load(here("data/outputs/temp/figures-2.RData"))
 
 ######################################
 
@@ -796,11 +798,17 @@ pheat.a[, class.type := "Average Phoenix Roadway"]
 # import data
 #bg.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds"))[batch.name == "Bare Ground / Desert Soil",]
 #pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190625_110129/all_pave_surface_data.rds")) # surface temporal data by run for pavements
+#pave.surface.data <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds"))
 #all.surface.data <- rbind(bg.surface.data, pave.surface.data) # merge bare ground and pavement simulations seperatley (bare ground is rarely rerun)
 
-all.surface.data <- readRDS(here("data/outputs/run_metadata_20190625_110129/all_pave_surface_data.rds"))
+#all.surface.data.7d <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds")) # old 7 day runs (will replace)
+#all.surface.data.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/all_pave_surface_data.rds"))
+#all.surface.data.ti <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/all_pave_surface_data.rds"))
+#all.surface.data.al <- readRDS(here("data/outputs/run_metadata_20190526_182759_varied_albedo/all_pave_surface_data.rds"))
+#all.surface.data <- rbind(all.surface.data.th, all.surface.data.ti, all.surface.data.al, all.surface.data.7d)
 
-all.surface.data <- all.surface.data[!(pave.name %in% c("Bare Dry Soil #1"))]
+#all.surface.data <- all.surface.data[!(pave.name %in% c("Bare Dry Soil #1"))]
+all.surface.data <- readRDS(here("data/outputs/run_metadata_20190520_171637/all_pave_surface_data.rds")) # original fig
 
 # force to static date for date.time for easier manipulation in ggplot, will ignore date
 # NOTE: all summarized surface data is filtered previously to only last day of data
@@ -824,10 +832,10 @@ surface.data.c <- surface.data.c[SVF == 1.0]
 
 # new names
 surface.data.c[, new.name := batch.name]
-surface.data.c[batch.name == "Asphalt Pavements", new.name := "Asphalt Surface"]
-surface.data.c[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Surface"]
-surface.data.c[batch.name == "Concrete Pavements", new.name := "Concrete Surface"]
-surface.data.c[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete Surface"]
+surface.data.c[batch.name == "Asphalt Pavements", new.name := "Asphalt Pavement"]
+surface.data.c[batch.name == "Asphalt Overlays on PCC Pavements", new.name := "Asphalt Pavement"]
+surface.data.c[batch.name == "Concrete Pavements", new.name := "Concrete Pavement"]
+surface.data.c[batch.name == "Whitetopped Asphalt Pavements", new.name := "Concrete Pavement"]
 surface.data.c[batch.name == "Bare Ground / Desert Soil", new.name := "Bare Ground (Desert Soil)"]
 
 surface.data.c <- surface.data.c[, .(out.flux = mean(out.flux)),
@@ -858,15 +866,17 @@ vheat[, class.type := paste(type, "-", class, "Road")]
 surface.data.add[, class.type := paste("Unshaded", new.name)]
 
 p.v.add <- rbind(surface.data.add[, .(date.time, mean.add.flux, class.type)],
-                 vheat[, .(date.time, mean.add.flux, class.type)],
-                 pheat.a[, .(date.time, mean.add.flux, class.type)])
+                 vheat[, .(date.time, mean.add.flux, class.type)])
+                 #pheat.a[, .(date.time, mean.add.flux, class.type)])
 
 # create different legend charateristics for plotting
 #aheat[, label := factor(label, levels = v.names)]
 pv.names <- unique(p.v.add[, class.type])
-pv.names <- c(pv.names[2], pv.names[7], pv.names[1], "  ", pv.names[3:6]) # add blank factor level to customize legend
-pv.col <- c("#0C120C", "#2d2d2d", "#918D77", "white", "#C60013", "#00599E", "#DD3E00", "#52006D")  
-pv.lty <- c("solid", "twodash", "twodash", "blank", "solid", "solid", "longdash", "longdash")
+pv.names <- c(pv.names[1:2], " ", "  ", pv.names[3:6]) # add blank factor level to customize legend
+#pv.names <- c(pv.names[2], pv.names[7], pv.names[1], "  ", pv.names[3:6]) # add blank factor level to customize legend
+
+pv.col <- c("#0C120C", "#918D77", "white", "white", "#C60013", "#00599E", "#DD3E00", "#52006D")  
+pv.lty <- c("solid", "twodash", "blank", "blank", "solid", "solid", "longdash", "longdash")
 names(pv.col) <- pv.names
 names(pv.lty) <- pv.names
 
@@ -917,8 +927,65 @@ p.flux.c <- (ggplot(data = p.v.add)
                      legend.background = element_blank())
 )
 
+# smooth out curves with roll mean
+p.v.add.s1 <- p.v.add[date.time == min(date.time) | date.time == max(date.time),]
+p.v.add.s1[, smean.add.flux := mean.add.flux]
+
+p.v.add.s2 <- p.v.add[class.type %in% c("Unshaded Asphalt Pavement", "Unshaded Concrete Pavement"),] %>% 
+  group_by(class.type) %>%
+  mutate(smean.add.flux = rollmean(mean.add.flux, 100, fill = NA, align = "right"))
+
+p.v.add.s3 <- p.v.add[!(class.type %in% c("Unshaded Asphalt Pavement", "Unshaded Concrete Pavement")),] %>% 
+  group_by(class.type) %>%
+  mutate(smean.add.flux = rollmean(mean.add.flux, 5, fill = NA, align = "right"))
+
+p.v.add.s <- rbind(p.v.add.s1, as.data.table(p.v.add.s2), as.data.table(p.v.add.s3))
+#p.v.add.s <- rbind(p.v.add.s2, p.v.add.s3)
+
+# create smoothed plot
+p.flux.c.s <- (ggplot(data = p.v.add.s[!is.na(smean.add.flux)]) 
+             
+             # custom border
+             + geom_segment(aes(x = min.x.veh, y = min.y.veh, xend = max.x.veh, yend = min.y.veh))   # x border (x,y) (xend,yend)
+             + geom_segment(aes(x = min.x.veh, y = min.y.veh, xend = min.x.veh, yend = max.y.veh))  # y border (x,y) (xend,yend)
+             
+             # line + point based on named factor of flux
+             #+ geom_ribbon(aes(ymin = min.add.flux, ymax = max.add.flux, x = date.time), fill = "grey10")
+             + geom_line(aes(y = smean.add.flux, x = date.time, color = class.type.f, linetype = class.type.f), size = 1) #
+             
+             # plot/axis titles & second axis for solar rad units
+             + labs(x = "Time of Day", y = bquote('Mean Sensible Heat Flux ('*W/m^2*')'))
+             + scale_color_manual(name = "", values = pv.col, drop = F)  # Type - Roadway Class
+             + scale_linetype_manual(name = "", values = pv.lty, drop = F) # Type - Roadway Class
+             #+ facet_wrap(~class.f)
+             
+             # scales
+             + scale_x_datetime(expand = c(0,0), limits = c(min.x.veh, max.x.veh), date_breaks = "3 hours", date_labels = "%H") #
+             + scale_y_continuous(expand = c(0,0), limits = c(min.y.veh, max.y.veh), breaks = seq(min.y.veh, max.y.veh, 20))
+             + guides(color = guide_legend(nrow = 4, ncol = 2)) # two rows in legend
+             
+             # theme and formatting
+             + theme_minimal()
+             + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
+                     axis.text = element_text(colour = "black"),
+                     plot.margin = margin(t = 5, r = 8, b = 90, l = 2, unit = "pt"), #b = 85
+                     #panel.spacing.x = unit(7, "mm"),
+                     #panel.spacing.y = unit(4, "mm"),
+                     axis.text.x = element_text(vjust = -1),
+                     axis.title.x = element_text(margin = margin(t = 12, r = 0, b = 0, l = 0)),
+                     axis.ticks = element_line(color = "grey50", size = 0.28),
+                     axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+                     #strip.text.x = element_text(size = 12, hjust = 0, vjust = 1), #face = "bold"
+                     legend.position = c(0.5, -0.25),
+                     legend.key.width = unit(30, "mm"),
+                     legend.text = element_text(size = 10),
+                     legend.spacing.y = unit(1, "mm"),
+                     legend.direction ="vertical",
+                     legend.background = element_blank())
+)
+
 # save plot
-ggsave("figures/add-veh-pave-heat-flux.png", p.flux.c, 
+ggsave("figures/add-veh-pave-heat-flux-smooth.png", p.flux.c.s, 
        device = "png", scale = 1, width = 7, height = 6, dpi = 300, units = "in") 
 saveRDS(vheat, here("data/outputs/veh-heat-time-summarized.rds"))
 
