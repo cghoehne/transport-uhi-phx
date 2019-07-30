@@ -37,8 +37,7 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # DEFINE BATCH RUN ID and NAME #
 ################################
 batch.n <- 1 # choose index for batch run type
-meas.sol <- "yes" # use measured solar radiation? "yes" else will use estimated sol rad (no cloud)
-# ideally, use measured sol for validation
+meas.sol <- "yes" # use measured solar radiation or estimated? "yes" or "no"
 
 batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
                          name = c("Asphalt Pavements", 
@@ -58,15 +57,15 @@ dir.create(out.folder, showWarnings = FALSE)
 layer.profiles <- readRDS(here(paste0("data/outputs/layer-profiles-", batches[batch.n, id],".rds"))) 
 
 # define validation site location IDs to pull weather data from the nearest weather site to corresponding layer profile
-if(batches[batch.n, id] == "BG"){layer.sites <- c("B1", "B1", "B1") # BARE GROUND also B2 good
-} else if(batches[batch.n, id] == "C") {layer.sites <- c("C1", "C4", "C1") # CONCRETE also C1 good
-} else if(batches[batch.n, id] == "WA") {layer.sites <- c("C1", "C4", "C1") # WHITETOPPED ASPHALT also C4 good
-} else if(batches[batch.n, id] == "OC") {layer.sites <- c("A1", "A7", "A9") # ASPHALT OVERLAY CONCRETE also A6 good
-} else if(batches[batch.n, id] == "A") {layer.sites <- c("A6", "A7", "A9")} # ASPHALT also A3 good
+if(batches[batch.n, id] == "BG"){layer.sites <- c("B2", "B2", "B2") # BARE GROUND also B2 good
+} else if(batches[batch.n, id] == "C") {layer.sites <- c("C1", "C1", "C1") # CONCRETE also C1 good
+} else if(batches[batch.n, id] == "WA") {layer.sites <- c("C4", "C4", "C4") # WHITETOPPED ASPHALT also C4 good
+} else if(batches[batch.n, id] == "OC") {layer.sites <- c("A6", "A6", "A6") # ASPHALT OVERLAY CONCRETE also A6 good
+} else if(batches[batch.n, id] == "A") {layer.sites <- c("A5", "A5", "A5")} # ASPHALT also A3 good
 
 # load validation site data 
 valid.dates <- readRDS(here("data/outputs/aster/aster-data-my.rds")) # remote sensed temps at valiation sites on specified dates
-valid.dates <- valid.dates[!(date(date.time) %in% date(c("2007-06-26","2013-10-30")))] # drop bad dates **temporary**
+#valid.dates <- valid.dates[!(date(date.time) %in% date(c("2007-06-26","2013-10-30")))] # drop bad dates **temporary**
 my.sites <- fread(here("data/validation_sites.csv")) # other validation sites info 
 
 # create list of models to run with varied inputs to check sentivity/error
@@ -80,7 +79,7 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                SVF = c(0.95), # sky view factor  0.5, 
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
-               n.days = c(2) # number of days to simulate 
+               n.days = c(7) # number of days to simulate 
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
@@ -132,7 +131,7 @@ for(run in 1:model.runs[,.N]){  #
     model.runs[run.n == run, broke.t := NA]
     
     # first clear up space for new run
-    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "stations.raw", "meas.sol",
+    rm(list=setdiff(ls(), c("run", "model.runs", "layer.profiles", "script.start", "pave.time.ref", "stations.raw",
                             "weather.raw", "create.layer", "start.time", "my.errors", "my.sites", "out.folder", "run.log")))
     gc()
     t.start <- Sys.time() # start model run timestamp
@@ -207,24 +206,13 @@ for(run in 1:model.runs[,.N]){  #
     
     # determine which of eligible stations are the closest to the validation site
     my.station <- my.stations[my.site.dist == min(my.site.dist, na.rm = T), station.name]
-    
+
     # finally, trim weather to station that is chosen
-    #weather <- weather[station.name == my.station,]
+    weather <- weather[station.name == my.station,]
   
-    # alternatively, mean all variables
-    #weather[, date.time.round2 := as.POSIXct(round.POSIXt(date.time, "hours"))
-    weather <- weather[, .(solar = mean(solar, na.rm = T),
-                               winspd = mean(winspd, na.rm = T),
-                               temp.c = mean(temp.c, na.rm = T),
-                               dewpt.c = mean(dewpt.c, na.rm = T)), 
-                           by = date.time.round]
-    setnames(weather, "date.time.round", "date.time")
-    
-    
     # store station.name and distance in model.run metadata and my.sites validation data
-    #model.runs[run.n == run, station.name := my.station]
-    #model.runs[run.n == run, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
-    model.runs[run.n == run, station.name := "Mean Hour All Stations"]
+    model.runs[run.n == run, station.name := my.station]
+    model.runs[run.n == run, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
     my.sites[, station.name := my.station]
     my.sites[, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
     
@@ -320,8 +308,7 @@ for(run in 1:model.runs[,.N]){  #
     
     # L in (m) is the characteristic length of the pavement at the test site taken as the ratio of
     #L <- model.runs[run.n == run, pave.length] # the slab length in the direction of the wind to the perimeter
-    #L <- my.site[, max.pave.len]
-    L <- pi # this assumes L is the ratio of slab length to perimeter when slab is always a circle
+    L <- my.site[, max.pave.len]
     model.runs[run.n == run, pave.length := L]
     # assume horizontal & flat, width b and infinite length L, hotter than the environment -> L = b/2
     # L could vary, but minimum for a pavement should be 2 lanes, or about ~10 meters
@@ -431,8 +418,8 @@ for(run in 1:model.runs[,.N]){  #
       for(z in 1:200){
         
         # for timestep p, calc the surface heat transfer parameters (surface radiative coefficient, infrared radiation & convection)
-        pave.time[time.s == t.step[p] & node == 0, h.rad := SVF * epsilon * sigma * ((T.K^2) + (T.sky^2)) * (T.K + T.sky)]  # radiative heat transfer coefficient in W/(m2*degK) 
-        pave.time[time.s == t.step[p] & node == 0, q.rad := SVF * epsilon * sigma * ((T.K^4) - (T.sky^4))] # infrared radiation heat transfer at surfaceW/m2
+        pave.time[time.s == t.step[p] & node == 0, h.rad := epsilon * sigma * ((T.K^2) + (T.sky^2)) * (T.K + T.sky)]  # radiative heat transfer coefficient in W/(m2*degK) 
+        pave.time[time.s == t.step[p] & node == 0, q.rad := epsilon * sigma * ((T.K^4) - (T.sky^4))] # infrared radiation heat transfer at surfaceW/m2
         pave.time[time.s == t.step[p] & node == 0, q.cnv := h.inf * (T.K - T.inf)] # convection heat transfer W/m2
         
         # store these values for surface for all layers to calc CFL later

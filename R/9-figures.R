@@ -6,7 +6,7 @@ options(scipen = 999) # prevent scientific notation when printing
 # first make sure checkpoint is installed locally
 # this is the only package that is ok to not use a 'checkpointed' (i.e. archived version of a package)
 # checkpoint does not archive itself and it should not create dependency issues+
-if (!require("checkpoint")){
+if (!require("checkpoint")){f
   install.packages("checkpoint")
   library(checkpoint)
 }
@@ -52,8 +52,7 @@ RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))}
 #######################################
 
 # IMPORT VALIDATION MODEL DATA
-folder <- here("data/outputs/run_metadata_20190610_113813") # validation runs
-all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
+all.model.runs <- readRDS(here("data/outputs/run_metadata_20190610_113813/stats_all_model_runs.rds")) # validation runs
 
 all.model.runs[, RMSE(Modeled, Observed), by = pave.name][order(V1)]
 all.model.runs[, mean(p.err), by = pave.name][order(V1)]
@@ -62,7 +61,6 @@ all.model.runs[, RMSE(Modeled, Observed), by = pave.name][order(V1)]
 all.model.runs[, mean(p.err), by = c("pave.name", "day.sea")][order(V1)]
 
 all.model.runs[, RMSE(Modeled, Observed), by = day.sea][order(V1)]
-
 
 
 # for validation only, drop unrealistic/bad predictors and high volume pavements as they are not representative
@@ -166,11 +164,6 @@ my.plot.f <- (ggplot(data = model.runs)
             )
 
 # save plot
-dir.create(paste0(folder, "/figures/"), showWarnings = F)
-#ggsave(paste0(folder, "/figures/modeled-observed", 
-#              format(strptime(Sys.time(), format = "%Y-%m-%d %H:%M:%S"), 
-#                     format = "%Y%m%d_%H%M%S"),".png"), my.plot.f, 
-#       device = "png", scale = 1.5, width = 6, height = 5, dpi = 300, units = "in")
 ggsave("figures/modeled-observed.png", my.plot.f, 
        device = "png", scale = 1.5, width = 7, height = 5, dpi = 300, units = "in")
 
@@ -288,11 +281,6 @@ p.flux.a <- (ggplot(data = surface.data.a[season %in% c("(a) Summer", "(b) Winte
 )
 
 # save plot
-#dir.create(paste0(folder, "/figures/"), showWarnings = F)
-#ggsave(paste0(folder, "/figures/heat-flux-diff", 
-#              format(strptime(Sys.time(), format = "%Y-%m-%d %H:%M:%S"),
-#                     format = "%Y%m%d_%H%M%S"),".png"), p.flux.a, 
-#       device = "png", scale = 1, width = 7, height = 4.5, dpi = 300, units = "in") 
 ggsave("figures/heat-flux-diff.png", p.flux.a, 
        device = "png", scale = 1, width = 6, height = 4.5, dpi = 300, units = "in") 
 

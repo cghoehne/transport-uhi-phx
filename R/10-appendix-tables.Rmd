@@ -43,11 +43,17 @@ windowsFonts(Times=windowsFont("TT Times New Roman"))
 #my.font <- "Century"
 my.font <- "Times"
 
+RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))}
+
 layer.profiles.bg <- readRDS(here("data/outputs/layer-profiles-BG.rds"))
 layer.profiles.c <- readRDS(here("data/outputs/layer-profiles-C.rds"))
 layer.profiles.a <- readRDS(here("data/outputs/layer-profiles-A.rds"))
 layer.profiles.wa <- readRDS(here("data/outputs/layer-profiles-WA.rds"))
 layer.profiles.oc <- readRDS(here("data/outputs/layer-profiles-OC.rds"))
+
+# validation info
+my.sites <- fread(here("data/validation_sites.csv")) # other validation sites info 
+valid.model.runs <- readRDS(here("data/outputs/run_metadata_20190610_113813/stats_all_model_runs.rds")) 
 
 ```
 
@@ -78,3 +84,45 @@ knitr::kable(c.table)
 
 ```
 
+Validation Sites
+
+```{r table4, echo = FALSE, results = 'asis'}
+
+valid.sites <- my.sites[,.(Location, lon, lat, dom.type, type)]
+used.valid <- unique(valid.model.runs[,valid.site])
+valid.sites <- valid.sites[Location %in% used.valid]
+colnames(valid.sites) <- c("Site ID", "Longitude", "Latitude", "Material", "Function")
+valid.sites[Material == "bare ground", Function := "vacant lot"]
+knitr::kable(valid.sites)
+
+```
+
+Validation Summaries
+
+```{r valid-summs, echo = FALSE, results = 'asis'}
+
+folder <- here("data/outputs/run_metadata_20190610_113813")
+error.day <- fread(paste0(folder, "/error-day.csv"))
+colnames(error.day) <- c("Date", "Season", "RMSE", "MAPE")
+knitr::kable(error.day)
+
+error.pave <- valid.model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = pave.name][order(RMSE)]
+colnames(error.day) <- c("Date", "Season", "RMSE", "MAPE")
+knitr::kable(error.day)
+
+error.site <- valid.model.runs[, .(RMSE = RMSE(Modeled, Observed), MAPE = mean(p.err, na.rm = T)), by = valid.site][order(RMSE)]
+colnames(error.day) <- c("Date", "Season", "RMSE", "MAPE")
+knitr::kable(error.day)
+
+```
+
+
+Validation Dates
+
+```{r table, echo = FALSE, results = 'asis'}
+
+valid.runs <- valid.model.runs[,.(pave.name, end.day, valid.site, Modeled, Observed, p.err)]
+colnames(valid.runs) <- c("Profile", "Date", "Site ID", "Modeled ST", "Observed ST", "Error")
+knitr::kable(valid.runs)
+
+```
