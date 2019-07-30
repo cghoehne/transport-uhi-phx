@@ -37,7 +37,8 @@ checkpoint("2019-01-01", # archive date for all used packages (besides checkpoin
 # DEFINE BATCH RUN ID and NAME #
 ################################
 batch.n <- 1 # choose index for batch run type
-meas.sol <- "yes" # use measured solar radiation or estimated? "yes" or "no"
+meas.sol <- "no" # use measured solar radiation? "yes" else will use estimated sol rad (no cloud)
+# use measured sol for validation
 
 batches <- data.table(id = c("A", "C", "WA", "OC", "BG"),
                          name = c("Asphalt Pavements", 
@@ -76,10 +77,10 @@ models <- list(run.n = c(0), # dummy run number (replace below)
                i.bot.temp = c(33.5), # starting bottom boundary layer temperature in deg C. ASSUMED TO BE CONSTANT 
                time.step = c(30), # time step in seconds
                #pave.length = c(200), # characteristic length of pavement in meters
-               SVF = c(0.95), # sky view factor  0.5, 
+               SVF = c(1.0, 0.1), # sky view factor 
                layer.profile = 1:length(layer.profiles), # for each layer.profile, create a profile to id
                end.day = unique(valid.dates[, date(date.time)]), # date on which to end the simulation (at midnight)
-               n.days = c(7) # number of days to simulate 
+               n.days = c(7) # number of days to simulate
 )
 
 model.runs <- as.data.table(expand.grid(models)) # create all combinations in model inputs across profiles
@@ -210,6 +211,20 @@ for(run in 1:model.runs[,.N]){  #
     # finally, trim weather to station that is chosen
     weather <- weather[station.name == my.station,]
   
+    # other option: mean all variables in 20 km radius
+    #my.stations <- my.stations[my.site.dist <= 20,]
+    #weather <- weather[station.name %in% my.stations[, station.name],]
+    
+    # alternatively, mean all variables
+    #weather[, date.time.round2 := as.POSIXct(round.POSIXt(date.time, "hours"))
+    weather <- weather[, .(solar = mean(solar, na.rm = T),
+                           winspd = mean(winspd, na.rm = T),
+                           temp.c = mean(temp.c, na.rm = T),
+                           dewpt.c = mean(dewpt.c, na.rm = T)), 
+                       by = date.time.round]
+    setnames(weather, "date.time.round", "date.time") # rename date.time.round to date.time
+    
+>>>>>>> 271819c39b04dc493f5b78b90ec19582c67a96aa
     # store station.name and distance in model.run metadata and my.sites validation data
     model.runs[run.n == run, station.name := my.station]
     model.runs[run.n == run, station.dist.km := my.stations[station.name == my.station, my.site.dist]]
