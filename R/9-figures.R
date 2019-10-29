@@ -958,7 +958,7 @@ p.flux.c.s <- (ggplot(data = p.v.add.s[!is.na(smean.add.flux)])
              + theme_minimal()
              + theme(text = element_text(family = my.font, size = 12, colour = "black"), 
                      axis.text = element_text(colour = "black"),
-                     plot.margin = margin(t = 5, r = 8, b = 90, l = 2, unit = "pt"), #b = 85
+                     plot.margin = margin(t = 5, r = 14, b = 90, l = 2, unit = "pt"), #b = 85
                      #panel.spacing.x = unit(7, "mm"),
                      #panel.spacing.y = unit(4, "mm"),
                      axis.text.x = element_text(vjust = -1),
