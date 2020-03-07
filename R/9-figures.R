@@ -53,8 +53,11 @@ RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))}
 #######################################
 
 # IMPORT VALIDATION MODEL DATA
-folder <- here("data/outputs/run_metadata_20190611_105020") # validation runs 
-# run_metadata_20190610_113813
+#load(here("data/outputs/temp/figures-1.RData"))
+folder <- here("data/outputs/run_metadata_20190610_113813") 
+#folder <- here("data/outputs/run_metadata_20190611_105020") # validation runs 
+#folder <- here("data/outputs/run_metadata_20190324_185458") # validation runs 
+
 all.model.runs <- readRDS(paste0(folder, "/stats_all_model_runs.rds"))
 
 all.model.runs[, RMSE(Modeled, Observed), by = pave.name][order(V1)]
@@ -68,7 +71,7 @@ all.model.runs[, RMSE(Modeled, Observed), by = day.sea][order(V1)]
 
 # for validation only, drop unrealistic/bad predictors and high volume pavements as they are not representative
 model.names <- sort(unique(all.model.runs$pave.name))
-model.runs <- all.model.runs#[p.err <= 0.30 & is.finite(p.err) & RMSE(Modeled, Observed) <= 10,] # remove poor performers or NAs if there are any 
+model.runs <- all.model.runs[p.err <= 0.30 & is.finite(p.err) & RMSE(Modeled, Observed) <= 10,] # remove poor performers or NAs if there are any 
 #model.runs <- model.runs[!(pave.name %in% model.names[7:12])]
 
 
@@ -110,7 +113,7 @@ model.runs[new.name == p.names[3], new.name.t := paste("(c)", p.names[3])]
 model.runs[new.name == p.names[4], new.name.t := paste("(d)", p.names[4])]
 model.runs[, new.name.t := as.factor(new.name.t)]
 
-# RMSE & MAPE
+# RMSE, MAPE, & MAE
 model.runs[new.name == p.names[1], RMSE.batch := RMSE(Modeled, Observed)]
 model.runs[new.name == p.names[2], RMSE.batch := RMSE(Modeled, Observed)]
 model.runs[new.name == p.names[3], RMSE.batch := RMSE(Modeled, Observed)]
@@ -123,6 +126,12 @@ model.runs[new.name == p.names[3], MAPE.batch := mean(p.err, na.rm = T)]
 model.runs[new.name == p.names[4], MAPE.batch := mean(p.err, na.rm = T)]
 model.runs[, MAPE.batch := paste0("MAPE = ", format(signif(MAPE.batch, 3) * 100, nsmall = 1), "%")]
 
+model.runs[new.name == p.names[1], MAE.batch := mean(abs(Modeled - Observed), na.rm = T)]
+model.runs[new.name == p.names[2], MAE.batch := mean(abs(Modeled - Observed), na.rm = T)]
+model.runs[new.name == p.names[3], MAE.batch := mean(abs(Modeled - Observed), na.rm = T)]
+model.runs[new.name == p.names[4], MAE.batch := mean(abs(Modeled - Observed), na.rm = T)]
+model.runs[, MAE.batch := paste("MAE =", format(signif(MAE.batch, 3), nsmall = 1))]
+
 # create plot
 my.plot.f <- (ggplot(data = model.runs) 
             
@@ -132,7 +141,7 @@ my.plot.f <- (ggplot(data = model.runs)
             
             # points for modeled vs observed + ref line
             + geom_point(aes(y = Modeled, x = Observed, color = day.sea, shape = day.sea, size = day.sea))
-            + geom_text(aes(y = max.y /  6, x = max.x * 0.85, label = MAPE.batch), family = my.font, size = 3.5)
+            + geom_text(aes(y = max.y /  6, x = max.x * 0.85, label = MAE.batch), family = my.font, size = 3.5)
             + geom_text(aes(y = max.y / 12, x = max.x * 0.85, label = RMSE.batch), family = my.font, size = 3.5)
             + geom_abline(intercept = 0, slope = 1) # line of equality
             
@@ -167,8 +176,8 @@ my.plot.f <- (ggplot(data = model.runs)
             )
 
 # save plot
-ggsave("figures/modeled-observed.png", my.plot.f, 
-       device = "png", scale = 1.5, width = 7, height = 5, dpi = 300, units = "in")
+ggsave("figures/modeled-observed-new.png", my.plot.f, 
+       device = "png", scale = 1.5, width = 6, height = 5, dpi = 300, units = "in")
 
 #######################################
 # HEAT FLUX PLOT (NON-VALIDATION RUNS #

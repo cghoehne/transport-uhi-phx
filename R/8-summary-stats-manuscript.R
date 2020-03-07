@@ -39,7 +39,8 @@ RMSE = function(m, o){sqrt(mean((m - o)^2, na.rm = T))}
 
 
 # IMPORT MODEL METADATA
-all.valid.model.runs <- readRDS(here("data/outputs/run_metadata_20190324_185458/stats_all_model_runs.rds"))
+#all.valid.model.runs <- readRDS(here("data/outputs/run_metadata_20190324_185458/stats_all_model_runs.rds"))
+all.valid.model.runs <- readRDS(here("data/outputs/run_metadata_20190610_113813/stats_all_model_runs.rds"))
 all.model.runs.7d <- readRDS(here("data/outputs/run_metadata_20190520_171637/stats_all_model_runs.rds"))
 all.model.runs.th <- readRDS(here("data/outputs/run_metadata_20190526_185113_varied_thick/stats_all_model_runs.rds"))
 all.model.runs.ti <- readRDS(here("data/outputs/run_metadata_20190524_112541_varied_TI/stats_all_model_runs.rds"))
@@ -56,26 +57,32 @@ sort(unique(all.valid.model.runs[, end.day])) # sorted
 # for validation only, drop unrealistic/bad predictors and high volume pavements as they are not representative
 valid.model.names <- sort(unique(all.valid.model.runs$pave.name))
 valid.model.runs <- all.valid.model.runs[p.err <= 0.30 & is.finite(p.err) & RMSE(Modeled, Observed) <= 10,] # remove poor performers or NAs if there are any 
-valid.model.runs <- valid.model.runs[!(pave.name %in% valid.model.names[7:12])]
-valid.model.runs[, RMSE(Modeled, Observed)]
+#valid.model.runs <- valid.model.runs[!(pave.name %in% valid.model.names[7:12])]
+valid.model.runs[, RMSE(Modeled, Observed)] # root mean square error
+valid.model.runs[, mean(abs(Modeled - Observed), na.rm = T)] # mean absolute error
 valid.model.runs[, mean(p.err, na.rm = T)]
 
 
 valid.model.runs[, .(mean.err = mean(p.err),
+                     mean.mae = mean(abs(Modeled - Observed), na.rm = T),
                      mean.rmse = RMSE(Modeled, Observed)),
                  by = season]
 
 valid.model.runs[, .(mean.err = mean(p.err),
+                     mean.mae = mean(abs(Modeled - Observed), na.rm = T),
                      mean.rmse = RMSE(Modeled, Observed)),
                  by = daytime]
 
 valid.model.runs[, .(mean.err = mean(p.err),
+                     mean.mae = mean(abs(Modeled - Observed), na.rm = T),
                      mean.rmse = RMSE(Modeled, Observed)),
                  by = pave.name][order(mean.rmse)]
 
 
 
 valid.model.runs[pave.name == "Low Stress PCC #1 (0.35 albedo)",]
+valid.model.runs[pave.name == "Portland Cement Concrete Low A", .(unique(L1.thickness), unique(L1.albedo))]
+valid.model.runs[pave.name == "Asphalt Med A", .(unique(L1.thickness), unique(L1.albedo))]
 
 # min, avg, max of temps at nearest node to 1.0 meter depth for all runs
 all.model.runs[, .(min.T_1.0m = min(min.T_1.0m, na.rm = T),
